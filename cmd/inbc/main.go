@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	pb "example.com/tcv5/pkg/api/inbd/v1"
+	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

@@ -1,4 +1,4 @@
-module example.com/tcv5
+module github.com/intel/intel-inb-manageability
 
 go 1.24.1
 
