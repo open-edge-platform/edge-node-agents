@@ -15,6 +15,7 @@ type inbdServer struct {
 }
 
 func (s *inbdServer) GetVersion(ctx context.Context, req *pb.GetVersionRequest) (*pb.GetVersionResponse, error) {
+	log.Printf("Received GetVersion request")
 	return &pb.GetVersionResponse{
 		Version: "1.0.0",
 	}, nil
