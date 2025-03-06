@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package inbd.v1;
+option go_package = "example.com/tcv5/pkg/api/inbs/v1";
+
+message GetVersionRequest {
+}
+
+message GetVersionResponse {
+  string version = 1;
+}
+
+service InbService {
+  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
+}
