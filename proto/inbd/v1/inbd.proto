@@ -1,7 +1,16 @@
 syntax = "proto3";
 
 package inbd.v1;
+
+import "google/protobuf/timestamp.proto";
+import "buf/validate/validate.proto";
+
 option go_package = "github.com/intel/intel-inb-manageability/pkg/api/inbs/v1";
+
+service InbService {
+  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
+  rpc UpdateSystemSoftware(UpdateSystemSoftwareRequest) returns (UpdateResponse);
+}
 
 message GetVersionRequest {
 }
@@ -10,6 +19,36 @@ message GetVersionResponse {
   string version = 1;
 }
 
-service InbService {
-  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
+message UpdateSystemSoftwareRequest {
+  string url = 1 [(buf.validate.field).cel = {
+    id: "valid_uri"
+    message: "url must be a valid URL."
+    expression: "this == '' || this.isUri()"
+  },
+  (buf.validate.field).required = false]; // URL from which to remotely retrieve the package
+  google.protobuf.Timestamp release_date = 2 [(buf.validate.field).required = false]; // Release date of the new SW update.
+  enum DownloadMode {
+      DOWNLOAD_MODE_UNSPECIFIED = 0;
+      DOWNLOAD_MODE_FULL = 1; // Both download the package and install the package
+      DOWNLOAD_MODE_NO_DOWNLOAD = 2; // Do not download the package.  Only install.
+      DOWNLOAD_MODE_DOWNLOAD_ONLY = 3; // Only download the package.  Do not install.
+  }
+  DownloadMode mode = 3 [
+      (buf.validate.field).enum = {
+          defined_only: true
+      },
+  (buf.validate.field).required = true]; // Mode for installing the software update regarding download and install steps.
+  bool do_not_reboot = 4;  // Whether to reboot the node after the firmware update attempt
+  repeated string package_list = 5 [(buf.validate.field).repeated = {
+      unique: true,
+      items: {
+          string: {
+              pattern: "^[a-zA-Z0-9_-]+$" // Adjust the pattern as needed
+          }
+      }
+  }]; // List of packages to install if whole package update isn't desired.
+}
+
+message UpdateResponse {
+  string error = 1; // set if there is an error
 }
