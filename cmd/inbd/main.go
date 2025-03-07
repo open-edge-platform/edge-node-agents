@@ -21,6 +21,26 @@ func (s *inbdServer) GetVersion(ctx context.Context, req *pb.GetVersionRequest) 
 	}, nil
 }
 
+func (s *inbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest) (*pb.UpdateResponse, error) {
+	log.Printf("Received UpdateSystemSoftware request")
+	return &pb.UpdateResponse{StatusCode: 501, Error: "Not implemented"}, nil
+}
+
+func (s *inbdServer) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceRequest) (*pb.UpdateResponse, error) {
+	log.Printf("Received UpdateOSSource request")
+	return &pb.UpdateResponse{StatusCode: 501, Error: "Not implemented"}, nil
+}
+
+func (s *inbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplicationSourceRequest) (*pb.UpdateResponse, error) {
+	log.Printf("Received AddApplicationSource request")
+	return &pb.UpdateResponse{StatusCode: 501, Error: "Not implemented"}, nil
+}
+
+func (s *inbdServer) RemoveApplicationSource(ctx context.Context, req *pb.RemoveApplicationSourceRequest) (*pb.UpdateResponse, error) {
+	log.Printf("Received RemoveApplicationSource request")
+	return &pb.UpdateResponse{StatusCode: 501, Error: "Not implemented"}, nil
+}
+
 func main() {
 	// remove sock if exists
 	if _, err := os.Stat("/tmp/inbd.sock"); err == nil {

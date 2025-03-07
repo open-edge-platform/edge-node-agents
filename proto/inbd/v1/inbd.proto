@@ -92,6 +92,7 @@ message RemoveApplicationSourceRequest {
 }
 
 message UpdateResponse {
-  string error = 1; // set if there is an error
+  int32 status_code = 1; // Status code of the operation
+  string error = 2; // set if there is an error
 }
   
