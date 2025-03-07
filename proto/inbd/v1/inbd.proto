@@ -10,6 +10,9 @@ option go_package = "github.com/intel/intel-inb-manageability/pkg/api/inbs/v1";
 service InbService {
   rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
   rpc UpdateSystemSoftware(UpdateSystemSoftwareRequest) returns (UpdateResponse);
+  rpc UpdateOSSource(UpdateOSSourceRequest) returns (UpdateResponse);
+  rpc AddApplicationSource(AddApplicationSourceRequest) returns (UpdateResponse);
+  rpc RemoveApplicationSource(RemoveApplicationSourceRequest) returns (UpdateResponse);
 }
 
 message GetVersionRequest {
@@ -49,6 +52,46 @@ message UpdateSystemSoftwareRequest {
   }]; // List of packages to install if whole package update isn't desired.
 }
 
+message UpdateOSSourceRequest {
+  repeated string source_list = 1 [(buf.validate.field).repeated = {
+      unique: true,
+      items: {
+          string: {
+              pattern: "^[a-zA-Z0-9_-]+$:/" // Adjust the pattern as needed
+              min_len: 1
+              max_len: 500
+          }
+      }
+  }]; // List of sources to update.
+}
+
+message AddApplicationSourceRequest {
+  repeated string source = 1 [(buf.validate.field).repeated = {
+    unique: true,
+    items: {
+        string: {
+            pattern: "^[a-zA-Z0-9_-]+$:/" // Adjust the pattern as needed
+            min_len: 1
+            max_len: 500
+        }
+    }
+  }];
+  string filename = 2 [(buf.validate.field).required = true];
+  string gpg_key_uri = 3 [(buf.validate.field).cel = {
+    id: "valid_uri"
+    message: "url must be a valid URL."
+    expression: "this == '' || this.isUri()"
+  },
+  (buf.validate.field).required = false]; // URL from which to remotely retrieve the package
+  string gpg_key_name = 4 [(buf.validate.field).required = false];
+}
+
+message RemoveApplicationSourceRequest {
+  string filename = 1 [(buf.validate.field).required = true];
+  string gpg_key_name = 2 [(buf.validate.field).required = false];
+}
+
 message UpdateResponse {
   string error = 1; // set if there is an error
 }
+  

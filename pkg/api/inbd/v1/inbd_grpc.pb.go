@@ -24,6 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 type InbServiceClient interface {
 	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
 	UpdateSystemSoftware(ctx context.Context, in *UpdateSystemSoftwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
+	UpdateOSSource(ctx context.Context, in *UpdateOSSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
+	AddApplicationSource(ctx context.Context, in *AddApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
+	RemoveApplicationSource(ctx context.Context, in *RemoveApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 }
 
 type inbServiceClient struct {
@@ -52,12 +55,42 @@ func (c *inbServiceClient) UpdateSystemSoftware(ctx context.Context, in *UpdateS
 	return out, nil
 }
 
+func (c *inbServiceClient) UpdateOSSource(ctx context.Context, in *UpdateOSSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
+	out := new(UpdateResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/UpdateOSSource", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inbServiceClient) AddApplicationSource(ctx context.Context, in *AddApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
+	out := new(UpdateResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/AddApplicationSource", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inbServiceClient) RemoveApplicationSource(ctx context.Context, in *RemoveApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
+	out := new(UpdateResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/RemoveApplicationSource", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InbServiceServer is the server API for InbService service.
 // All implementations must embed UnimplementedInbServiceServer
 // for forward compatibility
 type InbServiceServer interface {
 	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
 	UpdateSystemSoftware(context.Context, *UpdateSystemSoftwareRequest) (*UpdateResponse, error)
+	UpdateOSSource(context.Context, *UpdateOSSourceRequest) (*UpdateResponse, error)
+	AddApplicationSource(context.Context, *AddApplicationSourceRequest) (*UpdateResponse, error)
+	RemoveApplicationSource(context.Context, *RemoveApplicationSourceRequest) (*UpdateResponse, error)
 	mustEmbedUnimplementedInbServiceServer()
 }
 
@@ -70,6 +103,15 @@ func (UnimplementedInbServiceServer) GetVersion(context.Context, *GetVersionRequ
 }
 func (UnimplementedInbServiceServer) UpdateSystemSoftware(context.Context, *UpdateSystemSoftwareRequest) (*UpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSystemSoftware not implemented")
+}
+func (UnimplementedInbServiceServer) UpdateOSSource(context.Context, *UpdateOSSourceRequest) (*UpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOSSource not implemented")
+}
+func (UnimplementedInbServiceServer) AddApplicationSource(context.Context, *AddApplicationSourceRequest) (*UpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddApplicationSource not implemented")
+}
+func (UnimplementedInbServiceServer) RemoveApplicationSource(context.Context, *RemoveApplicationSourceRequest) (*UpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveApplicationSource not implemented")
 }
 func (UnimplementedInbServiceServer) mustEmbedUnimplementedInbServiceServer() {}
 
@@ -120,6 +162,60 @@ func _InbService_UpdateSystemSoftware_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InbService_UpdateOSSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOSSourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).UpdateOSSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/UpdateOSSource",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).UpdateOSSource(ctx, req.(*UpdateOSSourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InbService_AddApplicationSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddApplicationSourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).AddApplicationSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/AddApplicationSource",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).AddApplicationSource(ctx, req.(*AddApplicationSourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InbService_RemoveApplicationSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveApplicationSourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).RemoveApplicationSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/RemoveApplicationSource",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).RemoveApplicationSource(ctx, req.(*RemoveApplicationSourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InbService_ServiceDesc is the grpc.ServiceDesc for InbService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +230,18 @@ var InbService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateSystemSoftware",
 			Handler:    _InbService_UpdateSystemSoftware_Handler,
+		},
+		{
+			MethodName: "UpdateOSSource",
+			Handler:    _InbService_UpdateOSSource_Handler,
+		},
+		{
+			MethodName: "AddApplicationSource",
+			Handler:    _InbService_AddApplicationSource_Handler,
+		},
+		{
+			MethodName: "RemoveApplicationSource",
+			Handler:    _InbService_RemoveApplicationSource_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
