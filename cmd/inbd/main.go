@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net"
 	"os"
+	"syscall"
 
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"google.golang.org/grpc"
@@ -42,23 +44,28 @@ func (s *inbdServer) RemoveApplicationSource(ctx context.Context, req *pb.Remove
 }
 
 func main() {
-	// remove sock if exists
-	if _, err := os.Stat("/tmp/inbd.sock"); err == nil {
-		err := os.Remove("/tmp/inbd.sock")
+	var socket = flag.String("s", "/var/run/inbd.sock", "UNIX domain socket path")
+	flag.Parse()
+
+	if _, err := os.Stat(*socket); err == nil {
+		err := os.Remove(*socket)
 		if err != nil {
-			log.Fatalf("Error removing /tmp/inbd.sock")
+			log.Fatalf("Error removing %s", *socket)
 		}
 	}
 
-	lis, err := net.Listen("unix", "/tmp/inbd.sock")
+	// when creating the socket, we need it to be with 0600 permissions, atomically
+	oldUmask := syscall.Umask(0177)
+	lis, err := net.Listen("unix", *socket)
 	if err != nil {
-		log.Fatalf("Error listening to /tmp/inbd.sock: %v", err)
+		log.Fatalf("Error listening to %s: %v", *socket, err)
 	}
+	syscall.Umask(oldUmask)
 
 	grpcServer := grpc.NewServer()
 
 	pb.RegisterInbServiceServer(grpcServer, &inbdServer{})
-	log.Println("Server listening on /tmp/inbd.sock")
+	log.Printf("Server listening on %s", *socket)
 
 	err = grpcServer.Serve(lis)
 	if err != nil {

@@ -7,13 +7,13 @@ To generate protobuf:
 
 To run server:
 
-* Run: `go run ./cmd/inbd`
+* Run: `go run ./cmd/inbd -s /tmp/inbd.sock`
 
 This will wait for a client connection on `/tmp/inbd.sock`.
 
 To run client:
 
-* Run: `go run ./cmd/inbc`
+* Run: `go run ./cmd/inbc -s /tmp/inbd.sock`
 
 This will connect to the server `inbd` via `/tmp/inbd.sock` and send a simple gRPC query.
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net"
 
@@ -11,13 +12,16 @@ import (
 )
 
 func main() {
+	var socket = flag.String("s", "/var/run/inbd.sock", "UNIX domain socket path")
+	flag.Parse()
+
 	dialer := func(ctx context.Context, addr string) (net.Conn, error) {
 		// cut off the unix:// part
 		addr = addr[7:]
 		return net.Dial("unix", addr)
 	}
 
-	conn, err := grpc.NewClient("unix:///tmp/inbd.sock", grpc.WithTransportCredentials(insecure.NewCredentials()),
+	conn, err := grpc.NewClient("unix://"+*socket, grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(dialer))
 	if err != nil {
 		log.Fatalf("Error setting up new grpc client: %v", err)
