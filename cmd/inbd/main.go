@@ -16,13 +16,6 @@ type inbdServer struct {
 	pb.UnimplementedInbServiceServer
 }
 
-func (s *inbdServer) GetVersion(ctx context.Context, req *pb.GetVersionRequest) (*pb.GetVersionResponse, error) {
-	log.Printf("Received GetVersion request")
-	return &pb.GetVersionResponse{
-		Version: "1.0.0",
-	}, nil
-}
-
 func (s *inbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest) (*pb.UpdateResponse, error) {
 	log.Printf("Received UpdateSystemSoftware request")
 	return &pb.UpdateResponse{StatusCode: 501, Error: "Not implemented"}, nil
