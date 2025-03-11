@@ -1,34 +1,39 @@
+/*
+ * SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+ * SPDX-License-Identifier: LicenseRef-Intel
+ */
 package main
 
 import (
-	"context"
-	"log"
-	"net"
+	"fmt"
+	"os"
 
-	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/spf13/cobra"
+
+	"github.com/intel/intel-inb-manageability/cmd/inbc/commands"
 )
 
+// Version is set with linker flags at build time.
+var Version string
+
 func main() {
-	dialer := func(ctx context.Context, addr string) (net.Conn, error) {
-		// cut off the unix:// part
-		addr = addr[7:]
-		return net.Dial("unix", addr)
+	// Root command and persistent flags
+	rootCmd := &cobra.Command{
+		Use:     "inbc",
+		Short:   "INBC - CLI for Intel Manageability",
+		Version: Version,
+		Long:    `INBC is a CLI to access and perform different manageability commands.`,
 	}
+	verbose := rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
 
-	conn, err := grpc.NewClient("unix:///tmp/inbd.sock", grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialer))
-	if err != nil {
-		log.Fatalf("Error setting up new grpc client: %v", err)
+	// Add subcommands
+	rootCmd.AddCommand(commands.SOTACmd())
+
+	// Execute CLI
+	if err := rootCmd.Execute(); err != nil {
+		if *verbose {
+			fmt.Println(err)
+		}
+		os.Exit(1)
 	}
-	defer conn.Close()
-
-	client := pb.NewInbServiceClient(conn)
-	version, err := client.GetVersion(context.Background(), &pb.GetVersionRequest{})
-	if err != nil {
-		log.Fatalf("error getting server version: %v", err)
-	}
-
-	log.Printf("Got version from server: %s", version.GetVersion())
 }

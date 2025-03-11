@@ -5,7 +5,7 @@ package inbd.v1;
 import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
-option go_package = "github.com/intel/intel-inb-manageability/pkg/api/inbs/v1";
+option go_package = "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1";
 
 service InbService {
   rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
