@@ -1,28 +1,23 @@
 ```mermaid
 gantt
-    title TC2Go Project Timeline and Resources
+    title TC2Go Project Timeline and Resources: Tiber A/B update focus
     dateFormat  YYYY-MM-DD
-    axisFormat  WW
+    tickInterval 1week
 
-    section WW11
-        Basic Int Test (BLR)              :a1, 2025-03-10, 1w
-        UNIX Socket (Gavin)               :done, a2, 2025-03-10, 1w
-        Repo Struct (Gavin)               :done, a3, 2025-03-10, 1w
-        INBC Command-line tool (Nat)      :done, a4, 2025-03-10, 1w
-        Create Initial Earthfile (Nat)    :active, a5, 2025-03-10, 1w
-        TC Systemd service (YL)           :active, a6, 2025-03-10, 1w        
+    section Dev
+        Start                             :milestone, :start, 2025-03-10, 0d
+        E1 Foundation                     :foundation, after start, 1w
+        E2 INBC                           :inbc, after start, 1w
+        E3 SOTA & Demo (Gavin/YL)         :sotademo, after inbc, 2w
+        TiberOS integrate (Gavin/YL) :spec, after sotademo, 2w
+        Demo                              :milestone, :demo, after spec, 0d
+        Ongoing Unit Tests (BLR)          :unit, after foundation, 4w        
 
-    section WW12
-        CI/CD Int (BLR)                   :b1, 2025-03-17, 2w
-        SOTA Download-only Tiber (YL)     :crit, b2, 2025-03-17, 1w
-        Unit Tests (BLR)                  :a6, 2025-03-10, 3w
-
-    section WW13
-        SOTA Update Tiber (YL)            :crit, c1, 2025-03-24, 2w
-        Demo Prep (Gavin/YL)              :crit, c2, 2025-03-24, 2w
-
-    section WW14
-        Fuzz Testing (Val)                :d1, 2025-03-31, 6w
-
-    section WW15
-        ITEP Integration                  :e1, 2025-04-7, 2w
+    section CICD and UQRC
+        CI/CD with Integration Test (BLR)         :cicd, 2025-03-17, 15d
+    
+    section Security
+        Fuzz Testing (Val)                :fuzz, after demo, 1w
+        OSPDT (Nat)                       :ospdt, after demo, 2w
+        SAFE (Nat/Gavin)                  :safe, after demo, 2w
+```
