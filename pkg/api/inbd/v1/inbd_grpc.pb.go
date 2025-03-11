@@ -22,7 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InbServiceClient interface {
-	GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error)
 	UpdateSystemSoftware(ctx context.Context, in *UpdateSystemSoftwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	UpdateOSSource(ctx context.Context, in *UpdateOSSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	AddApplicationSource(ctx context.Context, in *AddApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
@@ -35,15 +34,6 @@ type inbServiceClient struct {
 
 func NewInbServiceClient(cc grpc.ClientConnInterface) InbServiceClient {
 	return &inbServiceClient{cc}
-}
-
-func (c *inbServiceClient) GetVersion(ctx context.Context, in *GetVersionRequest, opts ...grpc.CallOption) (*GetVersionResponse, error) {
-	out := new(GetVersionResponse)
-	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/GetVersion", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *inbServiceClient) UpdateSystemSoftware(ctx context.Context, in *UpdateSystemSoftwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
@@ -86,7 +76,6 @@ func (c *inbServiceClient) RemoveApplicationSource(ctx context.Context, in *Remo
 // All implementations must embed UnimplementedInbServiceServer
 // for forward compatibility
 type InbServiceServer interface {
-	GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error)
 	UpdateSystemSoftware(context.Context, *UpdateSystemSoftwareRequest) (*UpdateResponse, error)
 	UpdateOSSource(context.Context, *UpdateOSSourceRequest) (*UpdateResponse, error)
 	AddApplicationSource(context.Context, *AddApplicationSourceRequest) (*UpdateResponse, error)
@@ -98,9 +87,6 @@ type InbServiceServer interface {
 type UnimplementedInbServiceServer struct {
 }
 
-func (UnimplementedInbServiceServer) GetVersion(context.Context, *GetVersionRequest) (*GetVersionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetVersion not implemented")
-}
 func (UnimplementedInbServiceServer) UpdateSystemSoftware(context.Context, *UpdateSystemSoftwareRequest) (*UpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSystemSoftware not implemented")
 }
@@ -124,24 +110,6 @@ type UnsafeInbServiceServer interface {
 
 func RegisterInbServiceServer(s grpc.ServiceRegistrar, srv InbServiceServer) {
 	s.RegisterService(&InbService_ServiceDesc, srv)
-}
-
-func _InbService_GetVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetVersionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(InbServiceServer).GetVersion(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/inbd.v1.InbService/GetVersion",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InbServiceServer).GetVersion(ctx, req.(*GetVersionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _InbService_UpdateSystemSoftware_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -223,10 +191,6 @@ var InbService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "inbd.v1.InbService",
 	HandlerType: (*InbServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetVersion",
-			Handler:    _InbService_GetVersion_Handler,
-		},
 		{
 			MethodName: "UpdateSystemSoftware",
 			Handler:    _InbService_UpdateSystemSoftware_Handler,

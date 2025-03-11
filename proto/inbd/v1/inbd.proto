@@ -8,18 +8,10 @@ import "buf/validate/validate.proto";
 option go_package = "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1";
 
 service InbService {
-  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse);
   rpc UpdateSystemSoftware(UpdateSystemSoftwareRequest) returns (UpdateResponse);
   rpc UpdateOSSource(UpdateOSSourceRequest) returns (UpdateResponse);
   rpc AddApplicationSource(AddApplicationSourceRequest) returns (UpdateResponse);
   rpc RemoveApplicationSource(RemoveApplicationSourceRequest) returns (UpdateResponse);
-}
-
-message GetVersionRequest {
-}
-
-message GetVersionResponse {
-  string version = 1;
 }
 
 message UpdateSystemSoftwareRequest {
