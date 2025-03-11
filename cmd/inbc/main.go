@@ -14,14 +14,14 @@ import (
 )
 
 // Version is set with linker flags at build time.
-//var Version string
+var Version string
 
 func main() {
 	// Root command and persistent flags
 	rootCmd := &cobra.Command{
 		Use:     "inbc",
 		Short:   "INBC - CLI for Intel Manageability",
-		//Version: Version,
+		Version: Version,
 		Long:    `INBC is a CLI to access and perform manageability commands.`,
 	}
 	verbose := rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")

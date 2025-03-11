@@ -17,9 +17,6 @@ import (
 
 // Dial returns a new grpc client
  func Dial(ctx context.Context, addr string) (pb.InbServiceClient, *grpc.ClientConn,error) {
-	//var socket = flag.String("s", "/var/run/inbd.sock", "UNIX domain socket path")
-	//flag.Parse()
-
 	dialer := func(ctx context.Context, addr string) (net.Conn, error) {
 		// cut off the unix:// part
 		addr = addr[7:]
