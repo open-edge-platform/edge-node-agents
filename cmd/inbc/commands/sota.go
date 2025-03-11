@@ -18,6 +18,7 @@ import (
 
 // SOTACmd returns a cobra command for the SOTA command
 func SOTACmd() *cobra.Command {
+	var socket string
 	var url string
 	var releaseDate string
 	var mode string
@@ -28,9 +29,10 @@ func SOTACmd() *cobra.Command {
 		Use:   "sota",
 		Short: "Performs System Software Update",
 		Long:  `Updates the system software on the device.`,
-		RunE:  handleSOTA(&url, &releaseDate, &mode, &doNotReboot, &packageList),		
+		RunE:  handleSOTA(&socket, &url, &releaseDate, &mode, &doNotReboot, &packageList),		
 	}
 
+	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
 	cmd.Flags().StringVar(&url, "url", "", "URL from which to remotely retrieve the package")
 	cmd.Flags().StringVar(&releaseDate, "release-date", "", "Release date of the new SW update (RFC3339 format)")
 	cmd.MarkFlagRequired("mode")
@@ -42,7 +44,7 @@ func SOTACmd() *cobra.Command {
 }
 
 // handleSOTA is a helper function to handle the SOTA command
-func handleSOTA(url *string, releaseDate *string, mode *string, doNotReboot *bool, packageList *[]string) func(*cobra.Command, []string) error {
+func handleSOTA(socket *string, url *string, releaseDate *string, mode *string, doNotReboot *bool, packageList *[]string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("SOTA INBC Command was invoked.\n")
 
@@ -89,7 +91,7 @@ func handleSOTA(url *string, releaseDate *string, mode *string, doNotReboot *boo
 			PackageList: *packageList,
 		}
 
-		client, conn, err := Dial(context.Background(), "unix:///tmp/inbd.sock")
+		client, conn, err := Dial(context.Background(), *socket)
 		if err != nil {
 			log.Fatalf("Error setting up new grpc client: %v", err)
 		}

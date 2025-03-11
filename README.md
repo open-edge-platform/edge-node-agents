@@ -13,7 +13,9 @@ This will wait for a client connection on `/tmp/inbd.sock`.
 
 To run client:
 
-* Run: `go run ./cmd/inbc -s /tmp/inbd.sock`
+* Run: `go run ./cmd/inbc --socket /tmp/inbd.sock sota --mode full`
+
+(Should respond with 501-Not Implemented)
 
 This will connect to the server `inbd` via `/tmp/inbd.sock` and send a simple gRPC query.
 
