@@ -13,7 +13,7 @@
 	 cmd := &cobra.Command{
 		 Use:   "os",
 		 Short: "Modifies the source files for OS Updates",
-		 Long:  `Source command is used to creates a new /etc/apt/sources.list file with only the sources provided.`,
+		 Long:  "Source command is used to creates a new /etc/apt/sources.list file with only the sources provided.",
 	 }
  
 	 // Add subcommands to source OS command

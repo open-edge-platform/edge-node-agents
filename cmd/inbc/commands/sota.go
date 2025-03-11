@@ -22,29 +22,29 @@ func SOTACmd() *cobra.Command {
 	var url string
 	var releaseDate string
 	var mode string
-	var doNotReboot bool
+	var reboot bool
 	var packageList []string
 
 	cmd := &cobra.Command{
 		Use:   "sota",
 		Short: "Performs System Software Update",
 		Long:  `Updates the system software on the device.`,
-		RunE:  handleSOTA(&socket, &url, &releaseDate, &mode, &doNotReboot, &packageList),		
+		RunE:  handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList),		
 	}
 
 	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
-	cmd.Flags().StringVar(&url, "url", "", "URL from which to remotely retrieve the package")
-	cmd.Flags().StringVar(&releaseDate, "release-date", "", "Release date of the new SW update (RFC3339 format)")
+	cmd.Flags().StringVar(&url, "uri", "", "URI from which to remotely retrieve the package")
+	cmd.Flags().StringVar(&releaseDate, "releasedate", "", "Release date of the new SW update (RFC3339 format)")
 	cmd.MarkFlagRequired("mode")
-	cmd.Flags().StringVar(&mode, "mode", "", "Mode for installing the software update (full, no-download, download-only)")
-	cmd.Flags().BoolVar(&doNotReboot, "do-not-reboot", false, "Whether to reboot the node after the firmware update attempt")
+	cmd.Flags().StringVar(&mode, "mode", "full", "Mode for installing the software update (full, no-download, download-only)")
+	cmd.Flags().BoolVar(&reboot, "reboot", true, "Whether to reboot the node after the software update attempt")
 	cmd.Flags().StringSliceVar(&packageList, "package-list", []string{}, "List of packages to install if whole package update isn't desired")
 	
 	return cmd
 }
 
 // handleSOTA is a helper function to handle the SOTA command
-func handleSOTA(socket *string, url *string, releaseDate *string, mode *string, doNotReboot *bool, packageList *[]string) func(*cobra.Command, []string) error {
+func handleSOTA(socket *string, url *string, releaseDate *string, mode *string, reboot *bool, packageList *[]string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("SOTA INBC Command was invoked.\n")
 
@@ -87,7 +87,7 @@ func handleSOTA(socket *string, url *string, releaseDate *string, mode *string, 
 			Url:         *url,
 			ReleaseDate: releaseDateProto,
 			Mode:        pb.UpdateSystemSoftwareRequest_DownloadMode(downloadMode),
-			DoNotReboot: *doNotReboot,
+			DoNotReboot: !*reboot,
 			PackageList: *packageList,
 		}
 

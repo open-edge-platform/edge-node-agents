@@ -16,6 +16,7 @@ import (
 
 // AddApplicationSourceCmd returns a cobra command for the AddApplicationSource command
 func AddApplicationSourceCmd() *cobra.Command {
+	var socket string
 	var sources []string
 	var filename string
 	var gpgKeyURI string
@@ -25,13 +26,14 @@ func AddApplicationSourceCmd() *cobra.Command {
 		Use:   "add",
 		Short: "Adds a new application source",
 		Long:  `Add command is used to add a new application source to the list of sources.`,
-		RunE:  handleAddApplicationSource(&sources, &filename, &gpgKeyURI, &gpgKeyName),
+		RunE:  handleAddApplicationSource(&socket, &sources, &filename, &gpgKeyURI, &gpgKeyName),
 	}
 
+	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
+	cmd.Flags().StringSliceVar(&sources, "sources", nil, "List of sources to add")
 	cmd.MarkFlagRequired("sources")
-	cmd.MarkFlagRequired("filename")
-	cmd.Flags().StringSliceVar(&sources, "sources", []string{}, "List of sources to add")
 	cmd.Flags().StringVar(&filename, "filename", "", "Filename of the source")
+	cmd.MarkFlagRequired("filename")
 	cmd.Flags().StringVar(&gpgKeyURI, "gpg-key-uri", "", "GPG key URI")
 	cmd.Flags().StringVar(&gpgKeyName, "gpg-key-name", "", "GPG key name")
 
@@ -39,7 +41,7 @@ func AddApplicationSourceCmd() *cobra.Command {
 }
 
 // handleAddApplicationSource is a helper function to handle the AddApplicationSource command
-func handleAddApplicationSource(sources *[]string, filename *string, gpgKeyURI *string, gpgKeyName *string) func(*cobra.Command, []string) error {
+func handleAddApplicationSource(socket *string, sources *[]string, filename *string, gpgKeyURI *string, gpgKeyName *string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("SOURCE APPLICATION ADD INBC Command was invoked.\n")
 
@@ -60,9 +62,9 @@ func handleAddApplicationSource(sources *[]string, filename *string, gpgKeyURI *
 			GpgKeyName: *gpgKeyName,
 		}
 
-		client, conn, err := Dial(context.Background(), "unix:///tmp/inbd.sock")
+		client, conn, err := Dial(context.Background(), *socket)
 		if err != nil {
-			log.Fatalf("Error setting up new grpc client: %v", err)
+			log.Fatalf("Error setting up new gRPC client: %v", err)
 		}
 		defer conn.Close()
 

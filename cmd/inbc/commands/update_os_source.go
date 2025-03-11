@@ -16,23 +16,25 @@ import (
 
 // UpdateOSSourceCmd returns a cobra command for the Update OS Source command
 func UpdateOSSourceCmd() *cobra.Command {
+	var socket string
 	var sources []string
 
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Creates a new /etc/apt/sources.list file",
-		Long:  `Update command is used to creates a new /etc/apt/sources.list file with only the sources provided.`,
-		RunE:  handleUpdateOSSource(&sources),
+		Long:  "Update command is used to creates a new /etc/apt/sources.list file with only the sources provided.",
+		RunE:  handleUpdateOSSource(&socket, &sources),
 	}
 
+	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
+	cmd.Flags().StringSliceVar(&sources, "sources", nil, "List of sources to add")
 	cmd.MarkFlagRequired("sources")
-	cmd.Flags().StringSliceVar(&sources, "sources", []string{}, "List of sources to add")
 
 	return cmd
 }
 
 // handleUpdateOSSource is a helper function to handle the UpdateOSSource command
-func handleUpdateOSSource(sources *[]string) func(*cobra.Command, []string) error {
+func handleUpdateOSSource(socket *string, sources *[]string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		fmt.Printf("SOURCE OS UPDATE INBC Command was invoked.\n")
 
@@ -50,9 +52,9 @@ func handleUpdateOSSource(sources *[]string) func(*cobra.Command, []string) erro
 			SourceList: *sources,
 		}
 
-		client, conn, err := Dial(context.Background(), "unix:///tmp/inbd.sock")
+		client, conn, err := Dial(context.Background(), *socket)
 		if err != nil {
-			log.Fatalf("Error setting up new grpc client: %v", err)
+			log.Fatalf("Error setting up new gRPC client: %v", err)
 		}
 		defer conn.Close()
 

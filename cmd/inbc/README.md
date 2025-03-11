@@ -42,12 +42,11 @@ By default, when SOTA is performing an installation, it will upgrade all eligibl
 ### Usage
 
 ```commandline
-inbc sota {--uri, -u=URI} 
-   [--releasedate, -r RELEASE_DATE; default="2026-12-31"] 
-   [--username, -un USERNAME]
-   [--mode, -m MODE; default="full", choices=["full","no-download", "download-only"] ]
-   [--reboot, -rb; default=yes]
-   [--package-list, -p=PACKAGES]
+inbc sota {--uri URI} 
+   [--releasedate RELEASE_DATE; default="2026-12-31"] 
+   [--mode MODE; default="full", choices=["full","no-download", "download-only"] ]
+   [--reboot; default=yes]
+   [--package-list PACKAGES]
 ```
 
 ### Examples
@@ -111,10 +110,10 @@ This list file is used during 'sudo apt update' to update the application.  <em>
 
 ```commandline
 inbc source application add
-   {--sources, -s SOURCES}
-   {--filename, -f=FILENAME}
-   [--gpgKeyUri, -gku=GPG_KEY_URI]
-   [--gpgKeyName, -gkn=GPG_KEY_NAME]
+   {--sources SOURCES}
+   {--filename FILENAME}
+   [--gpgKeyUri GPG_KEY_URI]
+   [--gpgKeyName GPG_KEY_NAME]
 ```
 
 ### Example
@@ -183,14 +182,14 @@ inbc source application add
 
 ### Description
 
-Removes the source file from under /etc/apt/sources.list.d/.  Optionally removes the GPG key file from under <em>/usr/share/keyrings</em>. 
+Removes the source file from under /etc/apt/sources.list.d/.  Optionally removes the GPG key file from under <em>/usr/share/keyrings</em>.
 
 ### Usage
 
 ```commandline
 inbc source application remove    
-   {--filename, -f=FILE_NAME}
-   [--gpgKeyName, -gkn=GPG_KEY_NAME]
+   {--filename FILE_NAME}
+   [--gpgKeyName GPG_KEY_NAME]
 ```
 
 ### Example
@@ -219,7 +218,7 @@ Creates a new <em>/etc/apt/sources.list</em> file with only the sources provided
 
 ```commandline
 inbc source os update
-    {--sources, -s SOURCES}
+    {--sources SOURCES}
 ```
 
 ### Example

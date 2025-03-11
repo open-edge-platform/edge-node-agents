@@ -13,7 +13,7 @@ func SourceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "source",
 		Short: "Modifies the source files for Updates",
-		Long:  `Source command is used to modify the application and OS files used for performing updates.`,
+		Long:  "Source command is used to modify the application and OS files used for performing updates.",
 	}
 
 	// Add subcommands to createCmd
