@@ -11,7 +11,7 @@ gantt
         E2 INBC (Nat)                     :inbc, 2025-03-10, 5d
         E3 SOTA & Demo Prep (Gavin/YL)    :sotademo, after inbc, 10d
         TiberOS integrate (Gavin/YL) :spec, after sotademo, 10d
-        TiberOS Demo                              :milestone, :a1, 2025-03-31, 0d
+        TiberOS Demo                              :milestone, :demo, 2025-03-31, 0d
         Ongoing Unit Tests (BLR)          :unit, after foundation, 15d
 
     section CICD
@@ -20,12 +20,15 @@ gantt
     
     section Security
         SDLe survey (Nat/Gavin)           :milestone, :survey, 2025-03-26, 0d
-        Fuzz Testing (Val)                :fuzz, 2025-03-31, 10d
+        SDLe activities (All+Val)         :sdle, after safe, 10d
+        Fuzz Testing (Val)                :fuzz, 2025-03-31, 15d
         SAFE (Nat/Gavin)                  :safe, 2025-03-31, 10d
 
     section Legal
         OSPDT (Nat)                       :ospdt, 2025-03-31, 10d
     
     section Validation
-        Ongoing Validation (Val)        :val, after foundation, 20d
+        Meet with Validation (Gavin/Nat) :milestone, :meetval, 2025-03-12, 0d
+        Validation via inbc (Val)        :valinbc, after sotademo, 10d
+        Validation end-to-end (Val)      :vale2e, after spec, 10d
 ```
