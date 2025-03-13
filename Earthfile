@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: (C) 2024-2025 Intel Corporation
 # SPDX-License-Identifier: LicenseRef-Intel
-VERSION 0.7
+VERSION 0.8
 
 LOCALLY
 ARG http_proxy=$(echo $http_proxy)
@@ -43,9 +43,11 @@ golang-base:
     WORKDIR /work
     COPY go.mod .
     COPY go.sum .
+    RUN go mod download # for caching
     COPY cmd/ ./cmd
     COPY pkg/ ./pkg
     COPY proto/ ./proto
+    COPY internal/ ./internal
 
 lint:
     FROM +golang-base
@@ -59,13 +61,15 @@ test:
 run-golang-unit-tests:
     FROM +golang-base
     
+    # Run tests for all packages, generating coverage for internal/ only
     RUN --mount=type=cache,target=/root/.cache/go-build \
         CGO_ENABLED=1 go test -race -shuffle on -short ./... \
-        -coverprofile=cover.out
+        -coverpkg=./internal/... -coverprofile=cover.out
     
-    # Enforce minimum coverage threshold directory
-    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=80.0 && echo "Total Coverage: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
+    # Enforce minimum coverage threshold for internal/ directory
+    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=80.0 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
     SAVE ARTIFACT cover.out AS LOCAL build/cover.out
+
     
 generate-proto:
     FROM +golang-base
