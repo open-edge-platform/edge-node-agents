@@ -18,7 +18,7 @@ gantt
         CI/CD with Integration Test (BLR)         :cicd, 2025-03-17, 15d
     
     section Security
-        SDLe survey (Nat/Gavin)           :milestone, :survey, 2025-03-26, 0d
+        SDLe survey (Nat/Gavin)           :milestone, :survey, 2025-03-13, 0d
         SDLe activities (All+Val)         :sdle, after safe, 10d
         Fuzz Testing (Val)                :fuzz, 2025-03-31, 15d
         SAFE (Nat/Gavin)                  :safe, 2025-03-31, 10d
