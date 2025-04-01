@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_input high platform-observability-agent/host || true
+db_input high platform-observability-agent/port || true
+db_input high platform-observability-agent/metrics-host || true
+db_input high platform-observability-agent/metrics-port || true
+db_go || true

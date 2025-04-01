@@ -1,0 +1,120 @@
+# Last Modified: Tue Jul  4 12:38:12 2023
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/opt/edge-node/bin/platform-update-agent {
+  include <abstractions/base>
+  include <abstractions/lxc/container-base>
+  include <abstractions/nameservice>
+  include <abstractions/openssl>
+  include <abstractions/python>
+  include <abstractions/ssl_certs>
+
+  /etc/apt/apt.conf.d/ r,
+  /etc/apt/apt.conf.d/* r,
+  /etc/apt/sources.list r,
+  /etc/apt/sources.list.d/ r,
+  /etc/apt/sources.list.d/* r,
+  /etc/apt/sources.list.d/pua.list rw,
+  /etc/default/grub.d/90-platform-update-agent.cfg rw,
+  /etc/intel_edge_node/tokens/platform-update-agent/access_token r,
+  /etc/hosts r,
+  /etc/ld.so.cache r,
+  /etc/locale.alias r,
+  /etc/edge-node/node/confs/apt.sources.list.template r,
+  /etc/edge-node/node/confs/platform-update-agent.yaml r,
+  /etc/nsswitch.conf r,
+  /opt/edge-node/bin/platform-update-agent mr,
+  /etc/os-release r,
+  /usr/lib/os-release r,
+  /run/node-agent/node-agent.sock rw,
+  /run/platform-observability-agent/platform-observability-agent.sock rw,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/bin/ r,
+  /usr/bin/lsb_release mrix,
+  /usr/bin/python3.10 ix,
+  /usr/bin/python3.10 r,
+  /usr/bin/sudo rPx -> pua-sudo,
+  /usr/share/distro-info/debian.csv r,
+  /usr/share/distro-info/ubuntu.csv r,
+  /usr/share/dpkg/cputable r,
+  /usr/share/dpkg/tupletable r,
+  /usr/share/python-apt/templates/ r,
+  /usr/share/python-apt/templates/* r,
+  /usr/share/xml/iso-codes/iso_3166-1.xml r,
+  /var/edge-node/pua/.inbm-config-success rw,
+  /var/edge-node/pua/metadata.json rw,
+  owner /proc/*/fd/ r,
+
+}
+profile pua-inbc {
+  include <abstractions/base>
+  include <abstractions/lxc/container-base>
+
+  /etc/intel_manageability.conf rw,
+  /usr/bin/inbc mr,
+
+}
+profile pua-provision-tc {
+  include <abstractions/base>
+  include <abstractions/bash>
+  include <abstractions/lxc/container-base>
+
+  ptrace read peer=unconfined,
+
+  /usr/bin/bash ix,
+  /usr/bin/provision-tc r,
+
+}
+profile pua-sudo {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/lxc/container-base>
+  include <abstractions/lxc/start-container>
+  include <abstractions/postfix-common>
+
+  capability audit_write,
+  capability sys_resource,
+
+  /etc/sudoers r,
+  /etc/sudoers.d/* r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /usr/bin/apt rUx,
+  /usr/bin/truncate rUx,
+  /usr/sbin/reboot rUx,
+  /usr/bin/inbc rPx -> pua-inbc,
+  /usr/bin/provision-tc rPx -> pua-provision-tc,
+  /usr/bin/sudo mr,
+  /usr/bin/systemctl rUx,
+  /usr/libexec/sudo/libsudo_util.so.* mr,
+  /usr/bin/caddy rUx,
+  /usr/sbin/update-grub rUx,
+  owner /etc/default/locale r,
+  owner /etc/environment r,
+  owner /etc/group r,
+  owner /etc/host.conf r,
+  owner /etc/hosts r,
+  owner /etc/ld.so.cache r,
+  owner /etc/locale.alias r,
+  owner /etc/login.defs r,
+  owner /etc/nsswitch.conf r,
+  owner /etc/pam.d/* r,
+  owner /etc/passwd r,
+  owner /etc/security/capability.conf r,
+  owner /etc/security/limits.conf r,
+  owner /etc/security/limits.d/ r,
+  owner /etc/security/pam_env.conf r,
+  owner /etc/shadow r,
+  owner /etc/sudo.conf r,
+  owner /etc/sudoers.d/ r,
+  owner /proc/*/cgroup r,
+  owner /proc/*/limits r,
+  owner /proc/*/mountinfo r,
+  owner /proc/*/stat r,
+  owner /proc/filesystems r,
+  owner /proc/sys/kernel/ngroups_max r,
+  owner /usr/libexec/sudo/sudoers.so mr,
+
+}

@@ -1,0 +1,129 @@
+# Configuration for the OpenTelemetry Collector service
+extensions:
+  bearertokenauth:
+    scheme: "Bearer"
+    filename: "/etc/intel_edge_node/tokens/platform-observability-agent/access_token"
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: /run/platform-observability-agent/platform-observability-agent.sock
+        transport: unix
+  fluentforward:
+    endpoint: unix:///run/platform-observability-agent/agent-logs.sock
+  fluentforward/hostlogs:
+    endpoint: unix:///run/platform-observability-agent/fluent-bit/host-logs.sock
+  fluentforward/applicationlogs:
+    endpoint: unix:///run/platform-observability-agent/fluent-bit/application-logs.sock
+  fluentforward/containerlogs:
+    endpoint: unix:///run/platform-observability-agent/fluent-bit/container-logs.sock
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 400
+    spike_limit_mib: 80
+  batch:
+    timeout: 2m
+  attributes:
+    actions:
+      - key: hostGuid
+        value: "EDGE_NODE_UUID"
+        action: insert
+      - key: projectId
+        value: ${env:TENANT_ID}
+        action: insert
+
+exporters:
+  otlphttp/withauth:
+    endpoint: https://OBSERVABILITY_METRICS_HOST:OBSERVABILITY_METRICS_PORT/otlp/v1/metrics
+    metrics_endpoint: https://OBSERVABILITY_METRICS_HOST:OBSERVABILITY_METRICS_PORT/otlp/v1/metrics
+    headers:
+      "X-Scope-OrgID": ${env:TENANT_ID}
+    auth:
+      authenticator: bearertokenauth
+    tls:
+      min_version: "1.3"
+      max_version: "1.3"
+      cipher_suites:
+        - TLS_AES_256_GCM_SHA384
+  otlphttp/withauthagentlogs:
+    endpoint: https://OBSERVABILITY_HOST:OBSERVABILITY_PORT/v1/logs
+    logs_endpoint: https://OBSERVABILITY_HOST:OBSERVABILITY_PORT/v1/logs
+    headers:
+      "X-Scope-OrgID": ${env:TENANT_ID}
+      "X-Log-Source": "edgenode_agents"
+    auth:
+      authenticator: bearertokenauth
+    tls:
+      min_version: "1.3"
+      max_version: "1.3"
+      cipher_suites:
+        - TLS_AES_256_GCM_SHA384
+  otlphttp/withauthhostlogs:
+    endpoint: https://OBSERVABILITY_HOST:OBSERVABILITY_PORT/v1/logs
+    logs_endpoint: https://OBSERVABILITY_HOST:OBSERVABILITY_PORT/v1/logs
+    headers:
+      "X-Scope-OrgID": ${env:TENANT_ID}
+      "X-Log-Source": "edgenode_host_logs"
+    auth:
+      authenticator: bearertokenauth
+    tls:
+      min_version: "1.3"
+      max_version: "1.3"
+      cipher_suites:
+        - TLS_AES_256_GCM_SHA384
+  otlphttp/withauthapplogs:
+    endpoint: https://OBSERVABILITY_HOST:OBSERVABILITY_PORT/v1/logs
+    logs_endpoint: https://OBSERVABILITY_HOST:OBSERVABILITY_PORT/v1/logs
+    headers:
+      "X-Scope-OrgID": ${env:TENANT_ID}
+      "X-Log-Source": "edgenode_application_logs"
+    auth:
+      authenticator: bearertokenauth
+    tls:
+      min_version: "1.3"
+      max_version: "1.3"
+      cipher_suites:
+        - TLS_AES_256_GCM_SHA384
+  otlphttp/withauthcontainerlogs:
+    endpoint: https://OBSERVABILITY_HOST:OBSERVABILITY_PORT/v1/logs
+    logs_endpoint: https://OBSERVABILITY_HOST:OBSERVABILITY_PORT/v1/logs
+    headers:
+      "X-Scope-OrgID": ${env:TENANT_ID}
+      "X-Log-Source": "edgenode_container_logs"
+    auth:
+      authenticator: bearertokenauth
+    tls:
+      min_version: "1.3"
+      max_version: "1.3"
+      cipher_suites:
+        - TLS_AES_256_GCM_SHA384
+
+service:
+  extensions: [bearertokenauth]
+  telemetry:
+    metrics:
+      level: none
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, attributes]
+      exporters: [otlphttp/withauth]
+    logs:
+      receivers: [fluentforward]
+      processors: [memory_limiter, batch, attributes]
+      exporters: [otlphttp/withauthagentlogs]
+    logs/hostlogs:
+      receivers: [fluentforward/hostlogs]
+      processors: [memory_limiter, batch, attributes]
+      exporters: [otlphttp/withauthhostlogs]
+    logs/applogs:
+      receivers: [fluentforward/applicationlogs]
+      processors: [memory_limiter, batch, attributes]
+      exporters: [otlphttp/withauthapplogs]
+    logs/containerlogs:
+      receivers: [fluentforward/containerlogs]
+      processors: [memory_limiter, batch, attributes]
+      exporters: [otlphttp/withauthcontainerlogs]

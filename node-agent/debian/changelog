@@ -1,0 +1,15 @@
+node-agent (VERSION) UNRELEASED; urgency=medium
+
+  * Vault is being used in configuration.
+
+  * Lintian fixed.
+
+  * Handle update of systemd service file.
+
+  * Added a separate cert/key pair for apt where the cert is composite consisting of the intermediate and root certificates as well. Platform update agent uses another pair of certificate which are similar to the other agents.
+
+  * Disabled port 22/tcp (ssh) on firewall.
+
+  * Development version for Demo 3.
+
+ -- Rajeev2 Ranjan <rajeev2.ranjan@intel.com>  Thu, 13 Apr 2023 14:27:33 +0000

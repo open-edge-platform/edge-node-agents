@@ -1,0 +1,46 @@
+# Last Modified: Tue Mar 19 17:01:52 2024
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/usr/bin/caddy {
+  include <abstractions/base>
+  include <abstractions/lxc/container-base>
+  include <abstractions/lxc/start-container>
+
+  capability net_admin,
+  capability net_bind_service,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 stream,
+  /etc/caddy/ r,
+  /etc/caddy/Caddyfile r,
+  /etc/caddy/containerd.caddy r,
+  /etc/caddy/pua.caddy r,
+  /etc/hosts r,
+  /etc/machine-id r,
+  /etc/nsswitch.conf r,
+  /etc/passwd r,
+  /proc/sys/net/core/somaxconn r,
+  /run/systemd/notify rw,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/bin/caddy mr,
+  owner /etc/intel_edge_node/caddy/.keys/caddy-apt-key.pem r,
+  owner /etc/intel_edge_node/caddy/.keys/caddy-containerd-key.pem r,
+  owner /etc/intel_edge_node/caddy/certs/caddy-apt-cert.pem r,
+  owner /etc/intel_edge_node/caddy/certs/caddy-containerd-cert.pem r,
+  owner /proc/*/cpuset r,
+  owner /var/lib/caddy/.config/ w,
+  owner /var/lib/caddy/.config/caddy/ w,
+  owner /var/lib/caddy/.config/caddy/autosave.json w,
+  owner /var/lib/caddy/.local/ w,
+  owner /var/lib/caddy/.local/share/ w,
+  owner /var/lib/caddy/.local/share/caddy/ w,
+  owner /var/lib/caddy/.local/share/caddy/instance.uuid rw,
+  owner /var/lib/caddy/.local/share/caddy/last_clean.json rw,
+  owner /var/lib/caddy/.local/share/caddy/locks/ w,
+  owner /var/lib/caddy/.local/share/caddy/locks/storage_clean.lock rw,
+
+}

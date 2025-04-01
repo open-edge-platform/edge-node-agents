@@ -1,0 +1,39 @@
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/opt/otelcol/bin/otelcol {
+  include <abstractions/base>
+
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+  network netlink raw,
+
+  /etc/intel_edge_node/tokens/platform-observability-agent/access_token r,
+  /etc/hosts r,
+  /etc/passwd r,
+  /etc/ssl/certs/ca-certificates.crt r,
+  /etc/ssl/certs/ r,
+  /etc/nsswitch.conf r,
+  /etc/otelcol/otelcol.yaml r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /opt/otelcol/bin/otelcol mr,
+  /proc/bus/pci/devices r,
+  /proc/modules r,
+  /proc/**/cgroup r,
+  /proc/**/stat r,
+  /proc/sys/net/core/somaxconn r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/local/share/ca-certificates/* r,
+  /usr/share/ca-certificates/mozilla/* r,
+  owner /run/platform-observability-agent/* rw,
+  owner /run/platform-observability-agent/agent-logs.sock rw,
+  owner /run/platform-observability-agent/fluent-bit/* rw,
+  owner /run/platform-observability-agent/fluent-bit/application-logs.sock rw,
+  owner /run/platform-observability-agent/fluent-bit/container-logs.sock rw,
+  owner /run/platform-observability-agent/fluent-bit/host-logs.sock rw,
+  owner /run/platform-observability-agent/platform-observability-agent.sock rw,
+
+}

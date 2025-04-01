@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: 'v0.5.0'
+
+# Globally unique identifier read from motherboard. Might be obtained with:
+# sudo cat /sys/class/dmi/id/product_uuid
+GUID: '00000000-0000-0000-0000-000000000000'
+
+# Connection parameters
+clusterOrchestratorURL: 'localhost:12345'
+heartbeat: '10s'
+metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
+metricsInterval: 10s
+statusEndpoint: 'unix:////tmp/status-server.sock'
+jwt:
+  accessTokenPath: '/etc/intel_edge_node/tokens/cluster-agent'

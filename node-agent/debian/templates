@@ -1,0 +1,49 @@
+Template: node-agent/onboarding.serviceURL
+Type: string
+Default: localhost:443
+Description: Onboarding service URL:
+
+Template: node-agent/onboarding.enabled
+Type: boolean
+Default: true
+Description: Onboarding service Heartbeat enabled:
+
+Template: node-agent/onboarding.heartbeatInterval
+Type: string
+Default: 10s
+Description: Onboarding service Heartbeat interval:
+
+Template: node-agent/auth.accessTokenURL
+Type: string
+Default: localhost:443
+Description: Orchestrator access token URL:
+
+Template: node-agent/auth.rsTokenURL
+Type: string
+Default: localhost:443
+Description: Release service token URL:
+
+Template: node-agent/proxy.aptSourceURL
+Type: string
+Default: localhost:443
+Description: Apt source URL:
+
+Template: node-agent/proxy.aptSourceProxyPort
+Type: string
+Default: 60444
+Description: Apt source proxy port:
+
+Template: node-agent/proxy.imgRegistryURL
+Type: string
+Default: localhost:443
+Description: Image registry URL:
+
+Template: node-agent/proxy.imgRegistryProxyPort
+Type: string
+Default: 9443
+Description: Image registry proxy port:
+
+Template: node-agent/auth.RSType
+Type: string
+Default: auth
+Description: Registry type:

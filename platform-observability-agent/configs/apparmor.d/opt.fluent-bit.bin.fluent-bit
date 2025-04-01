@@ -1,0 +1,23 @@
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/opt/fluent-bit/bin/fluent-bit {
+  include <abstractions/base>
+  include <abstractions/dbus-session-strict>
+
+  /etc/fluent-bit/fluent-bit.conf r,
+  /opt/fluent-bit/bin/fluent-bit mr,
+  /run/log/journal/ r,
+  /run/platform-observability-agent/agent-logs.sock rw,
+  /sys/kernel/mm/transparent_hugepage/enabled r,
+  /usr/bin/dash ix,
+  /var/log/apt/history.log r,
+  /var/log/inbm-update-status.log r,
+  /var/log/journal/ r,
+  /var/log/journal/** r,
+  owner /var/log/edge-node/poa/ r,
+  owner /var/log/edge-node/poa/* r,
+  owner /var/log/edge-node/poa/** rw,
+
+}

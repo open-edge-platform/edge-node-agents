@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+version = 1
+
+[[annotations]]
+path = [
+    "**/VERSION",
+    "**/config/apparmor.d/**",
+    "**/config/sudoers.d/**",
+    "**/configs/apparmor.d/**",
+    "**/configs/rancher-system-agent.service.d/caddy.conf",
+    "**/configs/sudoers.d/**",
+    "**/configs/**.caddy",
+    "**/configs/**.conf",
+    "**/configs/fluentbit-cluster-gold.yaml",
+    "**/configs/fluentbit-host-gold.yaml",
+    "**/configs/otelcol.yaml",
+    "**/configs/telegraf-cluster-gold.yaml",
+    "**/configs/telegraf-host-gold.yaml",
+    "**/configs/apt/**",
+    "**/configs/apt.conf.d/**",
+    "**/debian/**",
+    "**/go.mod",
+    "**/go.sum",
+    "**/internal/config/testdata/fuzz/**",
+    "**/mocks/**",
+    "**/pkg/api/buf.lock",
+    "**/pkg/api/status/proto/agent_status_grpc.pb.go",
+    "**/release/data/sources_for_maintenance_manager.json",
+    "**/test/**",
+    "**/.github/workflows/**",
+    "ci/**",
+    "ci/scripts/**"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 Intel Corporation"
+SPDX-License-Identifier = "Apache-2.0"

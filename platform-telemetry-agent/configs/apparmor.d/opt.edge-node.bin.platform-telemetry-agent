@@ -1,0 +1,128 @@
+# Last Modified: Mon Mar 18 13:00:00 2024
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/opt/edge-node/bin/platform-telemetry-agent {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/ssl_certs>
+
+  capability mknod,
+  capability dac_override,
+
+  /etc/hosts r,
+  /etc/edge-node/node/confs/platform-telemetry-agent.yaml r,
+  /etc/edge-node/node/confs/telegraf-host-gold.yaml rw,
+  /etc/edge-node/node/confs/telegraf-cluster-gold.yaml rw,
+  /etc/edge-node/node/confs/fluentbit-host-gold.yaml rw,
+  /etc/edge-node/node/confs/fluentbit-cluster-gold.yaml rw,
+  /etc/intel_edge_node/tokens/platform-telemetry-agent/access_token r,
+  /run/node-agent/node-agent.sock rw,
+  /tmp/fluentbit-tmp.conf rw,
+  /tmp/fluentbit-cluster-tmp.conf rw,
+  /tmp/telegraf-tmp.conf rw,
+  /tmp/telegraf-tmp-cluster.conf rw,
+  /etc/telegraf/telegraf.d/poa-telegraf.conf rw,
+  /etc/fluent-bit/fluent-bit.conf rw,
+  /opt/edge-node/bin/platform-telemetry-agent mr,
+  /usr/bin/sudo rPx -> pta_sudo,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+}
+profile pta_systemctl {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  capability sys_ptrace,
+  capability net_admin,
+
+  /etc/ld.so.cache r,
+  /usr/bin/systemctl mr,
+  /run/systemd/private rw,
+  ptrace (read) peer=unconfined,
+}
+
+profile pta_mv {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  /etc/ld.so.cache r,
+  /usr/bin/mv mr,
+  /tmp/fluentbit-tmp.conf rw,
+  /tmp/fluentbit-cluster-tmp.conf rw,
+  /tmp/telegraf-tmp.conf rw,
+  /tmp/telegraf-tmp-cluster.conf rw,
+  /etc/telegraf/telegraf.d/poa-telegraf.conf rw,
+  /etc/fluent-bit/fluent-bit.conf rw,
+}
+
+profile pta_kubectl {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  /var/lib/rancher/rke2/data/**/bin/kubectl rix,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /etc/rancher/rke2/rke2.yaml r,
+  /root/.kube/cache/** rw,
+}
+
+profile pta_chown {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  capability chown,
+
+
+  /etc/ld.so.cache r,
+  /usr/bin/chown mr,
+  /etc/fluent-bit/fluent-bit.conf rw,
+}
+
+profile pta_sudo {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dovecot-common>
+  include <abstractions/nameservice>
+  include <abstractions/postfix-common>
+
+  capability audit_write,
+  capability sys_resource,
+  capability dac_override,
+  capability chown,
+  capability fowner,
+
+  /etc/sudoers r,
+  /etc/sudoers.d/* r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /usr/bin/sudo mr,
+  /usr/bin/mv rPx -> pta_mv,
+  /usr/bin/systemctl rPx -> pta_systemctl,
+  /usr/libexec/sudo/libsudo_util.so.* mr,
+  /usr/bin/chown rPx -> pta_chown,
+  /var/lib/rancher/rke2/data/**/bin/kubectl rPx -> pta_kubectl,
+  owner /etc/default/locale r,
+  owner /etc/environment r,
+  owner /etc/group r,
+  owner /etc/host.conf r,
+  owner /etc/hosts r,
+  owner /etc/ld.so.cache r,
+  owner /etc/locale.alias r,
+  owner /etc/login.defs r,
+  owner /etc/nsswitch.conf r,
+  owner /etc/pam.d/* r,
+  owner /etc/passwd r,
+  owner /etc/security/capability.conf r,
+  owner /etc/security/limits.conf r,
+  owner /etc/security/limits.d/ r,
+  owner /etc/security/pam_env.conf r,
+  owner /etc/shadow r,
+  owner /etc/sudo.conf r,
+  owner /etc/sudoers.d/ r,
+  owner /proc/*/cgroup r,
+  owner /proc/*/limits r,
+  owner /proc/*/mountinfo r,
+  owner /proc/*/stat r,
+  owner /proc/filesystems r,
+  owner /proc/sys/kernel/ngroups_max r,
+  owner /usr/libexec/sudo/sudoers.so mr,
+}

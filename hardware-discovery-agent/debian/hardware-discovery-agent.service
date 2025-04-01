@@ -1,0 +1,17 @@
+[Unit]
+Description=Hardware Discovery Agent
+Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/hardware-discovery-agent/README.md
+
+[Service]
+ExecStart=/opt/edge-node/bin/hd-agent -config /etc/edge-node/node/confs/hd-agent.yaml
+StandardOutput=journal
+StandardError=journal
+RestartSec=60
+Restart=on-failure
+User=hd-agent
+Group=bm-agents
+CPUQuota=20%
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

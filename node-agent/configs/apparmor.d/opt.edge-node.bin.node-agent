@@ -1,0 +1,51 @@
+# Last Modified: Thu Mar  6 06:21:07 2025
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/opt/edge-node/bin/node-agent {
+  include <abstractions/apache2-common>
+  include <abstractions/base>
+  include <abstractions/ssl_certs>
+
+  /etc/hosts r,
+  /etc/nsswitch.conf r,
+  /etc/ssl/openssl.cnf r,
+  /opt/edge-node/bin/node-agent mr,
+  /proc/*/net/dev r,
+  /proc/bus/pci/devices r,
+  /proc/modules r,
+  /proc/sys/net/core/somaxconn r,
+  /proc/uptime r,
+  /run/node-agent/node-agent.sock rw,
+  /run/platform-observability-agent/platform-observability-agent.sock rw,
+  /run/systemd/resolve/resolv.conf r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/bin/cloud-init ux,
+  /usr/bin/systemctl Cx,
+  /usr/bin/systemd-analyze ux,
+  owner /etc/intel_edge_node/client-credentials/client_id r,
+  owner /etc/intel_edge_node/client-credentials/client_secret rw,
+  owner /etc/intel_edge_node/tokens/attestation-manager/access_token rw,
+  owner /etc/intel_edge_node/tokens/cluster-agent/access_token rw,
+  owner /etc/intel_edge_node/tokens/connect-agent/access_token rw,
+  owner /etc/intel_edge_node/tokens/hd-agent/access_token rw,
+  owner /etc/intel_edge_node/tokens/node-agent/access_token rw,
+  owner /etc/intel_edge_node/tokens/platform-observability-agent/access_token rw,
+  owner /etc/intel_edge_node/tokens/platform-telemetry-agent/access_token rw,
+  owner /etc/intel_edge_node/tokens/platform-update-agent/access_token rw,
+  owner /etc/intel_edge_node/tokens/prometheus/access_token rw,
+  owner /etc/intel_edge_node/tokens/release-service/access_token rw,
+  owner /etc/edge-node/node/confs/node-agent.yaml r,
+  owner /proc/*/cgroup r,
+  owner /proc/*/stat r,
+
+
+  profile /usr/bin/systemctl {
+    include <abstractions/base>
+    include <abstractions/lxc/container-base>
+
+    /usr/bin/systemctl mr,
+
+  }
+}

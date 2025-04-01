@@ -1,0 +1,4 @@
+Template: hardware-discovery-agent/onboarding.serviceURL
+Type: string
+Default: localhost:443
+Description: Onboarding service  URL:

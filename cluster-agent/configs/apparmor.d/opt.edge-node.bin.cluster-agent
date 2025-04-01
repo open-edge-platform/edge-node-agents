@@ -1,0 +1,327 @@
+# Last Modified: Mon Jun 24 10:00:00 2023
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/opt/edge-node/bin/cluster-agent {
+  include <abstractions/apache2-common>
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/ssl_certs>
+
+  signal send set=kill peer=ca_bash,
+
+  /etc/intel_edge_node/tokens/cluster-agent/access_token r,
+  /etc/hosts r,
+  /etc/ld.so.cache r,
+  /etc/edge-node/node/confs/cluster-agent.yaml r,
+  /etc/lsb-release r,
+  /etc/nsswitch.conf r,
+  /opt/edge-node/bin/cluster-agent mr,
+  /proc/bus/pci/devices r,
+  /proc/modules r,
+  /proc/net/dev r,
+  /proc/*/net/dev r,
+  /run/node-agent/node-agent.sock rw,
+  /run/platform-observability-agent/platform-observability-agent.sock rw,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/bin/bash rPx -> ca_bash,
+  owner /proc/*/cgroup r,
+  owner /proc/*/stat r,
+
+}
+profile ca_bash {
+  include <abstractions/base>
+  include <abstractions/consoles>
+
+  signal receive set=kill peer=/opt/edge-node/bin/cluster-agent,
+
+  /etc/nsswitch.conf r,
+  /etc/passwd r,
+  /dev/lvmvg/ r,
+  /usr/bin/bash mr,
+  /usr/bin/curl rPx -> ca_curl,
+  /usr/bin/sudo rPx -> ca_sudo,
+  /{,usr/}bin/timeout ix,
+
+}
+profile ca_curl {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/openssl>
+  include <abstractions/ssl_certs>
+
+  /etc/host.conf r,
+  /etc/hosts r,
+  /etc/ld.so.cache r,
+  /etc/nsswitch.conf r,
+  /etc/passwd r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /usr/bin/curl mr,
+
+}
+profile ca_dash {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/openssl>
+
+  capability dac_read_search,
+  capability net_admin,
+
+  signal receive set=cont peer=ca_sudo,
+  signal receive set=term peer=ca_sudo,
+
+  ptrace read peer=unconfined,
+
+  /dev/null r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /usr/bin/cat ix,
+  /usr/bin/chmod ix,
+  /usr/bin/chown ix,
+  /usr/bin/curl ix,
+  /usr/bin/dash mrix,
+  /usr/bin/dd ix,
+  /usr/bin/env ix,
+  /usr/bin/awk ix,
+  /usr/bin/*awk ix,
+  /usr/bin/grep mrix,
+  /usr/bin/gzip ix,
+  /usr/bin/head ix,
+  /usr/bin/id ix,
+  /usr/bin/install ix,
+  /usr/bin/mkdir ix,
+  /usr/bin/mktemp ix,
+  /usr/bin/mountpoint ix,
+  /usr/bin/openssl ix,
+  /usr/bin/rm ix,
+  /usr/bin/sha256sum ix,
+  /usr/bin/sed ix,
+  /usr/bin/sleep ix,
+  /usr/bin/systemctl ix,
+  /usr/bin/tee ix,
+  /usr/bin/touch ix,
+  /usr/bin/tar ix,
+  /usr/bin/tr ix,
+  /usr/bin/uname ix,
+  /usr/lib/x86_64-linux-gnu/ mr,
+  /usr/lib/x86_64-linux-gnu/* mr,
+  /usr/lib/x86_64-linux-gnu/** mr,
+  /etc/default/rke2-agent rw,
+  /etc/default/rke2-server rw,
+  /etc/kubernetes/ rw,
+  /etc/kubernetes/** rw,
+  /etc/rancher/ rw,
+  /etc/rancher/** rw,
+  /etc/systemd/system/rke2-server.service.d/ rw,
+  /etc/systemd/system/rke2-server.service.d/override.conf rw,
+  /etc/systemd/system/rke2-agent.service.d/ rw,
+  /etc/systemd/system/rke2-agent.service.d/override.conf rw,
+  /etc/systemd/system/rancher-system-agent.env w,
+  /etc/systemd/system/rancher-system-agent.service w,
+  /etc/systemd/system/rancher-system-agent.service.d/ r,
+  /etc/systemd/system/rancher-system-agent.service.d/** r,
+  /opt/rancher-system-agent/ w,
+  /proc/cmdline r,
+  /run/cluster-api/ rw,
+  /run/cluster-api/** rw,
+  /sys/devices/pci*/** r,
+  /tmp/** rw,
+  /usr/local/ r,
+  /usr/local/.r-sa-ro-test w,
+  /usr/local/.rke2-ro-test w,
+  /usr/local/bin/ w,
+  /usr/local/bin/rancher-system-agent w,
+  /usr/local/bin/rancher-system-agent-uninstall.sh w,
+  /usr/local/bin/rke2 w,
+  /usr/local/bin/rke2-killall.sh w,
+  /usr/local/bin/rke2-uninstall.sh w,
+  /usr/local/lib/ w,
+  /usr/local/lib/systemd/ w,
+  /usr/local/lib/systemd/system/ w,
+  /usr/local/lib/systemd/system/rke2-agent.env w,
+  /usr/local/lib/systemd/system/rke2-agent.service w,
+  /usr/local/lib/systemd/system/rke2-server.env w,
+  /usr/local/lib/systemd/system/rke2-server.service w,
+  /usr/local/share/ w,
+  /usr/local/share/rke2/ rw,
+  /usr/local/share/rke2/** rw,
+  /var/lib/rancher/ rw,
+  /var/lib/rancher/** rw,
+  owner /etc/host.conf r,
+  owner /etc/hosts r,
+  owner /etc/ld.so.cache r,
+  owner /etc/locale.alias r,
+  owner /etc/nsswitch.conf r,
+  owner /etc/passwd r,
+  owner /proc/*/maps r,
+  owner /proc/*/mountinfo r,
+  owner /run/systemd/private rw,
+
+}
+profile ca_rancher-system-agent-uninstall {
+  include <abstractions/base>
+  include <abstractions/gvfs-open>
+  include <abstractions/ubuntu-konsole>
+
+  capability net_admin,
+
+  signal receive set=cont peer=ca_sudo,
+  signal receive set=term peer=ca_sudo,
+
+  ptrace read peer=unconfined,
+
+  /usr/bin/id mrix,
+  /usr/bin/mountpoint mrix,
+  /usr/bin/rm mrix,
+  /usr/bin/systemctl mrix,
+  /usr/bin/touch mrix,
+  /etc/rancher/** rw,
+  /etc/systemd/system/rancher-system-agent.env w,
+  /etc/systemd/system/rancher-system-agent.service w,
+  /etc/systemd/system/rancher-system-agent.service.d/ r,
+  /usr/local/.r-sa-ro-test w,
+  /usr/local/bin/rancher-system-agent w,
+  /usr/local/bin/rancher-system-agent-uninstall.sh rw,
+  /var/lib/rancher/** rw,
+  owner /etc/ld.so.cache r,
+  owner /proc/*/mountinfo r,
+  owner /proc/filesystems r,
+  owner /run/systemd/private rw,
+
+}
+profile ca_rke2-uninstall {
+  include <abstractions/gvfs-open>
+  include <abstractions/opencl-pocl>
+  include <abstractions/ubuntu-konsole>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability net_admin,
+
+  ptrace read peer=unconfined,
+
+  /usr/bin/dirname mrix,
+  /usr/bin/find mrix,
+  /usr/bin/id mrix,
+  /usr/bin/rm mrix,
+  /usr/bin/systemctl mrix,
+  /usr/local/bin/rke2-killall.sh Ux,
+  /etc/cni/ rw,
+  /etc/cni/net.d/ rw,
+  /etc/cni/net.d/** rw,
+  /etc/rancher/ rw,
+  /etc/rancher/** rw,
+  /opt/cni/bin/ rw,
+  /opt/cni/bin/** rw,
+  /usr/local/bin/rke2 w,
+  /usr/local/bin/rke2-killall.sh rw,
+  /usr/local/bin/rke2-uninstall.sh rw,
+  /usr/local/lib/systemd/system/ r,
+  /usr/local/lib/systemd/system/rke2-agent.env w,
+  /usr/local/lib/systemd/system/rke2-agent.service w,
+  /usr/local/lib/systemd/system/rke2-server.env w,
+  /usr/local/lib/systemd/system/rke2-server.service w,
+  /usr/local/share/rke2/ rw,
+  /usr/local/share/rke2/** rw,
+  /var/lib/kubelet/ rw,
+  /var/lib/kubelet/** rw,
+  /var/lib/rancher/ rw,
+  /var/lib/rancher/** rw,
+  owner /etc/ld.so.cache r,
+  owner /etc/systemd/system/ r,
+  owner /etc/systemd/system/** r,
+  owner /proc/filesystems r,
+  owner /run/systemd/private rw,
+
+}
+profile ca_sudo {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice>
+  include <abstractions/postfix-common>
+  include <abstractions/ubuntu-konsole>
+
+  capability audit_write,
+  capability net_admin,
+  capability mknod,
+  capability sys_admin,
+  capability sys_nice,
+  capability sys_rawio,
+  capability sys_resource,
+
+  signal send set=cont peer=ca_rancher-system-agent-uninstall,
+  signal send set=term peer=ca_rancher-system-agent-uninstall,
+  signal send set=cont peer=ca_dash,
+  signal send set=term peer=ca_dash,
+
+  /dev/mapper/control rw,
+  /dev/dm-2 w,
+  /dev/sd* w,
+  /dev/nvme* w,
+  /etc/lvm/archive/ rwk,
+  /etc/lvm/archive/.lvm_* rwk,
+  /etc/lvm/archive/lvmvg_* l,
+  /etc/lvm/backup/ rw,
+  /etc/lvm/backup/.lvm_* rwk,
+  /etc/lvm/backup/lvmvg rwk,
+  /etc/lvm/backup/lvmvg.tmp rwk,
+  /etc/lvm/lvm.conf r,
+  /etc/lvm/lvmlocal.conf r,
+  /etc/sudoers r,
+  /etc/sudoers.d/ r,
+  /etc/sudoers.d/* r,
+  /proc/*/mounts r,
+  /run/lock/lvm/V_lvmvg rwk,
+  /run/lock/lvm/V_lvmvg:aux rwk,
+  /run/lvm/hints rwk,
+  /run/lvm/newhints rwk,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /run/udev/data/* r,
+  /sys/bus/ r,
+  /sys/class/ r,
+  /sys/class/block/ r,
+  /sys/devices/pci*/** r,
+  /sys/devices/virtual/block/** r,
+  /usr/bin/dash rPx -> ca_dash,
+  /usr/bin/sudo mr,
+  /usr/libexec/sudo/libsudo_util.so.* mr,
+  /usr/local/bin/rancher-system-agent-uninstall.sh rPx -> ca_rancher-system-agent-uninstall,
+  /usr/local/bin/rke2-uninstall.sh rPx -> ca_rke2-uninstall,
+  /usr/sbin/ipmitool mrix,
+  /usr/sbin/lvm ix,
+  /usr/sbin/smartctl mrix,
+  /etc/rancher/agent/cattle-id w,
+  /etc/rancher/agent/config.yaml w,
+  /etc/systemd/system/rancher-system-agent.service w,
+  owner /dev/ r,
+  owner /dev/* r,
+  owner /etc/default/locale r,
+  owner /etc/environment r,
+  owner /etc/group r,
+  owner /etc/host.conf r,
+  owner /etc/hosts r,
+  owner /etc/ld.so.cache r,
+  owner /etc/login.defs r,
+  owner /etc/nsswitch.conf r,
+  owner /etc/pam.d/* r,
+  owner /etc/passwd r,
+  owner /etc/security/capability.conf r,
+  owner /etc/security/limits.conf r,
+  owner /etc/security/limits.d/ r,
+  owner /etc/security/pam_env.conf r,
+  owner /etc/shadow r,
+  owner /etc/sudo.conf r,
+  owner /etc/sudoers.d/ r,
+  owner /proc/*/cgroup r,
+  owner /proc/*/fd/ r,
+  owner /proc/*/limits r,
+  owner /proc/*/mountinfo r,
+  owner /proc/*/stat r,
+  owner /proc/devices r,
+  owner /sys/class/scsi_host/ r,
+  owner /usr/libexec/sudo/sudoers.so mr,
+  owner /usr/share/smartmontools/drivedb.h r,
+  owner /{,var/}run/utmp rwk,
+
+}

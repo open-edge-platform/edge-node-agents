@@ -1,0 +1,5 @@
+platform-telemetry-agent (VERSION) UNRELEASED; urgency=medium
+
+  * Initial Development.
+
+ -- Teoh Suh Haw <suh.haw.teoh@intel.com>  Wed, 29 Nov 2023 16:42:33 +0000

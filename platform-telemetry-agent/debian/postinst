@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_get telemetry-agent/telemetrymanager.serviceURL
+
+if [ ! -z "$RET" ]; then
+    extracted_host=$(echo "$RET" | cut -d: -f1)
+    echo "$extracted_host"
+    sed -i "s/address: localhost/address: $extracted_host/" /etc/edge-node/node/confs/platform-telemetry-agent.yaml
+    extracted_port=$(echo "$RET" | cut -d: -f2)
+    sed -i "s/port: 5000/port: $extracted_port/" /etc/edge-node/node/confs/platform-telemetry-agent.yaml
+fi
+
+GUID="$(cat /sys/class/dmi/id/product_uuid)"
+sed -i "s/nodeid: aaaaaaaa-0000-1111-2222-bbbbbbbbcccc/nodeid: $GUID/" /etc/edge-node/node/confs/platform-telemetry-agent.yaml
+
+groupadd -f bm-agents --system
+id -u platform-telemetry-agent >/dev/null 2>&1 || useradd --system --shell /sbin/nologin -g bm-agents platform-telemetry-agent
+
+if ! grep -q "KUBECONFIG=/etc/rancher/rke2/rke2.yaml" /etc/environment; then
+    echo KUBECONFIG=/etc/rancher/rke2/rke2.yaml | tee -a /etc/environment
+fi
+
+apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.platform-telemetry-agent
+
+#DEBHELPER#

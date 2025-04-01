@@ -1,0 +1,10 @@
+Template: platform-update-agent/updateServiceURL
+Type: string
+Default: localhost:443
+Description: Maintenance Manager URL:
+
+Template: platform-update-agent/enaDebURL
+Type: string
+Default: files.internal.example.intel.com
+Description: Edge Node Agents Debian URL:
+

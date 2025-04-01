@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+# build folder
+build/
+build/artifacts
+
+# build artifacts
+venv_hdagent/
+vendor/
+rpm/BUILD/
+rpm/RPMS/
+rpm/SRPMS/
+rpm/SOURCES/
+artifacts/*
+assets/
+intel-inb-manageability/
+
+# test files
+coverage.*
+junit_report.xml
+int_coverage.*
+jint_report.xml
+helm-unittest-output.xml
+*.log
+fuzz_config*
+
+# Default ignored files
+/shelf/
+/workspace.xml
+
+# Editor-based HTTP Client requests
+/httpRequests/
+
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+/.run/
+/.idea/
+
+# editors
+*.sw[a-p]
+*~
+.netrwhist
+.vscode/*
+
+# patches
+*.orig
+*.rej
+
+# OS Generated files
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+._*
+Icon
+Thumbs.db
+ehthumbs.db

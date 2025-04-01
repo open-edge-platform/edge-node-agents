@@ -1,0 +1,27 @@
+platform-observability-agent binary: dir-or-file-in-opt opt/fluent-bit/
+platform-observability-agent binary: dir-or-file-in-opt opt/fluent-bit/bin/
+platform-observability-agent binary: dir-or-file-in-opt opt/fluent-bit/bin/fluent-bit
+platform-observability-agent binary: executable-stack-in-shared-library lib/libfluent-bit.so
+platform-observability-agent binary: package-name-doesnt-match-sonames libfluent-bit
+platform-observability-agent binary: shared-library-lacks-version lib/libfluent-bit.so libfluent-bit.so
+platform-observability-agent binary: dir-or-file-in-opt opt/telegraf/
+platform-observability-agent binary: dir-or-file-in-opt opt/telegraf/bin/
+platform-observability-agent binary: dir-or-file-in-opt opt/telegraf/bin/telegraf
+platform-observability-agent: statically-linked-binary opt/telegraf/bin/telegraf
+platform-observability-agent binary: dir-or-file-in-opt opt/otelcol/
+platform-observability-agent binary: dir-or-file-in-opt opt/otelcol/bin/
+platform-observability-agent binary: dir-or-file-in-opt opt/otelcol/bin/otelcol
+platform-observability-agent: statically-linked-binary opt/otelcol/bin/otelcol
+platform-observability-agent: dir-or-file-in-opt opt/health-check/
+platform-observability-agent: dir-or-file-in-opt opt/health-check/bin/
+platform-observability-agent: dir-or-file-in-opt opt/health-check/bin/fluent-bit
+platform-observability-agent: dir-or-file-in-opt opt/telegraf/bin/collect_disk_info.sh
+platform-observability-agent: dir-or-file-in-opt opt/telegraf/bin/collect_gpu_metrics.sh
+platform-observability-agent: dir-or-file-in-opt opt/telegraf/bin/core_metrics.sh
+platform-observability-agent: python3-script-but-no-python3-dep python3 (does not satisfy python3:any | python3-minimal:any) [etc/telegraf/perfmon/scripts/ci/verify_mapfile/verify_mapfile.py]
+platform-observability-agent: python3-script-but-no-python3-dep python3 (does not satisfy python3:any | python3-minimal:any) [etc/telegraf/perfmon/scripts/create_perf_json.py]
+platform-observability-agent: executable-not-elf-or-script etc/telegraf/perfmon/TMA_Metrics-full.csv
+platform-observability-agent: executable-not-elf-or-script etc/telegraf/perfmon/TMA_Metrics-full.xlsx
+platform-observability-agent: executable-not-elf-or-script etc/telegraf/perfmon/security.md
+platform-observability-agent: package-contains-vcs-control-dir etc/telegraf/perfmon/.git/
+platform-observability-agent: package-contains-vcs-control-file etc/telegraf/perfmon/.gitignore

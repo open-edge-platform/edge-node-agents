@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: 'v0.2.0'
+
+logLevel: info
+GUID: 'aaaaaaaa-0000-1111-2222-bbbbbbbbcccc'
+onboarding:
+  serviceURL: localhost:8080
+  enabled: true
+  heartbeatInterval: 10s
+status:
+  endpoint: '/tmp/node-agent.sock'
+  serviceClients: [ hd-agent, cluster-agent, platform-update-agent, platform-telemetry-agent ]
+  outboundClients: [ platform-observability-collector, platform-observability-health-check, platform-observability-logging, platform-observability-metrics ]
+  networkEndpoints:
+    - name: caddy
+      url: https://localhost:60444/edge-node.asc
+auth:
+  accessTokenURL: keycloak.edgeorch.intel.com
+  rsTokenURL: token-provider.edgeorch.intel.com
+  accessTokenPath: /etc/intel_edge_node/tokens/node-agent
+  clientCredsPath: /etc/intel_edge_node/client-credentials
+  tokenClients: [ node-agent,  hd-agent, cluster-agent, platform-update-agent, platform-observability-agent, platform-telemetry-agent, prometheus ]

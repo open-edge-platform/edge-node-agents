@@ -1,0 +1,10 @@
+#!/bin/sh  -e
+
+#DEBHELPER#
+
+if [ "$1" = purge ]; then
+	userdel platform-update-agent
+	rm -f /etc/apparmor.d/opt.edge-node.bin.platform-update-agent /etc/default/grub.d/90-platform-update-agent.cfg /etc/edge-node/node/confs/platform-update-agent.yaml /etc/apt/sources.list.d/pua.list
+	rm -rf /var/edge-node/pua
+	echo "Successfully purged platform-update-agent"
+fi

@@ -1,0 +1,12 @@
+Source: cluster-agent
+Maintainer: Intel <dummy@intel.com>
+Section: misc
+Priority: optional
+Standards-Version: 1.0.0
+Build-Depends: debhelper-compat (= 12)
+
+Package: cluster-agent
+Architecture: any
+Depends: ${misc:Depends}, apparmor-utils, curl
+Description: installs/uninstalls orchestration software on an edge node
+ using command obtained from Cluster Orchestrator.

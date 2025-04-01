@@ -1,0 +1,4 @@
+Template: telemetry-agent/telemetrymanager.serviceURL
+Type: string
+Default: localhost:443
+Description: Telemetry Manager service  URL:

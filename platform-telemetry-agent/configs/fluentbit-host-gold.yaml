@@ -1,0 +1,450 @@
+# This YAML file specifiy the mapping of fluent-bit config 
+# from observability stack to telemetry control.
+# keywords meaning as follow:
+#     key: identifier used by telemetry agent to pickup configuration
+#     type: the configuration type based on telemetry agent perspective 
+#     isInit: flag to specify configuration as an initialization values
+#     tag: identifier used by telemetry agent to group/match configuration under a single keywords
+#     multiline_data: configuration data to be applied
+# source - https://github.com/open-edge-platform/edge-node-agents/blob/main/platform-observability-agent/configs/fluent-bit.conf
+# supported source version - observability agent 1.3.0-dev
+
+- key: "header"
+  type: "service"
+  tag: "service"
+  multiline_data: |
+    [SERVICE]
+        flush        5
+        daemon       Off
+        log_level    info
+        storage.path              /var/log/edge-node/poa
+        storage.sync              normal
+        storage.checksum          off
+        storage.max_chunks_up     128 # 128 is a default value
+        storage.backlog.mem_limit 10M
+    
+- key: "systemd"
+  type: "input"
+  tag: "systemd"
+  multiline_data: |
+    [INPUT]
+        Name           systemd
+        Tag            Host_Systemd
+
+- key: "opentelemetry"
+  type: "input"
+  isInit: true
+  tag: "opentelemetry"
+  multiline_data: |
+    [INPUT] ## Input for opentelemetry service
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=platform-observability-collector.service
+        storage.type   filesystem
+        Tag            OpenTelemetry_Collector
+
+- key: "installer"
+  type: "input"
+  isInit: true
+  tag: "installer"
+  multiline_data: |
+    [INPUT] ## Input for installer service logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=install-profile-pkgs-and-node-agent.service
+        storage.type   filesystem
+        Tag            installer
+        
+- key: "hw_agent"
+  type: "input"
+  isInit: true
+  tag: "Hardware_Agent"
+  multiline_data: |
+    [INPUT] ## Input for Hardware Agent logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=hardware-discovery-agent.service
+        storage.type   filesystem
+        Tag            Hardware_Agent
+
+- key: "cluster_agent"
+  type: "input"
+  isInit: true
+  tag: "Cluster_Agent"
+  multiline_data: |
+    [INPUT] ## Input for Cluster Agent
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=cluster-agent.service
+        storage.type   filesystem
+        Tag            Cluster_Agent
+
+- key: "node_agent"
+  type: "input"
+  isInit: true
+  tag: "Node_Agent"
+  multiline_data: |
+    [INPUT] ## Input for Node Agent logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=node-agent.service
+        storage.type   filesystem
+        Tag            Node_Agent
+
+- key: "platform_update_agent"
+  type: "input"
+  isInit: true
+  tag: "Platform_Update_Agent"
+  multiline_data: |
+    [INPUT] ## Input for Platform Update Agent Agent logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=platform-update-agent.service
+        storage.type   filesystem
+        Tag            Platform Update Agent
+
+- key: "caddy"
+  type: "input"
+  isInit: true
+  tag: "caddy"
+  multiline_data: |
+    [INPUT] ## Input for caddy logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=caddy.service
+        storage.type   filesystem
+        Tag            caddy
+
+- key: "rke_agent"
+  type: "input"
+  isInit: true
+  tag: "RKE_Server"
+  multiline_data: |
+    [INPUT] ## Input for RKE Server log
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=rke2-server.service
+        storage.type   filesystem
+        Tag            RKE_Server
+
+- key: "rke_agent"
+  type: "input"
+  isInit: true
+  tag: "RKE_System_Agent"
+  multiline_data: |
+    [INPUT] ## Input for RKE Agent log
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=rancher-system-agent.service
+        storage.type   filesystem
+        Tag            RKE_System_Agent
+
+- key: "Telegraf"
+  type: "input"
+  isInit: true
+  tag: "Telegraf"
+  multiline_data: |
+    [INPUT] ## Input for Telegraf
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=platform-observability-metrics.service
+        storage.type   filesystem
+        Tag            Telegraf
+
+- key: "platform_telemetry_agent"
+  type: "input"
+  isInit: true
+  tag: "Platform_Telemetry_Agent"
+  multiline_data: |
+    [INPUT] ## Input for Platform Telemetry Agent logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=platform-telemetry-agent.service
+        storage.type   filesystem
+        Tag            Platform_Telemetry_Agent
+
+- key: "apt_install_logs"
+  type: "input"
+  isInit: true
+  tag: "Apt_Install_Logs"
+  multiline_data: |
+    [INPUT] ## Input for Apt Install History Logs
+        Name           tail
+        Tag            Apt_Install_Logs
+        Path           /var/log/apt/history.log
+        Read_from_Head true
+
+- key: "inbm"
+  type: "input"
+  isInit: true
+  tag: "INBM"
+  multiline_data: |
+    [INPUT] ## Input for INBM service logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=inbm.service
+        storage.type   filesystem
+        Tag            INBM
+
+- key: "inbm_dispatcher"
+  type: "input"
+  isInit: true
+  tag: "INBM_Dispatcher"
+  multiline_data: |
+    [INPUT] ## Input for INBM Dispatcher service logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=inbm-dispatcher.service
+        storage.type   filesystem
+        Tag            INBM_Dispatcher
+
+- key: "inbm_configuration"
+  type: "input"
+  isInit: true
+  tag: "INBM_Configuration"
+  multiline_data: |
+    [INPUT] ## Input for INBM Configuration service logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=inbm-configuration.service
+        storage.type   filesystem
+        Tag            INBM_Configuration
+
+- key: "inbm_diagnostic"
+  type: "input"
+  isInit: true
+  tag: "INBM_Diagnostic"
+  multiline_data: |
+    [INPUT] ## Input for INBM Diagnostic service logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=inbm-diagnostic.service
+        storage.type   filesystem
+        Tag            INBM_Diagnostic
+
+- key: "inbm_telemetry"
+  type: "input"
+  isInit: true
+  tag: "INBM_Telemetry"
+  multiline_data: |
+    [INPUT] ## Input for INBM Telemetry service logs
+        Name           systemd
+        Systemd_Filter _SYSTEMD_UNIT=inbm-telemetry.service
+        storage.type   filesystem
+        Tag            INBM_Telemetry
+
+- key: "inbm_update_status_logs"
+  type: "input"
+  isInit: true
+  tag: "INBM_Update_Status_Logs"
+  multiline_data: |
+    [INPUT] ## Input for INBM update status logs
+        Name           tail
+        Tag            INBM_Update_Status_Logs
+        Path           /var/log/inbm-update-status.log
+        Read_from_Head true
+
+- key: "Edge Node ID Filter"
+  type: "filter"
+  tag: "EdgeNodeID"
+  multiline_data: |
+    [FILTER] ## Filter for adding UUID of Edge Node to logs
+        Name   record_modifier
+        Match  *
+        Record EdgeNodeID EDGE_NODE_UUID 
+
+- key: "RKE_System_Agent_Filter"
+  type: "filter"
+  tag: "RKE_System_Agent"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  RKE_System_Agent
+        Record FileType RKE_System_Agent
+
+- key: "RKE_Server_Filter"
+  type: "filter"
+  tag: "RKE_Server"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  RKE_Server
+        Record FileType RKE_Server
+
+- key: "Telegraf_Filter"
+  type: "filter"
+  tag: "Telegraf"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  Telegraf
+        Record FileType Telegraf
+
+- key: "OpenTelemetry_Collector_Filter"
+  type: "filter"
+  tag: "OpenTelemetry_Collector"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  OpenTelemetry_Collector
+        Record FileType OpenTelemetry_Collector
+
+- key: "Platform Update agent log Filter"
+  type: "filter"
+  tag: "Platform_Update_Agent"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  Platform_Update_Agent
+        Record FileType PlatformUpdateAgent
+
+- key: "Node agent log Filter"
+  type: "filter"
+  tag: "Node_Agent"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  Node_Agent
+        Record FileType NodeAgent
+
+- key: "Cluster agent log Filter"
+  type: "filter"
+  tag: "Cluster_Agent"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  Cluster_Agent
+        Record FileType ClusterAgent
+
+- key: "Caddy log Filter"
+  type: "filter"
+  tag: "caddy"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  caddy
+        Record FileType caddy
+
+- key: "installer log Filter"
+  type: "filter"
+  tag: "installer"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  installer
+        Record FileType installer
+
+- key: "HW Agent log"
+  type: "filter"
+  tag: "Hardware_Agent"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  Hardware_Agent
+        Record FileType HardwareAgent
+
+- key: "Telegraf Filter"
+  type: "filter"
+  tag: "Telegraf"
+  multiline_data: |
+    [FILTER] ## Filter for excluding sudo command output in Telegraf
+        Name   grep
+        Match  Telegraf
+        Exclude SYSLOG_IDENTIFIER sudo
+
+- key: "Platform_Telemetry_Agent_Filter"
+  type: "filter"
+  tag: "Platform_Telemetry_Agent"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  Platform_Telemetry_Agent
+        Record FileType Platform_Telemetry_Agent
+
+- key: "Apt_Install_Logs_Filter"
+  type: "filter"
+  tag: "Apt_Install_logs"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  Apt_Install_Logs
+        Record FileType AptInstallLogs
+
+- key: "INBM_Filter"
+  type: "filter"
+  tag: "INBM"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match INBM
+        Record FileType INBM
+
+- key: "INBM_Dispatcher_Filter"
+  type: "filter"
+  tag: "INBM_Dispatcher"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  INBM_Dispatcher
+        Record FileType INBM_Dispatcher
+
+- key: "INBM_Configuration_Filter"
+  type: "filter"
+  tag: "INBM_Configuration"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  INBM_Configuration
+        Record FileType INBM_Configuration
+
+- key: "INBM_Diagnostic_Filter"
+  type: "filter"
+  tag: "INBM_Diagnostic"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  INBM_Diagnostic
+        Record FileType INBM_Diagnostic
+
+- key: "INBM_Telemetry_Filter"
+  type: "filter"
+  tag: "INBM_Telemetry"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  INBM_Telemetry
+        Record FileType INBM_Telemetry
+
+- key: "INBM_Update_Status_Logs_Filter"
+  type: "filter"
+  tag: "INBM_Update_Status_Logs"
+  multiline_data: |
+    [FILTER] ## Filter for adding file type tag
+        Name   record_modifier
+        Match  INBM_Update_Status_Logs
+        Record FileType INBM_Update_Status
+
+- key: "Hostname Filter"
+  type: "filter"
+  tag: "HOSTNAME"
+  multiline_data: |
+    [FILTER] ## Filter for adding host name of Edge Node to all logs
+        Name   record_modifier
+        Match  *
+        Record Hostname HOSTNAME
+
+- key: "filter_all"
+  type: "filter"
+  tag: "*"
+  multiline_data: |
+    [FILTER]
+        Name record_modifier
+        Match *
+        Remove_Key _SYSTEMD_INVOCATION_ID
+        Remove_Key _SYSTEMD_CGROUP
+        Remove_Key _GID
+        Remove_Key _CAP_EFFECTIVE
+        Remove_Key _HOSTNAME
+        Remove_Key _MACHINE_ID
+        Remove_Key _PID
+        Remove_Key _STREAM_ID
+        Remove_Key _SYSTEMD_SLICE
+        Remove_Key _SYSTEMD_UNIT
+        Remove_Key _UID
+        Remove_Key _TRANSPORT
+        Remove_Key _BOOT_ID
+        Remove_Key _SELINUX_CONTEXT
+
+- key: "output"
+  type: "output"
+  tag: "output"
+  multiline_data: |
+    [OUTPUT]
+        Name      forward
+        Match     *
+        Unix_Path /run/platform-observability-agent/agent-logs.sock

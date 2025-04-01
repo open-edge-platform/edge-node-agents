@@ -1,0 +1,19 @@
+Template: platform-observability-agent/host
+Type: string
+Default: localhost.com
+Description: Edge Infrastructure Manager observability HOST:
+
+Template: platform-observability-agent/port
+Type: string
+Default: 443
+Description: Edge Infrastructure Manager observability PORT:
+
+Template: platform-observability-agent/metrics-host
+Type: string
+Default: localhost.com
+Description: Central observability stack metrics HOST:
+
+Template: platform-observability-agent/metrics-port
+Type: string
+Default: 443
+Description: Central observability stack metrics PORT:

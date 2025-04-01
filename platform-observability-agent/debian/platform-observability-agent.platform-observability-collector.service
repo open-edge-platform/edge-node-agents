@@ -1,0 +1,26 @@
+[Unit]
+Description=Platform Observability Collector Agent
+Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/platform-observability-agent/README.md
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/otelcol
+EnvironmentFile=-/etc/default/otelcol
+Environment=TENANT_ID=not-set
+EnvironmentFile=-/etc/intel_edge_node/tenantId
+ExecStart=/opt/otelcol/bin/otelcol --config=/etc/otelcol/otelcol.yaml
+StandardOutput=journal
+StandardError=journal
+RestartSec=60
+Restart=on-failure
+User=platform-observability-agent
+Group=bm-agents
+CPUQuota=20%
+MemoryMax=512M
+UMask=0007
+RuntimeDirectory=platform-observability-agent platform-observability-agent/fluent-bit
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+
+[Install]
+WantedBy=multi-user.target

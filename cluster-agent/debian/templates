@@ -1,0 +1,9 @@
+Template: cluster-agent/cluster-orchestrator-url
+Type: string
+Default: localhost:443
+Description: Cluster orchestrator URL:
+
+Template: cluster-agent/heartbeat-interval
+Type: string
+Default: 10s
+Description: Interval of heartbeats sent to orchestrator:

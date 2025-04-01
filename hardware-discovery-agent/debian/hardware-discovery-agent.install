@@ -1,0 +1,3 @@
+config/hd-agent.yaml etc/edge-node/node/confs
+config/apparmor.d/opt.edge-node.bin.hd-agent etc/apparmor.d
+config/sudoers.d/hd-agent etc/sudoers.d

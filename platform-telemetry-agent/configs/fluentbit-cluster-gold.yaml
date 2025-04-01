@@ -1,0 +1,204 @@
+# This YAML file specifiy the mapping of fluent-bit configmap 
+# from observability stack to telemetry control.
+# keywords meaning as follow:
+#     key: identifier used by telemetry agent to pickup configuration
+#     type: the configuration type based on telemetry agent perspective 
+#     isInit: flag to specify configuration as an initialization values
+#     tag: identifier used by telemetry agent to group/match configuration under a single keywords
+#     multiline_data: configuration data to be applied
+# supported source version - fluent-bit Chart 0.1.27
+
+- key: "header"
+  type: "service"
+  tag: "service"
+  multiline_data: |
+    [SERVICE]
+        Flush     5
+        Log_Level info
+
+- key: "EdgeNode_Syslog"
+  type: "default"
+  isInit: true
+  tag: "EdgeNode_Syslog"
+  multiline_data: |
+    [INPUT] ## Input for syslog
+        Name           tail
+        Tag            EdgeNode_Syslog
+        Path           /var/log/syslog
+        Parser         syslog-rfc3164
+        Read_from_Head true
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+
+- key: "Authentication log"
+  type: "default"
+  isInit: true
+  tag: "EdgeNode_AuthLog"
+  multiline_data: |
+    [INPUT] ## Input for auth.log
+        Name           tail
+        Tag            EdgeNode_AuthLog
+        Path           /var/log/auth.log
+        Parser         syslog-rfc3164
+        Read_from_Head true
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+
+- key: "container"
+  type: "input"
+  isInit: true
+  tag: "Container.*"
+  multiline_data: |
+    [INPUT] ## Input for container logs
+        Name           tail
+        Tag            Container.*
+        multiline.parser docker, cri
+        Path           /var/log/containers/*.log
+        Mem_Buf_Limit 5MB
+        Read_from_Head true
+        Skip_Long_Lines On
+
+- key: "kubelet"
+  type: "input"
+  isInit: true
+  tag: "EdgeNode_KubeletLog"
+  multiline_data: |
+    [INPUT] ## Input for Rancher agent log (kubelet log)
+        Name           tail
+        Tag            EdgeNode_KubeletLog
+        Path           /var/lib/rancher/rke2/agent/logs/kubelet.log
+        Mem_Buf_Limit 5MB
+        Read_from_Head true
+
+- key: "opentelemetry"
+  type: "input"
+  isInit: true
+  tag: "EdgeNode_OtelLogs"
+  chart_values: 
+      svcPort: "24224"
+      CertPath: "/opt/fluent-bit/certs"
+  multiline_data: |
+    [INPUT] ## Input for logs/traces received on port
+        Name         opentelemetry
+        Tag          EdgeNode_OtelLogs
+        Listen       0.0.0.0
+        Port         {{ .Values.svcPort }}
+        tls          on
+        tls.verify   on
+        tls.ca_file  {{ .Values.Certs.CertPath }}/ca.crt
+        tls.crt_file {{ .Values.Certs.CertPath }}/tls.crt
+        tls.key_file {{ .Values.Certs.CertPath }}/tls.key
+
+- key: "filter_all"
+  type: "filter"
+  tag: "*"
+  chart_values:
+      hostname: "LocalEdgeNode"
+  multiline_data: |
+    [FILTER] ## Filter for adding host name of Edge Node to all logs
+        Name   record_modifier
+        Match  *
+        Record Hostname {{ .Values.hostname }}
+
+- key: "filter_all"
+  type: "filter"
+  tag: "*"
+  chart_values: 
+      nodeUUID: "4c4c4544-004c-5001-8049-c4c04f384633"
+  multiline_data: |
+    [FILTER] ## Filter for adding UUID of Edge Node to all logs
+        Name   record_modifier
+        Match  *
+        Record UUID {{ .Values.nodeUUID }}
+
+- key: "Syslog_Tagging_Filter"
+  type: "filter"
+  tag: "EdgeNode_Syslog"
+  multiline_data: |
+    [FILTER] ## Filter for syslog tagging
+        Name   record_modifier
+        Match  EdgeNode_Syslog
+        Record FileType SystemLog
+
+- key: "AuthLog_Tagging_Filter"
+  type: "filter"
+  tag: "EdgeNode_AuthLog"
+  multiline_data: |
+    [FILTER] ## Filter for auth log tagging
+        Name   record_modifier
+        Match  EdgeNode_AuthLog
+        Record FileType AuthLog
+
+- key: "KubeletLog_Tagging_Filter"
+  type: "filter"
+  tag: "EdgeNode_KubeletLog"
+  multiline_data: |
+    [FILTER] ## Filter for Rancher agent log (kubelet log) tagging
+        Name   record_modifier
+        Match  EdgeNode_KubeletLog
+        Record FileType KubeletLog
+
+- key: "OpentelemetryLogs_Tagging_Filter"
+  type: "filter"
+  tag: "EdgeNode_OtelLogs"
+  multiline_data: |
+    [FILTER] ## Filter for logs/traces received on port
+        Name   record_modifier
+        Match  EdgeNode_OtelLogs
+        Record FileType OpenTelemetryLogs
+
+- key: "Kubernetes_Metadata_Filter"
+  type: "filter"
+  tag: "Container.*"
+  chart_values: 
+      kubeApiUrl: "https://kubernetes.default.svc.cluster.local:443"
+      KubeCAFile: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+      KubeTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+  multiline_data: |
+    [FILTER] ## Filter for adding kubernetes metadata for containers
+        Name            kubernetes
+        Match           Container.*
+        Kube_URL        {{ .Values.kubeApiUrl }}
+        Kube_CA_File    {{ .Values.Certs.KubeCAFile }}
+        Kube_Token_File {{ .Values.Certs.KubeTokenFile }}
+        Kube_Tag_Prefix Container.var.log.containers.
+        Labels          off
+        Annotations     off
+
+- key: "Rewrite_Tag_Filter"
+  type: "filter"
+  tag: "Container.*"
+  chart_values:
+      systenNamespacesRegex: "^(?!.*(akri|calico-system|calico-fleet-system|calico-impersonation-system|cattle-fleet-system|cattle-system|cdi|edge-system|kube-node-lease|kube-public|kube-system|kubevirt|local|metallb-system|observability|openebs|sriov-network-operator|tigera-operator|cert-manager|istio-operator|storageos)).*$"
+  multiline_data: |
+    [FILTER] ## Rewrite the tag for logs that do not originate from an edgenode system namespace.  These logs will be considered application logs
+        Name            rewrite_tag
+        Match           Container.*
+        Rule $kubernetes['namespace_name'] {{ .Values.systenNamespacesRegex }} Application_EdgeNode.var.log.containers.$TAG[4].log false
+
+- key: "output"
+  type: "output"
+  tag: "Container.*"
+  multiline_data: |
+    [OUTPUT] ## Output Edge Node Container logs.
+        Name      forward
+        Match     Container.*
+        Unix_Path /run/platform-observability-agent/fluent-bit/container-logs.sock
+
+- key: "output"
+  type: "output"
+  tag: "EdgeNode_*"
+  multiline_data: |
+    [OUTPUT] ## Output Edge Node System logs.
+        Name      forward
+        Match     EdgeNode_*
+        Unix_Path /run/platform-observability-agent/fluent-bit/host-logs.sock
+
+- key: "output"
+  type: "output"
+  tag: "Application_EdgeNode.*"
+  multiline_data: |
+    [OUTPUT] ## Output container logs for edgenode applications. Logs not originating from an edgenode system namespace will be considered application logs
+        Name      forward
+        Match     Application_EdgeNode.*
+        Unix_Path /run/platform-observability-agent/fluent-bit/application-logs.sock

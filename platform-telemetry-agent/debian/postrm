@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+#DEBHELPER#
+
+# Remove user on apt-get purge
+if [ "$1" = purge ]; then
+	userdel platform-telemetry-agent
+fi

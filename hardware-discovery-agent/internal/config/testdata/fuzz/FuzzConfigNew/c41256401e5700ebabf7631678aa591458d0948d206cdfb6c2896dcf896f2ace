@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("logLevel: 0\nonboarding:\n serviceURL: 0\ntls: \n  certPath: 0\n  keyPath: 00")

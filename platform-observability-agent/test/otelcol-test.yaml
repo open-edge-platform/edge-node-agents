@@ -1,0 +1,37 @@
+# Configuration for the OpenTelemetry Collector service
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: /run/platform-observability-agent/platform-observability-agent.sock
+        transport: unix
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 400
+    spike_limit_mib: 80
+  batch:
+    timeout: 30s
+
+exporters:
+  file:
+    path: /tmp/otelcol_metrics.log
+  otlphttp:
+    endpoint: https://testhost.com:553/otlp/v1/metrics
+    metrics_endpoint: https://testhost.com:553/oltp/v1/metrics
+    logs_endpoint: https://testhost.com:553/v1/logs
+    headers:
+      "X-Scope-OrgID": "edgenode-system"
+    tls:
+      min_version: "1.3"
+      max_version: "1.3"
+      cipher_suites:
+        - TLS_AES_256_GCM_SHA384
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [file]

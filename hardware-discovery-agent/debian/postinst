@@ -1,0 +1,17 @@
+#!/bin/bash -e
+
+. /usr/share/debconf/confmodule
+
+
+db_get hardware-discovery-agent/onboarding.serviceURL
+if [ ! -z "$RET" ]; then
+    sed -i "s/^  serviceURL: '.*'/  serviceURL: '$RET'/" /etc/edge-node/node/confs/hd-agent.yaml
+fi
+
+groupadd -f bm-agents --system
+
+id -u hd-agent &>/dev/null || useradd hd-agent --system -g bm-agents -s /sbin/nologin
+
+apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.hd-agent
+
+#DEBHELPER#

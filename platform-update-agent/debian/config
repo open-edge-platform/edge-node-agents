@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_input high platform-update-agent/updateServiceURL || true
+db_input high platform-update-agent/enaDebURL || true
+db_go || true

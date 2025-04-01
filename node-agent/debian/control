@@ -1,0 +1,14 @@
+Source: node-agent
+Maintainer: Intel <dummy@intel.com>
+Section: misc
+Priority: optional
+Standards-Version: 1.0.0
+Build-Depends: debhelper-compat (= 12)
+
+Package: node-agent
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, apparmor-utils, caddy, incron
+Description: Node Agent registers and authenticates the Edge Node with
+ the Edge Infrastructure Manager service. It also creates and renews
+ tokens for other agents running on the Edge Node. It reports status
+ of Edge Node to the Edge Infrastructure Manager as it onboards.

@@ -1,0 +1,51 @@
+---
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+name: Lint manifest
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths:
+      - 'ena-manifest.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false # Do not persist credentials, otherwise they will clash with credentials set by bootstrap action
+          fetch-depth: 0 # Fetch all history, WO sporadic issue with missing tags
+          fetch-tags: true # Fetch tags
+          ref: ${{ github.head_ref }} # Checkout the branch that triggered the workflow to avoid detached HEAD
+
+      - name: Checkout action repository
+        uses: actions/checkout@v4
+        with:
+          repository: intel/orch-ci
+          path: ci
+          token: ${{ secrets.SYS_ORCH_GITHUB }}
+      - name: Setup CI environment
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@7669d2d1d2841d285604b428185b997f08fec56e
+        with:
+          gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
+          bootstrap_tools: "yq"
+
+      - name: Check manifest version
+        run: |
+          ./common/ci_scripts/manifest-versioning.sh check
+        
+      - name: Lint manifest
+        shell: bash
+        run: |
+          yamllint ena-manifest.yaml

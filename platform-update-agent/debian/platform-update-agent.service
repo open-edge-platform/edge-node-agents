@@ -1,0 +1,17 @@
+[Unit]
+Description=Platform Update Agent
+Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/platform-update-agent/README.md
+
+[Service]
+ExecStart=/opt/edge-node/bin/platform-update-agent -config /etc/edge-node/node/confs/platform-update-agent.yaml
+StandardOutput=journal
+StandardError=journal
+RestartSec=60
+Restart=on-failure
+CPUQuota=20%
+MemoryMax=128M
+User=platform-update-agent
+Group=bm-agents
+
+[Install]
+WantedBy=multi-user.target

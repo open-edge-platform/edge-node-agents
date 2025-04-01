@@ -1,0 +1,4 @@
+2: ens3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether a1:b2:c3:d4:e5:f6 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.50/24 brd 192.168.1.255 scope global dynamic ens3
+       valid_lft 143272sec preferred_lft 143272sec

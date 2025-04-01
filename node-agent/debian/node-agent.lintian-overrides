@@ -1,0 +1,4 @@
+node-agent binary: dir-or-file-in-opt opt/edge-node/
+node-agent binary: dir-or-file-in-opt opt/edge-node/bin/
+node-agent binary: dir-or-file-in-opt opt/edge-node/bin/node-agent
+node-agent binary: statically-linked-binary opt/edge-node/bin/node-agent

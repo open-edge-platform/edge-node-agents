@@ -1,0 +1,10 @@
+deb <repoURL> jammy main restricted
+deb <repoURL> jammy-updates main restricted
+deb <repoURL> jammy universe
+deb <repoURL> jammy-updates universe
+deb <repoURL> jammy multiverse
+deb <repoURL> jammy-updates multiverse
+deb <repoURL> jammy-backports main restricted universe multiverse
+deb <repoURL> jammy-security main restricted
+deb <repoURL> jammy-security universe
+deb <repoURL> jammy-security multiverse

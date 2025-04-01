@@ -1,0 +1,17 @@
+{
+    "memory": [
+       {
+          "range": "0x0000000000000000-0x00000000efffffff",
+          "size": 4026531840,
+          "state": "online",
+          "removable": true,
+          "block": "0-29"
+       },{
+          "range": "0x0000000100000000-0x000000040fffffff",
+          "size": 13153337344,
+          "state": "online",
+          "removable": true,
+          "block": "32-129"
+       }
+    ]
+ }

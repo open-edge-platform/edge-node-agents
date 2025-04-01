@@ -1,0 +1,37 @@
+  *-display
+       description: VGA compatible controller
+       product: Graphics Controller
+       vendor: Graphics
+       physical id: 0
+       bus info: pci@0000:03:00.0
+       logical name: /dev/fb0
+       version: 04
+       width: 32 bits
+       clock: 66MHz
+       capabilities: pm vga_controller bus_master cap_list rom fb
+       configuration: depth=32 driver=mgag200 latency=64 maxlatency=32 mingnt=16 resolution=1024,768
+       resources: irq:16 memory:91000000-91ffffff memory:92808000-9280bfff memory:92000000-927fffff memory:c0000-dffff
+  *-display UNCLAIMED
+       description: PCI graphics card
+       product: Graphics Card
+       vendor: PCI
+       physical id: 0
+       bus info: pci@0000:57:00.0
+       version: 05
+       width: 64 bits
+       clock: 33MHz
+       capabilities: pciexpress msi pm bus_master cap_list
+       configuration: latency=0
+       resources: iomemory:22fe0-22fdf iomemory:22fc0-22fbf memory:22fe1f000000-22fe1fffffff memory:22fc00000000-22fdffffffff memory:22fe00000000-22fe1effffff memory:22be00000000-22fbffffffff
+  *-display UNCLAIMED
+       description: PCI graphics card
+       product: Graphics Card
+       vendor: PCI
+       physical id: 0
+       bus info: pci@0000:5b:00.0
+       version: 05
+       width: 64 bits
+       clock: 33MHz
+       capabilities: pciexpress msi pm bus_master cap_list
+       configuration: latency=0
+       resources: iomemory:22bc0-22bbf iomemory:22ba0-22b9f memory:22bc1f000000-22bc1fffffff memory:22ba00000000-22bbffffffff memory:22bc00000000-22bc1effffff memory:227c00000000-22b9ffffffff

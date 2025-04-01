@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	$(MAKE) DESTDIR=$$(pwd)/debian/node-agent PREFIX=/opt/edge-node nainstall
+
+override_dh_builddeb:
+	dh_builddeb -- -Zxz
+
+override_dh_installsystemd:
+	dh_installsystemd --name=node-agent
+
+override_dh_auto_build:
+	dh_auto_build -- all

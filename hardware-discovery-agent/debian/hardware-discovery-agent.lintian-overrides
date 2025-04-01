@@ -1,0 +1,4 @@
+hardware-discovery-agent binary: dir-or-file-in-opt opt/edge-node/
+hardware-discovery-agent binary: dir-or-file-in-opt opt/edge-node/bin/
+hardware-discovery-agent binary: dir-or-file-in-opt opt/edge-node/bin/hd-agent
+hardware-discovery-agent: statically-linked-binary opt/edge-node/bin/hd-agent

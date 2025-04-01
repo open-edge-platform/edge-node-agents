@@ -1,0 +1,5 @@
+# These overrides are exceptions to rules used by Lintian
+platform-telemetry-agent: dir-or-file-in-opt opt/edge-node/bin/platform-telemetry-agent
+platform-telemetry-agent: dir-or-file-in-opt opt/edge-node/
+platform-telemetry-agent: dir-or-file-in-opt opt/edge-node/bin/
+platform-telemetry-agent: statically-linked-binary opt/edge-node/bin/platform-telemetry-agent

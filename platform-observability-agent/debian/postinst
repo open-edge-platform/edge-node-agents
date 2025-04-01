@@ -1,0 +1,54 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_get platform-observability-agent/host
+if [ ! -z "$RET" ]; then
+	sed -i "s/OBSERVABILITY_HOST/$RET/g" /etc/otelcol/otelcol.yaml
+fi
+
+db_get platform-observability-agent/port
+if [ ! -z "$RET" ]; then
+	sed -i "s/OBSERVABILITY_PORT/$RET/g" /etc/otelcol/otelcol.yaml
+fi
+
+db_get platform-observability-agent/metrics-host
+if [ ! -z "$RET" ]; then
+       sed -i "s/OBSERVABILITY_METRICS_HOST/$RET/g" /etc/otelcol/otelcol.yaml
+fi
+
+db_get platform-observability-agent/metrics-port
+if [ ! -z "$RET" ]; then
+       sed -i "s/OBSERVABILITY_METRICS_PORT/$RET/g" /etc/otelcol/otelcol.yaml
+fi
+
+sed -i "s#EDGE_NODE_UUID#$(cat /sys/class/dmi/id/product_uuid)#" /etc/fluent-bit/fluent-bit.conf
+sed -i "s#EDGE_NODE_UUID#$(cat /sys/class/dmi/id/product_uuid)#" /etc/health-check/health-check.conf
+sed -i "s#EDGE_NODE_UUID#$(cat /sys/class/dmi/id/product_uuid)#" /etc/otelcol/otelcol.yaml
+sed -i "s#HOSTNAME#$(cat /proc/sys/kernel/hostname)#" /etc/fluent-bit/fluent-bit.conf
+sed -i "s#HOSTNAME#$(cat /proc/sys/kernel/hostname)#" /etc/health-check/health-check.conf
+
+groupadd -f bm-agents --system
+id -u platform-observability-agent >/dev/null 2>&1 || useradd platform-observability-agent --system -g bm-agents -G systemd-journal,adm -s /sbin/nologin
+
+mkdir -p /var/log/edge-node/poa
+chown platform-observability-agent:bm-agents /var/log/edge-node/poa
+
+mkdir -p /run/platform-observability-agent
+chown platform-observability-agent:bm-agents /run/platform-observability-agent
+
+mkdir -p /run/platform-observability-agent/fluent-bit
+chown platform-observability-agent:bm-agents /run/platform-observability-agent/fluent-bit
+
+chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_gpu_metrics.sh
+chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_disk_info.sh
+chown platform-observability-agent:bm-agents /opt/telegraf/bin/core_metrics.sh
+
+apparmor_parser -rK /etc/apparmor.d/opt.fluent-bit.bin.fluent-bit
+apparmor_parser -rK /etc/apparmor.d/opt.health-check.bin.fluent-bit
+apparmor_parser -rK /etc/apparmor.d/opt.otelcol.bin.otelcol
+apparmor_parser -rK /etc/apparmor.d/opt.telegraf.bin.telegraf
+
+#DEBHELPER#

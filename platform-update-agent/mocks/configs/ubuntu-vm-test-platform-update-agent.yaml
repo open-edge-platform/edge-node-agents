@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: 'v0.1.0'
+logLevel: debug
+GUID: '00000000-0000-0000-0000-000000000000'
+updateServiceURL: 'localhost:8089'
+metadataPath: '/home/ubuntu/pua-metadata.json'
+INBCLogsPath: '/var/log/inbm-update-status.log'
+INBCGranularLogsPath: '/var/log/inbm-update-log.log'
+metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
+metricsInterval: 10000s
+tickerInterval: 5s
+jwt:
+  accessTokenPath: '../../mocks/access_token'
+immediateDownloadWindow: 10s
+downloadWindow: 10s

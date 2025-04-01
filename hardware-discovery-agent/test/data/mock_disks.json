@@ -1,0 +1,77 @@
+{
+    "blockdevices": [
+       {
+          "serial": null,
+          "kname": "loop0",
+          "vendor": null,
+          "model": null,
+          "size": 64970752,
+          "type": "loop",
+          "wwn": "0x0000000000000000"
+       },{
+          "serial": null,
+          "kname": "loop1",
+          "vendor": null,
+          "model": null,
+          "size": 83832832,
+          "type": "loop",
+          "wwn": "0x0000000000000000"
+       },{
+          "serial": null,
+          "kname": "loop2",
+          "vendor": null,
+          "model": null,
+          "size": 49242112,
+          "type": "loop",
+          "wwn": "0x0000000000000000"
+       },{
+        "serial": null,
+        "kname": "nvme0n1p1",
+        "vendor": null,
+        "model": null,
+        "size": 1127219200,
+        "type": "disk",
+        "wwn": null
+       },{
+          "serial": "002bb496324e7da81d0018d730708741",
+          "kname": "sda",
+          "vendor": "DELL    ",
+          "model": "PERC H730P Mini",
+          "size": 399431958528,
+          "type": "disk",
+          "wwn": "0x5000c5008e0b3b1d"
+       },{
+          "serial": null,
+          "kname": "dm-0",
+          "vendor": null,
+          "model": null,
+          "size": 107374182400,
+          "type": "lvm",
+          "wwn": "0x0000000000000000"
+       },{
+          "serial": "CVFT521000J6800CGN",
+          "kname": "nvme0n1",
+          "vendor": null,
+          "model": "INTEL SSDPEDMD800G4",
+          "size": 800166076416,
+          "type": "disk",
+          "wwn": "eui.01000000010000005cd2e43cf16e5451"
+       },{
+          "serial": null,
+          "kname": "nvme0n1p2",
+          "vendor": null,
+          "model": null,
+          "size": 2147483648,
+          "type": "part",
+          "wwn": "0x0000000000000000"
+       },{
+          "serial": null,
+          "kname": "nvme0n1p3",
+          "vendor": null,
+          "model": null,
+          "size": 796888399872,
+          "type": "part",
+          "wwn": "0x0000000000000000"
+       }
+    ]
+ }

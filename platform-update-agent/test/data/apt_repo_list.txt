@@ -1,0 +1,5 @@
+deb http://pl.archive.ubuntu.com/ubuntu/ jammy main universe multiverse restricted
+deb http://pl.archive.ubuntu.com/ubuntu/ jammy-updates main universe multiverse restricted
+deb http://pl.archive.ubuntu.com/ubuntu/ jammy-backports main universe multiverse restricted
+deb http://security.ubuntu.com/ubuntu jammy-security main universe multiverse restricted
+deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable

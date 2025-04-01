@@ -1,0 +1,1 @@
+platform-update-agent ALL=(root) NOPASSWD:SETENV: /usr/bin/inbc,/usr/bin/apt,/usr/bin/truncate,/usr/sbin/reboot,/usr/sbin/dmidecode,/usr/bin/provision-tc,/usr/sbin/update-grub,/usr/bin/systemctl,/usr/bin/caddy

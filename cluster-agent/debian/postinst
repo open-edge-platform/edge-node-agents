@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_get cluster-agent/cluster-orchestrator-url
+if [ ! -z "$RET" ]; then
+    sed -i "s/^clusterOrchestratorURL: '.*'/clusterOrchestratorURL: '$RET'/" /etc/edge-node/node/confs/cluster-agent.yaml
+fi
+
+db_get cluster-agent/heartbeat-interval
+if [ ! -z "$RET" ]; then
+    sed -i "s/^heartbeat: '.*'/heartbeat: '$RET'/" /etc/edge-node/node/confs/cluster-agent.yaml
+fi
+
+sed -i "s/^GUID: '.*'/GUID: '$(cat /sys/class/dmi/id/product_uuid)'/" /etc/edge-node/node/confs/cluster-agent.yaml
+
+groupadd -f bm-agents --system
+id -u cluster-agent >/dev/null 2>&1 || useradd cluster-agent --system -g bm-agents -s /sbin/nologin
+
+apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.cluster-agent
+
+# By default rke2-server service is configured to use /etc/environment for proxy settings
+# If proxy settings are not configured in /etc/environment, then we try to use environment variables instead
+if ! grep -q "http_proxy" /etc/environment && ! grep -q "https_proxy" /etc/environment && ! grep -q "no_proxy" /etc/environment; then
+    printf "Proxy configuration is missing in /etc/environment. Trying environment variables for proxy configuration..."
+    if [ -n "${HTTP_PROXY}" ] || [ -n "${HTTPS_PROXY}" ] || [ -n "${NO_PROXY}" ]; then
+        printf "Proxy configuration found in environment variables. Configuring rke2-server service to use environment variables for proxy configuration."
+        mkdir -p /etc/systemd/system/rke2-server.service.d /etc/systemd/system/rke2-agent.service.d
+        printf "[Service]\nEnvironment=HTTP_PROXY=${HTTP_PROXY}\nEnvironment=HTTPS_PROXY=${HTTPS_PROXY}\nEnvironment=NO_PROXY=${NO_PROXY}\n" > /etc/systemd/system/rke2-server.service.d/override.conf
+        printf "[Service]\nEnvironment=HTTP_PROXY=${HTTP_PROXY}\nEnvironment=HTTPS_PROXY=${HTTPS_PROXY}\nEnvironment=NO_PROXY=${NO_PROXY}\n" > /etc/systemd/system/rke2-agent.service.d/override.conf
+    fi
+fi
+#DEBHELPER#

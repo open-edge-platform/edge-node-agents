@@ -1,0 +1,22 @@
+[Unit]
+Description=Node Agent
+Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/node-agent/README.md
+
+[Service]
+EnvironmentFile=/etc/environment
+ExecStart=/opt/edge-node/bin/node-agent -config /etc/edge-node/node/confs/node-agent.yaml
+StandardOutput=journal
+StandardError=journal
+RestartSec=60
+Restart=on-failure
+User=node-agent
+Group=bm-agents
+CPUQuota=20%
+MemoryMax=128M
+UMask=0007
+RuntimeDirectory=node-agent
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
+
+[Install]
+WantedBy=multi-user.target

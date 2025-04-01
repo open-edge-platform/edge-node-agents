@@ -1,0 +1,15 @@
+---
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+deps:
+  - buf.build/bufbuild/protovalidate
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - STANDARD
+    - ENUM_FIRST_VALUE_ZERO
+  allow_comment_ignores: true

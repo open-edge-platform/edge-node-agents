@@ -1,0 +1,6 @@
+configs/cluster-agent.yaml etc/edge-node/node/confs
+configs/apparmor.d/opt.edge-node.bin.cluster-agent etc/apparmor.d
+configs/sudoers.d/cluster-agent etc/sudoers.d
+configs/rancher-system-agent.service.d/caddy.conf etc/systemd/system/rancher-system-agent.service.d
+configs/rke2-agent.service.d/override.conf etc/systemd/system/rke2-agent.service.d
+configs/rke2-server.service.d/override.conf etc/systemd/system/rke2-server.service.d

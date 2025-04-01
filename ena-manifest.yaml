@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+---
+metadata:
+  schemaVersion: 2.0.0
+  release: 1.0.0-dev
+repository:
+  codename: 3.0
+  component: main
+packages:
+  - name: cluster-agent
+    version: 1.5.12
+    ociArtifact: edge-orch/en/deb/cluster-agent
+  - name: hardware-discovery-agent
+    version: 1.5.10
+    ociArtifact: edge-orch/en/deb/hardware-discovery-agent
+  - name: node-agent
+    version: 1.5.14
+    ociArtifact: edge-orch/en/deb/node-agent
+  - name: platform-observability-agent
+    version: 1.7.6
+    ociArtifact: edge-orch/en/deb/platform-observability-agent
+  - name: platform-telemetry-agent
+    version: 1.2.10
+    ociArtifact: edge-orch/en/deb/platform-telemetry-agent
+  - name: platform-update-agent
+    version: 1.3.8
+    ociArtifact: edge-orch/en/deb/platform-update-agent
+  - name: caddy
+    version: 2.7.6
+    ociArtifact: edge-orch/en/deb/caddy
+  - name: inbc-program
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/inbc-program
+  - name: inbm-configuration-agent
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/inbm-configuration-agent
+  - name: inbm-cloudadapter-agent
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/inbm-cloudadapter-agent
+  - name: inbm-diagnostic-agent
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/inbm-diagnostic-agent
+  - name: inbm-dispatcher-agent
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/inbm-dispatcher-agent
+  - name: inbm-telemetry-agent
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/inbm-telemetry-agent
+  - name: mqtt
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/mqtt
+  - name: tpm-provision
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/tpm-provision
+  - name: trtl
+    version: 4.2.8.2-1
+    ociArtifact: edge-orch/en/deb/trtl

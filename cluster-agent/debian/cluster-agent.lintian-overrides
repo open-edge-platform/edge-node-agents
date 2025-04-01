@@ -1,0 +1,5 @@
+# These overrides are exceptions to rules used by Lintian
+cluster-agent binary: dir-or-file-in-opt opt/edge-node/
+cluster-agent binary: dir-or-file-in-opt opt/edge-node/bin/
+cluster-agent binary: dir-or-file-in-opt opt/edge-node/bin/cluster-agent
+cluster-agent binary: statically-linked-binary opt/edge-node/bin/cluster-agent

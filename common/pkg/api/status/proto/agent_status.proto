@@ -1,0 +1,45 @@
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+// buf:lint:ignore PACKAGE_DIRECTORY_MATCH
+package agent_status_proto.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = ".;agent_status";
+
+message ReportStatusRequest {
+  string agent_name = 1 [(buf.validate.field).string = {
+    pattern: "^[a-z]+(-[a-z]+)*$"
+    max_len: 40
+  }]; // Agent name to optionally call out on UI
+  Status status = 2; // Binary ready/non-ready
+  google.protobuf.Struct detail = 3; // For future use if the status is complex
+}
+
+message GetStatusIntervalRequest {
+  string agent_name = 1 [(buf.validate.field).string = {
+    pattern: "^[a-z]+(-[a-z]+)*$"
+    max_len: 40
+  }]; // Agent name for future use for registration
+}
+
+message GetStatusIntervalResponse {
+  int32 interval_seconds = 1; // Interval in seconds
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_READY = 1;
+  STATUS_NOT_READY = 2;
+}
+
+message ReportStatusResponse {}
+
+service StatusService {
+  rpc ReportStatus(ReportStatusRequest) returns (ReportStatusResponse);
+  rpc GetStatusInterval(GetStatusIntervalRequest) returns (GetStatusIntervalResponse);
+}

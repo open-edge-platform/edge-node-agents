@@ -1,0 +1,22 @@
+[Unit]
+Description=Platform Observability Metrics Agent
+Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/platform-observability-agent/README.md
+
+[Service]
+Type=simple
+AmbientCapabilities=CAP_SYS_RAWIO CAP_DAC_READ_SEARCH CAP_SYS_ADMIN
+Environment="SF_OCSP_RESPONSE_CACHE_DIR=/opt/telegraf/"
+EnvironmentFile=-/etc/sysconfig/telegraf
+EnvironmentFile=-/etc/default/telegraf
+ExecStart=/opt/telegraf/bin/telegraf --config /etc/telegraf/telegraf.d/poa-telegraf.conf
+StandardOutput=null
+StandardError=journal
+RestartSec=60
+Restart=on-failure
+User=platform-observability-agent
+Group=bm-agents
+CPUQuota=20%
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

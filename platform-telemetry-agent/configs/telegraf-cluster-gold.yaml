@@ -1,0 +1,124 @@
+# This YAML file specifiy the mapping of telegraf configmap 
+# from observability stack to telemetry control.
+# keywords meaning as follow:
+#     key: identifier used by telemetry agent to pickup configuration
+#     type: the configuration type based on telemetry agent perspective 
+#     isInit: flag to specify configuration as an initialization values
+#     multiline_data: configuration data to be applied
+# supported source version - telegraf chart 0.1.14
+
+- key: "agent"
+  type: "global"
+  multiline_data: |
+    [agent]
+      interval = "30s"
+      round_interval = true
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      collection_jitter = "0s"
+      flush_interval = "5s"
+      flush_jitter = "0s"
+      precision = ""
+      debug = false
+      quiet = false
+      logfile = ""
+      hostname = "$HOSTNAME"
+      omit_hostname = false
+
+- key: "output"
+  type: "output"
+  chart_values: 
+      port: "9105"
+      certsDest: "/opt/telegraf/certs"
+  multiline_data: |
+    [[outputs.prometheus_client]]
+      ## Address to listen on.
+      listen = ":{{ .Values.telegraf.port }}"
+
+      ## Metric version controls the mapping from Telegraf metrics into
+      ## Prometheus format.  When using the prometheus input, use the same value in
+      ## both plugins to ensure metrics are round-tripped without modification.
+      ##
+      ##   example: metric_version = 1;
+      ##            metric_version = 2; recommended version
+      metric_version = 2
+
+      ## Use HTTP Basic Authentication.
+      # basic_username = "Foo"
+      # basic_password = ""
+
+      ## If set, the IP Ranges which are allowed to access metrics.
+      ##   ex: ip_range = ["192.168.0.0/24", "192.168.1.0/30"]
+      # ip_range = ["192.168.0.0/24", "192.168.1.0/30"]
+
+      ## Path to publish the metrics on.
+      path = "/metrics"
+
+      ## Expiration interval for each metric. 0 == no expiration
+      # expiration_interval = "60s"
+
+      ## Collectors to enable, valid entries are "gocollector" and "process".
+      ## If unset, both are enabled.
+      # collectors_exclude = ["gocollector", "process"]
+
+      ## Send string metrics as Prometheus labels.
+      ## Unless set to false all string metrics will be sent as labels.
+      # string_as_label = true
+
+      ## If set, enable TLS with the given certificate.
+      tls_cert = "{{ .Values.certs.certsDest }}/tls.crt"
+      tls_key = "{{ .Values.certs.certsDest }}/tls.key"
+
+      ## Set one or more allowed client CA certificate file names to
+      ## enable mutually authenticated TLS connections
+      tls_allowed_cacerts = ["{{ .Values.certs.certsDest }}/ca.crt"]
+
+      ## Export metric collection time.
+      export_timestamp = true
+
+- key: "kube_inventory"
+  type: "input"
+  isInit: true
+  multiline_data: |
+    # Read metrics from kubernetes resources
+    [[inputs.kube_inventory]]
+      ## URL for the kubernetes API
+      url = "https://kubernetes.default.svc.cluster.local:443"
+      ## Namespace to check, use "" to check all namespaces
+      namespace = ""
+      ## Use TLS buyt skip verification
+      insecure_skip_verify = true
+      ## resources to be excluded from collection
+      resource_exclude = [ "secrets" ]
+
+- key: "opentelemetry"
+  type: "input"
+  isInit: true
+  chart_values: 
+      otelport: "4317"
+      certsDest: "/opt/telegraf/certs"
+  multiline_data: |
+    # Receive OpenTelemetry traces, metrics, and logs over gRPC
+    [[inputs.opentelemetry]]
+      ## Override the default (0.0.0.0:4317) destination OpenTelemetry gRPC service
+      ## address:port
+      service_address = "0.0.0.0:{{ .Values.telegraf.otelport }}"
+
+      ## Override the default (5s) new connection timeout
+      # timeout = "5s"
+
+      ## Override the default (prometheus-v1) metrics schema.
+      ## Supports: "prometheus-v1", "prometheus-v2"
+      ## For more information about the alternatives, read the Prometheus input
+      ## plugin notes.
+      # metrics_schema = "prometheus-v1"
+
+      ## Optional TLS Config.
+      ## For advanced options: https://github.com/influxdata/telegraf/blob/v1.18.3/docs/TLS.md
+      ##
+      ## Set one or more allowed client CA certificate file names to
+      ## enable mutually authenticated TLS connections.
+      tls_allowed_cacerts = ["{{ .Values.certs.certsDest }}/ca.crt"]
+      ## Add service certificate and key.
+      tls_cert = "{{ .Values.certs.certsDest }}/tls.crt"
+      tls_key = "{{ .Values.certs.certsDest }}/tls.key"

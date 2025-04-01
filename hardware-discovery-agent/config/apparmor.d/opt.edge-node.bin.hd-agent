@@ -1,0 +1,325 @@
+# Last Modified: Tue Jun 27 18:29:45 2023
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/opt/edge-node/bin/hd-agent {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/ssl_certs>
+
+  signal send set=kill peer=udevadm,
+  signal send set=kill peer=hda_udevadm,
+  /dev/ipmi0 r,
+  /etc/intel_edge_node/tokens/hd-agent/access_token r,
+  /etc/hosts r,
+  /etc/edge-node/node/confs/hd-agent.yaml r,
+  /etc/nsswitch.conf r,
+  /opt/edge-node/bin/hd-agent mr,
+  /proc/bus/pci/devices r,
+  /proc/modules r,
+  /proc/net/dev r,
+  /proc/*/cgroup r,
+  /proc/*/net/dev r,
+  /run/node-agent/node-agent.sock rw,
+  /run/platform-observability-agent/platform-observability-agent.sock rw,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /sys/class/net/ r,
+  /sys/devices/pci*/** r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/bin/cat rPx -> hda_cat,
+  /usr/bin/ip rPx -> hda_ipaddr,
+  /usr/bin/lsblk rPx -> hda_lsblk,
+  /usr/bin/lscpu rPx -> hda_lscpu,
+  /usr/bin/lsmem rPx -> hda_lsmem,
+  /usr/bin/lspci rPx -> hda_lspci,
+  /usr/bin/lsusb rPx -> hda_lsusb,
+  /usr/bin/lsb_release rPx -> hda_lsbrelease,
+  /usr/bin/sudo rPx -> hda_sudo,
+  /usr/bin/udevadm rPx -> hda_udevadm,
+  /usr/bin/uname rPx -> hda_uname,
+  owner /proc/*/stat r,
+}
+profile hda_cat {
+  include <abstractions/base>
+
+  /sys/devices/system/cpu/smt/active r,
+  /usr/bin/cat mr,
+
+}
+profile hda_dmidecode {
+  include <abstractions/base>
+
+  /usr/sbin/dmidecode mr,
+  owner /dev/mem r,
+  owner /sys/firmware/dmi/tables/DMI r,
+  owner /sys/firmware/dmi/tables/smbios_entry_point r,
+  owner /sys/firmware/efi/systab r,
+
+}
+profile hda_ipaddr {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  /dev/null r,
+  /etc/iproute2/group r,
+  /etc/ld.so.cache r,
+  /usr/bin/ip mr,
+  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.* r,
+  /usr/lib/x86_64-linux-gnu/libbpf.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libbsd.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libc.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libcap.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libelf-*.so r,
+  /usr/lib/x86_64-linux-gnu/libmd.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libmnl.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libz.so.* mr,
+
+}
+profile hda_ipmitool {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  /dev/ipmi0 rw,
+  /dev/null r,
+  /etc/ld.so.cache r,
+  /usr/bin/ipmitool mr,
+  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.* r,
+  /usr/lib/x86_64-linux-gnu/libc.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libcrypto.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libfreeipmi.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libgcrypt.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libgpg-error.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libm.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libreadline.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libtinfo.so.* mr,
+
+}
+profile hda_lsblk {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  /etc/ld.so.cache r,
+  /proc/filesystems r,
+  /run/udev/data/* r,
+  /sys/block/ r,
+  /sys/devices/pci*/** r,
+  /sys/devices/virtual/block/** r,
+  /usr/bin/lsblk mr,
+
+}
+profile hda_lscpu {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/php-worker>
+
+  /etc/ld.so.cache r,
+  /etc/locale.alias r,
+  /proc/ r,
+  /proc/bus/pci/devices r,
+  /proc/cpuinfo r,
+  /proc/sys/kernel/osrelease r,
+  /sys/devices/system/cpu/** r,
+  /sys/devices/system/node/node*/cpumap r,
+  /usr/bin/lscpu mr,
+  owner /proc/*/status r,
+
+}
+profile hda_lshw {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  capability sys_admin,
+  capability dac_read_search,
+  capability dac_override,
+  capability mknod,
+
+  / r,
+  /dev/ r,
+  /dev/fb* rw,
+  /dev/mem r,
+  /dev/ng0n1 r,
+  /dev/nvme* r,
+  /dev/sda* r,
+  /dev/sdb* r,
+  /dev/sg0 rw,
+  /dev/sg1 rw,
+  /proc/bus/cpi/devices/ r,
+  /proc/devices r,
+  /proc/scsi/ r,
+  /proc/scsi/sg/ r,
+  /proc/sys/abi/ r,
+  /proc/*/mounts r,
+  /proc/*/net/dev r,
+  /run/fb* rw,
+  /sys/bus/ r,
+  /sys/bus/memory/devices/ r,
+  /sys/bus/pci/devices/ r,
+  /sys/bus/pnp/devices/ r,
+  /sys/bus/virtio/devices/ r,
+  /sys/class/graphics/ r,
+  /sys/class/input/ r,
+  /sys/class/mmc_host/ r,
+  /sys/class/nvme/ r,
+  /sys/class/sound/ r,
+  /sys/devices/LNXSYSTM:00/LNXPWRBN:00/input/input*/name r,
+  /sys/devices/LNXSYSTM:00/LNXPWRBN:00/input/input*/modalias r,
+  /sys/devices/LNXSYSTM:00/LNXPWRBN:00/input/input*/id/bustype r,
+  /sys/devices/LNXSYSTM:00/LNXPWRBN:00/input/input*/ r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input*/name r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input*/modalias r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input*/id/bustype r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input*/ r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input*/name r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input*/modalias r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input*/id/bustype r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0C:00/input/input*/ r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input*/name r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input*/modalias r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input*/id/bustype r,
+  /sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input*/ r,
+  /sys/devices/platform/eeepc-wmi/input/input*/name r,
+  /sys/devices/platform/eeepc-wmi/input/input*/modalias r,
+  /sys/devices/platform/eeepc-wmi/input/input*/id/bustype r,
+  /sys/devices/platform/eeepc-wmi/input/input*/ r,
+  /sys/devices/system/cpu/cpufreq/policy*/** r,
+  /sys/devices/system/memory/block_size_bytes r,
+  /sys/devices/system/memory/memory*/** r,
+  /sys/devices/pci*/** r,
+  /sys/devices/pnp*/** r,
+  /sys/firmware/dmi/tables/DMI r,
+  /sys/firmware/dmi/tables/smbios_entry_point r,
+  /sys/firmware/efi/systab r,
+  /sys/kernel/debug/usb/devices r,
+  /tmp/fb* rw,
+  /usr/bin/lshw mr,
+  /usr/share/misc/pci.ids r,
+  /var/lib/usbutils/usb.ids r,
+
+}
+profile hda_lsmem {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  /etc/ld.so.cache r,
+  /etc/locale.alias r,
+  /sys/devices/system/memory/ r,
+  /sys/devices/system/memory/block_size_bytes r,
+  /sys/devices/system/memory/memory*/ r,
+  /sys/devices/system/memory/memory*/** r,
+  /usr/bin/lsmem mr,
+
+}
+profile hda_lspci {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  /etc/modprobe.d/ r,
+  /etc/modprobe.d/* r,
+  /proc/cmdline r,
+  /sys/bus/pci/devices/ r,
+  /sys/devices/pci*/** r,
+  /sys/bus/pci/slots/ r,
+  /sys/bus/pci/slots/*/address r,
+  /usr/bin/lspci mr,
+  /usr/share/misc/pci.ids r,
+
+}
+profile hda_lsusb {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  /dev/bus/usb/ r,
+  /etc/ld.so.cache r,
+  /run/udev/data/* r,
+  /sys/bus/ r,
+  /sys/bus/usb/devices/ r,
+  /sys/class/ r,
+  /sys/devices/pci*/** r,
+  /usr/bin/lsusb mr,
+
+}
+profile hda_lsbrelease {
+  include <abstractions/base>
+
+  /dev/null r,
+  /etc/ld.so.cache r,
+  /usr/bin/ r,
+  /usr/bin/lsb_release r,
+  /usr/bin/python3.* r,
+  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.* r,
+  /usr/lib/x86_64-linux-gnu/libexpat.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libm.so.* mr,
+  /usr/lib/x86_64-linux-gnu/libz.so.* r,
+  /usr/local/lib/python3.*/dist-packages/ r,
+  /usr/share/distro-info/debian.csv r,
+
+}
+profile hda_sudo {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/dovecot-common>
+  include <abstractions/nameservice>
+  include <abstractions/postfix-common>
+
+  capability audit_write,
+  capability sys_resource,
+
+  /etc/sudoers r,
+  /etc/sudoers.d/* r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /usr/bin/ipmitool rPx -> hda_ipmitool,
+  /usr/bin/lshw rPx -> hda_lshw,
+  /usr/bin/sudo mr,
+  /usr/libexec/sudo/libsudo_util.so.* mr,
+  /usr/sbin/dmidecode rPx -> hda_dmidecode,
+  owner /etc/default/locale r,
+  owner /etc/environment r,
+  owner /etc/group r,
+  owner /etc/host.conf r,
+  owner /etc/hosts r,
+  owner /etc/ld.so.cache r,
+  owner /etc/locale.alias r,
+  owner /etc/login.defs r,
+  owner /etc/nsswitch.conf r,
+  owner /etc/pam.d/* r,
+  owner /etc/passwd r,
+  owner /etc/security/capability.conf r,
+  owner /etc/security/limits.conf r,
+  owner /etc/security/limits.d/ r,
+  owner /etc/security/pam_env.conf r,
+  owner /etc/shadow r,
+  owner /etc/sudo.conf r,
+  owner /etc/sudoers.d/ r,
+  owner /proc/*/cgroup r,
+  owner /proc/*/limits r,
+  owner /proc/*/mountinfo r,
+  owner /proc/*/stat r,
+  owner /proc/filesystems r,
+  owner /proc/sys/kernel/ngroups_max r,
+  owner /usr/libexec/sudo/sudoers.so mr,
+
+}
+profile hda_udevadm {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  signal receive set=kill peer=/opt/edge-node/bin/hd-agent,
+
+  /etc/ld.so.cache r,
+  /etc/udev/udev.conf r,
+  /proc/filesystems r,
+  /usr/bin/udevadm mr,
+
+}
+profile hda_uname {
+  include <abstractions/base>
+
+  /dev/null r,
+  /etc/ld.so.cache r,
+  /usr/bin/uname r,
+  /usr/lib/locale/locale-archive r,
+  /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.* r,
+  /usr/lib/x86_64-linux-gnu/libc.so.* mr,
+
+}

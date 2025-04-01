@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: v0.2.0
+logLevel: info
+onboarding:
+  serviceURL: 'localhost:8080'
+interval: 30s
+jwt:
+  accessTokenPath: /etc/intel_edge_node/tokens/hd-agent
+statusEndpoint: 'unix:///tmp/status-server.sock'

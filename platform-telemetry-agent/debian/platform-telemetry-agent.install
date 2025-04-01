@@ -1,0 +1,7 @@
+configs/platform-telemetry-agent.yaml /etc/edge-node/node/confs/
+configs/telegraf-host-gold.yaml /etc/edge-node/node/confs/
+configs/telegraf-cluster-gold.yaml /etc/edge-node/node/confs/
+configs/fluentbit-host-gold.yaml /etc/edge-node/node/confs/
+configs/fluentbit-cluster-gold.yaml /etc/edge-node/node/confs/
+configs/apparmor.d/opt.edge-node.bin.platform-telemetry-agent etc/apparmor.d
+configs/sudoers.d/platform-telemetry-agent etc/sudoers.d

@@ -1,0 +1,11 @@
+platform-observability-agent ALL=(root) NOPASSWD: /usr/sbin/aa-status
+platform-observability-agent ALL=(root) NOPASSWD: /usr/bin/ps
+platform-observability-agent ALL=(root) NOPASSWD: /usr/sbin/ufw
+platform-observability-agent ALL=(root) NOPASSWD: /usr/sbin/smartctl
+platform-observability-agent ALL=(root) NOPASSWD: /usr/bin/ipmitool
+platform-observability-agent ALL=(root) NOPASSWD: /usr/sbin/pqos -r --iface-os --mon-file-type=csv --mon-interval=*
+platform-observability-agent ALL=(root) NOPASSWD: /usr/bin/xpu-smi
+platform-observability-agent ALL=(root) NOPASSWD: /usr/sbin/lvs *
+platform-observability-agent ALL=(root) NOPASSWD: /usr/sbin/pvs *
+platform-observability-agent ALL=(root) NOPASSWD: /usr/sbin/vgs *
+platform-observability-agent ALL=(root) NOPASSWD: /usr/sbin/dmidecode

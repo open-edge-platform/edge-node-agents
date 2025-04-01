@@ -1,0 +1,31 @@
+#!/bin/sh  -e
+
+. /usr/share/debconf/confmodule
+
+db_get platform-update-agent/updateServiceURL
+if [ ! -z "$RET" ]; then
+    sed -i "s/^updateServiceURL: '.*'/updateServiceURL: '$RET'/" /etc/edge-node/node/confs/platform-update-agent.yaml
+fi
+
+db_get platform-update-agent/enaDebURL
+if [ ! -z "$RET" ]; then
+    sed -i "s/^Acquire::https::.* {/Acquire::https::$RET {/" /etc/apt/apt.conf.d/75platform-update-agent
+fi
+
+sed -i "s/^GUID: '.*'/GUID: '$(cat /sys/class/dmi/id/product_uuid)'/" /etc/edge-node/node/confs/platform-update-agent.yaml
+
+groupadd -f bm-agents --system
+
+id -u platform-update-agent >/dev/null 2>&1 || useradd --system --shell /sbin/nologin -g bm-agents platform-update-agent
+
+apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.platform-update-agent
+
+chmod 740 /var/edge-node/pua
+chown platform-update-agent:bm-agents /var/edge-node/pua
+
+touch /etc/default/grub.d/90-platform-update-agent.cfg
+chown platform-update-agent:bm-agents /etc/default/grub.d/90-platform-update-agent.cfg
+
+touch /etc/apt/sources.list.d/pua.list
+chown platform-update-agent:bm-agents /etc/apt/sources.list.d/pua.list
+#DEBHELPER#

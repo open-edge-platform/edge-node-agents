@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: 'v0.2.0'
+logLevel: info
+configpath:
+    telegraf: /etc/telegraf/telegraf.d/poa-telegraf.conf
+    fluentbit: /etc/fluent-bit/fluent-bit.conf
+
+    configroot: /etc/edge-node/node/confs/
+    telegrafgoldhost: telegraf-host-gold.yaml
+    telegrafgoldcluster: telegraf-cluster-gold.yaml
+    fluentbitgoldhost: fluentbit-host-gold.yaml
+    fluentbitgoldcluster: fluentbit-cluster-gold.yaml
+    tmpdir: /tmp/
+global:
+    #nodeid is guid, example: ec289fa3-1c7a-95dd-b3d4-9344c2c47778
+    nodeid: aaaaaaaa-0000-1111-2222-bbbbbbbbcccc
+    updateinterval: 60
+    developerMode: false
+    statusEndpoint: 'unix:///run/node-agent/node-agent.sock'
+server:
+    address: localhost
+    port: 443
+    token: "/etc/intel_edge_node/tokens/platform-telemetry-agent/access_token"
+misc:
+    kubeconfig: "KUBECONFIG=/etc/rancher/rke2/rke2.yaml"
+    kubectl: "/var/lib/rancher/rke2/bin/kubectl"
+    telegrafConfigMap: "get configmap telegraf-config -n observability -o jsonpath='{.data.telegraf\\.conf}'"
+    fluentbitConfigMap: "get configmap fluent-bit-config -n observability -o jsonpath='{.data.fluent-bit\\.conf}'"
+    fileOwner: "platform-observability-agent"

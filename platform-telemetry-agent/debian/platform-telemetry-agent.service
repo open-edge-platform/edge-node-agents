@@ -1,0 +1,16 @@
+[Unit]
+Description=Telemetry Agent
+
+[Service]
+ExecStart=/opt/edge-node/bin/platform-telemetry-agent -config /etc/edge-node/node/confs/platform-telemetry-agent.yaml
+StandardOutput=journal
+StandardError=journal
+RestartSec=60
+Restart=on-failure
+User=platform-telemetry-agent
+Group=bm-agents
+CPUQuota=20%
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

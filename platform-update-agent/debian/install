@@ -1,0 +1,5 @@
+configs/platform-update-agent.yaml etc/edge-node/node/confs
+configs/apparmor.d/opt.edge-node.bin.platform-update-agent etc/apparmor.d
+configs/sudoers.d/platform-update-agent etc/sudoers.d
+configs/apt.conf.d/75platform-update-agent etc/apt/apt.conf.d
+configs/apt/apt.sources.list.template etc/edge-node/node/confs

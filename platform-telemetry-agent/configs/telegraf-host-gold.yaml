@@ -1,0 +1,250 @@
+# This YAML file specifiy the mapping of telegraf config 
+# from observability stack to telemetry control.
+# keywords meaning as follow:
+#     key: identifier used by telemetry agent to pickup configuration
+#     type: the configuration type based on telemetry agent perspective 
+#     isInit: flag to specify configuration as an initialization values
+#     multiline_data: configuration data to be applied
+# source - https://github.com/open-edge-platform/edge-node-agents/blob/main/platform-observability-agent/configs/telegraf.conf
+# supported source version - observability agent 1.3.0-dev
+
+- key: "agent"
+  type: "global"
+  multiline_data: |
+    # Configuration for telegraf agent
+    [agent]
+      interval = "90s"
+      round_interval = true
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      collection_jitter = "0s"
+      flush_interval = "2m"
+      flush_jitter = "0s"
+      precision = "0s"
+
+      ## Log at debug level.
+      debug = false
+      ## Log only error level messages.
+      quiet = false
+
+      ## Log target controls the destination for logs and can be one of "file",
+      ## "stderr" or, on Windows, "eventlog".  When set to "file", the output file
+      ## is determined by the "logfile" setting.
+      logtarget = "stderr"
+
+      ## Name of the file to be logged to when using the "file" logtarget.  If set to
+      ## the empty string then logs are written to stderr.
+      logfile = ""
+
+      ## The logfile will be rotated after the time interval specified.  When set
+      ## to 0 no time based rotation is performed.  Logs are rotated only when
+      ## written to, if there is no log activity rotation may be delayed.
+      # logfile_rotation_interval = "0h"
+
+      ## The logfile will be rotated when it becomes larger than the specified
+      ## size.  When set to 0 no size based rotation is performed.
+      # logfile_rotation_max_size = "0MB"
+
+      ## Maximum number of rotated archives to keep, any older logs are deleted.
+      ## If set to -1, no archives are removed.
+      # logfile_rotation_max_archives = 5
+
+      ## Pick a timezone to use when logging or type 'local' for local time.
+      ## Example: America/Chicago
+      # log_with_timezone = ""
+
+      ## Override default hostname, if empty use os.Hostname()
+      hostname = ""
+      ## If set to true, do no set the "host" tag in the telegraf agent.
+      omit_hostname = false
+
+- key: "output"
+  type: "output"
+  multiline_data: |
+    [[outputs.opentelemetry]]
+      service_address = "unix:///run/platform-observability-agent/platform-observability-agent.sock"
+
+- key: "system"
+  type: "default"
+  isInit: true
+  multiline_data: |
+    [[inputs.system]]
+      fieldinclude = ["uptime"]
+
+- key: "cpu"
+  type: "default"
+  isInit: true
+  multiline_data: |
+    [[inputs.cpu]]
+      ## Whether to report per-cpu stats or not
+      percpu = true
+      ## Whether to report total system cpu stats or not
+      totalcpu = true
+      ## If true, collect raw CPU time metrics
+      collect_cpu_time = false
+      ## If true, compute and report the sum of all non-idle CPU states
+      ## NOTE: The resulting 'time_active' field INCLUDES 'iowait'!
+      report_active = false
+      ## If true and the info is available then add core_id and physical_id tags
+      core_tags = false
+      ## Minimal metric set
+      fieldinclude = ["usage_idle", "usage_system", "usage_user"]
+
+- key: "mem"
+  type: "default"
+  isInit: true
+  multiline_data: |
+    [[inputs.mem]]
+      fieldinclude   = ["available", "buffered", "cached", "free", "total", "used", "used_percent"]
+
+- key: "disk"
+  type: "default"
+  isInit: true
+  multiline_data: |
+    [[inputs.disk]]
+      ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs", "proc"]
+      fieldinclude   = ["used_percent"]
+
+- key: "diskio"
+  type: "input"
+  isInit: true
+  multiline_data: |
+    [[inputs.diskio]]
+      device_tags = ["ID_FS_TYPE", "ID_FS_USAGE"]
+      fieldinclude   = ["read_bytes", "write_bytes"]
+
+- key: "net"
+  type: "input"
+  isInit: true
+  multiline_data: |
+    [[inputs.net]]
+      fieldinclude   = ["bytes_recv", "bytes_sent"]
+
+- key: "temp"
+  type: "default"
+  isInit: true
+  multiline_data: |
+    [[inputs.temp]]
+
+- key: "ipmi_sensor"
+  type: "input"
+  isInit: false
+  multiline_data: |
+    [[inputs.ipmi_sensor]]
+      use_sudo = true
+      timeout = "20s"
+      metric_version = 2
+
+- key: "smart"
+  type: "input"
+  isInit: false
+  multiline_data: |
+    [[inputs.smart]]
+      use_sudo = true
+      attributes = true
+
+- key: "intel_powerstat"
+  type: "input"
+  isInit: false
+  multiline_data: |
+    [[inputs.intel_powerstat]]
+      package_metrics = ["current_power_consumption", "current_dram_power_consumption", "thermal_design_power"]
+
+- key: "intel_gpu_top (exec)"
+  type: "input"
+  isInit: false
+  multiline_data: |
+    [[inputs.exec]]
+      commands = ["/opt/telegraf/bin/collect_gpu_metrics.sh"]
+      timeout = "5s"
+      data_format = "json"
+      json_strict = true
+      
+- key: "ras"
+  type: "input"
+  isInit: false
+  multiline_data: |
+    [[inputs.ras]]
+
+- key: "redfish"
+  type: "input"
+  isInit: false
+  multiline_data: |
+    # [[inputs.redfish]]
+    #   ## Redfish API Base URL.
+    #   address = "http://localhost:8000/redfish/v1"
+    #   ## Credentials for the Redfish API.
+    #   username = "root"
+    #   password = "" 
+    #   ## System Id to collect data for in Redfish APIs.
+    #   computer_system_id="1"
+
+- key: "lvm"
+  type: "default"
+  isInit: false
+  multiline_data: |
+    [[inputs.lvm]]
+        use_sudo = true
+
+- key: "disk_storage (exec)"
+  type: "default"
+  isInit: true
+  multiline_data: |
+    [[inputs.exec]]
+        commands = ["/opt/telegraf/bin/collect_disk_info.sh"]
+        timeout = "30s"
+        data_format = "json_v2"
+        name_suffix = "diskmetrics"
+        [[inputs.exec.json_v2]]
+            [[inputs.exec.json_v2.object]]
+                path = "diskSizeTotal"
+                [[inputs.exec.json_v2.object.tag]]
+                    path = "#.tag"
+                    rename = "device_name"
+                [[inputs.exec.json_v2.object.field]]
+                    path = "#.disk_size_total_bytes"
+                    type = "int"
+            [[inputs.exec.json_v2.object]]
+                path = "diskPartUsedTotal"
+                [[inputs.exec.json_v2.object.tag]]
+                    path = "#.tag"
+                    rename = "device_name"
+                [[inputs.exec.json_v2.object.field]]
+                    path = "#.disk_size_used_partition_bytes"
+                    type = "int"
+            [[inputs.exec.json_v2.object]]
+                path = "diskLvmUsedTotal"
+                [[inputs.exec.json_v2.object.tag]]
+                    path = "#.tag"
+                    rename = "device_name"
+                [[inputs.exec.json_v2.object.field]]
+                    path = "#.disk_size_used_lvm_bytes"
+                    type = "int"
+            [[inputs.exec.json_v2.object]]
+                path = "diskAvailTotal"
+                [[inputs.exec.json_v2.object.tag]]
+                    path = "#.tag"
+                    rename = "device_name"
+                [[inputs.exec.json_v2.object.field]]
+                    path = "#.disk_size_available_bytes"
+                    type = "int"
+
+- key: "CPU metrics (exec)"
+  type: "default"
+  isInit: false
+  multiline_data: |
+    [[inputs.exec]]
+        commands = ["/opt/telegraf/bin/core_metrics.sh"]
+        timeout = "15s"
+        data_format = "json_v2"
+        name_suffix = "coremetrics"
+        [[inputs.exec.json_v2]]
+            [[inputs.exec.json_v2.field]]
+                path = "cores"
+                type = "int"
+            [[inputs.exec.json_v2.field]]
+                path = "threads"
+                type = "int"
+            [[inputs.exec.json_v2.field]]
+                path = "hyper_threading_status"
+                type = "int"

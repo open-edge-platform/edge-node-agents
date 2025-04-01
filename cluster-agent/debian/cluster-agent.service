@@ -1,0 +1,17 @@
+[Unit]
+Description=Cluster Agent
+Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/cluster-agent/README.md
+
+[Service]
+ExecStart=/opt/edge-node/bin/cluster-agent -config /etc/edge-node/node/confs/cluster-agent.yaml
+StandardOutput=journal
+StandardError=journal
+RestartSec=60
+Restart=on-failure
+User=cluster-agent
+Group=bm-agents
+CPUQuota=20%
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+DPkg::Options {"--force-confnew";};
+
+Acquire::https::files.internal.example.intel.com {
+    SSLCert "/etc/edge-node/node/.apt/certs/apt-cert.pem";
+    SSLKey "/etc/edge-node/node/.apt/.keys/apt-key.pem";
+};
