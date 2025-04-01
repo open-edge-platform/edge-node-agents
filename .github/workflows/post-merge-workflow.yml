@@ -98,12 +98,12 @@ jobs:
       - name: Checkout action repository
         uses: actions/checkout@v4
         with:
-          repository: intel/orch-ci
+          repository: open-edge-platform/orch-ci
           path: ci
           token: ${{ secrets.SYS_ORCH_GITHUB }}
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@7669d2d1d2841d285604b428185b997f08fec56e
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@40d61a820157bc9b70d3f2bdc5aec786073d48f2
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
 
