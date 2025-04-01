@@ -14,6 +14,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"time"
 
@@ -25,7 +27,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -58,7 +59,7 @@ func WithNetworkDialer(serverAddr string) func(*Client) {
 func NewClient(serverAddr string, tlsConfig *tls.Config, options ...func(*Client)) *Client {
 	cli := &Client{}
 	cli.ServerAddr = serverAddr
-	cli.Transport = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
+	cli.Transport = grpc.WithTransportCredentials(insecure.NewCredentials())
 	cli.RegisterToClusterOrch = cli.registerToClusterOrch
 
 	WithNetworkDialer(serverAddr)(cli)
@@ -145,9 +146,16 @@ func (cli *Client) UpdateClusterStatus(ctx context.Context, state string, nodeAu
 func (cli *Client) registerToClusterOrch(ctx context.Context, guid string) (installCmd, uninstallCmd string) {
 
 	var resp *proto.RegisterClusterResponse
+	log.Infof("sending register cluster request for guid: %v", guid)
+
+	// Add client information. This is used Southbound handler to bypass rbac for cluster-agent
+	// NOTE: This is for testing only. Not to be done in production.
+	niceMD := metautils.NiceMD{}
+	niceMD.Add("client", "cluster-agent")
+	newCtx := niceMD.ToOutgoing(ctx)
 
 	op := func() error {
-		res, err := cli.Register(ctx, guid)
+		res, err := cli.Register(newCtx, guid)
 		resp = res
 		if err == nil && res != nil {
 			return nil
@@ -155,7 +163,7 @@ func (cli *Client) registerToClusterOrch(ctx context.Context, guid string) (inst
 		return err
 	}
 
-	err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+	err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), newCtx))
 	if err != nil {
 		log.Infoln("Registering to Edge Cluster Manager has been canceled")
 		return

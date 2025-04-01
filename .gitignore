@@ -57,3 +57,11 @@ fuzz_config*
 Icon
 Thumbs.db
 ehthumbs.db
+
+
+# secrets
+*.key
+*.crt
+
+.idea
+enic/rancher-*

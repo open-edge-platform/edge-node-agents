@@ -1,0 +1,13 @@
+[Unit]
+Description=cluster agent service
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/environment
+ExecStart=/etc/enic/cluster-agent --config /etc/enic/cluster-agent.yaml
+User=root
+WorkingDirectory=/etc/enic
+
+[Install]
+WantedBy=multi-user.target

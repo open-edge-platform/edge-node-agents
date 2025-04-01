@@ -9,6 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"os"
 	"os/signal"
 	"sync"
@@ -106,7 +107,14 @@ func main() {
 	go func() {
 		defer wg.Done()
 		op := func() error {
-			res, updateErr := clusterOrch.UpdateClusterStatus(utils.GetAuthContext(ctx, cfg.JWT.AccessTokenPath), stateMachine.State(), cfg.GUID)
+			// Add client information. This is used Southbound handler to bypass rbac for cluster-agent
+			// NOTE: This is for testing only. Not to be done in production.
+			_ctx := utils.GetAuthContext(ctx, cfg.JWT.AccessTokenPath)
+			niceMD := metautils.NiceMD{}
+			niceMD.Add("client", "cluster-agent")
+			_newCtx := niceMD.ToOutgoing(_ctx)
+
+			res, updateErr := clusterOrch.UpdateClusterStatus(_newCtx, stateMachine.State(), cfg.GUID)
 			if updateErr != nil {
 				return updateErr
 			}

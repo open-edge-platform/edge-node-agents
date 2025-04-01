@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cluster-agent
+spec:
+  serviceName: "cluster-agent"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-agent
+  template:
+    metadata:
+      labels:
+        app: cluster-agent
+    spec:
+      containers:
+      - name: cluster-agent
+        image: registry.espdprod.infra-host.com/edge-orch/cluster/cluster-agent:lw-enic
+        imagePullPolicy: IfNotPresent
+        command: ["/lib/systemd/systemd"]
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            cpu: "2000m"
+            memory: "4000Mi"
+        volumeMounts:
+        - name: rancher-volume
+          mountPath: /var/lib/rancher
+      hostname: cluster-agent
+  volumeClaimTemplates:
+  - metadata:
+      name: rancher-volume
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 100Gi
