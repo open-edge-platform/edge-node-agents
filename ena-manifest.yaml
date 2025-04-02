@@ -31,29 +31,29 @@ packages:
     version: 2.7.6
     ociArtifact: edge-orch/en/deb/caddy
   - name: inbc-program
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/inbc-program
   - name: inbm-configuration-agent
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/inbm-configuration-agent
   - name: inbm-cloudadapter-agent
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/inbm-cloudadapter-agent
   - name: inbm-diagnostic-agent
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/inbm-diagnostic-agent
   - name: inbm-dispatcher-agent
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/inbm-dispatcher-agent
   - name: inbm-telemetry-agent
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/inbm-telemetry-agent
   - name: mqtt
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/mqtt
   - name: tpm-provision
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/tpm-provision
   - name: trtl
-    version: 4.2.8.2-1
+    version: 4.2.8.4-1
     ociArtifact: edge-orch/en/deb/trtl
