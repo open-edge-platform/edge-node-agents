@@ -37,7 +37,7 @@ jobs:
           echo "filtered_projects=${filtered_projects}" >> ${GITHUB_OUTPUT}
   pre-merge-pipeline:
     needs: pre-checks
-    if: ${{ needs.pre-checks.outputs.filtered_projects != '[""]' }}
+    if: needs.pre-checks.outputs.filtered_projects != '[""]'
     strategy:
       fail-fast: false
       matrix:
@@ -64,7 +64,7 @@ jobs:
     secrets: inherit
   final-check:
       runs-on: ubuntu-latest
-      if: ${{ always() }}
+      if: always()
       needs: [pre-merge-pipeline]
       steps:
         - name: Final Status Check
