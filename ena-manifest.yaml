@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ---
-
 metadata:
   schemaVersion: 2.0.0
   release: 1.0.0-dev
@@ -11,7 +10,7 @@ repository:
   component: main
 packages:
   - name: cluster-agent
-    version: 1.6.0
+    version: 1.6.1
     ociArtifact: edge-orch/en/deb/cluster-agent
   - name: hardware-discovery-agent
     version: 1.6.0
