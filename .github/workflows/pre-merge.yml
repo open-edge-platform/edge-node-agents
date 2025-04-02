@@ -30,14 +30,14 @@ jobs:
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         run: |
-          folders_to_remove='[".github",".reuse","LICENSES","ena-manifest.yaml"]'
+          folders_to_remove='[".github",".reuse","LICENSES"]'
           
           changed_projects='${{ steps.discover-changes.outputs.changed_projects }}'
           filtered_projects=$(echo "$changed_projects" | jq -cr --argjson folders_to_remove "$folders_to_remove" 'map(select(. as $item | $folders_to_remove | index($item) | not))')
           echo "filtered_projects=${filtered_projects}" >> ${GITHUB_OUTPUT}
   pre-merge-pipeline:
     needs: pre-checks
-    if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' }}
+    if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' && needs.pre-checks.outputs.filtered_projects != '[""]' }}
     strategy:
       fail-fast: false
       matrix:
