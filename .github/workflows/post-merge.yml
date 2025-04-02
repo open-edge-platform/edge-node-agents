@@ -38,7 +38,7 @@ jobs:
           project_folder: "."
   post-merge-pipeline:
     needs: pre-checks
-    if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' }}
+    if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' && needs.pre-checks.outputs.filtered_projects != '[""]' }}
     strategy:
       fail-fast: false
       matrix:
