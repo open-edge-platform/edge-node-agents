@@ -64,7 +64,7 @@ jobs:
     secrets: inherit
   final-check:
       runs-on: ubuntu-latest
-      if: always()
+      if: ${{ always() }}
       needs: [pre-merge-pipeline]
       steps:
         - name: Final Status Check
