@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"google.golang.org/grpc"
 )
 
 func newResource(name, version string) *resource.Resource {
@@ -26,9 +27,14 @@ func newResource(name, version string) *resource.Resource {
 func newMeterProvider(ctx context.Context, res *resource.Resource, endpoint string,
 	interval time.Duration) (*metric.MeterProvider, error) {
 
+	// #FIXME : https://github.com/grpc/grpc-go/issues/8207 If https_proxy
+	// is set failure seen in dial to a unix domain socket. Current workaround
+	// is to disable proxy usage as we know this is a unix socket.
 	metricExporter, err := otlpmetricgrpc.New(ctx,
 		otlpmetricgrpc.WithEndpoint(endpoint),
-		otlpmetricgrpc.WithInsecure())
+		otlpmetricgrpc.WithInsecure(),
+		otlpmetricgrpc.WithDialOption(grpc.WithNoProxy()),
+	)
 	if err != nil {
 		return nil, err
 	}
