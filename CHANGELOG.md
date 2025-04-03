@@ -6,6 +6,9 @@
 
 ## Cluster Agent Changelog
 
+### 1.6.1
+- Update common to 1.6.8
+
 ### 1.6.0
 - Initial cluster agent release
 - Dependency import updates
@@ -27,6 +30,12 @@
 
 ## Node Agent Changelog
 
+### 1.6.2
+- Update common to 1.6.8
+
+### 1.6.1
+- Update postinst to fix permission on keys
+
 ### 1.6.0
 - Initial node agent release
 - Dependency import updates
@@ -38,11 +47,17 @@
 
 ## Platform Telemetry Agent Changelog
 
+### 1.3.1
+- Update common to 1.6.8
+
 ### 1.3.0
 - Initial platform telemetry agent release
 - Dependency import updates
 
 ## Platform Update Agent Changelog
+
+### 1.4.1
+- Update common to 1.6.8
 
 ### 1.4.0
 - Initial platform update agent release
