@@ -95,6 +95,9 @@ if [ ! -e "/etc/intel_edge_node/caddy/certs/caddy-containerd-cert.pem" ]; then
     cp /etc/intel_edge_node/caddy/certs/caddy-containerd-cert.pem /usr/local/share/ca-certificates/caddy-containerd-cert.crt
 fi
 
+chmod 600 /etc/intel_edge_node/caddy/.keys/caddy-apt-key.pem
+chmod 600 /etc/intel_edge_node/caddy/.keys/caddy-containerd-key.pem
+
 # Entry for containerd proxy, Not adding to no_proxy as .internal expected
 if ! grep -q "127.0.0.1 localhost.internal localhost" "/etc/hosts"; then
     echo "127.0.0.1 localhost.internal localhost" >> /etc/hosts
