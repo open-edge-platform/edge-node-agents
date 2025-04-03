@@ -29,7 +29,7 @@ type StatusClient struct {
 //   - error: An error if the client creation fails, otherwise nil.
 func InitClient(serverAddr string) (*StatusClient, error) {
 
-	conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithNoProxy())
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to %s: %w", serverAddr, err)
 	}
