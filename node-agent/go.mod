@@ -7,7 +7,7 @@ toolchain go1.23.5
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/open-edge-platform/edge-node-agents/common v1.6.6
+	github.com/open-edge-platform/edge-node-agents/common v1.6.7
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/oauth2 v0.22.0

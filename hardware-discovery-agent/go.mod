@@ -7,7 +7,7 @@ toolchain go1.23.5
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
-	github.com/open-edge-platform/edge-node-agents/common v1.6.6
+	github.com/open-edge-platform/edge-node-agents/common v1.6.7
 	github.com/open-edge-platform/infra-managers/host v1.18.0
 	github.com/safchain/ethtool v0.3.0
 	github.com/sirupsen/logrus v1.9.3

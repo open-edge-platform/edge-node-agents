@@ -8,7 +8,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
-	github.com/open-edge-platform/edge-node-agents/common v1.6.6
+	github.com/open-edge-platform/edge-node-agents/common v1.6.7
 	github.com/open-edge-platform/infra-managers/telemetry v1.18.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.18.2
