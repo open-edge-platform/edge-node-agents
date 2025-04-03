@@ -9,7 +9,6 @@ on:
     branches:
       - main
       - release-*
-  workflow_dispatch:
 
 jobs:
   pre-checks:
@@ -18,7 +17,7 @@ jobs:
       filtered_projects: ${{ steps.filter-changes.outputs.filtered_projects }}
       manifest: ${{ contains(steps.check-files.outputs.changed_files, 'ena-manifest.yaml') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - name: "Discover Changed Subfolders"
         id: discover-changes
         uses: open-edge-platform/orch-ci/discover-changed-subfolders@40d61a820157bc9b70d3f2bdc5aec786073d48f2
@@ -92,14 +91,14 @@ jobs:
           bootstrap_tools: "yq,aws,oras"
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
           aws-access-key-id: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}
           aws-secret-access-key: ${{ secrets.NO_AUTH_ECR_PUSH_PASSWD }}
           aws-region: us-west-2
 
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@v2.0.1
         with:
           registries: "080137407410"
 
