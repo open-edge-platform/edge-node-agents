@@ -29,7 +29,10 @@ type StatusClient struct {
 //   - error: An error if the client creation fails, otherwise nil.
 func InitClient(serverAddr string) (*StatusClient, error) {
 
-	conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// #FIXME : https://github.com/grpc/grpc-go/issues/8207 If https_proxy
+	// is set failure seen in dial to a unix domain socket. Current workaround
+	// is to disable proxy usage as we know this is a unix socket.
+	conn, err := grpc.NewClient(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithNoProxy())
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to %s: %w", serverAddr, err)
 	}

@@ -12,6 +12,9 @@
 
 ## Common Package Changelog
 
+### 1.6.8
+- Fix Status client to use option WithNoProxy
+
 ### 1.6.7
 - Initial release of common agent code
 - Dependency import updates
