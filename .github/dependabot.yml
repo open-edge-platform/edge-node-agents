@@ -1,0 +1,36 @@
+---
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+version: 2
+registries:
+  github:
+    type: git
+    url: https://github.com
+    username: x-access-token
+    password: ${{ secrets.SYS_ORCH_GITHUB }}
+updates:
+  - package-ecosystem: "gomod"
+    directories:
+      - "/cluster-agent"
+      - "/common"
+      - "/hardware-discovery-agent"
+      - "/node-agent"
+      - "/platform-telemetry-agent"
+      - "/platform-update-agent"
+    registries:
+      - github
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "[gomod] "
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*open-edge-platform*"
+      internal-dependencies:
+        patterns:
+          - "*open-edge-platform*"
