@@ -3,7 +3,7 @@
 
 NAME ?= platform-update-agent
 BUILD_DIR ?= build/artifacts
-INBM_VERSION ?= 4.2.8.4
+INBM_VERSION ?= 4.2.8.6
 INBM_DIR_NAME ?= inbm
 INBM_OUTPUT_DIR_NAME ?= output
 PUA_PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
