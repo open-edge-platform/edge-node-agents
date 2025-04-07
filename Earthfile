@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: (C) 2024-2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: LicenseRef-Intel
 VERSION 0.8
 
@@ -70,7 +70,6 @@ run-golang-unit-tests:
     # Enforce minimum coverage threshold for internal/ directory
     RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=56.5 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
     SAVE ARTIFACT cover.out AS LOCAL build/cover.out
-
     
 generate-proto:
     FROM +golang-base
@@ -98,3 +97,22 @@ build-inbd:
             -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
             ./cmd/inbd
     SAVE ARTIFACT build/inbd AS LOCAL ./build/inbd
+
+build-deb:
+    BUILD +build
+    FROM debian:bullseye
+    WORKDIR /package
+    RUN mkdir -p DEBIAN usr/bin
+    COPY build/inbc usr/bin/inbc
+    COPY build/inbd usr/bin/inbd
+    RUN echo "Package: intel-inbm\nVersion: 0.0.0-unknown\nArchitecture: amd64\nMaintainer: Your Name <your-email@example.com>\nDescription: Intel In-Band Manageability Tools\n This package contains the inbc CLI and inbd daemon for Intel In-Band Manageability." > DEBIAN/control
+    RUN dpkg-deb --build . /package/intel-inbm.deb
+    SAVE ARTIFACT /package/intel-inbm.deb AS LOCAL ./build/intel-inbm.deb
+
+package:
+    RUN mkdir -p dist/inbm
+    COPY LICENSE dist/inbm/LICENSE
+    COPY installer/install-tc.sh dist/inbm/install-tc.sh
+    COPY installer/uninstall-tc.sh dist/inbm/uninstall-tc.sh
+    COPY build/intel-inbm.deb dist/inbm/intel-inbm.deb
+    SAVE ARTIFACT dist/inbm AS LOCAL ./dist/inbm
