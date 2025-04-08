@@ -18,7 +18,16 @@ lint: golint buf-lint
 clean:
 	rm -rf build
 
-unit-test:
+build:
+	@echo "no binaries to build, skipping"
+
+integration_test:
+	@echo "no integration tests to run, skipping"
+
+fuzztest:
+	@echo "no fuzz tests to run, skipping"
+
+test:
 	@echo "---MAKEFILE TEST---"
 	go test ./...  -race
 	@echo "---END MAKEFILE TEST---"

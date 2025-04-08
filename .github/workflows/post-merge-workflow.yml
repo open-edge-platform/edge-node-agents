@@ -113,94 +113,56 @@ jobs:
           echo 'Call scanners from a different yml'
 
       - name: Build Code
-        if: ${{ (inputs.run_build == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') }}
+        if: ${{ inputs.run_build == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
-          echo "Building the code"
           make build
 
       - name: Lint Code
-        if: ${{ (inputs.run_lint == true) && (inputs.project_folder != 'platform-observability-agent') }}
+        if: ${{ inputs.run_lint == true }}
         working-directory: ${{ inputs.project_folder }}
         run: |
           make lint
 
       - name: Test Code
-        if: ${{ (inputs.run_test == true) && (inputs.project_folder != 'platform-observability-agent') }}
+        if: ${{ inputs.run_test == true }}
         working-directory: ${{ inputs.project_folder }}
         run: |
-          make unit-test
-
-      - name: Cert setup for integration tests
-        if: ${{ (inputs.project_folder == 'cluster-agent') || (inputs.project_folder == 'hardware-discovery-agent') || (inputs.project_folder == 'node-agent') }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
-          sudo update-ca-certificates
+          make test
 
       - name: Integration test
-        if: ${{ (inputs.run_integration_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') && (inputs.project_folder != 'platform-update-agent') }}
+        if: ${{ inputs.run_integration_test == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
           make integration_test
 
       - name: Fuzz test
-        if: ${{ (inputs.run_integration_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') }}
+        if: ${{ inputs.run_integration_test == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
           make fuzztest
 
-      - name: INBM dependency download
-        if: ${{ inputs.project_folder == 'platform-update-agent' }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          make inbmdownload
-
-      - name: POA dependency download
-        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          sudo make package_depends
-          make download_deps
-
       - name: Build Package
-        if: ${{ (inputs.run_package_build == true) && (inputs.project_folder != 'common') }}
+        if: ${{ inputs.run_package_build == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
-          echo "Building the package"
           make package
 
-      - name: POA dependency clean up
-        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          rm -rf assets
-
-      - name: Apt update
-        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          sudo apt update
-
       - name: Package test
-        if: ${{ (inputs.run_package_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-update-agent') }}
+        if: ${{ inputs.run_package_test == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
+          #sudo apt update
           #make package_test
           echo "Test package"
 
       - name: Scan Packages
-        if: ${{ (inputs.run_scan_package == true) && (inputs.project_folder != 'common') }}
+        if: ${{ inputs.run_scan_package == true }}
         run: |
           echo "Scanning package..."
 

@@ -139,7 +139,7 @@ sudo journalctl -u hardware-discovery-agent
 - **Run unit tests**:
 
     ```
-    make unit-test
+    make test
     ```
 
 - **Run integration tests**:
