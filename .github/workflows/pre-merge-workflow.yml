@@ -144,7 +144,7 @@ jobs:
           path: trivy_scan_report-${{ env.SANITIZED_REPORT_PATH }}.txt
 
       - name: Setup CI environment
-        uses: ci/.github/actions/bootstrap
+        uses: ./ci/.github/actions/bootstrap
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
 
