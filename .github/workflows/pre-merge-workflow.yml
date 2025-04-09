@@ -144,7 +144,7 @@ jobs:
           path: trivy_scan_report-${{ env.SANITIZED_REPORT_PATH }}.txt
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@0.0.2
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@0.1.0
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
 
