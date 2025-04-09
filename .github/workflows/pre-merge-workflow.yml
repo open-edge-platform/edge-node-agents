@@ -104,6 +104,7 @@ jobs:
           repository: open-edge-platform/orch-ci
           path: ci
           token: ${{ secrets.SYS_ORCH_GITHUB }}
+          ref: 0.1.0
 
       - name: Sanitize project folder
         run: |
