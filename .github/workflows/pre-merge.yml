@@ -61,6 +61,8 @@ jobs:
       run_shellcheck_agent: true
       prefix_tag_separator: "/"
       project_folder: ${{ matrix.project_folder }}
+      remove_cache_go: true
+      cache_go: true
     secrets: inherit
   final-check:
       runs-on: ubuntu-latest
