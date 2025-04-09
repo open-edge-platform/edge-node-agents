@@ -80,6 +80,12 @@ on:
         required: false
         default: "."
         type: string
+      remove_cache_go:
+        description: >-
+          "Should Go-related cache for project be removed when not needed anymore."
+        required: false
+        default: false
+        type: boolean
 jobs:
   run-repo-pipelines:
     runs-on: ${{ inputs.runner_version }}
