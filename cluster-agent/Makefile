@@ -72,7 +72,7 @@ test: common-unit-test
 
 integration_test: cabuild_with_race combuild ssmbuild
 	sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
-	sudo update-ca-certificate
+	sudo update-ca-certificates
 	CA_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/cluster-agent_race \
 	COM_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/cluster-orch-mock \
 	SS_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/status-server-mock \
