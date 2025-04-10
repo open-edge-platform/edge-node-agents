@@ -27,6 +27,9 @@ integration_test:
 fuzztest:
 	@echo "no fuzz tests to run, skipping"
 
+package:
+	@echo "no package to build, skipping"
+
 test:
 	@echo "---MAKEFILE TEST---"
 	go test ./...  -race
