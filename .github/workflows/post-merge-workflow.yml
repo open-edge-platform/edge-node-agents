@@ -112,6 +112,7 @@ jobs:
         with:
           repository: open-edge-platform/orch-ci
           path: ci
+          ref: cgoea-patch-1
           token: ${{ secrets.SYS_ORCH_GITHUB }}
 
       - name: Make sure directories where the cache will be restored exist and are empty
