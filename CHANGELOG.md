@@ -55,6 +55,8 @@
 - Dependency import updates
 
 ## Platform Update Agent Changelog
+### 1.4.2
+- Update INBM to 4.2.8.6
 
 ### 1.4.1
 - Update common to 1.6.8
