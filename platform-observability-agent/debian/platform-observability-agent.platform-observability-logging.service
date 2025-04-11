@@ -1,6 +1,7 @@
 [Unit]
 Description=Platform Observability Logging Agent
 Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/platform-observability-agent/README.md
+After=platform-observability-collector.service
 
 [Service]
 Type=simple
