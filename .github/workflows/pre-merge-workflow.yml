@@ -80,6 +80,18 @@ on:
         required: false
         default: "."
         type: string
+      cache_go:
+        description: >-
+          "Should Go-related cache for project be saved/restored."
+        required: false
+        default: false
+        type: boolean
+      remove_cache_go:
+        description: >-
+          "Should Go-related cache for project be removed when not needed anymore."
+        required: false
+        default: false
+        type: boolean
 jobs:
   run-repo-pipelines:
     runs-on: ${{ inputs.runner_version }}
@@ -143,10 +155,46 @@ jobs:
           name: trivy-scan-report-${{ env.SANITIZED_REPORT_PATH }}
           path: trivy_scan_report-${{ env.SANITIZED_REPORT_PATH }}.txt
 
+      - name: Make sure directories where the cache will be restored exist and are empty
+        if: ${{ inputs.cache_go }}
+        run: |
+          # Some caches from previous steps/jobs might be left, clean them up to avoid
+          # "Cannot open: File exists" errors
+          GOCACHE="$(go env GOCACHE)"
+          GOMODCACHE="$(go env GOMODCACHE)"
+          mkdir -p "${GOCACHE}" "${GOMODCACHE}" ~/.cache/golangci-lint
+          echo "Cache sizes before removal:"
+          sudo du -sh "${GOCACHE}"
+          sudo du -sh "${GOMODCACHE}"
+          sudo du -sh ~/.cache/golangci-lint
+          sudo rm -rf "${GOCACHE:?}"/{*,.*} || true
+          sudo rm -rf "${GOMODCACHE:?}"/{*,.*} || true
+          sudo rm -rf ~/.cache/golangci-lint/{*,.*} || true
+          echo "Cache sizes after removal:"
+          sudo du -sh "${GOCACHE}"
+          sudo du -sh "${GOMODCACHE}"
+          sudo du -sh ~/.cache/golangci-lint
+          echo "GOCACHE=$GOCACHE" >> "$GITHUB_ENV"
+          echo "GOMODCACHE=$GOMODCACHE" >> "$GITHUB_ENV"
+
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@40d61a820157bc9b70d3f2bdc5aec786073d48f2
+        uses: ./ci/.github/actions/bootstrap
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
+
+      - name: Restore Go cache
+        if: ${{ inputs.cache_go }}
+        id: restored-project-go-cache
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.4
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+            ~/.cache/golangci-lint
+          key: ${{ env.REPO_PROJECT }}-${{ runner.os }}-go-${{ env.GOLANG_VER }}-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ env.REPO_PROJECT }}-${{ runner.os }}-go-${{ env.GOLANG_VER }}-
+            ${{ env.REPO_PROJECT }}-${{ runner.os }}-go-
 
       - name: Version Check
         if: ${{ inputs.run_version_check == true }}
