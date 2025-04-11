@@ -43,10 +43,10 @@ jobs:
       matrix:
         #runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: ./.github/workflows/pre-merge-workflow.yml
+    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@merge_en_agents
     with:
       #runner_version: ${{ matrix.runner_version }}
-      runner_version: ubuntu-22.04
+      runs_on: ubuntu-22.04
       run_security_scans: true
       run_version_check: true
       run_reuse_check: true
@@ -57,8 +57,8 @@ jobs:
       run_fuzz_test: true
       run_package_build: true
       run_package_test: true
-      run_shellcheck_common: true
-      run_shellcheck_agent: true
+      #run_shellcheck_common: true  ## should be part of make lint
+      #run_shellcheck_agent: true  ## should be part of make lint
       prefix_tag_separator: "/"
       project_folder: ${{ matrix.project_folder }}
       remove_cache_go: true
