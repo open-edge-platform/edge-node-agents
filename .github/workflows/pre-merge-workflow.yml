@@ -103,6 +103,7 @@ jobs:
         with:
           repository: open-edge-platform/orch-ci
           path: ci
+          ref: main
           token: ${{ secrets.SYS_ORCH_GITHUB }}
 
       - name: Sanitize project folder
@@ -144,7 +145,7 @@ jobs:
           path: trivy_scan_report-${{ env.SANITIZED_REPORT_PATH }}.txt
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@40d61a820157bc9b70d3f2bdc5aec786073d48f2
+        uses: ./ci/.github/actions/bootstrap
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
 
