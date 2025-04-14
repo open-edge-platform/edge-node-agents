@@ -115,7 +115,7 @@ jobs:
         with:
           repository: open-edge-platform/orch-ci
           path: ci
-          ref: main
+          ref: cgoea-patch-1
           token: ${{ secrets.SYS_ORCH_GITHUB }}
 
       - name: Sanitize project folder
