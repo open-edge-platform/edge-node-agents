@@ -62,6 +62,8 @@ jobs:
       run_version_dev: true
       prefix_tag_separator: "/"
       project_folder: ${{ matrix.project_folder }}
+      remove_cache_go: true
+      cache_go: true
     secrets: inherit
   push-manifest:
     runs-on: ubuntu-latest
