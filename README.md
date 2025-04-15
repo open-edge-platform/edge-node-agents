@@ -35,8 +35,8 @@ To develop one of the Agents please follow it's specific guide present in the RE
 
 ## Contribute
 
-To learn how to contribute to the project, see the \[Contributor's
-Guide\](<https://website-name.com>).
+To learn how to contribute to the project, see the [Contributor's
+Guide](https://docs.openedgeplatform.intel.com/edge-manage-docs/main/developer_guide/contributor_guide/index.html).
 
 ## Community and Support
 
@@ -52,4 +52,4 @@ Each agent is licensed under [Apache 2.0][apache-license].
 
 Last Updated Date: April 7, 2025
 
-[apache-license]: https://www.apache.org/licenses/LICENSE-2.0
+[apache-license]: LICENSES/Apache-2.0.txt
