@@ -6,6 +6,7 @@ include <tunables/global>
   include <abstractions/base>
   include <abstractions/dbus-session-strict>
 
+  /etc/edge-node/node/confs/platform-observability-logging ix,
   /etc/fluent-bit/fluent-bit.conf r,
   /opt/fluent-bit/bin/fluent-bit mr,
   /run/log/journal/ r,

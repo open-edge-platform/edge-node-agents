@@ -99,6 +99,8 @@ package_test:
 	sudo cp test/fluent-bit-test.conf /etc/fluent-bit/fluent-bit.conf
 	sudo cp test/health-check-test.conf /etc/health-check/health-check.conf
 	sudo cp test/otelcol-test.yaml /etc/otelcol/otelcol.yaml
+	sudo mkdir -p /etc/intel_edge_node/tokens/platform-observability-agent/
+	sudo touch /etc/intel_edge_node/tokens/platform-observability-agent/access_token
 	sudo systemctl enable platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
 	sudo systemctl start platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
 	systemctl is-active platform-observability-logging
