@@ -41,10 +41,9 @@ Guide](https://docs.openedgeplatform.intel.com/edge-manage-docs/main/developer_g
 ## Community and Support
 
 To learn more about the project, its community, and governance, visit
-the \[Edge Orchestrator Community\](<https://website-name.com>).
+the [Edge Orchestrator Community](https://docs.openedgeplatform.intel.com/edge-manage-docs/main/index.html).
 
-For support, start with \[Troubleshooting\](<https://website-name.com>) or
-\[contact us\](<https://website-name.com>).
+For support, start with [Troubleshooting](https://docs.openedgeplatform.intel.com/edge-manage-docs/main/developer_guide/troubleshooting/index.html)
 
 ## License
 
