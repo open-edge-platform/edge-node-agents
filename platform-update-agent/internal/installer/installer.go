@@ -94,10 +94,6 @@ func (i *Installer) ProvisionInbm(ctx context.Context) error {
 		return fmt.Errorf("failed to execute shell command - %v", err)
 	}
 
-	if err := i.modifyConfiguration(ctx); err != nil {
-		return fmt.Errorf("failed to modify INBC configuration - %v", err)
-	}
-
 	file, err := os.Create(inbmConfigSuccessPath)
 	if err != nil {
 		log.Errorf("Creating file failed: %s", inbmConfigSuccessPath)
