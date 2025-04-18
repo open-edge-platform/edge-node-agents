@@ -105,6 +105,8 @@ build-deb:
     RUN mkdir -p DEBIAN usr/bin etc usr/lib/systemd/system
     COPY build/inbc usr/bin/inbc
     COPY build/inbd usr/bin/inbd
+    RUN mkdir -p DEBIAN etc/apparmor.d
+    COPY fpm-templates/etc/apparmor.d/usr.bin.inbd etc/apparmor.d/usr.bin.inbd
     COPY fpm-templates/usr/bin/provision-tc usr/bin/provision-tc
     COPY fpm-templates/etc/intel_manageability.conf etc/intel_manageability.conf
     COPY fpm-templates/usr/lib/systemd/system/inbd.service usr/lib/systemd/system/inbd.service
