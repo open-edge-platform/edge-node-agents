@@ -22,9 +22,9 @@ else ifneq ("$(wildcard ./common.mk)","")
 	include ./common.mk
 endif
 
-.PHONY: all build clean lint package unit-test fuzztest tarball
+.PHONY: all build clean lint package test fuzztest tarball
 
-all: build lint unit-test
+all: build lint test
 
 clean:
 	rm -rf build
@@ -65,7 +65,7 @@ ptabuild_with_cover: generate_config
 	-o $(BUILD_DIR)/$(NAME)_cover cmd/telemetryagent/main.go
 	@echo "---END MAKEFILE Build---"
 
-unit-test: common-unit-test
+test: common-unit-test
 
 fuzztest: common-fuzztest
 
