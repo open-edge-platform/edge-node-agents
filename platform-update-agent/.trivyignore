@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-skip-files:
-  # List of file paths to be ignored
-  - mocks/server-key.pem
+# Ignore specific secret types
+AsymmetricPrivateKey
