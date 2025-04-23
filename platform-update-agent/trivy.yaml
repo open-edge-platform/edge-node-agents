@@ -1,0 +1,3 @@
+ignore:
+  # List of file paths to be ignored
+  - mocks/server-key.pem
