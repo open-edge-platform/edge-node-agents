@@ -63,6 +63,7 @@ jobs:
       project_folder: ${{ matrix.project_folder }}
       remove_cache_go: true
       cache_go: true
+      trivy_config_path: ${{ matrix.project_folder }}/trivy.yaml
     secrets: inherit
   final-check:
       runs-on: ubuntu-latest
