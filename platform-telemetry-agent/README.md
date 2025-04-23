@@ -122,7 +122,7 @@ sudo journalctl -u platform-telemetry-agent -f
 - **Run unit tests**:
 
     ```
-    make unit-test
+    make test
     ```
 
 - **Run integration tests**:
