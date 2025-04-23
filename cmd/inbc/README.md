@@ -12,18 +12,20 @@
 
 </details>
 
-# Introduction
+## Introduction
 
 Intel® In-Band Manageability command-line utility, INBC, is a software utility running on a host managing an Edge IoT Device.  It allows the user to perform Device Management operations like system update from the command-line. This may be used in lieu of using the cloud update mechanism.
 
-# Commands
+## Commands
 
-## SOTA
+### SOTA
 
-### Description
+#### Description
+
 Performs a Software Over The Air (SOTA) update.
 
-#### Edge Device
+##### Edge Device
+
 There are two possible software updates on an edge device depending on the Operating System on the device. If the OS is Ubuntu, then the update will be performed using the Ubuntu update mechanism.
 
 System update flow can be broken into two parts:
@@ -39,7 +41,7 @@ SOTA on Ubuntu and EMT OS is supported in 3 modes:
 
 By default, when SOTA is performing an installation, it will upgrade all eligible packages. The user can optionally specify a list of packages to upgrade (or install if not present) via the [--package-list, -p=PACKAGES] option.
 
-### Usage
+#### Usage
 
 ```commandline
 inbc sota {--uri URI} 
@@ -49,15 +51,15 @@ inbc sota {--uri URI}
    [--package-list PACKAGES]
 ```
 
-### Examples
+#### Examples
 
-#### Edge Device on Ubuntu in Update/Full mode
+##### Edge Device on Ubuntu in Update/Full mode
 
 ```commandline
 inbc sota --reboot=false
 ```
 
-#### Edge Device on Ubuntu in Update/Full mode with package list
+##### Edge Device on Ubuntu in Update/Full mode with package list
 
 ```commandline
 inbc sota --package-list less,git --reboot=false
@@ -66,13 +68,13 @@ inbc sota --package-list less,git --reboot=false
 This will install (or upgrade) the less and git packages and any necessary
 dependencies.
 
-#### Edge Device on Ubuntu in download-only mode
+##### Edge Device on Ubuntu in download-only mode
 
 ```commandline
 inbc sota --mode download-only --reboot=false
 ```
 
-#### Edge Device on Ubuntu in download-only mode with package list
+##### Edge Device on Ubuntu in download-only mode with package list
 
 ```commandline
 inbc sota --mode download-only --package-list=less,git --reboot=false
@@ -81,13 +83,13 @@ inbc sota --mode download-only --package-list=less,git --reboot=false
 This will download the latest versions of less and git and any necessary
 dependencies.
 
-#### Edge Device on Ubuntu in no-download mode
+##### Edge Device on Ubuntu in no-download mode
 
 ```commandline
 inbc sota --mode no-download --reboot=false
 ```
 
-#### Edge Device on Ubuntu in no-download mode with package list
+##### Edge Device on Ubuntu in no-download mode with package list
 
 ```commandline
 inbc sota --mode no-download --package-list less,git
@@ -97,16 +99,16 @@ This will upgrade or install the packages and get any necessary
 dependencies, as long as all packages needed to do this have already been
 downloaded. (see download-only mode)
 
-## SOURCE APPLICATION ADD
+### SOURCE APPLICATION ADD
 
-### Description
+#### Description
 
 Optionally Downloads and encrypts GPG key and stores it on the system under <em>/usr/share/keyrings</em>.  Creates a file under <em>/etc/apt/sources.list.d</em> to store the update source information.
 This list file is used during 'sudo apt update' to update the application.  <em>Deb882</em> format may be used instead of downloading a GPG key.
 
 **NOTE:** Make sure to add gpgKeyUri to the trustedrepositories before using INBC source application ADD command
 
-### Usage
+#### Usage
 
 ```commandline
 inbc source application add
@@ -116,9 +118,9 @@ inbc source application add
    [--gpgKeyName GPG_KEY_NAME]
 ```
 
-### Example
+#### Example
 
-#### Add an Application Source (non-deb822 format with remote GPG key)
+##### Add an Application Source (non-deb822 format with remote GPG key)
 
 ```commandline
 inbc source application add 
@@ -128,7 +130,7 @@ inbc source application add
    --filename google-chrome.list
 ```
 
-#### Add an Application Source (using deb822 format)
+##### Add an Application Source (using deb822 format)
 
 **NOTE:** In the Signed-By: Section, use the following guidelines.
 
@@ -178,13 +180,13 @@ inbc source application add
    --filename google-chrome.sources
 ```
 
-## SOURCE APPLICATION REMOVE
+### SOURCE APPLICATION REMOVE
 
-### Description
+#### Description
 
 Removes the source file from under /etc/apt/sources.list.d/.  Optionally removes the GPG key file from under <em>/usr/share/keyrings</em>.
 
-### Usage
+#### Usage
 
 ```commandline
 inbc source application remove    
@@ -192,9 +194,9 @@ inbc source application remove
    [--gpgKeyName GPG_KEY_NAME]
 ```
 
-### Example
+#### Example
 
-#### Remove an application source (Both GPG key and Source File)
+##### Remove an application source (Both GPG key and Source File)
 
 ```commandline
 inbc source application remove 
@@ -202,28 +204,29 @@ inbc source application remove
     --filename google-chrome.list
 ```
 
-#### Remove an application source (deb822 format)
+##### Remove an application source (deb822 format)
 
 ```commandline
 inbc source application remove 
     --filename google-chrome.sources
 ```
 
-## SOURCE OS UPDATE
+### SOURCE OS UPDATE
 
-### Description
+#### Description
+
 Creates a new <em>/etc/apt/sources.list</em> file with only the sources provided
 
-### Usage
+#### Usage
 
 ```commandline
 inbc source os update
     {--sources SOURCES}
 ```
 
-### Example
+#### Example
 
-### Creates a new <em>/etc/apt/sources.list</em> file with only the two provided sources
+##### Creates a new <em>/etc/apt/sources.list</em> file with only the two provided sources
 
 ```commandline
 inbc source os update
