@@ -2,4 +2,4 @@ platform-observability-agent (VERSION) UNRELEASED; urgency=medium
 
   * GA release
 
- -- Intel <dummy@intel.com>  Fri, 29 Mar 2024 16:00:33 +0000
+ -- Node Agent Team <team@example.com> Fri, 29 Mar 2024 16:00:33 +0000
