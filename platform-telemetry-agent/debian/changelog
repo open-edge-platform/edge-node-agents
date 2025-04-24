@@ -1,5 +1,5 @@
 platform-telemetry-agent (VERSION) UNRELEASED; urgency=medium
 
-  * Initial Development.
+  * GA release
 
- -- Teoh Suh Haw <suh.haw.teoh@intel.com>  Wed, 29 Nov 2023 16:42:33 +0000
+ -- Platform Telemetry Agent Team <team@example.com> Fri, 29 Mar 2024 16:00:33 +0000

@@ -1,5 +1,5 @@
 Source: hardware-discovery-agent
-Maintainer: Intel <dummy@intel.com>
+Maintainer: Hardware Discovery Agent Team <team@example.com>
 Section: misc
 Priority: optional
 Standards-Version: 1.0.0
