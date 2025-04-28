@@ -30,6 +30,9 @@
 
 ## Node Agent Changelog
 
+### 1.7.0
+- Fix RS toekn error in logs
+
 ### 1.6.3
 - Update release service token check for anonymous token
 
