@@ -6,7 +6,7 @@
 
 ## Cluster Agent Changelog
 
-### 1.6.2
+### 1.7.0
 - Fix readiness reporting to NA during cluster install
 
 ### 1.6.1
