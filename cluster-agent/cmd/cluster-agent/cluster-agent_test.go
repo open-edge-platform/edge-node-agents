@@ -5,8 +5,10 @@
 package main_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"testing"
@@ -35,6 +37,7 @@ const uninstallFilePath = "/tmp/uninstall"
 
 var installCmd string = "touch " + installFilePath
 var uninstallCmd string = "touch " + uninstallFilePath
+var caBuffer bytes.Buffer
 
 // Execute Cluster Agent smoke test
 // The test intent is to check if Cluster Agent is able to execute cluster installation & deinstallation command.
@@ -68,6 +71,10 @@ func TestInstallUninstallCluster(t *testing.T) {
 	fmt.Println("Waiting for uninstallation command execution...")
 	require.NoError(t, waitForFile(ctx, uninstallFilePath))
 	fmt.Println("Uninstallation command executed!")
+
+	fmt.Println("Checking Status message to Status Server")
+	require.Contains(t, caBuffer.String(), "Status Ready")
+	caBuffer.Reset()
 
 	fmt.Println("Stopping Cluster Agent...")
 	_ = killProcess(ctx, caCmd.Process.Pid)
@@ -126,7 +133,7 @@ func startStatusServerMock(ctx context.Context, statusServerMockBinary string) (
 
 func startClusterAgent(ctx context.Context, clusterAgentBinary string) (*exec.Cmd, error) {
 	cmd := exec.CommandContext(ctx, clusterAgentBinary, "-config", testConfig)
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = io.MultiWriter(&caBuffer, os.Stdout)
 	cmd.Stderr = os.Stderr
 	return cmd, cmd.Start()
 }
