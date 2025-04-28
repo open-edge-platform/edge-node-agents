@@ -49,22 +49,22 @@ cover:
 	gocover-cobertura < $(BUILD_DIR)/coverage/profile > $(BUILD_DIR)/coverage.xml
 
 deb-push:
-  if [ -z "$(cat VERSION | grep 'dev')" ]; then
-	echo "Uploading artifacts..."
-	cd build/artifacts
+	if [ -z "$(cat VERSION | grep 'dev')" ]; then
+		echo "Uploading artifacts..."
+		cd build/artifacts
 
-	for DEB_PKG in *.deb; do
-		PKG_VER=$(dpkg-deb -f "${DEB_PKG}" Version)
-		PKG_NAME=$(dpkg-deb -f "${DEB_PKG}" Package)
-		#REPOSITORY=en/deb/${{ inputs.runner_version }}/${PKG_NAME}
-		REPOSITORY=en/deb/${PKG_NAME}
+		for DEB_PKG in *.deb; do
+			PKG_VER=$(dpkg-deb -f "${DEB_PKG}" Version)
+			PKG_NAME=$(dpkg-deb -f "${DEB_PKG}" Package)
+			#REPOSITORY=en/deb/${{ inputs.runner_version }}/${PKG_NAME}
+			REPOSITORY=en/deb/${PKG_NAME}
 
-		aws ecr create-repository --region us-west-2 --repository-name edge-orch/${REPOSITORY} || true
-		oras push ${REGISTRY}/edge-orch/${REPOSITORY}:${PKG_VER} \
-		--artifact-type application/vnd.intel.orch.deb ./${DEB_PKG}
-	done
+			aws ecr create-repository --region us-west-2 --repository-name edge-orch/${REPOSITORY} || true
+			oras push ${REGISTRY}/edge-orch/${REPOSITORY}:${PKG_VER} \
+			--artifact-type application/vnd.intel.orch.deb ./${DEB_PKG}
+		done
 
-	cd -
+		cd -
 	fi
 
 #### Protobuf code generation tooling ###
