@@ -1,5 +1,5 @@
 Source: platform-telemetry-agent
-Maintainer: Teoh Suh Haw <suh.haw.teoh@intel.com>
+Maintainer: Platform Telemetry Agent Team <team@example.com>
 Section: misc
 Priority: optional
 Standards-Version: 1.0.0

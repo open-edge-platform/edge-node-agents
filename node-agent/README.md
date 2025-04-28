@@ -126,7 +126,7 @@ sudo journalctl -u node-agent
 - **Run unit tests**:
 
     ```
-    make unit-test
+    make test
     ```
 
 - **Run integration tests**:

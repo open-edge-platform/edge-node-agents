@@ -125,7 +125,7 @@ sudo journalctl -u cluster-agent
 - **Run unit tests**:
 
     ```
-    make unit-test
+    make test
     ```
 
 - **Run integration tests**:

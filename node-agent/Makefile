@@ -22,7 +22,7 @@ else
 	include ../common.mk
 endif
 
-.PHONY: all build clean help lint package unit-test fuzztest tarball
+.PHONY: all build clean help lint package test fuzztest tarball
 
 all: build lint test
 
@@ -71,9 +71,11 @@ hmmbuild:
 
 build: nabuild hmmbuild
 
-unit-test: common-unit-test
+test: common-unit-test
 
 integration_test: nabuild_with_race hmmbuild
+	sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
+	sudo update-ca-certificates
 	NA_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/node-agent_race \
 	HMM_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/hostmgr-mock \
 	TEST_CONFIG_PATH=$(shell pwd)/test/test_config.yaml \
