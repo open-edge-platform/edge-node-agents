@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-#  test
 
 SHELL=/bin/bash -o pipefail
 NAME ?= cluster-agent
@@ -141,3 +140,6 @@ package_test:
 	sudo apt-get purge -y cluster-agent
 
 tarball: common-tarball
+
+deb-push:
+	@echo "no deb packages to build, skipping"

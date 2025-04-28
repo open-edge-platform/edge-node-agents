@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # hardware-discovery-agent Makefile
-#  test
 
 SHELL = bash -eu -o pipefail
 
@@ -167,3 +166,6 @@ tarball:
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile
 	cd $(TARBALL_DIR) && go mod tidy && go mod vendor
 	tar -zcf $(BUILD_DIR)/$(FULL_NAME)-$(PKG_VERSION).tar.gz --directory=$(BUILD_DIR) $(FULL_NAME)-$(PKG_VERSION)
+
+deb-push:
+	@echo "no deb packages to build, skipping"
