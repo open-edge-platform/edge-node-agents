@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-# test
+#  test
 .DEFAULT_GOAL := help
 
 SCRIPTS_DIR := ./ci_scripts

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # hardware-discovery-agent Makefile
-# test
+#  test
 
 SHELL = bash -eu -o pipefail
 

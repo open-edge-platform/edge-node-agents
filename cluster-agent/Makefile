@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-# test
+#  test
 
 SHELL=/bin/bash -o pipefail
 NAME ?= cluster-agent
