@@ -14,6 +14,7 @@ else
 	PKG_VERSION = $(VERSION)
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ../common.mk)","")
@@ -138,3 +139,17 @@ tarball:
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile
 	cd $(TARBALL_DIR) && go mod tidy && go mod vendor
 	tar -zcf $(BUILD_DIR)/$(NAME)-$(PKG_VERSION).tar.gz --directory=$(BUILD_DIR) $(NAME)-$(PKG_VERSION)
+
+deb-push:
+	if [ -z "$$(cat VERSION | grep 'dev')" ]; then \
+		echo "Uploading artifacts..."; \
+		cd build/artifacts; \
+		for DEB_PKG in *.deb; do \
+			PKG_VER=$$(dpkg-deb -f "$${DEB_PKG}" Version); \
+			PKG_NAME=$$(dpkg-deb -f "$${DEB_PKG}" Package); \
+			REPOSITORY=en/deb/$${PKG_NAME}; \
+			oras push $${REGISTRY}/edge-orch/$${REPOSITORY}:$${PKG_VER} \
+			--artifact-type application/vnd.intel.orch.deb ./$${DEB_PKG}; \
+		done; \
+		cd -; \
+	fi
