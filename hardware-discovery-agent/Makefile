@@ -176,7 +176,6 @@ deb-push:
 			PKG_VER=$(dpkg-deb -f "$${DEB_PKG}" Version); \
 			PKG_NAME=$(dpkg-deb -f "$${DEB_PKG}" Package); \
 			REPOSITORY=en/deb/$${PKG_NAME}; \
-			aws ecr create-repository --region us-west-2 --repository-name edge-orch/$${REPOSITORY} || true; \
 			oras push $${REGISTRY}/edge-orch/$${REPOSITORY}:$${PKG_VER} \
 			--artifact-type application/vnd.intel.orch.deb ./$${DEB_PKG}; \
 		done; \
