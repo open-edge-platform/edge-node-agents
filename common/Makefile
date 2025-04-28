@@ -6,7 +6,7 @@
 SCRIPTS_DIR := ./ci_scripts
 BUILD_DIR ?= build/artifacts
 APIPKG_DIR := pkg/api
-REGISTRY='080137407410.dkr.ecr.us-west-2.amazonaws.com'
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile
 include ../common.mk
