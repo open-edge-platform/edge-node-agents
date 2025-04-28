@@ -14,7 +14,7 @@
 
 #### Go Targets ####
 
-GOCMD := GOPRIVATE="github.com/open-edge-platform/*" go
+GOCMD := go
 
 #### Lint targets ####
 

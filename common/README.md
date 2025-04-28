@@ -33,7 +33,7 @@ The required Go version for the agents is outlined [here](https://github.com/ope
 - **Run unit tests**:
 
     ```
-    make unit-test
+    make test
     ```
 
 - **Run linters**:
