@@ -68,7 +68,7 @@ run-golang-unit-tests:
         -coverpkg=./internal/... -coverprofile=cover.out
     
     # Enforce minimum coverage threshold for internal/ directory
-    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=55.0 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
+    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=56.1 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
     SAVE ARTIFACT cover.out AS LOCAL build/cover.out
     
 generate-proto:
@@ -102,15 +102,38 @@ build-deb:
     BUILD +build
     FROM debian:bullseye
     WORKDIR /package
-    RUN mkdir -p DEBIAN usr/bin etc usr/lib/systemd/system
+    RUN mkdir -p DEBIAN usr/bin etc etc/apparmor.d usr/lib/systemd/system usr/share
+
+    # Copy the binaries to the package directory
     COPY build/inbc usr/bin/inbc
     COPY build/inbd usr/bin/inbd
-    RUN mkdir -p DEBIAN etc/apparmor.d
+
+    # Copy the configuration file to the package directory
+    COPY fpm-templates/etc/intel_manageability.conf etc/intel_manageability.conf
+
+    # Create the DEBIAN/conffiles file
+    RUN echo "/etc/intel_manageability.conf" >> DEBIAN/conffiles
+        
+    # Set ownership and permissions for the configuration file
+    RUN chown root:root etc/intel_manageability.conf
+    RUN chmod 644 etc/intel_manageability.conf
+
+    # Copy the schema file to the package directory
+    COPY fpm-templates/usr/share/inbd_schema.json usr/share/inbd_schema.json
+    
+    # Set ownership and permissions for the schema file
+    RUN chown root:root usr/share/inbd_schema.json
+    RUN chmod 644 usr/share/inbd_schema.json
+
+    # Copy other files    
     COPY fpm-templates/etc/apparmor.d/usr.bin.inbd etc/apparmor.d/usr.bin.inbd
     COPY fpm-templates/usr/bin/provision-tc usr/bin/provision-tc
-    COPY fpm-templates/etc/intel_manageability.conf etc/intel_manageability.conf
     COPY fpm-templates/usr/lib/systemd/system/inbd.service usr/lib/systemd/system/inbd.service
+    
+    # Create the control file
     RUN echo "Package: intel-inbm\nVersion: 0.0.0-unknown\nArchitecture: amd64\nMaintainer: Your Name <your-email@example.com>\nDescription: Intel In-Band Manageability Tools\n This package contains the inbc CLI and inbd daemon for Intel In-Band Manageability." > DEBIAN/control
+    
+    # Build the Debian package
     RUN dpkg-deb --build . /package/intel-inbm.deb
     SAVE ARTIFACT /package/intel-inbm.deb AS LOCAL ./build/intel-inbm.deb
 
