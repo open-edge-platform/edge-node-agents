@@ -6,6 +6,7 @@ version = 1
 [[annotations]]
 path = [
     "**/VERSION",
+    "**.md",
     "**/config/apparmor.d/**",
     "**/config/sudoers.d/**",
     "**/configs/apparmor.d/**",
