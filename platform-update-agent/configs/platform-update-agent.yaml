@@ -12,7 +12,7 @@ INBCGranularLogsPath: '/var/log/inbm-update-log.log'
 metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
 metricsInterval: 10s
 statusEndpoint: 'unix:///run/node-agent/node-agent.sock'
-tickerInterval: 10s
+tickerInterval: 20s
 jwt:
   accessTokenPath: '/etc/intel_edge_node/tokens/platform-update-agent/access_token'
 immediateDownloadWindow: 10m
