@@ -8,6 +8,7 @@ do
 		echo "Starting Platform Observability Metrics Service"
 		break
 	else
+		echo "Waiting on collector service to start"
 		sleep 10
 	fi
 done

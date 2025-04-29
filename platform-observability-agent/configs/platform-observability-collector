@@ -8,6 +8,7 @@ do
 	        echo "Starting Platform Observability Collector Service"
 		break
 	else
+		echo "Waiting for token"
         	sleep 10
 	fi
 done
