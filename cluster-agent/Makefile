@@ -15,6 +15,7 @@ else
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
 CA_VERSION="Cluster Agent v$(VERSION)-$(COMMIT)" \
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
@@ -140,3 +141,5 @@ package_test:
 	sudo apt-get purge -y cluster-agent
 
 tarball: common-tarball
+
+deb-push: common-deb-push

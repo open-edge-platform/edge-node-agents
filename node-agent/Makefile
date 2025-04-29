@@ -14,6 +14,7 @@ else
 	PKG_VERSION = $(VERSION)
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
@@ -144,3 +145,5 @@ package_test:
 	sudo apt-get purge -y node-agent caddy
 
 tarball: common-tarball
+
+deb-push: common-deb-push

@@ -59,3 +59,6 @@ buf-lint:
 buf-gen:
 	buf --version ;\
 	buf generate
+
+deb-push:
+	@echo "no deb packages to build, skipping"

@@ -11,6 +11,7 @@ GO_MOD_MODE ?= readonly
 FUZZTIME ?= 1s
 PKG_VERSION := $(shell if grep -q dev VERSION; then echo $$(cat VERSION)-$$(git rev-parse --short HEAD); else cat VERSION; fi)
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
@@ -129,3 +130,5 @@ package_test:
 	sudo apt-get purge -y platform-update-agent
 
 tarball: common-tarball
+
+deb-push: common-deb-push
