@@ -10,7 +10,7 @@ NO_UNIT := platform-observability-agent
 NO_PACKAGE := common
 NO_CLEAN := common
 
-.PHONY: build-agents unit-test-agents fuzztest-agents clean-agents help lint-agents package-agents tarball-agents
+.PHONY: build-agents test-agents fuzztest-agents clean-agents help lint-agents package-agents tarball-agents
 
 build-agents:
 	@# Help: runs `build` target for each sub directory/agents
@@ -19,11 +19,11 @@ build-agents:
 		$(MAKE) -C $$s build; \
 	done
 
-unit-test-agents:
-	@# Help: runs `unit-test` target for each sub directory/agents
+test-agents:
+	@# Help: runs `test` target for each sub directory/agents
 	@for s in $(filter-out $(NO_UNIT), $(SUBPROJECTS)); do \
 		echo "Testing $$s"; \
-	    $(MAKE) -C $$s unit-test; \
+	    $(MAKE) -C $$s test; \
 	done
 
 fuzztest-agents:

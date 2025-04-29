@@ -11,6 +11,7 @@ GO_MOD_MODE ?= readonly
 FUZZTIME ?= 1s
 PKG_VERSION := $(shell if grep -q dev VERSION; then echo $$(cat VERSION)-$$(git rev-parse --short HEAD); else cat VERSION; fi)
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
@@ -19,7 +20,7 @@ else
 	include ../common.mk
 endif
 
-.PHONY: all build clean help lint package unit-test fuzztest
+.PHONY: all build clean help lint package test fuzztest
 
 all: build lint test
 
@@ -84,7 +85,10 @@ fuzztest:
 	go test ./cmd/platform-update-agent/ -fuzz=FuzzGrpcCommunication -parallel=1 -fuzztime=${FUZZTIME}
 	go test ./cmd/platform-update-agent/ -fuzz=FuzzLogic -parallel=1 -fuzztime=${FUZZTIME}
 
-unit-test: common-unit-test
+test: common-unit-test
+
+integration_test:
+	@echo "no integration tests to run, skipping"
 
 cover_unit:
 	mkdir -p $(BUILD_DIR)/coverage/unit
@@ -126,3 +130,5 @@ package_test:
 	sudo apt-get purge -y platform-update-agent
 
 tarball: common-tarball
+
+deb-push: common-deb-push

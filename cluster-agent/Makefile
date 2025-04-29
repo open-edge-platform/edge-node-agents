@@ -15,6 +15,7 @@ else
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
 CA_VERSION="Cluster Agent v$(VERSION)-$(COMMIT)" \
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
@@ -23,7 +24,7 @@ else
 	include ../common.mk
 endif
 
-.PHONY: all build clean help lint list package unit-test fuzztest tarball
+.PHONY: all build clean help lint list package test fuzztest tarball
 
 all: build lint test
 
@@ -68,9 +69,11 @@ combuild:
 
 build: cabuild combuild ssmbuild
 
-unit-test: common-unit-test
+test: common-unit-test
 
 integration_test: cabuild_with_race combuild ssmbuild
+	sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
+	sudo update-ca-certificates
 	CA_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/cluster-agent_race \
 	COM_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/cluster-orch-mock \
 	SS_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/status-server-mock \
@@ -138,3 +141,5 @@ package_test:
 	sudo apt-get purge -y cluster-agent
 
 tarball: common-tarball
+
+deb-push: common-deb-push

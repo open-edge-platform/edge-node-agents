@@ -115,8 +115,6 @@ jobs:
         with:
           repository: open-edge-platform/orch-ci
           path: ci
-          ref: cgoea-patch-1
-          token: ${{ secrets.SYS_ORCH_GITHUB }}
 
       - name: Sanitize project folder
         run: |
@@ -161,22 +159,29 @@ jobs:
         run: |
           # Some caches from previous steps/jobs might be left, clean them up to avoid
           # "Cannot open: File exists" errors
+
           GOCACHE="$(go env GOCACHE)"
           GOMODCACHE="$(go env GOMODCACHE)"
+
           mkdir -p "${GOCACHE}" "${GOMODCACHE}" ~/.cache/golangci-lint
+
           echo "Cache sizes before removal:"
           sudo du -sh "${GOCACHE}"
           sudo du -sh "${GOMODCACHE}"
           sudo du -sh ~/.cache/golangci-lint
+
           sudo rm -rf "${GOCACHE:?}"/{*,.*} || true
           sudo rm -rf "${GOMODCACHE:?}"/{*,.*} || true
           sudo rm -rf ~/.cache/golangci-lint/{*,.*} || true
+
           echo "Cache sizes after removal:"
           sudo du -sh "${GOCACHE}"
           sudo du -sh "${GOMODCACHE}"
           sudo du -sh ~/.cache/golangci-lint
+
           echo "GOCACHE=$GOCACHE" >> "$GITHUB_ENV"
           echo "GOMODCACHE=$GOMODCACHE" >> "$GITHUB_ENV"
+  
 
       - name: Setup CI environment
         uses: ./ci/.github/actions/bootstrap
@@ -197,7 +202,7 @@ jobs:
           restore-keys: |
             ${{ env.REPO_PROJECT }}-${{ runner.os }}-go-${{ env.GOLANG_VER }}-
             ${{ env.REPO_PROJECT }}-${{ runner.os }}-go-
-
+      
       - name: Version Check
         if: ${{ inputs.run_version_check == true }}
         env:
@@ -210,105 +215,97 @@ jobs:
           fi
 
       - name: Build Code
-        if: ${{ (inputs.run_build == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') && (inputs.project_folder != '') }}
+        if: ${{ inputs.run_build == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
-          echo "Building the code"
           make build
 
       - name: Lint Code
-        if: ${{ (inputs.run_lint == true) && (inputs.project_folder != 'platform-observability-agent') && (inputs.project_folder != '') }}
+        if: ${{ inputs.run_lint == true }}
         working-directory: ${{ inputs.project_folder }}
         run: |
           make lint
 
       - name: Test Code
-        if: ${{ (inputs.run_test == true) && (inputs.project_folder != 'platform-observability-agent') && (inputs.project_folder != '') }}
+        if: ${{ inputs.run_test == true }}
         working-directory: ${{ inputs.project_folder }}
         run: |
-          make unit-test
+          make test
 
-      - name: Cert setup for integration tests
-        if: ${{ (inputs.project_folder == 'cluster-agent') || (inputs.project_folder == 'hardware-discovery-agent') || (inputs.project_folder == 'node-agent') }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
+      - name: Save Go cache
+        if: ${{ inputs.cache_go }}
+        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.4
+        with:
+          path: |
+            ${{ env.GOCACHE }}
+            ${{ env.GOMODCACHE }}
+            ~/.cache/golangci-lint
+          key: ${{ steps.restored-project-go-cache.outputs.cache-primary-key }}
+
+      - name: Remove Go-related cache when not needed anymore to free up space
+        if: ${{ inputs.remove_cache_go }}
         run: |
-          sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
-          sudo update-ca-certificates
+          GOCACHE="$(go env GOCACHE)"
+          GOMODCACHE="$(go env GOMODCACHE)"
+
+          echo "Cache sizes before removal:"
+          sudo du -sh "${GOCACHE}"
+          sudo du -sh "${GOMODCACHE}"
+          sudo du -sh ~/.cache/golangci-lint
+
+          sudo rm -rf "${GOCACHE:?}"/{*,.*} || true
+          sudo rm -rf "${GOMODCACHE:?}"/{*,.*} || true
+          sudo rm -rf ~/.cache/golangci-lint/{*,.*} || true
+
+          echo "Cache sizes after removal:"
+          sudo du -sh "${GOCACHE}"
+          sudo du -sh "${GOMODCACHE}"
+          sudo du -sh ~/.cache/golangci-lint
 
       - name: Integration test
-        if: ${{ (inputs.run_integration_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') && (inputs.project_folder != 'platform-update-agent') && (inputs.project_folder != '') }}
+        if: ${{ inputs.run_integration_test == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
           make integration_test
 
       - name: Fuzz test
-        if: ${{ (inputs.run_integration_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') && (inputs.project_folder != '') }}
+        if: ${{ inputs.run_integration_test == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
           make fuzztest
 
-      - name: INBM dependency download
-        if: ${{ inputs.project_folder == 'platform-update-agent' }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          make inbmdownload
-
-      - name: POA dependency download
-        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          sudo make package_depends
-          make download_deps
-
       - name: Build Package
-        if: ${{ (inputs.run_package_build == true) && (inputs.project_folder != 'common') && (inputs.project_folder != '') }}
+        if: ${{ inputs.run_package_build == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
-          echo "Building the package"
+          if [ "${{ inputs.project_folder }}" == "platform-update-agent" ]; then
+              make inbmdownload
+          fi
           make package
 
-      - name: POA dependency clean up
-        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          rm -rf assets
-
-      - name: Apt update
-        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          sudo apt update
-
       - name: Package test
-        if: ${{ (inputs.run_package_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-update-agent') && (inputs.project_folder != '') }}
+        if: ${{ inputs.run_package_test == true}}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
+          #sudo apt update
           #make package_test
           echo "Test package"
 
-      - name: Shellcheck common scripts
-        if: ${{ (inputs.run_shellcheck_common == true) && (inputs.project_folder == 'common') }}
+      - name: Shellcheck scripts
+        if: ${{ inputs.run_shellcheck_common == true }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
-          find . -type f -name *.sh -exec "shellcheck" "-e" "SC2010,SC2086" {} +
-
-      - name: Shellcheck agent scripts
-        if: ${{ (inputs.run_shellcheck_agent == true) && (inputs.project_folder == 'platform-observability-agent') }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
-        run: |
-          find scripts/ -type f -name *.sh -exec "shellcheck" {} +
+          if [ "${{ inputs.project_folder }}" == "common" ]; then
+              find . -type f -name *.sh -exec "shellcheck" "-e" "SC2010,SC2086" {} +
+          elif [ "${{ inputs.project_folder }}" == "platform-observability-agent" ]; then
+              find scripts/ -type f -name *.sh -exec "shellcheck" {} +
+          fi
 
       - name: Send failure email
         if: ${{ failure() }}
