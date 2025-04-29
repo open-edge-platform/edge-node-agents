@@ -57,7 +57,13 @@ func newTestIDPServer(t *testing.T, method string, response any, resource string
 		}
 		_, err := io.ReadAll(req.Body)
 		require.Nil(t, err)
-		res, err := json.Marshal(response)
+		var res []byte
+		if str, ok := response.(string); ok {
+			res = []byte(str)
+		} else {
+			res, err = json.Marshal(response)
+			require.Nil(t, err)
+		}
 		require.Nil(t, err)
 		_, err = rw.Write(res)
 		require.Nil(t, err)
@@ -207,5 +213,32 @@ func TestProvisionReleaseServiceToken(t *testing.T) {
 	relToken, err := relAuthCli.ProvisionReleaseServiceToken(ctx, authConf, accessToken)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, relToken.AccessToken)
+	defer os.RemoveAll(testAuthClientCredsPath)
+}
+
+func TestProvisionReleaseServiceTokenAnonymous(t *testing.T) {
+	accessToken := "TEST-ACCESS-TOKEN"
+	authConf := getAuthConfig()
+
+	token := "anonymous"
+	ts := newTestIDPServer(t, http.MethodGet, token, "/token", http.StatusOK)
+	defer ts.Close()
+
+	u, _ := url.Parse(ts.URL)
+
+	// Add mock server certificate to system cert pool
+	certPool, _ := x509.SystemCertPool()
+	certPool.AddCert(ts.Certificate())
+
+	ctx := context.Background()
+
+	// Now create release service token
+	relAuthCli, err := comms.GetAuthCli(u.Host, guid, certPool)
+	assert.Nil(t, err)
+
+	relToken, err := relAuthCli.ProvisionReleaseServiceToken(ctx, authConf, accessToken)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, relToken.AccessToken)
+	assert.Equal(t, relToken.AccessToken, token)
 	defer os.RemoveAll(testAuthClientCredsPath)
 }
