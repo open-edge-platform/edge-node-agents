@@ -131,16 +131,4 @@ package_test:
 
 tarball: common-tarball
 
-deb-push:
-	if [ -z "$$(cat VERSION | grep 'dev')" ]; then \
-		echo "Uploading artifacts..."; \
-		cd build/artifacts; \
-		for DEB_PKG in *.deb; do \
-			PKG_VER=$$(dpkg-deb -f "$${DEB_PKG}" Version); \
-			PKG_NAME=$$(dpkg-deb -f "$${DEB_PKG}" Package); \
-			REPOSITORY=en/deb/$${PKG_NAME}; \
-			oras push $${REGISTRY}/edge-orch/$${REPOSITORY}:$${PKG_VER} \
-			--artifact-type application/vnd.intel.orch.deb ./$${DEB_PKG}; \
-		done; \
-		cd -; \
-	fi
+deb-push: common-deb-push
