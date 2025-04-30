@@ -1,3 +1,7 @@
+<!---
+  SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+  SPDX-License-Identifier: Apache-2.0
+-->
 # Contributors
 
 ## Special thanks for all the people who had helped this project so far
