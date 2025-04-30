@@ -186,7 +186,6 @@ jobs:
       - name: Setup CI environment
         uses: ./ci/.github/actions/bootstrap
         with:
-          ref: cgoea-patch-1
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
 
       - name: Restore Go cache
