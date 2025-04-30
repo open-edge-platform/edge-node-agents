@@ -11,6 +11,7 @@ include <tunables/global>
   network inet6 dgram,
   network netlink raw,
 
+  /etc/edge-node/node/confs/platform-observability-collector ix,
   /etc/intel_edge_node/tokens/platform-observability-agent/access_token r,
   /etc/hosts r,
   /etc/passwd r,

@@ -1,27 +1,17 @@
 ---
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-name: Pre-Merge CI Pipeline
+name: Post-Merge CI Pipeline
 on:
   workflow_call:
     inputs:
       runner_version:
-        description: "Runner version to use"
+        description: "Runner verison to use"
         required: true
         default: "ubuntu-24.04"
         type: string
       run_security_scans:
         description: "Run security scans"
-        required: false
-        default: true
-        type: boolean
-      run_version_check:
-        description: "Run version check"
-        required: false
-        default: true
-        type: boolean
-      run_reuse_check:
-        description: "Header license scan with reuse"
         required: false
         default: true
         type: boolean
@@ -60,13 +50,23 @@ on:
         required: false
         default: true
         type: boolean
-      run_shellcheck_common:
-        description: "Run shellcheck on common scripts"
+      run_scan_package:
+        description: "Run scan package"
+        required: true
+        default: true
+        type: boolean
+      run_artifact:
+        description: "Run artifact"
         required: false
         default: true
         type: boolean
-      run_shellcheck_agent:
-        description: "Run shellcheck on agent scripts"
+      run_version_tag:
+        description: "Run version tag"
+        required: false
+        default: true
+        type: boolean
+      run_version_dev:
+        description: "Run version dev"
         required: false
         default: true
         type: boolean
@@ -93,7 +93,7 @@ on:
         default: false
         type: boolean
 jobs:
-  run-repo-pipelines:
+  run-repo-pipeline:
     runs-on: ${{ inputs.runner_version }}
     env:
       GIT_SHORT_URL: ${{ github.repository }}
@@ -102,91 +102,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          persist-credentials: false # Do not persist credentials, otherwise they will clash with credentials set by bootstrap action
           fetch-depth: 0 # Fetch all history, WO sporadic issue with missing tags
           fetch-tags: true # Fetch tags
           ref: ${{ github.head_ref }} # Checkout the branch that triggered the workflow to avoid detached HEAD
-
-      - name: REUSE Compliance Check
-        if: ${{ inputs.run_reuse_check == true }}
-        uses: fsfe/reuse-action@bb774aa972c2a89ff34781233d275075cbddf542  # v5.0.0
 
       - name: Checkout action repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: open-edge-platform/orch-ci
           path: ci
-
-      - name: Sanitize project folder
-        run: |
-          SANITIZED_REPORT_PATH=$(echo "${{ inputs.project_folder }}" | tr '/' '-')
-          echo "SANITIZED_REPORT_PATH=${SANITIZED_REPORT_PATH}" >> $GITHUB_ENV
-
-      - name: Run ClamAV Scan
-        if: ${{ inputs.run_security_scans }}
-        uses: open-edge-platform/orch-ci/.github/actions/clamav@40d61a820157bc9b70d3f2bdc5aec786073d48f2
-        with:
-          report-path: clamav_scan_report-${{ inputs.project_folder }}.txt
-          project-folder: ${{ inputs.project_folder }}
-
-      - name: Upload ClamAV Scan Report
-        if: ${{ inputs.run_security_scans }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
-        with:
-          name: ${{ env.CLAMAV_ARTIFACT_NAME }}
-          path: ${{ env.SANITIZED_CLAMAV_REPORT_PATH }}
-
-      - name: Run Trivy Filesystem Scan
-        if: ${{ inputs.run_security_scans }}
-        uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5  # v0.30.0
-        with:
-          scan-type: 'fs'
-          scan-ref: ${{ inputs.project_folder }}
-          format: 'table'
-          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-          ignore-unfixed: true
-          scanners: 'vuln,misconfig,secret'
-          output: "trivy_scan_report-${{ env.SANITIZED_REPORT_PATH }}.txt"
-
-      - name: Upload Trivy Scan Report
-        if: ${{ inputs.run_security_scans }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
-        with:
-          name: trivy-scan-report-${{ env.SANITIZED_REPORT_PATH }}
-          path: trivy_scan_report-${{ env.SANITIZED_REPORT_PATH }}.txt
+          ref: cgoea-patch-1
+          token: ${{ secrets.SYS_ORCH_GITHUB }}
 
       - name: Make sure directories where the cache will be restored exist and are empty
         if: ${{ inputs.cache_go }}
         run: |
           # Some caches from previous steps/jobs might be left, clean them up to avoid
           # "Cannot open: File exists" errors
-
           GOCACHE="$(go env GOCACHE)"
           GOMODCACHE="$(go env GOMODCACHE)"
-
           mkdir -p "${GOCACHE}" "${GOMODCACHE}" ~/.cache/golangci-lint
-
           echo "Cache sizes before removal:"
           sudo du -sh "${GOCACHE}"
           sudo du -sh "${GOMODCACHE}"
           sudo du -sh ~/.cache/golangci-lint
-
           sudo rm -rf "${GOCACHE:?}"/{*,.*} || true
           sudo rm -rf "${GOMODCACHE:?}"/{*,.*} || true
           sudo rm -rf ~/.cache/golangci-lint/{*,.*} || true
-
           echo "Cache sizes after removal:"
           sudo du -sh "${GOCACHE}"
           sudo du -sh "${GOMODCACHE}"
           sudo du -sh ~/.cache/golangci-lint
-
           echo "GOCACHE=$GOCACHE" >> "$GITHUB_ENV"
           echo "GOMODCACHE=$GOMODCACHE" >> "$GITHUB_ENV"
-  
 
       - name: Setup CI environment
         uses: ./ci/.github/actions/bootstrap
         with:
-          ref: cgoea-patch-1
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
 
       - name: Restore Go cache
@@ -202,110 +155,157 @@ jobs:
           restore-keys: |
             ${{ env.REPO_PROJECT }}-${{ runner.os }}-go-${{ env.GOLANG_VER }}-
             ${{ env.REPO_PROJECT }}-${{ runner.os }}-go-
-      
-      - name: Version Check
-        if: ${{ inputs.run_version_check == true }}
-        env:
-          BASEDIR: ${{ inputs.project_folder }}
+
+      - name: Security Scans
+        if: ${{ inputs.run_security_scans == true }}
         run: |
-          if [ -n "${{ inputs.prefix_tag_separator }}" ]; then
-            ./ci/scripts/version-check.sh "${{ inputs.project_folder }}${{ inputs.prefix_tag_separator }}"
-          else
-            ./ci/scripts/version-check.sh
-          fi
+          echo 'Call scanners from a different yml'
 
       - name: Build Code
-        if: ${{ inputs.run_build == true }}
+        if: ${{ (inputs.run_build == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
+          echo "Building the code"
           make build
 
       - name: Lint Code
-        if: ${{ inputs.run_lint == true }}
+        if: ${{ (inputs.run_lint == true) && (inputs.project_folder != 'platform-observability-agent') }}
         working-directory: ${{ inputs.project_folder }}
         run: |
           make lint
 
       - name: Test Code
-        if: ${{ inputs.run_test == true }}
+        if: ${{ (inputs.run_test == true) && (inputs.project_folder != 'platform-observability-agent') }}
         working-directory: ${{ inputs.project_folder }}
         run: |
-          make test
+          make unit-test
 
-      - name: Save Go cache
-        if: ${{ inputs.cache_go }}
-        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.4
-        with:
-          path: |
-            ${{ env.GOCACHE }}
-            ${{ env.GOMODCACHE }}
-            ~/.cache/golangci-lint
-          key: ${{ steps.restored-project-go-cache.outputs.cache-primary-key }}
-
-      - name: Remove Go-related cache when not needed anymore to free up space
-        if: ${{ inputs.remove_cache_go }}
+      - name: Cert setup for integration tests
+        if: ${{ (inputs.project_folder == 'cluster-agent') || (inputs.project_folder == 'hardware-discovery-agent') || (inputs.project_folder == 'node-agent') }}
+        working-directory: ${{ inputs.project_folder }}
+        shell: bash
         run: |
-          GOCACHE="$(go env GOCACHE)"
-          GOMODCACHE="$(go env GOMODCACHE)"
-
-          echo "Cache sizes before removal:"
-          sudo du -sh "${GOCACHE}"
-          sudo du -sh "${GOMODCACHE}"
-          sudo du -sh ~/.cache/golangci-lint
-
-          sudo rm -rf "${GOCACHE:?}"/{*,.*} || true
-          sudo rm -rf "${GOMODCACHE:?}"/{*,.*} || true
-          sudo rm -rf ~/.cache/golangci-lint/{*,.*} || true
-
-          echo "Cache sizes after removal:"
-          sudo du -sh "${GOCACHE}"
-          sudo du -sh "${GOMODCACHE}"
-          sudo du -sh ~/.cache/golangci-lint
+          sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
+          sudo update-ca-certificates
 
       - name: Integration test
-        if: ${{ inputs.run_integration_test == true }}
+        if: ${{ (inputs.run_integration_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') && (inputs.project_folder != 'platform-update-agent') }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
           make integration_test
 
       - name: Fuzz test
-        if: ${{ inputs.run_integration_test == true }}
+        if: ${{ (inputs.run_integration_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-observability-agent') }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
           make fuzztest
 
-      - name: Build Package
-        if: ${{ inputs.run_package_build == true }}
+      - name: INBM dependency download
+        if: ${{ inputs.project_folder == 'platform-update-agent' }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
-          if [ "${{ inputs.project_folder }}" == "platform-update-agent" ]; then
-              make inbmdownload
-          fi
+          make inbmdownload
+
+      - name: POA dependency download
+        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
+        working-directory: ${{ inputs.project_folder }}
+        shell: bash
+        run: |
+          sudo make package_depends
+          make download_deps
+
+      - name: Build Package
+        if: ${{ (inputs.run_package_build == true) && (inputs.project_folder != 'common') }}
+        working-directory: ${{ inputs.project_folder }}
+        shell: bash
+        run: |
+          echo "Building the package"
           make package
 
-      - name: Package test
-        if: ${{ inputs.run_package_test == true}}
+      - name: POA dependency clean up
+        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
         working-directory: ${{ inputs.project_folder }}
         shell: bash
         run: |
-          #sudo apt update
+          rm -rf assets
+
+      - name: Apt update
+        if: ${{ inputs.project_folder == 'platform-observability-agent' }}
+        working-directory: ${{ inputs.project_folder }}
+        shell: bash
+        run: |
+          sudo apt update
+
+      - name: Package test
+        if: ${{ (inputs.run_package_test == true) && (inputs.project_folder != 'common') && (inputs.project_folder != 'platform-update-agent') }}
+        working-directory: ${{ inputs.project_folder }}
+        shell: bash
+        run: |
           #make package_test
           echo "Test package"
 
-      - name: Shellcheck scripts
-        if: ${{ inputs.run_shellcheck_common == true }}
-        working-directory: ${{ inputs.project_folder }}
-        shell: bash
+      - name: Scan Packages
+        if: ${{ (inputs.run_scan_package == true) && (inputs.project_folder != 'common') }}
         run: |
-          if [ "${{ inputs.project_folder }}" == "common" ]; then
-              find . -type f -name *.sh -exec "shellcheck" "-e" "SC2010,SC2086" {} +
-          elif [ "${{ inputs.project_folder }}" == "platform-observability-agent" ]; then
-              find scripts/ -type f -name *.sh -exec "shellcheck" {} +
+          echo "Scanning package..."
+
+      - name: Configure AWS credentials
+        if: ${{ inputs.run_artifact == true }}
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-access-key-id: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}
+          aws-secret-access-key: ${{ secrets.NO_AUTH_ECR_PUSH_PASSWD }}
+          aws-region: us-west-2
+      
+      - name: Login to Amazon ECR
+        if: ${{ inputs.run_artifact == true }}
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+        with:
+          registries: "080137407410"
+
+      - name: Push Agent packages
+        if: ${{ (inputs.run_artifact == true) && (inputs.project_folder != 'common') }}
+        working-directory: ${{ inputs.project_folder }}
+        run: |
+          REGISTRY='080137407410.dkr.ecr.us-west-2.amazonaws.com'
+
+          if [ -z "$(cat VERSION | grep 'dev')" ]; then
+            echo "Uploading artifacts..."
+            cd build/artifacts
+
+            for DEB_PKG in *.deb; do
+              PKG_VER=$(dpkg-deb -f "${DEB_PKG}" Version)
+              PKG_NAME=$(dpkg-deb -f "${DEB_PKG}" Package)
+              #REPOSITORY=en/deb/${{ inputs.runner_version }}/${PKG_NAME}
+              REPOSITORY=en/deb/${PKG_NAME}
+
+              aws ecr create-repository --region us-west-2 --repository-name edge-orch/${REPOSITORY} || true
+              oras push ${REGISTRY}/edge-orch/${REPOSITORY}:${PKG_VER} \
+              --artifact-type application/vnd.intel.orch.deb ./${DEB_PKG}
+            done
+
+            cd -
           fi
+
+      - name: Version Tag
+        if: ${{ inputs.run_version_tag }}
+        working-directory: ${{ inputs.project_folder }}
+        run: |
+          if [ -n "${{ inputs.prefix_tag_separator }}" ]; then
+            $GITHUB_WORKSPACE/ci/scripts/version-tag-param.sh "${{ inputs.project_folder }}${{ inputs.prefix_tag_separator }}"
+          else
+            $GITHUB_WORKSPACE/ci/scripts/version-tag.sh
+          fi
+
+      - name: Version dev
+        if: ${{ inputs.run_version_dev }}
+        run: |
+          # Add your version dev commands here
+          echo "Versioning dev..."
 
       - name: Send failure email
         if: ${{ failure() }}

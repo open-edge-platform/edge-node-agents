@@ -48,6 +48,9 @@
 
 ## Platform Observability Agent Changelog
 
+### 1.8.1
+- Update log and metrics service to start after collector service
+
 ### 1.8.0
 - Initial platform observability agent release
 
