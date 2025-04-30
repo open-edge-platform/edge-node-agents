@@ -8,13 +8,13 @@ require (
 	github.com/open-edge-platform/edge-node-agents/common v1.6.8
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/oauth2 v0.28.0
+	golang.org/x/oauth2 v0.29.0
 	gopkg.in/yaml.v3 v3.0.1
 	oras.land/oras-go/v2 v2.5.0
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250307204501-0409229c3780.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250425153114-8976f5be98c1.1 // indirect
 	cel.dev/expr v0.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
@@ -65,5 +65,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
 	golang.org/x/sys v0.31.0 // indirect
-	google.golang.org/grpc v1.71.1
+	google.golang.org/grpc v1.72.0
 )
