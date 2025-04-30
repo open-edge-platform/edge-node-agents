@@ -30,7 +30,7 @@
 
 ## Node Agent Changelog
 
-### 1.7.0
+### 1.6.3
 - Update release service token check for anonymous token
 
 ### 1.6.2
