@@ -261,6 +261,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
+          set -eu -o pipefail
           if [ -n "${{ inputs.prefix_tag_separator }}" ]; then
             $GITHUB_WORKSPACE/ci/scripts/version-tag-param.sh "${{ inputs.project_folder }}${{ inputs.prefix_tag_separator }}"
           else
