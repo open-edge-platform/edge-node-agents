@@ -15,7 +15,6 @@ TELEGRAF_DIR = telegraf_$(TELEGRAF_VERSION)
 OTELCOL_VERSION = 0.122.1
 OTELCOL_DIR = otelcol_$(OTELCOL_VERSION)
 
-
 VERSION := $(shell cat VERSION)
 COMMIT := $(shell git rev-parse --short HEAD)
 ifneq (,$(findstring dev,$(VERSION)))
