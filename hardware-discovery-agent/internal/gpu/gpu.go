@@ -22,6 +22,10 @@ type Gpu struct {
 
 func parseGpuDetails(gpuDevice, infoType string) []string {
 	gpuInfo := strings.Split(gpuDevice, infoType)
+	if len(gpuInfo) == 1 {
+		// Return empty string if infoType is not found
+		return []string{""}
+	}
 	return strings.Split(gpuInfo[1], "\n")
 }
 
@@ -34,7 +38,7 @@ func GetGpuList(executor utils.CmdExecutor) ([]*Gpu, error) {
 	gpuDevices := strings.Split(string(gpuInfo), "*-display")
 	gpuList := []*Gpu{}
 	for _, gpu := range gpuDevices {
-		if !strings.Contains(gpu, "product: ") {
+		if strings.TrimSpace(gpu) == "" {
 			continue
 		}
 
@@ -48,18 +52,24 @@ func GetGpuList(executor utils.CmdExecutor) ([]*Gpu, error) {
 		deviceFeatures := parseGpuDetails(gpu, "capabilities: ")
 		features := strings.Split(deviceFeatures[0], " ")
 
-		deviceInfo, err := utils.ReadFromCommand(executor, "lspci", "-v", "-s", pciAddress)
-		if err != nil {
-			return []*Gpu{}, fmt.Errorf("failed to read data from command; error: %v", err)
+		device := ""
+		if pciAddress != "" {
+			deviceInfo, err := utils.ReadFromCommand(executor, "lspci", "-v", "-s", pciAddress)
+			if err != nil {
+				return []*Gpu{}, fmt.Errorf("failed to read data from command; error: %v", err)
+			}
+			deviceName := strings.Split(string(deviceInfo), " (")
+			devName := strings.Split(deviceName[0], ": ")
+			if len(devName) > 1 {
+				device = devName[1]
+			}
 		}
-		deviceName := strings.Split(string(deviceInfo), " (")
-		devName := strings.Split(deviceName[0], ": ")
 
 		gpuList = append(gpuList, &Gpu{
 			PciId:       pciAddress,
 			Product:     productName[0],
 			Vendor:      vendor[0],
-			Name:        devName[1],
+			Name:        device,
 			Description: description[0],
 			Features:    features,
 		})
