@@ -1,4 +1,4 @@
-# inbm-v5
+# frameworks.edge.one-intel-edge.maestro-infra.inbm
 
 Prerequisite for development: install Earthly. See https://earthly.dev/get-earthly. 
 
