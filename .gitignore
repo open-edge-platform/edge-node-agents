@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: LicenseRef-Intel
+
+build/
+
+# IDE files
+.vscode/
+
+# VS Code go debugger file
+**/__debug_bin*
+
+dist
