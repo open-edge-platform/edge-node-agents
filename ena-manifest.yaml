@@ -19,7 +19,7 @@ packages:
     version: 1.6.2
     ociArtifact: edge-orch/en/deb/node-agent
   - name: platform-observability-agent
-    version: 1.8.0
+    version: 1.8.1
     ociArtifact: edge-orch/en/deb/platform-observability-agent
   - name: platform-telemetry-agent
     version: 1.3.1

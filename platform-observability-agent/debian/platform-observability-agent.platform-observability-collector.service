@@ -8,7 +8,7 @@ EnvironmentFile=-/etc/sysconfig/otelcol
 EnvironmentFile=-/etc/default/otelcol
 Environment=TENANT_ID=not-set
 EnvironmentFile=-/etc/intel_edge_node/tenantId
-ExecStart=/opt/otelcol/bin/otelcol --config=/etc/otelcol/otelcol.yaml
+ExecStart=/etc/edge-node/node/confs/platform-observability-collector /opt/otelcol/bin/otelcol --config=/etc/otelcol/otelcol.yaml
 StandardOutput=journal
 StandardError=journal
 RestartSec=60

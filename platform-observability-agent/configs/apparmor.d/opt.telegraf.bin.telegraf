@@ -36,6 +36,7 @@ include <tunables/global>
   /dev/sd* r,
   /dev/tty rw,
   /etc/default/locale r,
+  /etc/edge-node/node/confs/platform-observability-metrics ix,
   /etc/environment r,
   /etc/group r,
   /etc/host.conf r,
