@@ -1,0 +1,16 @@
+#!/bin/bash
+# SPDX-FileCopyrightText: 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+while true
+do
+	if [ -f /etc/intel_edge_node/tokens/platform-observability-agent/access_token ]; then
+	        echo "Starting Platform Observability Collector Service"
+		break
+	else
+		echo "Waiting for token"
+        	sleep 10
+	fi
+done
+
+exec "$@"

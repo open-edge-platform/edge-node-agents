@@ -1,0 +1,16 @@
+#!/bin/bash
+# SPDX-FileCopyrightText: 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+while true
+do
+	if [ -e /run/platform-observability-agent/agent-logs.sock ]; then
+		echo "Starting Platform Observability Health Check Service"
+		break
+	else
+		echo "Waiting on collector service to start"
+		sleep 10
+	fi
+done
+
+exec "$@"

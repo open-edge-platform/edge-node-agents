@@ -15,7 +15,6 @@ TELEGRAF_DIR = telegraf_$(TELEGRAF_VERSION)
 OTELCOL_VERSION = 0.122.1
 OTELCOL_DIR = otelcol_$(OTELCOL_VERSION)
 
-
 VERSION := $(shell cat VERSION)
 COMMIT := $(shell git rev-parse --short HEAD)
 ifneq (,$(findstring dev,$(VERSION)))
@@ -112,11 +111,14 @@ package_test:
 	echo "platform-observability-agent platform-observability-agent/metrics-host string testhost.com" | sudo debconf-set-selections
 	echo "platform-observability-agent platform-observability-agent/metrics-port string 553" | sudo debconf-set-selections
 	sudo apt-get install -y $(BUILD_DIR)/platform-observability-agent_*_amd64.deb
+	sudo systemctl stop platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
 	sudo cp test/fluent-bit-test.conf /etc/fluent-bit/fluent-bit.conf
 	sudo cp test/health-check-test.conf /etc/health-check/health-check.conf
 	sudo cp test/otelcol-test.yaml /etc/otelcol/otelcol.yaml
+	sudo mkdir -p /etc/intel_edge_node/tokens/platform-observability-agent/
+	sudo touch /etc/intel_edge_node/tokens/platform-observability-agent/access_token
 	sudo systemctl enable platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
-	sudo systemctl start platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
+	sudo systemctl restart platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
 	systemctl is-active platform-observability-logging
 	systemctl is-active platform-observability-health-check
 	systemctl is-active platform-observability-metrics
