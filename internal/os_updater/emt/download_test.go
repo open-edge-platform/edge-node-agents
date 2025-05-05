@@ -10,7 +10,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"os"
 
 	"strings"
 	"testing"
@@ -21,7 +20,7 @@ import (
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 )
 
-func TestEMTDownloader_downloadFile(t *testing.T) {
+func TestDownloader_downloadFile(t *testing.T) {
 	t.Run("successful download", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
 		downloader := &Downloader{
@@ -29,7 +28,7 @@ func TestEMTDownloader_downloadFile(t *testing.T) {
 			request: &pb.UpdateSystemSoftwareRequest{
 				Url: "http://example.com/file.txt",
 			},
-			readJWTTokenFunc: func(afero.Afero, string) (string, error) {
+			readJWTTokenFunc: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
 			httpClient: &http.Client{
@@ -75,7 +74,7 @@ func TestEMTDownloader_downloadFile(t *testing.T) {
 			request: &pb.UpdateSystemSoftwareRequest{
 				Url: "http://example.com/file.txt",
 			},
-			readJWTTokenFunc: func(afero.Afero, string) (string, error) {
+			readJWTTokenFunc: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
 			httpClient: &http.Client{},
@@ -93,7 +92,7 @@ func TestEMTDownloader_downloadFile(t *testing.T) {
 			request: &pb.UpdateSystemSoftwareRequest{
 				Url: "http://example.com/file.txt",
 			},
-			readJWTTokenFunc: func(afero.Afero, string) (string, error) {
+			readJWTTokenFunc: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "", errors.New("error")
 			},
 			httpClient:     &http.Client{},
@@ -109,7 +108,7 @@ func TestEMTDownloader_downloadFile(t *testing.T) {
 			request: &pb.UpdateSystemSoftwareRequest{
 				Url: "http://example.com/file.txt",
 			},
-			readJWTTokenFunc: func(afero.Afero, string) (string, error) {
+			readJWTTokenFunc: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
 			httpClient: &http.Client{
@@ -163,7 +162,7 @@ func TestEMTDownloader_downloadFile(t *testing.T) {
 			request: &pb.UpdateSystemSoftwareRequest{
 				Url: "http://example.com/file.txt",
 			},
-			readJWTTokenFunc: func(afero.Afero, string) (string, error) {
+			readJWTTokenFunc: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
 			httpClient: &http.Client{
@@ -183,71 +182,10 @@ func TestEMTDownloader_downloadFile(t *testing.T) {
 	})
 }
 
-func TestEMTDownloader_readJWTToken(t *testing.T) {
-	fs := afero.NewMemMapFs()
-
-	t.Run("successful read", func(t *testing.T) {
-		err := afero.WriteFile(fs, JWTTokenPath, []byte("valid-token"), 0644)
-		if err != nil {
-			t.Fatalf("failed to write file: %v", err)
-		}
-		token, err := readJWTToken(afero.Afero{Fs: fs}, JWTTokenPath)
-		assert.NoError(t, err)
-		assert.Equal(t, "valid-token", token)
-	})
-
-	t.Run("file not found", func(t *testing.T) {
-		err := fs.Remove(JWTTokenPath)
-		if err != nil {
-			t.Logf("Warning: failed to remove file: %v", err)
-		}
-		token, err := readJWTToken(afero.Afero{Fs: fs}, JWTTokenPath)
-		assert.Error(t, err)
-		assert.Equal(t, "", token)
-		assert.True(t, os.IsNotExist(err))
-	})
-
-	// TODO: Fix this test
-	// t.Run("error reading file", func(t *testing.T) {
-	// 	tempDir := t.TempDir
-	// 	jwtTokenPath := filepath.Join(tempDir(), "access_token")
-	// 	fsa := afero.NewBasePathFs(afero.NewOsFs(), tempDir())
-
-	// 	err := fsa.MkdirAll("", 0755)
-	// 	if err != nil {
-	// 		t.Fatalf("failed to create directory: %v", err)
-	// 	}
-
-	// 	err = fsa.Remove(jwtTokenPath)
-	// 	if err != nil {
-	// 		t.Logf("Warning: failed to remove file: %v", err)
-	// 	}
-
-	// 	err = afero.WriteFile(fsa, "access_token", []byte("token"), 0644)
-	// 	if err != nil {
-	// 		t.Fatalf("failed to write file: %v", err)
-	// 	}
-
-	// 	err = fsa.Chmod("access_token", 0000)
-	// 	if err != nil {
-	// 		t.Fatalf("failed to change file permissions: %v", err)
-	// 	}
-
-	// 	token, err := readJWTToken(afero.Afero{Fs: fs}, jwtTokenPath)
-	// 	if err != nil {
-	// 		fmt.Println(err.Error())
-	// 	}
-
-	// 	assert.Error(t, err, "expected an error due to permission issues")
-	// 	assert.Equal(t, "", token)
-	// 	assert.True(t, os.IsPermission(err), "expected a permission error")
-	// })
-}
-
-func TestEMTDownloader_isDiskSpaceAvailable(t *testing.T) {
+func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 	tests := []struct {
 		name                    string
-		readJWTToken            func(fs afero.Afero, path string) (string, error)
+		readJWTToken            func(afero.Fs, string, func(string) (bool, error)) (string, error)
 		writeUpdateStatus       func(string, string, string)
 		writeGranularLog        func(string, string)
 		expectedResult          bool
@@ -260,7 +198,7 @@ func TestEMTDownloader_isDiskSpaceAvailable(t *testing.T) {
 			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
 				return 1000 * 4096, nil
 			},
-			readJWTToken: func(afero.Afero, string) (string, error) {
+			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
 			getFileSizeInBytes: func(string, string) (int64, error) {
@@ -271,7 +209,7 @@ func TestEMTDownloader_isDiskSpaceAvailable(t *testing.T) {
 		},
 		{
 			name: "error getting disk space",
-			readJWTToken: func(afero.Afero, string) (string, error) {
+			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "", nil
 			},
 			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
@@ -285,7 +223,7 @@ func TestEMTDownloader_isDiskSpaceAvailable(t *testing.T) {
 			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
 				return 1000 * 4096, nil
 			},
-			readJWTToken: func(afero.Afero, string) (string, error) {
+			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "", errors.New("token error")
 			},
 			writeUpdateStatus: func(status, message, details string) {
@@ -302,7 +240,7 @@ func TestEMTDownloader_isDiskSpaceAvailable(t *testing.T) {
 			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
 				return 1000 * 4096, nil
 			},
-			readJWTToken: func(afero.Afero, string) (string, error) {
+			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
 			writeUpdateStatus: func(status, message, details string) {
@@ -322,8 +260,7 @@ func TestEMTDownloader_isDiskSpaceAvailable(t *testing.T) {
 			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
 				return 1000 * 4096, nil
 			},
-
-			readJWTToken: func(afero.Afero, string) (string, error) {
+			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
 			getFileSizeInBytes: func(string, string) (int64, error) {

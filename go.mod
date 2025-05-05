@@ -22,6 +22,7 @@ require (
 )
 
 require (
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/spf13/afero v1.14.0
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/net v0.34.0 // indirect

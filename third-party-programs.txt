@@ -73,6 +73,10 @@ go-yaml
 Copyright (c) 2006-2010 Kirill Simonov
 Copyright (c) 2006-2011 Kirill Simonov
 
+golang-jwt/v4
+Copyright (c) 2012 Dave Grijalva
+Copyright (c) 2021 golang-jwt maintainers
+
 The MIT License
 MIT
 

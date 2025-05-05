@@ -28,15 +28,17 @@ import (
 
 var (
 	configFilePath = "/etc/intel_manageability.conf"
-	JWTTokenPath   = "/etc/intel_edge_node/tokens/release-service/access_token"
-	DownloadDir    = "/var/cache/manageability/repository-tool/sota"
+	jwtTokenPath   = "/etc/intel_edge_node/tokens/release-service/access_token"
+	// DownloadDir is the directory where the downloaded file will be stored.
+	DownloadDir = "/var/cache/manageability/repository-tool/sota"
 )
 
-// EMTDownloader is the concrete implementation of the IDownloader interface
+// Downloader is the concrete implementation of the IDownloader interface
 // for the EMT OS.
 type Downloader struct {
 	request                 *pb.UpdateSystemSoftwareRequest
-	readJWTTokenFunc        func(afero.Afero, string) (string, error)
+	readJWTTokenFunc        func(afero.Fs, string, func(string) (bool, error)) (string, error)
+	isTokenExpiredFunc      func(string) (bool, error)
 	writeUpdateStatus       func(string, string, string)
 	writeGranularLog        func(string, string)
 	statfs                  func(string, *unix.Statfs_t) error
@@ -51,7 +53,8 @@ type Downloader struct {
 func NewDownloader(request *pb.UpdateSystemSoftwareRequest) *Downloader {
 	return &Downloader{
 		request:                 request,
-		readJWTTokenFunc:        readJWTToken,
+		readJWTTokenFunc:        util.ReadJWTToken,
+		isTokenExpiredFunc:      util.IsTokenExpired,
 		writeUpdateStatus:       writeUpdateStatus,
 		writeGranularLog:        writeGranularLog,
 		statfs:                  unix.Statfs,
@@ -159,7 +162,7 @@ func (t *Downloader) downloadFile() error {
 	}
 
 	// Add the JWT token to the request header
-	token, err := t.readJWTTokenFunc(afero.Afero{Fs: t.fs}, JWTTokenPath)
+	token, err := t.readJWTTokenFunc(t.fs, jwtTokenPath, t.isTokenExpiredFunc)
 	if err != nil {
 		return fmt.Errorf("error reading JWT token: %w", err)
 	}
@@ -205,21 +208,6 @@ func (t *Downloader) downloadFile() error {
 	return nil
 }
 
-// readJWTToken reads the JWT token that is used for accessing RS server.
-func readJWTToken(fs afero.Afero, path string) (string, error) {
-	file, err := fs.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	token, err := afero.ReadFile(fs, path)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(token)), nil
-}
-
 // isDiskSpaceAvailable checks if there is enough disk space to download the artifacts.
 func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 	availableSpace, err := t.getFreeDiskSpaceInBytes("/var/cache/manageability/repository-tool/sota")
@@ -236,7 +224,7 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 	}
 
 	// Read JWT token
-	token, err := t.readJWTTokenFunc(afero.Afero{Fs: t.fs}, JWTTokenPath)
+	token, err := t.readJWTTokenFunc(t.fs, jwtTokenPath, t.isTokenExpiredFunc)
 	if err != nil {
 		t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
 		t.writeGranularLog(FAIL, FAILURE_REASON_INBM)
