@@ -153,11 +153,12 @@ func (cli *Client) ProvisionReleaseServiceToken(ctx context.Context, authConf co
 
 	log.Infoln("release service token retrieved successfully")
 	var expiry time.Time
-	if response.StatusCode == http.StatusNoContent {
+	if relToken == "anonymous" {
 		currentTime := time.Now()
+		// Add a very long time after first check to avoid checking again
 		expiry = currentTime.AddDate(10, 0, 0)
 	} else {
-		expiry, err = auth.GetExpiryFromJWT(strings.Trim(relToken, "\""))
+		expiry, err = auth.GetExpiryFromJWT(relToken)
 		if err != nil {
 			return token, fmt.Errorf("failed to parse jwt release token to get expiry :%v", err)
 		}
