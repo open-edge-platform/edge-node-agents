@@ -20,11 +20,13 @@ type Gpu struct {
 	Features    []string
 }
 
+var infoNotFound string = "Not Available"
+
 func parseGpuDetails(gpuDevice, infoType string) []string {
 	gpuInfo := strings.Split(gpuDevice, infoType)
 	if len(gpuInfo) == 1 {
 		// Return empty string if infoType is not found
-		return []string{""}
+		return []string{infoNotFound}
 	}
 	return strings.Split(gpuInfo[1], "\n")
 }
@@ -50,10 +52,13 @@ func GetGpuList(executor utils.CmdExecutor) ([]*Gpu, error) {
 		description := parseGpuDetails(gpu, "description: ")
 
 		deviceFeatures := parseGpuDetails(gpu, "capabilities: ")
-		features := strings.Split(deviceFeatures[0], " ")
+		features := deviceFeatures
+		if features[0] != infoNotFound {
+			features = strings.Split(deviceFeatures[0], " ")
+		}
 
-		device := ""
-		if pciAddress != "" {
+		device := "Info Not Available"
+		if pciAddress != infoNotFound {
 			deviceInfo, err := utils.ReadFromCommand(executor, "lspci", "-v", "-s", pciAddress)
 			if err != nil {
 				return []*Gpu{}, fmt.Errorf("failed to read data from command; error: %v", err)

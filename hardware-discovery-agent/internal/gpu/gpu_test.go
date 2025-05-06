@@ -32,6 +32,8 @@ var testDescription3 string = "PCI graphics card"
 var testFeatures1 []string = []string{"pm", "vga_controller", "bus_master", "cap_list", "rom", "fb"}
 var testFeatures2 []string = []string{"pciexpress", "msi", "pm", "bus_master", "cap_list"}
 var testFeatures3 []string = []string{"pciexpress", "msi", "pm", "bus_master", "cap_list"}
+var testNotFoundMsg string = "Not Available"
+var testNameNotFound string = "Info Not Available"
 
 func expectedOutput(expect []*gpu.Gpu, pci, prod, vendor, name, desc string, features []string) []*gpu.Gpu {
 	return append(expect, &gpu.Gpu{
@@ -83,8 +85,8 @@ func TestGetGpuListMultiDevicesSuccess(t *testing.T) {
 func TestGetGpuListEmptyPciInfo(t *testing.T) {
 	out, err := gpu.GetGpuList(testCmdExecutorEmptyPciInfo)
 	expect := []*gpu.Gpu{}
-	expect = expectedOutput(expect, "", testProduct1,
-		testVendor1, "", testDescription1, testFeatures1)
+	expect = expectedOutput(expect, testNotFoundMsg, testProduct1,
+		testVendor1, testNameNotFound, testDescription1, testFeatures1)
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
@@ -93,7 +95,7 @@ func TestGetGpuListEmptyPciInfo(t *testing.T) {
 func TestGetGpuListEmptyProductName(t *testing.T) {
 	out, err := gpu.GetGpuList(testCmdExecutorEmptyProductName)
 	expect := []*gpu.Gpu{}
-	expect = expectedOutput(expect, testPciAddr1, "",
+	expect = expectedOutput(expect, testPciAddr1, testNotFoundMsg,
 		testVendor1, testName, testDescription1, testFeatures1)
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
@@ -104,7 +106,7 @@ func TestGetGpuListEmptyVendor(t *testing.T) {
 	out, err := gpu.GetGpuList(testCmdExecutorEmptyVendorName)
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
-		"", testName, testDescription1, testFeatures1)
+		testNotFoundMsg, testName, testDescription1, testFeatures1)
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
@@ -114,7 +116,7 @@ func TestGetGpuListEmptyDescription(t *testing.T) {
 	out, err := gpu.GetGpuList(testCmdExecutorEmptyDescription)
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
-		testVendor1, testName, "", testFeatures1)
+		testVendor1, testName, testNotFoundMsg, testFeatures1)
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
@@ -124,7 +126,7 @@ func TestGetGpuListEmptyFeatures(t *testing.T) {
 	out, err := gpu.GetGpuList(testCmdExecutorEmptyFeatures)
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
-		testVendor1, testName, testDescription1, []string{""})
+		testVendor1, testName, testDescription1, []string{testNotFoundMsg})
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
@@ -134,7 +136,7 @@ func TestGetGpuListEmptyDeviceName(t *testing.T) {
 	out, err := gpu.GetGpuList(testCmdExecutorEmptyDeviceName)
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
-		testVendor1, "", testDescription1, testFeatures1)
+		testVendor1, testNameNotFound, testDescription1, testFeatures1)
 	assert.Nil(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
