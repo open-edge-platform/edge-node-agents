@@ -107,7 +107,7 @@ cover: cover_unit cover_integration
 	sed -i "s#$(shell pwd)#github.com/open-edge-platform/edge-node-agents/platform-update-agent#g" build/artifacts/coverage/profile 
 	gocover-cobertura < $(BUILD_DIR)/coverage/profile > build/artifacts/coverage.xml
 
-package:
+package: inbmdownload
 	mkdir -p $(PUA_PACKAGE_BUILD_DIR)
 	cp -r $(shell ls . | grep -v build*) $(PUA_PACKAGE_BUILD_DIR)
 	cp ../.golangci.yml $(PUA_PACKAGE_BUILD_DIR)
