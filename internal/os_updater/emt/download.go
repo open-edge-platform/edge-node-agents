@@ -39,7 +39,7 @@ type Downloader struct {
 	request                 *pb.UpdateSystemSoftwareRequest
 	readJWTTokenFunc        func(afero.Fs, string, func(string) (bool, error)) (string, error)
 	isTokenExpiredFunc      func(string) (bool, error)
-	writeUpdateStatus       func(string, string, string)
+	writeUpdateStatus       func(afero.Fs, string, string, string)
 	writeGranularLog        func(string, string)
 	statfs                  func(string, *unix.Statfs_t) error
 	httpClient              *http.Client
@@ -83,7 +83,7 @@ func (t *Downloader) Download() error {
 	// Perform source verification
 	if !IsTrustedRepository(t.request.Url, config) {
 		errMsg := fmt.Sprintf("URL '%s' is not in the list of trusted repositories.", t.request.Url)
-		t.writeUpdateStatus(FAIL, string(jsonString), errMsg)
+		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), errMsg)
 		t.writeGranularLog(FAIL, FAILURE_REASON_RS_AUTHENTICATION)
 		return errors.New(errMsg)
 	}
@@ -97,7 +97,7 @@ func (t *Downloader) Download() error {
 	}
 
 	if !isDiskEnough {
-		t.writeUpdateStatus(FAIL, string(jsonString), "Insufficient disk space")
+		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), "Insufficient disk space")
 		t.writeGranularLog(FAIL, FAILURE_REASON_INSUFFICIENT_STORAGE)
 		return fmt.Errorf("insufficient disk space")
 	}
@@ -107,7 +107,7 @@ func (t *Downloader) Download() error {
 	// Download file
 	err = t.downloadFile()
 	if err != nil {
-		t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
+		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 		t.writeGranularLog(FAIL, FAILURE_REASON_DOWNLOAD)
 		return fmt.Errorf("error downloading the file: %w", err)
 	}
@@ -118,7 +118,7 @@ func (t *Downloader) Download() error {
 }
 
 // VerifyHash verifies the hash of the downloaded file.
-func (t *EMTUpdater) VerifyHash() error {
+func (t *Updater) VerifyHash() error {
 	log.Println("Verify file SHA.")
 
 	// Extract the file name from the URL
@@ -226,7 +226,7 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 	// Read JWT token
 	token, err := t.readJWTTokenFunc(t.fs, jwtTokenPath, t.isTokenExpiredFunc)
 	if err != nil {
-		t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
+		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 		t.writeGranularLog(FAIL, FAILURE_REASON_INBM)
 		return false, fmt.Errorf("error reading JWT token: %w", err)
 	}
@@ -234,7 +234,7 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 
 	requiredSpace, err := t.getFileSizeInBytesFunc(t.request.Url, token)
 	if err != nil {
-		t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
+		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 		t.writeGranularLog(FAIL, FAILURE_REASON_DOWNLOAD)
 		return false, fmt.Errorf("error getting file size: %w", err)
 	}

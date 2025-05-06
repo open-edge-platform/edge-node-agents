@@ -18,8 +18,6 @@ import (
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 )
 
-
-
 // Updater is the concrete implementation of the Updater interface
 // for the Ubuntu OS.
 type Updater struct {

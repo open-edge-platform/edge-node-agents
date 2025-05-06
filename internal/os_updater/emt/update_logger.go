@@ -11,6 +11,9 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
+	"github.com/spf13/afero"
 )
 
 var (
@@ -28,7 +31,7 @@ type UpdateStatus struct {
 	Version  string `json:"Version"`
 }
 
-func writeUpdateStatus(status, metadata, errorDetails string) {
+func writeUpdateStatus(fs afero.Fs, status, metadata, errorDetails string) {
 	// Create the update status log file if it does not exist.
 	if _, err := os.Stat(updateStatusLogPath); os.IsNotExist(err) {
 		file, err := os.Create(updateStatusLogPath)
@@ -39,7 +42,7 @@ func writeUpdateStatus(status, metadata, errorDetails string) {
 	}
 
 	// Open the update status log file for writing and truncate it.
-	file, err := os.OpenFile(updateStatusLogPath, os.O_WRONLY|os.O_TRUNC, 0644)
+	file, err := utils.OpenFile(fs, updateStatusLogPath, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Printf("[Warning] Error writing update status: failed to open update status log file: %v", err)
 	}

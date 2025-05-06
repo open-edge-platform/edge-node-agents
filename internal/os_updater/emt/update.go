@@ -16,6 +16,7 @@ import (
 
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 )
 
 var (
@@ -24,22 +25,24 @@ var (
 	osUpdateToolPath = "/usr/bin/os-update-tool.sh"
 )
 
-// EMTUpdater is the concrete implementation of the IUpdater interface
+// Updater is the concrete implementation of the IUpdater interface
 // for the EMT OS.
-type EMTUpdater struct {
+type Updater struct {
 	commandExecutor   utils.Executor
 	request           *pb.UpdateSystemSoftwareRequest
-	writeUpdateStatus func(string, string, string)
+	writeUpdateStatus func(afero.Fs, string, string, string)
 	writeGranularLog  func(string, string)
+	fs                afero.Fs
 }
 
-// NewEMTUpdater creates a new EMTUpdater.
-func NewEMTUpdater(commandExecutor utils.Executor, request *pb.UpdateSystemSoftwareRequest) *EMTUpdater {
-	return &EMTUpdater{
+// NewUpdater creates a new Updater.
+func NewUpdater(commandExecutor utils.Executor, request *pb.UpdateSystemSoftwareRequest) *Updater {
+	return &Updater{
 		commandExecutor:   commandExecutor,
 		request:           request,
 		writeUpdateStatus: writeUpdateStatus,
 		writeGranularLog:  writeGranularLog,
+		fs:                afero.NewOsFs(),
 	}
 }
 
@@ -51,7 +54,7 @@ func (errReader) Read(_ []byte) (n int, err error) {
 }
 
 // Update method for Emt
-func (t *EMTUpdater) Update() (bool, error) {
+func (t *Updater) Update() (bool, error) {
 	// Print the value of tu.request.Mode
 	log.Printf("Mode: %v\n", t.request.Mode)
 
@@ -66,7 +69,7 @@ func (t *EMTUpdater) Update() (bool, error) {
 
 		err := t.VerifyHash()
 		if err != nil {
-			t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
+			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 			t.writeGranularLog(FAIL, FAILURE_REASON_SIGNATURE_CHECK)
 			return false, fmt.Errorf("hash verification failed: %w", err)
 		}
@@ -85,7 +88,7 @@ func (t *EMTUpdater) Update() (bool, error) {
 		}
 
 		if _, _, err := t.commandExecutor.Execute(updateToolWriteCommand); err != nil {
-			t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
+			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 			t.writeGranularLog(FAIL, FAILURE_REASON_UT_WRITE)
 			return false, fmt.Errorf("failed to execute shell command(%v)- %v", updateToolWriteCommand, err)
 		}
@@ -96,14 +99,14 @@ func (t *EMTUpdater) Update() (bool, error) {
 			jsonString = []byte("{}")
 		}
 		// Write the update status to the status log file
-		t.writeUpdateStatus(SUCCESS, string(jsonString), "")
+		t.writeUpdateStatus(t.fs, SUCCESS, string(jsonString), "")
 	}
 
 	if t.request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
 		log.Println("Save snapshot before applying the update.")
 		if err := Snapshot(); err != nil {
 			errMsg := fmt.Sprintf("Error taking snapshot: %v", err)
-			t.writeUpdateStatus(FAIL, string(jsonString), errMsg)
+			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), errMsg)
 			t.writeGranularLog(FAIL, FAILURE_REASON_INBM)
 			return false, fmt.Errorf("failed to take snapshot before applying the update: %v", err)
 		}
@@ -114,20 +117,20 @@ func (t *EMTUpdater) Update() (bool, error) {
 		}
 
 		if _, _, err := t.commandExecutor.Execute(updateToolApplyCommand); err != nil {
-			t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
+			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 			t.writeGranularLog(FAIL, FAILURE_REASON_BOOT_CONFIGURATION)
 			return false, fmt.Errorf("failed to execute shell command(%v)- %v", updateToolApplyCommand, err)
 		}
 
 		// Write the update status to the status log file
-		writeUpdateStatus(SUCCESS, string(jsonString), "")
+		writeUpdateStatus(t.fs, SUCCESS, string(jsonString), "")
 		writeGranularLog(SUCCESS, "")
 	}
 
 	return true, nil
 }
 
-func (t *EMTUpdater) commitUpdate() error {
+func (t *Updater) commitUpdate() error {
 	log.Println("Committing the update.")
 	// Get the request details
 	jsonString, err := protojson.Marshal(t.request)
@@ -142,7 +145,7 @@ func (t *EMTUpdater) commitUpdate() error {
 
 	if _, _, err := t.commandExecutor.Execute(updateToolCommitCommand); err != nil {
 		log.Printf("Error executing shell command(%v): %v\n", updateToolCommitCommand, err)
-		t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
+		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 		t.writeGranularLog(FAIL, FAILURE_REASON_OS_COMMIT)
 		return fmt.Errorf("failed to execute shell command(%v)- %v", updateToolCommitCommand, err)
 	}

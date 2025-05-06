@@ -17,6 +17,7 @@ import (
 
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 )
 
 var (
@@ -152,7 +153,7 @@ func ReadDispatcherStateFile(osType string) (string, error) {
 	return "", fmt.Errorf("OS not supported")
 }
 
-func VerifyUpdateAfterReboot(osType string) error {
+func VerifyUpdateAfterReboot(fs afero.Fs, osType string) error {
 
 	// Check if dispatcher state file exist.
 	if _, err := os.Stat(dispatcherStatePath); err == nil {
@@ -177,14 +178,14 @@ func VerifyUpdateAfterReboot(osType string) error {
 			// Compare the versions
 			if currentVersion != previousVersion {
 				log.Printf("Update Success. Previous image: %v, Current image: %v", previousVersion, currentVersion)
-				emtUpdater := NewEMTUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
+				emtUpdater := NewUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
 				err = emtUpdater.commitUpdate()
 				if err != nil {
 					return fmt.Errorf("error committing update: %w", err)
 				}
 
 				// Write status to the log file.
-				writeUpdateStatus(SUCCESS, "", "")
+				writeUpdateStatus(fs, SUCCESS, "", "")
 				if err != nil {
 					log.Printf("[Warning] Error writing update status: %v", err)
 				}
@@ -198,12 +199,12 @@ func VerifyUpdateAfterReboot(osType string) error {
 			} else {
 				log.Println("Update failed. Reverting to previous image.")
 				// Write the status to the log file.
-				writeUpdateStatus(FAIL, "", "Update failed. Versions are the same.")
+				writeUpdateStatus(fs, FAIL, "", "Update failed. Versions are the same.")
 				writeGranularLog(FAIL, FAILURE_REASON_BOOTLOADER)
 
 				log.Println("Rebooting...")
 				// Reboot the system without commit.
-				emtRebooter := NewEMTRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
+				emtRebooter := NewRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
 				err = emtRebooter.Reboot()
 				if err != nil {
 					return fmt.Errorf("error rebooting system: %w", err)

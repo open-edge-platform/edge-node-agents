@@ -186,7 +186,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 	tests := []struct {
 		name                    string
 		readJWTToken            func(afero.Fs, string, func(string) (bool, error)) (string, error)
-		writeUpdateStatus       func(string, string, string)
+		writeUpdateStatus       func(afero.Fs, string, string, string)
 		writeGranularLog        func(string, string)
 		expectedResult          bool
 		expectedError           error
@@ -226,7 +226,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "", errors.New("token error")
 			},
-			writeUpdateStatus: func(status, message, details string) {
+			writeUpdateStatus: func(afero.Fs, string, string, string) {
 				// No-op implementation for testing
 			},
 			writeGranularLog: func(level, message string) {
@@ -243,7 +243,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
-			writeUpdateStatus: func(status, message, details string) {
+			writeUpdateStatus: func(afero.Fs, string, string, string) {
 				// No-op implementation for testing
 			},
 			writeGranularLog: func(level, message string) {

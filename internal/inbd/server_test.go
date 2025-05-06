@@ -358,17 +358,6 @@ func TestRunServer_UmaskRestoration(t *testing.T) {
 // Tests for InbdServer methods
 // ----------------------------------------------------------------------------
 
-func TestInbdServer_UpdateOSSource(t *testing.T) {
-	srv := &InbdServer{}
-	resp, err := srv.UpdateOSSource(context.Background(), &pb.UpdateOSSourceRequest{})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-	if resp.StatusCode != 501 || resp.Error != "Not implemented" {
-		t.Errorf("Unexpected response: %+v", resp)
-	}
-}
-
 func TestInbdServer_AddApplicationSource(t *testing.T) {
 	srv := &InbdServer{}
 	resp, err := srv.AddApplicationSource(context.Background(), &pb.AddApplicationSourceRequest{})

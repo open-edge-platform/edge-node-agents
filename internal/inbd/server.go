@@ -61,9 +61,11 @@ func RunServer(deps ServerDeps) error {
 	// It compares the version in dispatcher_state file with the current system version.
 	// If the versions are different, the system successfully boots into the new image.
 
+	fs := afero.NewOsFs()
+
 	// TODO: This should call the correct function using the factory pattern.
 	// Currently hardcoded to use EMT.  It should also be able to call Ubuntu.
-	err = emt.VerifyUpdateAfterReboot("EMT")
+	err = emt.VerifyUpdateAfterReboot(fs, "EMT")
 	if err != nil {
 		return fmt.Errorf("[Post verification failed] error verifying update after reboot: %w", err)
 	}

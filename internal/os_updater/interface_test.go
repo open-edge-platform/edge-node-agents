@@ -50,12 +50,12 @@ func TestEMTUpdater(t *testing.T) {
 
 	t.Run("createUpdater returns EMTUpdater", func(t *testing.T) {
 		updater := emtUpdater.CreateUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
-		assert.IsType(t, &emt.EMTUpdater{}, updater)
+		assert.IsType(t, &emt.Updater{}, updater)
 	})
 
 	t.Run("createRebooter returns EMTRebooter", func(t *testing.T) {
 		rebooter := emtUpdater.CreateRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
-		assert.IsType(t, &emt.EMTRebooter{}, rebooter)
+		assert.IsType(t, &emt.Rebooter{}, rebooter)
 	})
 }
 

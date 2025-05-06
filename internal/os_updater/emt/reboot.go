@@ -14,29 +14,32 @@ import (
 
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 )
 
-// EMTRebooter is the concrete implementation of the IUpdater interface
+// Rebooter is the concrete implementation of the IUpdater interface
 // for the EMT OS.
-type EMTRebooter struct {
+type Rebooter struct {
 	commandExecutor   utils.Executor
 	request           *pb.UpdateSystemSoftwareRequest
-	writeUpdateStatus func(string, string, string)
+	writeUpdateStatus func(afero.Fs, string, string, string)
 	writeGranularLog  func(string, string)
+	fs                afero.Fs
 }
 
-// NewEMTRebooter creates a new EMTRebooter.
-func NewEMTRebooter(commandExecutor utils.Executor, request *pb.UpdateSystemSoftwareRequest) *EMTRebooter {
-	return &EMTRebooter{
+// NewRebooter creates a new EMTRebooter.
+func NewRebooter(commandExecutor utils.Executor, request *pb.UpdateSystemSoftwareRequest) *Rebooter {
+	return &Rebooter{
 		commandExecutor:   commandExecutor,
 		request:           request,
 		writeUpdateStatus: writeUpdateStatus,
 		writeGranularLog:  writeGranularLog,
+		fs:                afero.NewOsFs(),
 	}
 }
 
 // Reboot method for EMT
-func (t *EMTRebooter) Reboot() error {
+func (t *Rebooter) Reboot() error {
 	log.Println("Rebooting the system...")
 	// Get the request details
 	jsonString, err := protojson.Marshal(t.request)
@@ -50,7 +53,7 @@ func (t *EMTRebooter) Reboot() error {
 	}
 
 	if _, _, err := t.commandExecutor.Execute(rebootCommand); err != nil {
-		t.writeUpdateStatus(FAIL, string(jsonString), err.Error())
+		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 		t.writeGranularLog(FAIL, FAILURE_REASON_UNSPECIFIED)
 		return fmt.Errorf("failed to execute shell command(%v)- %v", rebootCommand, err)
 	}

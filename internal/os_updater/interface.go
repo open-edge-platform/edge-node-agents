@@ -44,12 +44,12 @@ func (f *EMTFactory) CreateDownloader(req *pb.UpdateSystemSoftwareRequest) Downl
 
 // CreateUpdater creates an OS updater concrete class for EMT OS.
 func (f *EMTFactory) CreateUpdater(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Updater {
-	return emt.NewEMTUpdater(commandExecutor, req)
+	return emt.NewUpdater(commandExecutor, req)
 }
 
 // CreateRebooter creates a rebooter concrete class for EMT OS.
 func (f *EMTFactory) CreateRebooter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
-	return emt.NewEMTRebooter(commandExecutor, req)
+	return emt.NewRebooter(commandExecutor, req)
 }
 
 // UbuntuFactory represents an EMT factory.
