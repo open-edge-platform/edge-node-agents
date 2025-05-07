@@ -49,7 +49,7 @@ func (t *Rebooter) Reboot() error {
 	}
 
 	rebootCommand := []string{
-		"sudo", "/usr/sbin/reboot",
+		"/usr/sbin/reboot",
 	}
 
 	if _, _, err := t.commandExecutor.Execute(rebootCommand); err != nil {

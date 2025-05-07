@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Package emt provides the implementation for updating the EMT OS.
-package emt
+// Package utils provides utility functions.
+package utils
 
 import (
     "testing"

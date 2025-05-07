@@ -20,6 +20,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	util "github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
@@ -27,7 +28,6 @@ import (
 )
 
 var (
-	configFilePath = "/etc/intel_manageability.conf"
 	jwtTokenPath   = "/etc/intel_edge_node/tokens/release-service/access_token"
 	// DownloadDir is the directory where the downloaded file will be stored.
 	DownloadDir = "/var/cache/manageability/repository-tool/sota"
@@ -68,7 +68,7 @@ func NewDownloader(request *pb.UpdateSystemSoftwareRequest) *Downloader {
 
 // Download implements IDownloader.
 func (t *Downloader) Download() error {
-	config, err := LoadConfig(t.fs, configFilePath)
+	config, err := utils.LoadConfig(t.fs, utils.ConfigFilePath)
 	if err != nil {
 		return fmt.Errorf("error loading config: %w", err)
 	}
@@ -81,7 +81,7 @@ func (t *Downloader) Download() error {
 	}
 
 	// Perform source verification
-	if !IsTrustedRepository(t.request.Url, config) {
+	if !utils.IsTrustedRepository(t.request.Url, config) {
 		errMsg := fmt.Sprintf("URL '%s' is not in the list of trusted repositories.", t.request.Url)
 		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), errMsg)
 		t.writeGranularLog(FAIL, FAILURE_REASON_RS_AUTHENTICATION)

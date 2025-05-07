@@ -35,8 +35,8 @@ func AddApplicationSourceCmd() *cobra.Command {
 	must(cmd.MarkFlagRequired("sources"))
 	cmd.Flags().StringVar(&filename, "filename", "", "Filename of the source")
 	must(cmd.MarkFlagRequired("filename"))
-	cmd.Flags().StringVar(&gpgKeyURI, "gpg-key-uri", "", "GPG key URI")
-	cmd.Flags().StringVar(&gpgKeyName, "gpg-key-name", "", "GPG key name")
+	cmd.Flags().StringVar(&gpgKeyURI, "gpgKeyUri", "", "GPG key URI")
+	cmd.Flags().StringVar(&gpgKeyName, "gpgKeyName", "", "GPG key name")
 
 	return cmd
 }

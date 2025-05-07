@@ -6,5 +6,5 @@
 // Package ossource provides functionality to update the OS source.
 package ossource
 
-const ubuntuAptSourcesList = "/etc/apt/sources.list"
-const ubuntuAptSourcesListBackup = "/etc/apt/sources.list.bak"
+// UbuntuAptSourcesList is the path to the Ubuntu apt sources list file.
+const UbuntuAptSourcesList = "/etc/apt/sources.list"

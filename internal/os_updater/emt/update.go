@@ -84,7 +84,7 @@ func (t *Updater) Update() (bool, error) {
 		filePath := DownloadDir + "/" + fileName
 
 		updateToolWriteCommand := []string{
-			"sudo", osUpdateToolPath, "-w", "-u", filePath, "-s", t.request.Signature,
+			osUpdateToolPath, "-w", "-u", filePath, "-s", t.request.Signature,
 		}
 
 		if _, _, err := t.commandExecutor.Execute(updateToolWriteCommand); err != nil {
@@ -113,7 +113,7 @@ func (t *Updater) Update() (bool, error) {
 
 		log.Println("Execute update tool apply command.")
 		updateToolApplyCommand := []string{
-			"sudo", osUpdateToolPath, "-a",
+			osUpdateToolPath, "-a",
 		}
 
 		if _, _, err := t.commandExecutor.Execute(updateToolApplyCommand); err != nil {

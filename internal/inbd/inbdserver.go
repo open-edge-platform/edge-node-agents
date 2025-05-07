@@ -10,6 +10,7 @@ import (
 	"log"
 
 	osUpdater "github.com/intel/intel-inb-manageability/internal/os_updater"
+	appSource "github.com/intel/intel-inb-manageability/internal/os_updater/ubuntu/app_source"
 	osSource "github.com/intel/intel-inb-manageability/internal/os_updater/ubuntu/os_source"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 )
@@ -50,16 +51,29 @@ func (s *InbdServer) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceR
 	if os != "Ubuntu" {
 		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Update OS Source is only for Ubuntu."}, nil
 	}
-	err = osSource.Update(req.SourceList)
+	if len(req.SourceList) == 0 {
+		return &pb.UpdateResponse{StatusCode: 400, Error: "Source list is empty"}, nil
+	}
+	err = osSource.NewUpdater().Update(req.SourceList, osSource.UbuntuAptSourcesList)
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
 	}
-	return &pb.UpdateResponse{StatusCode: 200, Error: ""}, nil
+	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
 }
 
 func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplicationSourceRequest) (*pb.UpdateResponse, error) {
-	log.Printf("Received AddApplicationSource request")
-	return &pb.UpdateResponse{StatusCode: 501, Error: "Not implemented"}, nil
+	os, err := osUpdater.DetectOS()
+	if err != nil {
+		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
+	}
+	if os != "Ubuntu" {
+		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Add Application Source is only for Ubuntu."}, nil
+	}
+	err = appSource.NewAdder().Add(req)
+	if err != nil {
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+	}
+	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
 }
 
 func (s *InbdServer) RemoveApplicationSource(ctx context.Context, req *pb.RemoveApplicationSourceRequest) (*pb.UpdateResponse, error) {

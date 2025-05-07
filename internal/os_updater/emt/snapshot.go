@@ -40,7 +40,7 @@ func Snapshot() error {
 	// we use truncate rather than remove here as some OSes like Emt require files that need to persist
 	// between reboots to not be removed.
 	dispatcherStateTruncateCommand := []string{
-		"sudo", "truncate", "-s", "0", dispatcherStatePath,
+		"truncate", "-s", "0", dispatcherStatePath,
 	}
 
 	if _, _, err := cmdExecutor.Execute(dispatcherStateTruncateCommand); err != nil {

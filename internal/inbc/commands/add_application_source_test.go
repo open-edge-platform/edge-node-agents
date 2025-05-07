@@ -39,13 +39,13 @@ func TestAddApplicationSourceCmd(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "", filename, "default filename should be empty")
 
-	gpgKeyURI, err := flags.GetString("gpg-key-uri")
+	gpgKeyURI, err := flags.GetString("gpgKeyUri")
 	assert.NoError(t, err)
-	assert.Equal(t, "", gpgKeyURI, "default gpg-key-uri should be empty")
+	assert.Equal(t, "", gpgKeyURI, "default gpgKeyUri should be empty")
 
-	gpgKeyName, err := flags.GetString("gpg-key-name")
+	gpgKeyName, err := flags.GetString("gpgKeyName")
 	assert.NoError(t, err)
-	assert.Equal(t, "", gpgKeyName, "default gpg-key-name should be empty")
+	assert.Equal(t, "", gpgKeyName, "default gpgKeyName should be empty")
 }
 
 func TestHandleAddApplicationSource(t *testing.T) {
