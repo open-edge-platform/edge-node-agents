@@ -119,3 +119,210 @@ jobs:
       - name: Tag new manifest version
         run: |
           ./common/ci_scripts/manifest-versioning.sh tag
+  collect-versions:
+    runs-on: ubuntu-latest
+    needs:
+      - pre-checks
+      - post-merge-pipeline
+      - push-manifest
+    outputs:
+      manifest_version: ${{ steps.manifest-version.outputs.version }}
+      cluster_agent_version: ${{ steps.agent-versions.outputs.cluster_agent }}
+      hardware_discovery_agent_version: ${{ steps.agent-versions.outputs.hardware_discovery_agent }}
+      node_agent_version: ${{ steps.agent-versions.outputs.node_agent }}
+      platform_observability_agent_version: ${{ steps.agent-versions.outputs.platform_observability_agent }}
+      platform_telemetry_agent_version: ${{ steps.agent-versions.outputs.platform_telemetry_agent }}
+      platform_update_agent_version: ${{ steps.agent-versions.outputs.platform_update_agent }}
+      inbm_version: ${{ steps.inbm-version.outputs.inbm_version }}
+    if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0 # Fetch all history, WO sporadic issue with missing tags
+          fetch-tags: true # Fetch tags
+          ref: ${{ github.head_ref }} # Checkout the branch that triggered the workflow to avoid detached HEAD
+
+      - name: Setup CI environment
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@40d61a820157bc9b70d3f2bdc5aec786073d48f2
+        with:
+          gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
+          ref: "base,yq"
+
+      - name: Get manifest version
+        id: manifest-version
+        shell: bash
+        run: |
+          version=$(yq '.metadata.release' ena-manifest.yaml)
+          echo "version=${version}" >> ${GITHUB_OUTPUT}
+
+      - name: Get agent versions
+        id: agent-versions
+        shell: bash
+        run: |
+          cluster_agent=$(head -n1 cluster-agent/VERSION)
+          hardware_discovery_agent=$(head -n1 hardware-discovery-agent/VERSION)
+          node_agent=$(head -n1 node-agent/VERSION)
+          platform_observability_agent=$(head -n1 platform-observability-agent/VERSION)
+          platform_telemetry_agent=$(head -n1 platform-telemetry-agent/VERSION)
+          platform_update_agent=$(head -n1 platform-update-agent/VERSION)
+          echo "cluster_agent=${cluster_agent}" >> ${GITHUB_OUTPUT}
+          echo "hardware_discovery_agent=${hardware_discovery_agent}" >> ${GITHUB_OUTPUT}
+          echo "node_agent=${node_agent}" >> ${GITHUB_OUTPUT}
+          echo "platform_observability_agent=${platform_observability_agent}" >> ${GITHUB_OUTPUT}
+          echo "platform_telemetry_agent=${platform_telemetry_agent}" >> ${GITHUB_OUTPUT}
+          echo "platform_update_agent=${platform_update_agent}" >> ${GITHUB_OUTPUT}
+
+      - name: Get INBM version
+        id: inbm-version
+        shell: bash
+        run: |
+          inbm_version=$(grep 'INBM_VERSION ?' platform-update-agent/Makefile | cut -d '=' -f 2-)
+          echo "inbm_version=${inbm_version}" >> ${GITHUB_OUTPUT}
+  update-manifest-upstream:
+    runs-on: ubuntu-latest
+    needs:
+      - pre-checks
+      - post-merge-pipeline
+      - push-manifest
+      - collect-versions
+    if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
+    steps:
+      - name: Checkout VEN repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: open-edge-platform/virtual-edge-node
+          path: virtual-edge-node
+          token: ${{ secrets.SYS_ORCH_GITHUB }}
+
+      - name: Setup CI environment
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@40d61a820157bc9b70d3f2bdc5aec786073d48f2
+        with:
+          gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
+          ref: "base"
+
+      - name: Set up Git identity
+        shell: bash
+        run: |
+          git config --global user.name "Github Bot"
+          git config --global user.email "github-bot@intel.com"
+
+      - name: Update manifest version in VEN
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          if [[ "${{ needs.collect-versions.outputs.manifest_version }}" = .*dev ]]; then
+            echo "Skipping manifest version update as no new version created"
+          else
+            echo "${{ needs.collect-versions.outputs.manifest_version }}" > edge-node-container/EN_MANIFEST_VERSION
+          fi
+
+      - name: Update cluster-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          if [[ "${{ needs.collect-versions.outputs.cluster_agent_version }}" = .*dev ]]; then
+            echo "Skipping cluster agent version update as no new version created"
+          else
+            sed "s/^cluster_agent_version: '.*'/cluster_agent_version: '${{ needs.collect-versions.outputs.cluster_agent }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^cluster_agent_version: '.*'/cluster_agent_version: '${{ needs.collect-versions.outputs.cluster_agent }}'/" edge-node-container/chart/values.yaml
+          fi
+
+      - name: Update hardware-discovery-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          if [[ "${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}" = .*dev ]]; then
+            echo "Skipping hardware discovery agent version update as no new version created"
+          else
+            sed "s/^hardware_discovery_agent_version: '.*'/hardware_discovery_agent_version: '${{ needs.collect-versions.outputs.hardware_discovery_agent }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^hardware_discovery_agent_version: '.*'/hardware_discovery_agent_version: '${{ needs.collect-versions.outputs.hardware_discovery_agent }}'/" edge-node-container/chart/values.yaml
+          fi
+
+      - name: Update node-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          if [[ "${{ needs.collect-versions.outputs.node_agent_version }}" = .*dev ]]; then
+            echo "Skipping node agent version update as no new version created"
+          else
+            sed "s/^node_agent_version: '.*'/node_agent_version: ${{ needs.collect-versions.outputs.node_agent }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^node_agent_version: '.*'/node_agent_version: ${{ needs.collect-versions.outputs.node_agent }}'/" edge-node-container/chart/values.yaml
+          fi
+
+      - name: Update platform-observability-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          if [[ "${{ needs.collect-versions.outputs.platform_observability_agent_version }}" = .*dev ]]; then
+            echo "Skipping platform observability agent version update as no new version created"
+          else
+            sed "s/^platform_observability_agent_version: '.*'/platform_observability_agent_version: ${{ needs.collect-versions.outputs.platform_observability_agent }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^platform_observability_agent_version: '.*'/platform_observability_agent_version: ${{ needs.collect-versions.outputs.platform_observability_agent }}'/" edge-node-container/chart/values.yaml
+          fi
+
+      - name: Update platform-telemetry-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          if [[ "${{ needs.collect-versions.outputs.platform_telemetry_agent_version }}" = .*dev ]]; then
+            echo "Skipping platform telemetry agent version update as no new version created"
+          else
+            sed "s/^platform_telemetry_agent_version: '.*'/platform_telemetry_agent_version: ${{ needs.collect-versions.outputs.platform_telemetry_agent }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^platform_telemetry_agent_version: '.*'/platform_telemetry_agent_version: ${{ needs.collect-versions.outputs.platform_telemetry_agent }}'/" edge-node-container/chart/values.yaml
+          fi
+
+      - name: Update platform-update-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          if [[ "${{ needs.collect-versions.outputs.platform_update_agent_version }}" = .*dev ]]; then
+            echo "Skipping platform update agent version update as no new version created"
+          else
+            sed "s/^platform_update_agent_version: '.*'/platform_update_agent_version: ${{ needs.collect-versions.outputs.platform_update_agent }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^platform_update_agent_version: '.*'/platform_update_agent_version: ${{ needs.collect-versions.outputs.platform_update_agent }}'/" edge-node-container/chart/values.yaml
+          fi
+
+      - name: Update INBM versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          if [[ "${{ needs.collect-versions.outputs.inbm_version }}" = .*dev ]]; then
+            echo "Skipping INBM version update as no new version created"
+          else
+            sed "s/^inbc_program_version: '.*'/inbc_program_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^inbc_program_version: '.*'/inbc_program_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/values.yaml
+            sed "s/^inbm_cloudadapter_agent_version: '.*'/inbm_cloudadapter_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^inbm_cloudadapter_agent_version: '.*'/inbm_cloudadapter_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/values.yaml
+            sed "s/^inbm_configuration_agent_version: '.*'/inbm_configuration_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^inbm_configuration_agent_version: '.*'/inbm_configuration_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/values.yaml
+            sed "s/^inbm_diagnostic_agent_version: '.*'/inbm_diagnostic_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^inbm_diagnostic_agent_version: '.*'/inbm_diagnostic_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/values.yaml
+            sed "s/^inbm_dispatcher_agent_version: '.*'/inbm_dispatcher_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^inbm_dispatcher_agent_version: '.*'/inbm_dispatcher_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/values.yaml
+            sed "s/^inbm_telemetry_agent_version: '.*'/inbm_telemetry_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^inbm_telemetry_agent_version: '.*'/inbm_telemetry_agent_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/values.yaml
+            sed "s/^mqtt_version: '.*'/mqtt_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^mqtt_version: '.*'/mqtt_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/values.yaml
+            sed "s/^tpm_provision_version: '.*'/tpm_provision_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^tpm_provision_version: '.*'/tpm_provision_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/values.yaml
+            sed "s/^trtl_version: '.*'/trtl_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/chart/bma_values.yaml
+            sed "s/^trtl_version: '.*'/trtl_version: '${{ needs.collect-versions.outputs.inbm_version }}'/" edge-node-container/cahrt/values.yaml
+          fi
+
+      - name: Commit changes to branch and create PR
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          check_changed_files=$(git status -s)
+          if [ ${check_changed_files} != "" ]; then
+            current_date=$(date +%d-%m-%Y-%H%M%S)
+            branch_name="update-versions-${current_date}"
+            git checkout -b $branch_name
+
+            git add -A
+            git commit -m "Update edge node agent versions to latest"
+            git push origin $branch_name
+
+            gh pr create --title "Update edge node agent versions to latest" --body "Bumping edge node agent versions to latest iteration" --base main --head $branch_name
+          fi
