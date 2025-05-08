@@ -82,3 +82,6 @@ jobs:
               echo "Pre-merge checks failed. PR can't get merged"
               exit 1
             fi
+
+permissions:
+  contents: read
