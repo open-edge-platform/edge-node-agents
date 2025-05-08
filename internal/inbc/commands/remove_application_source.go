@@ -31,7 +31,7 @@ func RemoveApplicationSourceCmd() *cobra.Command {
 	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
 	cmd.Flags().StringVar(&filename, "filename", "", "Filename of the source")
 	must(cmd.MarkFlagRequired("filename"))
-	cmd.Flags().StringVar(&gpgKeyName, "gpg-key-name", "", "GPG key name")
+	cmd.Flags().StringVar(&gpgKeyName, "gpgKeyName", "", "GPG key name")
 
 	return cmd
 }

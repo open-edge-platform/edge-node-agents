@@ -61,6 +61,8 @@ func (s *InbdServer) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceR
 	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
 }
 
+// AddApplicationSource adds the source file under /etc/apt/sources.list.d/.
+// It optionally adds the GPG key under /usr/share/keyrings/ if the GPG key name is provided.
 func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplicationSourceRequest) (*pb.UpdateResponse, error) {
 	os, err := osUpdater.DetectOS()
 	if err != nil {
@@ -69,6 +71,12 @@ func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplic
 	if os != "Ubuntu" {
 		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Add Application Source is only for Ubuntu."}, nil
 	}
+	if req.Filename == "" {
+		return &pb.UpdateResponse{StatusCode: 400, Error: "Filename is empty"}, nil
+	}
+	if len(req.Source) == 0 {
+		return &pb.UpdateResponse{StatusCode: 400, Error: "Source list is empty"}, nil
+	}
 	err = appSource.NewAdder().Add(req)
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
@@ -76,7 +84,23 @@ func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplic
 	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
 }
 
+// RemoveApplicationSource removes the source file from under /etc/apt/sources.list.d/.  
+// It optionally removes the GPG key under /usr/share/keyrings/ if the GPG key name is provided.
 func (s *InbdServer) RemoveApplicationSource(ctx context.Context, req *pb.RemoveApplicationSourceRequest) (*pb.UpdateResponse, error) {
-	log.Printf("Received RemoveApplicationSource request")
-	return &pb.UpdateResponse{StatusCode: 501, Error: "Not implemented"}, nil
+	os, err := osUpdater.DetectOS()
+	if err != nil {
+		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
+	}
+	if os != "Ubuntu" {
+		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Remove Application Source is only for Ubuntu."}, nil
+	}
+	if req.Filename == "" {
+		return &pb.UpdateResponse{StatusCode: 400, Error: "Filename is empty"}, nil
+	}
+	err = appSource.NewRemover().Remove(req)
+	if err != nil {
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+	}
+	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
+
 }

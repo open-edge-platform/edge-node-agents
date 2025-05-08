@@ -20,11 +20,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-// Manager is an interface that defines the methods to add an application source.
-type Manager interface {
-	Add(sourceListFileName string, sources []string, gpgKeyURI string, gpgKeyName string) error
-}
-
 // Adder is a struct that implements the AppSourceManager interface.
 type Adder struct {
 	httpClient        *http.Client

@@ -323,17 +323,6 @@ func TestAddGpgKey_DearmorFailure(t *testing.T) {
 	}
 	mockRequestCreator := http.NewRequest
 
-    // mockClient := &MockHTTPClient{
-    //     Response: &http.Response{
-    //         StatusCode: http.StatusOK,
-    //         Body:       io.NopCloser(strings.NewReader("mock GPG key content")),
-    //     },
-    // }
-    // mockExecutor := &MockExecutor{}
-    // mockExecutor.On("Execute", []string{
-    //     "/usr/bin/gpg", "--dearmor", "--output", "/etc/apt/keyrings/example-key.gpg", "/tmp/mock-gpgkey.asc",
-    // }).Return("", "", fmt.Errorf("mock dearmor error"))
-
     err := addGpgKey(
         "http://example.com/key.asc",
         "example-key.gpg",

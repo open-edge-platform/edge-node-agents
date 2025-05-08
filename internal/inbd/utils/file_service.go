@@ -9,6 +9,7 @@ package utils
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,36 @@ var allowedBaseDirs = []string{
 	"/var/cache/manageability/repository-tool/sota",
 	"/var/intel-manageability",
 	"/var/log",
+}
+
+// RemoveFile removes a file at the given path using the provided filesystem.
+// It returns an error if the file is a symlink or if there was an error removing the file.
+// The file must be an absolute path and within one of the allowed base directories.
+func RemoveFile(fs afero.Fs, filePath string) error {
+	if err := isFilePathAbsolute(filePath); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	if err := isFilePathSymLink(filePath); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	if err := fs.Remove(filePath); err != nil {
+		return fmt.Errorf("error removing file: %w", err)
+	}
+	return nil
+}
+
+// IsFileExist checks if a file exists at the given path using the provided filesystem.
+func IsFileExist(fs afero.Fs, filePath string) bool {
+	if exists, err := afero.Exists(fs, filePath); err != nil {
+		log.Printf("file does not exist: %s", filePath)
+		return false
+	} else if !exists {
+		log.Printf("file does not exist: %s", filePath)
+		return false
+	}
+	return true
 }
 
 // Open opens a file at the given path using the provided filesystem.

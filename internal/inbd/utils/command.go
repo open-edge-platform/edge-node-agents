@@ -8,7 +8,6 @@ package utils
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -63,18 +62,4 @@ func ExecuteAndReadOutput(executableCommand *exec.Cmd) ([]byte, []byte, error) {
 	}
 
 	return []byte(stdout.String()), []byte(stderr.String()), nil
-}
-
-// IsSymlink checks if a file is a symlink.
-func IsSymlink(filePath string) error {
-	fileInfo, err := os.Lstat(filePath)
-
-	if err != nil {
-		return fmt.Errorf("lstat command failed: %v", err)
-	}
-
-	if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-		return fmt.Errorf("loading metadata failed- %v is a symlink", filePath)
-	}
-	return nil
 }

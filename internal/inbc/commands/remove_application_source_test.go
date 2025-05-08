@@ -35,9 +35,9 @@ func TestRemoveApplicationSourceCmd(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "", filename, "default filename should be empty")
 
-	gpgKeyName, err := flags.GetString("gpg-key-name")
+	gpgKeyName, err := flags.GetString("gpgKeyName")
 	assert.NoError(t, err)
-	assert.Equal(t, "", gpgKeyName, "default gpg-key-name should be empty")
+	assert.Equal(t, "", gpgKeyName, "default gpgKeyName should be empty")
 }
 
 func TestHandleRemoveApplicationSource(t *testing.T) {

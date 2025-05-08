@@ -8,6 +8,77 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRemoveFile_Success(t *testing.T) {
+    fs := afero.NewOsFs() // Use an in-memory filesystem for testing
+
+    // Create a mock file
+    filePath := "/tmp/testfile.txt"
+    err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
+    assert.NoError(t, err)
+
+    // Call RemoveFile
+    err = RemoveFile(fs, filePath)
+    assert.NoError(t, err)
+
+    // Verify the file was removed
+    exists, err := afero.Exists(fs, filePath)
+    assert.NoError(t, err)
+    assert.False(t, exists, "File should have been removed")
+}
+
+func TestRemoveFile_NotAbsolutePath(t *testing.T) {
+    fs := afero.NewMemMapFs() // Use an in-memory filesystem for testing
+
+    // Call RemoveFile with a relative path
+    err := RemoveFile(fs, "relative/path/to/file.txt")
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "access to the file is outside the allowed directories")
+}
+
+func TestRemoveFile_Symlink(t *testing.T) {
+    fs := afero.NewOsFs() // Use the real filesystem for symlink testing
+    targetPath := "/tmp/realfile.txt"
+    symlinkPath := "/tmp/symlink.txt"
+
+    // Create a real file
+    err := os.WriteFile(targetPath, []byte("test content"), 0644)
+    assert.NoError(t, err)
+    defer os.Remove(targetPath)
+
+    // Create a symlink pointing to the real file
+    err = os.Symlink(targetPath, symlinkPath)
+    assert.NoError(t, err)
+    defer os.Remove(symlinkPath)
+
+    // Call RemoveFile with the symlink
+    err = RemoveFile(fs, symlinkPath)
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "file is a symlink")
+}
+
+func TestRemoveFile_FileDoesNotExist(t *testing.T) {
+    fs := afero.NewOsFs() // Use an in-memory filesystem for testing
+
+    // Call RemoveFile with a non-existent file
+    err := RemoveFile(fs, "/tmp/nonexistent.txt")
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "no such file or directory")
+}
+
+func TestRemoveFile_OutsideAllowedDirectories(t *testing.T) {
+    fs := afero.NewMemMapFs() // Use an in-memory filesystem for testing
+
+    // Create a file outside the allowed directories
+    filePath := "/unauthorized/testfile.txt"
+    err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
+    assert.NoError(t, err)
+
+    // Call RemoveFile
+    err = RemoveFile(fs, filePath)
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "access to the file is outside the allowed directories")
+}
+
 func TestCopyFile_ValidFile(t *testing.T) {
 	fs := afero.NewOsFs()
 	srcPath := "/tmp/source.txt"

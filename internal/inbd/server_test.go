@@ -5,7 +5,6 @@
 package inbd
 
 import (
-	"context"
 	"errors"
 	"net"
 	"os"
@@ -13,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
 	"google.golang.org/grpc"
 )
@@ -352,19 +350,4 @@ func TestRunServer_UmaskRestoration(t *testing.T) {
 		t.Errorf("Expected second Umask call with 0, got %o", maskSet[1])
 	}
 
-}
-
-// ----------------------------------------------------------------------------
-// Tests for InbdServer methods
-// ----------------------------------------------------------------------------
-
-func TestInbdServer_RemoveApplicationSource(t *testing.T) {
-	srv := &InbdServer{}
-	resp, err := srv.RemoveApplicationSource(context.Background(), &pb.RemoveApplicationSourceRequest{})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-	if resp.StatusCode != 501 || resp.Error != "Not implemented" {
-		t.Errorf("Unexpected response: %+v", resp)
-	}
 }
