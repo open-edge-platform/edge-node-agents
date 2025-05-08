@@ -119,3 +119,8 @@ jobs:
       - name: Tag new manifest version
         run: |
           ./common/ci_scripts/manifest-versioning.sh tag
+
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
