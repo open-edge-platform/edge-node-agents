@@ -6,7 +6,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/open-edge-platform/edge-node-agents/common v1.6.8
-	github.com/open-edge-platform/infra-managers/host v1.21.0
+	github.com/open-edge-platform/infra-managers/host v1.21.1
 	github.com/safchain/ethtool v0.3.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
