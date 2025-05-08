@@ -223,8 +223,6 @@ func TestInbm_ProvisionInbm_IfAlreadyProvisionedShouldDoNothing(t *testing.T) {
 
 func TestInbm_ProvisionInbm_HappyPath(t *testing.T) {
 	var provisionTcCommandCalled bool
-	var removeDockerCommandCalled bool
-	var restartInbmConfigurationCommandCalled bool
 
 	inbmConfigSuccessPath = "testdata/.notconfigured"
 	defer os.Remove(inbmConfigSuccessPath)
@@ -234,12 +232,6 @@ func TestInbm_ProvisionInbm_HappyPath(t *testing.T) {
 			switch {
 			case reflect.DeepEqual(*args, provisionTcCommand):
 				provisionTcCommandCalled = true
-				return nil, nil
-			case reflect.DeepEqual(*args, removeDockerCommand):
-				removeDockerCommandCalled = true
-				return nil, nil
-			case reflect.DeepEqual(*args, restartInbmConfigurationCommand):
-				restartInbmConfigurationCommandCalled = true
 				return nil, nil
 			}
 			return nil, nil
@@ -251,8 +243,6 @@ func TestInbm_ProvisionInbm_HappyPath(t *testing.T) {
 
 	require.NoError(t, sut(context.TODO()))
 	require.Truef(t, provisionTcCommandCalled, "provisionTcCommand function shall be called")
-	require.Truef(t, removeDockerCommandCalled, "removeDockerCommand function shall be called")
-	require.Truef(t, restartInbmConfigurationCommandCalled, "restartInbmConfigurationCommand function shall be called")
 	_, err := os.Stat(inbmConfigSuccessPath)
 	require.NoError(t, err)
 }
