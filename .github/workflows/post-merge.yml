@@ -4,6 +4,11 @@
 
 name: Post-Merge CI Pipeline
 
+permissions:
+  contents: read
+  packages: write
+  statuses: write
+
 on:
   push:
     branches:
