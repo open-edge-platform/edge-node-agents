@@ -49,3 +49,6 @@ jobs:
         shell: bash
         run: |
           yamllint ena-manifest.yaml
+
+permissions:
+  contents: read
