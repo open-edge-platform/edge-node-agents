@@ -14,7 +14,7 @@
 
 #### Go Targets ####
 
-GOCMD := GOPRIVATE="github.com/open-edge-platform/*" go
+GOCMD := go
 
 #### Lint targets ####
 
@@ -78,3 +78,19 @@ help:
         | sort \
         | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' \
         | xargs -I _ sh -c 'printf "%-20s " _; grep -B 1 "^_" Makefile | (grep -i "^# Help:" || echo "") | tail -1 | sed "s/^# Help: //g"'
+
+#### Build debian packages ####
+
+common-deb-push:
+	if [ -z "$$(cat VERSION | grep 'dev')" ]; then \
+		echo "Uploading artifacts..."; \
+		cd build/artifacts; \
+		for DEB_PKG in *.deb; do \
+			PKG_VER=$$(dpkg-deb -f "$${DEB_PKG}" Version); \
+			PKG_NAME=$$(dpkg-deb -f "$${DEB_PKG}" Package); \
+			REPOSITORY=en/deb/$${PKG_NAME}; \
+			oras push $${REGISTRY}/edge-orch/$${REPOSITORY}:$${PKG_VER} \
+			--artifact-type application/vnd.intel.orch.deb ./$${DEB_PKG}; \
+		done; \
+		cd -; \
+	fi

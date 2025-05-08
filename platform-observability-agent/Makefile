@@ -24,6 +24,7 @@ else
 	PKG_VERSION = $(VERSION)
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
@@ -32,10 +33,25 @@ else
 	include ../common.mk
 endif
 
-.PHONY: clean package package_test package_depends setup_fb_repo download_fb tarball
+.PHONY: clean build lint test package package_test package_depends setup_fb_repo download_fb tarball
 
 clean:
 	rm -rf build
+
+build:
+	@echo "no binaries to build, skipping"
+
+lint:
+	@echo "skipping linter"
+
+test:
+	@echo "no unit tests to run, skipping"
+
+integration_test:
+	@echo "no integration tests to run, skipping"
+
+fuzztest:
+	@echo "no fuzz tests to run, skipping"
 
 download_fb:
 	mkdir -p $(ASSETS_DIR)
@@ -77,10 +93,10 @@ install: unpack_fb unpack_telegraf unpack_otelcol
 	install -D $(BUILD_DIR)/$(OTELCOL_DIR)/usr/bin/otelcol-contrib $(INSTALL_DIR)/opt/otelcol/bin/otelcol
 
 package_depends:
-	apt-get update
-	apt-get -y install devscripts debhelper libpq5
+	sudo apt-get update
+	sudo apt-get -y install devscripts debhelper libpq5
 
-package:
+package: package_depends download_deps
 	mkdir -p $(PACKAGE_DIR)
 	cp -r assets configs scripts debian Makefile VERSION $(PACKAGE_DIR)
 	cp -r ../LICENSES ${PACKAGE_DIR}
@@ -89,6 +105,7 @@ package:
 	sed -i "s#VERSION#$(PKG_VERSION)#" $(PACKAGE_DIR)/debian/changelog
 	sed -i "s#../common.mk#common.mk#" $(PACKAGE_DIR)/Makefile
 	cd $(PACKAGE_DIR); debuild --preserve-env --preserve-envvar PATH -us -uc -b
+	rm -rf $(ASSETS_DIR)
 
 package_test:
 	echo "platform-observability-agent platform-observability-agent/host string testhost.com" | sudo debconf-set-selections
@@ -96,11 +113,14 @@ package_test:
 	echo "platform-observability-agent platform-observability-agent/metrics-host string testhost.com" | sudo debconf-set-selections
 	echo "platform-observability-agent platform-observability-agent/metrics-port string 553" | sudo debconf-set-selections
 	sudo apt-get install -y $(BUILD_DIR)/platform-observability-agent_*_amd64.deb
+	sudo systemctl stop platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
 	sudo cp test/fluent-bit-test.conf /etc/fluent-bit/fluent-bit.conf
 	sudo cp test/health-check-test.conf /etc/health-check/health-check.conf
 	sudo cp test/otelcol-test.yaml /etc/otelcol/otelcol.yaml
+	sudo mkdir -p /etc/intel_edge_node/tokens/platform-observability-agent/
+	sudo touch /etc/intel_edge_node/tokens/platform-observability-agent/access_token
 	sudo systemctl enable platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
-	sudo systemctl start platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
+	sudo systemctl restart platform-observability-logging platform-observability-health-check platform-observability-metrics platform-observability-collector
 	systemctl is-active platform-observability-logging
 	systemctl is-active platform-observability-health-check
 	systemctl is-active platform-observability-metrics
@@ -113,3 +133,5 @@ tarball:
 	cp -r configs/ debian/copyright scripts/ Makefile VERSION $(TARBALL_DIR)
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile
 	tar -zcf $(BUILD_DIR)/$(NAME)-$(PKG_VERSION).tar.gz --directory=$(BUILD_DIR) $(NAME)-$(PKG_VERSION)
+
+deb-push: common-deb-push

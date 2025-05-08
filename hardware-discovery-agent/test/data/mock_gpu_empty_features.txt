@@ -1,0 +1,11 @@
+  *-display
+       description: VGA compatible controller
+       product: Graphics Controller
+       vendor: Graphics
+       physical id: 0
+       bus info: pci@0000:03:00.0
+       version: 04
+       width: 32 bits
+       clock: 66MHz
+       configuration: driver=mgag200 latency=64 maxlatency=32 mingnt=16
+       resources: irq:16 memory:91000000-91ffffff memory:92808000-9280bfff memory:92000000-927fffff memory:c0000-dffff

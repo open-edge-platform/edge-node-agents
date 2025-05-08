@@ -21,6 +21,7 @@ else
 	PKG_VERSION = $(VERSION)
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(FULL_NAME)-$(PKG_VERSION)
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ../common.mk)","")
@@ -29,8 +30,8 @@ else ifneq ("$(wildcard ./common.mk)","")
 	include ./common.mk
 endif
 
-.PHONY: unit-test fuzztest build install tarball $(BUILD_DIR)/hdagent-linux-amd64 $(BUILD_DIR)/hdagent-linux-arm64
-all: unit-test build $(BUILD_DIR)/hdagent-linux-amd64 $(BUILD_DIR)/hdagent-linux-arm64
+.PHONY: test fuzztest build install tarball $(BUILD_DIR)/hdagent-linux-amd64 $(BUILD_DIR)/hdagent-linux-arm64
+all: test build $(BUILD_DIR)/hdagent-linux-amd64 $(BUILD_DIR)/hdagent-linux-arm64
 
 lint: golint
 
@@ -98,9 +99,11 @@ build: hdabuild hmmbuild ssmbuild
 
 build-linux: $(BUILD_DIR)/hdagent-linux-amd64 $(BUILD_DIR)/hdagent-linux-arm64
 
-unit-test: common-unit-test
+test: common-unit-test
 
 integration_test: hdabuild_with_race hmmbuild ssmbuild
+	sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
+	sudo update-ca-certificates
 	HDA_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/hd-agent_race \
 	HMM_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/hostmgr-mock \
 	SS_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/status-server-mock \
@@ -164,3 +167,5 @@ tarball:
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile
 	cd $(TARBALL_DIR) && go mod tidy && go mod vendor
 	tar -zcf $(BUILD_DIR)/$(FULL_NAME)-$(PKG_VERSION).tar.gz --directory=$(BUILD_DIR) $(FULL_NAME)-$(PKG_VERSION)
+
+deb-push: common-deb-push

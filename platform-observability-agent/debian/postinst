@@ -46,6 +46,16 @@ chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_gpu_metri
 chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_disk_info.sh
 chown platform-observability-agent:bm-agents /opt/telegraf/bin/core_metrics.sh
 
+chmod 740 /etc/edge-node/node/confs/platform-observability-collector
+chmod 740 /etc/edge-node/node/confs/platform-observability-health-check
+chmod 740 /etc/edge-node/node/confs/platform-observability-logging
+chmod 740 /etc/edge-node/node/confs/platform-observability-metrics
+
+chown platform-observability-agent:bm-agents /etc/edge-node/node/confs/platform-observability-collector
+chown platform-observability-agent:bm-agents /etc/edge-node/node/confs/platform-observability-health-check
+chown platform-observability-agent:bm-agents /etc/edge-node/node/confs/platform-observability-logging
+chown platform-observability-agent:bm-agents /etc/edge-node/node/confs/platform-observability-metrics
+
 apparmor_parser -rK /etc/apparmor.d/opt.fluent-bit.bin.fluent-bit
 apparmor_parser -rK /etc/apparmor.d/opt.health-check.bin.fluent-bit
 apparmor_parser -rK /etc/apparmor.d/opt.otelcol.bin.otelcol

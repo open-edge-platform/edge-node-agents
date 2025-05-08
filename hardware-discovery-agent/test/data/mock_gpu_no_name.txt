@@ -1,0 +1,9 @@
+ (prog-if 00 [VGA controller])
+        DeviceName: Embedded Video
+        Subsystem: Graphics Controller
+        Flags: bus master, 66MHz, medium devsel, latency 64, IRQ 16, NUMA node 0
+        Memory at 91000000 (32-bit, prefetchable) [size=16M]
+        Memory at 92808000 (32-bit, non-prefetchable) [size=16K]
+        Memory at 92000000 (32-bit, non-prefetchable) [size=8M]
+        Expansion ROM at 000c0000 [virtual] [disabled] [size=128K]
+        Capabilities: [dc] Power Management version 3

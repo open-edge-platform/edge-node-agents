@@ -14,6 +14,7 @@ else
 	PKG_VERSION = $(VERSION)
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ../common.mk)","")
@@ -22,9 +23,9 @@ else ifneq ("$(wildcard ./common.mk)","")
 	include ./common.mk
 endif
 
-.PHONY: all build clean lint package unit-test fuzztest tarball
+.PHONY: all build clean lint package test fuzztest tarball
 
-all: build lint unit-test
+all: build lint test
 
 clean:
 	rm -rf build
@@ -65,7 +66,7 @@ ptabuild_with_cover: generate_config
 	-o $(BUILD_DIR)/$(NAME)_cover cmd/telemetryagent/main.go
 	@echo "---END MAKEFILE Build---"
 
-unit-test: common-unit-test
+test: common-unit-test
 
 fuzztest: common-fuzztest
 
@@ -138,3 +139,5 @@ tarball:
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile
 	cd $(TARBALL_DIR) && go mod tidy && go mod vendor
 	tar -zcf $(BUILD_DIR)/$(NAME)-$(PKG_VERSION).tar.gz --directory=$(BUILD_DIR) $(NAME)-$(PKG_VERSION)
+
+deb-push: common-deb-push

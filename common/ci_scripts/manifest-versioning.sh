@@ -95,7 +95,7 @@ function version_tag {
 	local git_hash=""
 	local commit_info=""
 
-	git config --global user.email "do-not-reply@intel.com"
+	git config --global user.email "do-not-reply@example.com"
 	git config --global user.name "Sys_orch_github"
 
 	git_hash=$(git rev-parse --short HEAD)

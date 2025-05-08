@@ -1,11 +1,14 @@
 configs/fluent-bit.conf etc/fluent-bit
+configs/platform-observability-logging etc/edge-node/node/confs
 configs/apparmor.d/opt.fluent-bit.bin.fluent-bit etc/apparmor.d
 configs/sudoers.d/platform-observability-agent etc/sudoers.d
 
 configs/health-check.conf etc/health-check
+configs/platform-observability-health-check etc/edge-node/node/confs
 configs/apparmor.d/opt.health-check.bin.fluent-bit etc/apparmor.d
 
 configs/poa-telegraf.conf etc/telegraf/telegraf.d/
+configs/platform-observability-metrics etc/edge-node/node/confs
 configs/apparmor.d/opt.telegraf.bin.telegraf etc/apparmor.d
 perfmon/ /etc/telegraf/
 scripts/collect_gpu_metrics.sh opt/telegraf/bin/
@@ -13,4 +16,5 @@ scripts/collect_disk_info.sh opt/telegraf/bin/
 scripts/core_metrics.sh opt/telegraf/bin/
 
 configs/otelcol.yaml etc/otelcol
+configs/platform-observability-collector etc/edge-node/node/confs
 configs/apparmor.d/opt.otelcol.bin.otelcol etc/apparmor.d

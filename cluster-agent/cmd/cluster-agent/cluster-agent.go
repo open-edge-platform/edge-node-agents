@@ -110,6 +110,7 @@ func main() {
 			if updateErr != nil {
 				return updateErr
 			}
+			atomic.StoreInt64(&lastUpdateTimestamp, time.Now().Unix())
 			resp = res
 			return nil
 		}
@@ -130,7 +131,6 @@ func main() {
 					select {
 					// If receiver is reading from channel then this goroutine will write to it.
 					case actionRequests <- resp.GetActionRequest():
-						atomic.StoreInt64(&lastUpdateTimestamp, time.Now().Unix())
 					// Receiver not reading from channel, skipping.
 					default:
 					}

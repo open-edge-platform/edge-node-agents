@@ -6,6 +6,9 @@
 
 ## Cluster Agent Changelog
 
+### 1.7.0
+- Fix readiness reporting to NA during cluster install
+
 ### 1.6.1
 - Update common to 1.6.8
 
@@ -30,6 +33,9 @@
 
 ## Node Agent Changelog
 
+### 1.7.0
+- Update release service token check for anonymous token
+
 ### 1.6.2
 - Update common to 1.6.8
 
@@ -41,6 +47,9 @@
 - Dependency import updates
 
 ## Platform Observability Agent Changelog
+
+### 1.8.1
+- Update log and metrics service to start after collector service
 
 ### 1.8.0
 - Initial platform observability agent release

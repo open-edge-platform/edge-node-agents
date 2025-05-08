@@ -3,12 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 version: 2
-registries:
-  github:
-    type: git
-    url: https://github.com
-    username: x-access-token
-    password: ${{ secrets.SYS_ORCH_GITHUB }}
 updates:
   - package-ecosystem: "gomod"
     directories:
@@ -18,8 +12,6 @@ updates:
       - "/node-agent"
       - "/platform-telemetry-agent"
       - "/platform-update-agent"
-    registries:
-      - github
     schedule:
       interval: daily
     open-pull-requests-limit: 3
