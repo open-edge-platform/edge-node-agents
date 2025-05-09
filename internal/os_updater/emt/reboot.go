@@ -23,7 +23,7 @@ type Rebooter struct {
 	commandExecutor   utils.Executor
 	request           *pb.UpdateSystemSoftwareRequest
 	writeUpdateStatus func(afero.Fs, string, string, string)
-	writeGranularLog  func(string, string)
+	writeGranularLog  func(afero.Fs, string, string)
 	fs                afero.Fs
 }
 
@@ -54,7 +54,7 @@ func (t *Rebooter) Reboot() error {
 
 	if _, _, err := t.commandExecutor.Execute(rebootCommand); err != nil {
 		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
-		t.writeGranularLog(FAIL, FAILURE_REASON_UNSPECIFIED)
+		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_UNSPECIFIED)
 		return fmt.Errorf("failed to execute shell command(%v)- %v", rebootCommand, err)
 	}
 	return nil

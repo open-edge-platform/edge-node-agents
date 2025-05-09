@@ -32,7 +32,7 @@ type EMTState struct {
 }
 
 // Snapshot creates a snapshot of the system.
-func Snapshot() error {
+func Snapshot(fs afero.Fs) error {
 	log.Println("Take a snapshot.")
 
 	cmdExecutor := utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput)
@@ -47,7 +47,7 @@ func Snapshot() error {
 		return fmt.Errorf("failed to truncate dispatcher state file with command(%v)- %w", dispatcherStateTruncateCommand, err)
 	}
 
-	buildDate, err := GetImageBuildDate()
+	buildDate, err := GetImageBuildDate(fs)
 	if err != nil || buildDate == "" {
 		return fmt.Errorf("failed to get image build date: %w", err)
 	}
@@ -63,7 +63,7 @@ func Snapshot() error {
 	}
 
 	// Write the JSON to the dispatcher state file
-	if err := writeToDispatcherStateFile(string(jsonData)); err != nil {
+	if err := writeToDispatcherStateFile(fs, string(jsonData)); err != nil {
 		return fmt.Errorf("failed to write to dispatcher state file: %w", err)
 	}
 	
@@ -72,9 +72,9 @@ func Snapshot() error {
 }
 
 // GetImageBuildDate get the image build date.
-func GetImageBuildDate() (string, error) {
+func GetImageBuildDate(fs afero.Fs) (string, error) {
 	// Open the file
-	file, err := os.Open(emtImageIDPath)
+	file, err := utils.Open(fs, emtImageIDPath)
 	if err != nil {
 		log.Println("Error opening file:", err)
 		return "", err
@@ -102,9 +102,9 @@ func GetImageBuildDate() (string, error) {
 }
 
 // writeToDispatcherStateFile writes the content to the dispatcher state file.
-func writeToDispatcherStateFile(content string) error {
-	// Open the file
-	file, err := os.OpenFile(dispatcherStatePath, os.O_WRONLY|os.O_CREATE, 0644)
+func writeToDispatcherStateFile(fs afero.Fs, content string) error {
+	// Open the file for writing
+	file, err := utils.OpenFile(fs, dispatcherStatePath, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		log.Println("Error opening file:", err)
 		return err
@@ -123,10 +123,10 @@ func writeToDispatcherStateFile(content string) error {
 
 // ReadDispatcherStateFile reads the content from the dispatcher state file.
 // It returns the image version.
-func ReadDispatcherStateFile(osType string) (string, error) {
+func ReadDispatcherStateFile(fs afero.Fs, osType string) (string, error) {
 
 	if osType == "EMT" {
-		file, err := os.Open(dispatcherStatePath)
+		file, err := utils.Open(fs, dispatcherStatePath)
 		if err != nil {
 			log.Println("Error opening file:", err)
 			return "", err
@@ -153,24 +153,26 @@ func ReadDispatcherStateFile(osType string) (string, error) {
 	return "", fmt.Errorf("OS not supported")
 }
 
+// VerifyUpdateAfterReboot verifies the update after a reboot.
+// It checks if the dispatcher state file exists and compares the previous and current versions.
+// If the versions are different, it commits the update; otherwise, it reverts to the previous image.
 func VerifyUpdateAfterReboot(fs afero.Fs, osType string) error {
-
 	// Check if dispatcher state file exist.
 	if _, err := os.Stat(dispatcherStatePath); err == nil {
 		log.Println("Perform post update verification.")
 		if osType == "EMT" {
-			previousVersion, err := ReadDispatcherStateFile(osType)
+			previousVersion, err := ReadDispatcherStateFile(fs, osType)
 			if err != nil {
 				return fmt.Errorf("error reading dispatcher state file: %w", err)
 			}
 
-			currentVersion, err := GetImageBuildDate()
+			currentVersion, err := GetImageBuildDate(fs)
 			if err != nil {
 				return fmt.Errorf("error getting image build date: %w", err)
 			}
 
 			// Remove dispatcher state file before rebooting.
-			err = os.Remove(dispatcherStatePath)
+			err = utils.RemoveFile(fs, dispatcherStatePath)
 			if err != nil {
 				log.Printf("[Warning] Error removing dispatcher state file: %v", err)
 			}
@@ -192,7 +194,7 @@ func VerifyUpdateAfterReboot(fs afero.Fs, osType string) error {
 
 				log.Println("SUCCESSFUL INSTALL: Overall SOTA update successful.  System has been properly updated.")
 
-				writeGranularLog(SUCCESS, "")
+				writeGranularLog(fs, SUCCESS, "")
 				if err != nil {
 					log.Printf("[Warning] Error writing granular log: %v", err)
 				}
@@ -200,7 +202,7 @@ func VerifyUpdateAfterReboot(fs afero.Fs, osType string) error {
 				log.Println("Update failed. Reverting to previous image.")
 				// Write the status to the log file.
 				writeUpdateStatus(fs, FAIL, "", "Update failed. Versions are the same.")
-				writeGranularLog(FAIL, FAILURE_REASON_BOOTLOADER)
+				writeGranularLog(fs, FAIL, FAILURE_REASON_BOOTLOADER)
 
 				log.Println("Rebooting...")
 				// Reboot the system without commit.

@@ -187,7 +187,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 		name                    string
 		readJWTToken            func(afero.Fs, string, func(string) (bool, error)) (string, error)
 		writeUpdateStatus       func(afero.Fs, string, string, string)
-		writeGranularLog        func(string, string)
+		writeGranularLog        func(afero.Fs, string, string)
 		expectedResult          bool
 		expectedError           error
 		getFreeDiskSpaceInBytes func(string) (uint64, error)
@@ -195,7 +195,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 	}{
 		{
 			name: "successful check with enough disk space",
-			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			getFreeDiskSpaceInBytes: func(string) (uint64, error) {
 				return 1000 * 4096, nil
 			},
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
@@ -229,7 +229,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			writeUpdateStatus: func(afero.Fs, string, string, string) {
 				// No-op implementation for testing
 			},
-			writeGranularLog: func(level, message string) {
+			writeGranularLog: func(afero.Fs, string, string) {
 				// No-op implementation for testing
 			},
 			expectedResult: false,
@@ -246,7 +246,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			writeUpdateStatus: func(afero.Fs, string, string, string) {
 				// No-op implementation for testing
 			},
-			writeGranularLog: func(level, message string) {
+			writeGranularLog: func(afero.Fs, string, string) {
 				// No-op implementation for testing
 			},
 			getFileSizeInBytes: func(string, string) (int64, error) {

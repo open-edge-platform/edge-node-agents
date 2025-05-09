@@ -36,7 +36,7 @@ func TestReboot_Success(t *testing.T) {
 	}
     mockFs := afero.NewMemMapFs()
     mockWriteUpdateStatus := func(fs afero.Fs, status, request, errorMsg string) {}
-    mockWriteGranularLog := func(status, reason string) {}
+    mockWriteGranularLog := func(fs afero.Fs, status, reason string) {}
 
     rebooter := &Rebooter{
         commandExecutor:   mockExec,
@@ -64,7 +64,7 @@ func TestReboot_CommandExecutionFailure(t *testing.T) {
         assert.Contains(t, errorMsg, "mock command execution error")
     }
     mockWriteGranularLogCalled := false
-    mockWriteGranularLog := func(status, reason string) {
+    mockWriteGranularLog := func(fs afero.Fs, status, reason string) {
         mockWriteGranularLogCalled = true
         assert.Equal(t, FAIL, status)
         assert.Equal(t, FAILURE_REASON_UNSPECIFIED, reason)

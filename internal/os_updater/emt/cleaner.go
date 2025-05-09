@@ -12,21 +12,29 @@ import (
 	"path/filepath"
 
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
+	"github.com/spf13/afero"
 )
 
-type Cleaner struct {
-	commandExecutor utils.Executor
-}
-
+// CleanerInterface defines the interface for the Cleaner
 type CleanerInterface interface {
 	DeleteAll(path string) error
 }
 
-func NewCleaner(commandExecutor utils.Executor) *Cleaner {
-	return &Cleaner{
-		commandExecutor: commandExecutor}
+// Cleaner is the concrete implementation of the CleanerInterface
+type Cleaner struct {
+	commandExecutor utils.Executor
+	fs              afero.Fs
 }
 
+// NewCleaner creates a new Cleaner instance
+func NewCleaner(commandExecutor utils.Executor) *Cleaner {
+	return &Cleaner{
+		commandExecutor: commandExecutor,
+		fs:              afero.NewOsFs(),
+	}
+}
+
+// DeleteAll removes all files in the specified path
 func (c *Cleaner) DeleteAll(path string) error {
 	log.Println("Removes file after update")
 	// Walk through the directory and remove all files
@@ -39,7 +47,7 @@ func (c *Cleaner) DeleteAll(path string) error {
 			return nil
 		}
 		// Remove the file
-		err = os.Remove(p)
+		err = utils.RemoveFile(c.fs, p)
 		if err != nil {
 			log.Printf("Failed to delete file: %s, error: %v\n", p, err)
 		} else {

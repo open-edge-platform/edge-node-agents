@@ -31,7 +31,7 @@ type Updater struct {
 	commandExecutor   utils.Executor
 	request           *pb.UpdateSystemSoftwareRequest
 	writeUpdateStatus func(afero.Fs, string, string, string)
-	writeGranularLog  func(string, string)
+	writeGranularLog  func(afero.Fs, string, string)
 	fs                afero.Fs
 }
 
@@ -70,7 +70,7 @@ func (t *Updater) Update() (bool, error) {
 		err := t.VerifyHash()
 		if err != nil {
 			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
-			t.writeGranularLog(FAIL, FAILURE_REASON_SIGNATURE_CHECK)
+			t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_SIGNATURE_CHECK)
 			return false, fmt.Errorf("hash verification failed: %w", err)
 		}
 
@@ -89,7 +89,7 @@ func (t *Updater) Update() (bool, error) {
 
 		if _, _, err := t.commandExecutor.Execute(updateToolWriteCommand); err != nil {
 			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
-			t.writeGranularLog(FAIL, FAILURE_REASON_UT_WRITE)
+			t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_UT_WRITE)
 			return false, fmt.Errorf("failed to execute shell command(%v)- %v", updateToolWriteCommand, err)
 		}
 
@@ -104,10 +104,10 @@ func (t *Updater) Update() (bool, error) {
 
 	if t.request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
 		log.Println("Save snapshot before applying the update.")
-		if err := Snapshot(); err != nil {
+		if err := Snapshot(t.fs); err != nil {
 			errMsg := fmt.Sprintf("Error taking snapshot: %v", err)
 			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), errMsg)
-			t.writeGranularLog(FAIL, FAILURE_REASON_INBM)
+			t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INBM)
 			return false, fmt.Errorf("failed to take snapshot before applying the update: %v", err)
 		}
 
@@ -118,13 +118,13 @@ func (t *Updater) Update() (bool, error) {
 
 		if _, _, err := t.commandExecutor.Execute(updateToolApplyCommand); err != nil {
 			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
-			t.writeGranularLog(FAIL, FAILURE_REASON_BOOT_CONFIGURATION)
+			t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_BOOT_CONFIGURATION)
 			return false, fmt.Errorf("failed to execute shell command(%v)- %v", updateToolApplyCommand, err)
 		}
 
 		// Write the update status to the status log file
 		writeUpdateStatus(t.fs, SUCCESS, string(jsonString), "")
-		writeGranularLog(SUCCESS, "")
+		writeGranularLog(t.fs, SUCCESS, "")
 	}
 
 	return true, nil
@@ -146,7 +146,7 @@ func (t *Updater) commitUpdate() error {
 	if _, _, err := t.commandExecutor.Execute(updateToolCommitCommand); err != nil {
 		log.Printf("Error executing shell command(%v): %v\n", updateToolCommitCommand, err)
 		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
-		t.writeGranularLog(FAIL, FAILURE_REASON_OS_COMMIT)
+		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_OS_COMMIT)
 		return fmt.Errorf("failed to execute shell command(%v)- %v", updateToolCommitCommand, err)
 	}
 	return nil

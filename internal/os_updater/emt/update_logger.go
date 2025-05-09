@@ -71,7 +71,7 @@ func writeUpdateStatus(fs afero.Fs, status, metadata, errorDetails string) {
 	}
 }
 
-func writeGranularLog(statusDetail string, failureReason string) {
+func writeGranularLog(fs afero.Fs, statusDetail string, failureReason string) {
 	// Create the granular log file if it does not exist.
 	if _, err := os.Stat(granularLogPath); os.IsNotExist(err) {
 		file, err := os.Create(granularLogPath)
@@ -82,7 +82,7 @@ func writeGranularLog(statusDetail string, failureReason string) {
 	}
 
 	// Open the granular log file for writing and truncate it.
-	file, err := os.OpenFile(granularLogPath, os.O_WRONLY|os.O_TRUNC, 0644)
+	file, err := utils.OpenFile(fs, granularLogPath, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Printf("[Warning] Error writing granular log: failed to open granular log file: %v", err)
 	}
@@ -92,7 +92,7 @@ func writeGranularLog(statusDetail string, failureReason string) {
 	// If update is not successful, write the failure reason to the granular log.
 	var granularLogData map[string][]map[string]string
 	if statusDetail == SUCCESS {
-		buildDate, err := GetImageBuildDate()
+		buildDate, err := GetImageBuildDate(fs)
 		if err != nil || buildDate == "" {
 			log.Printf("[Warning] Error writing granular log: failed to get image build date: %v", err)
 		}
