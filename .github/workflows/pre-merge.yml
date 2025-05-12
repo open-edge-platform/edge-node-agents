@@ -15,8 +15,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   pre-checks:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       filtered_projects: ${{ steps.filter-changes.outputs.filtered_projects }}
@@ -36,6 +40,8 @@ jobs:
           filtered_projects=$(echo "$changed_projects" | jq -cr --argjson folders_to_remove "$folders_to_remove" 'map(select(. as $item | $folders_to_remove | index($item) | not))')
           echo "filtered_projects=${filtered_projects}" >> ${GITHUB_OUTPUT}
   pre-merge-pipeline:
+    permissions:
+      contents: read
     needs: pre-checks
     if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' && needs.pre-checks.outputs.filtered_projects != '[""]' }}
     strategy:
@@ -66,22 +72,21 @@ jobs:
       trivy_config_path: ${{ matrix.project_folder }}/trivy.yaml
     secrets: inherit
   final-check:
-      runs-on: ubuntu-latest
-      if: ${{ always() }}
-      needs: [pre-merge-pipeline]
-      steps:
-        - name: Final Status Check
-          run: |
-            pre_merge_pipeline_result="${{ needs.pre-merge-pipeline.result }}"
-            
-            echo "Pre-merge pipeline result: $pre_merge_pipeline_result"
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: [pre-merge-pipeline]
+    steps:
+      - name: Final Status Check
+        run: |
+          pre_merge_pipeline_result="${{ needs.pre-merge-pipeline.result }}"
+          
+          echo "Pre-merge pipeline result: $pre_merge_pipeline_result"
   
-            if [ "$pre_merge_pipeline_result" == "success" ] || [ "$pre_merge_pipeline_result" == "skipped" ]; then
-              echo "Pre-merge check passed successfully."
-            else
-              echo "Pre-merge checks failed. PR can't get merged"
-              exit 1
-            fi
-
-permissions:
-  contents: read
+          if [ "$pre_merge_pipeline_result" == "success" ] || [ "$pre_merge_pipeline_result" == "skipped" ]; then
+            echo "Pre-merge check passed successfully."
+          else
+            echo "Pre-merge checks failed. PR can't get merged"
+            exit 1
+          fi

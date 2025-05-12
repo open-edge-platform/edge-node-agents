@@ -11,8 +11,12 @@ on:
       - release-*
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   pre-checks:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       filtered_projects: ${{ steps.filter-changes.outputs.filtered_projects }}
@@ -37,6 +41,10 @@ jobs:
         with:
           project_folder: "."
   post-merge-pipeline:
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
     needs: pre-checks
     if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' && needs.pre-checks.outputs.filtered_projects != '[""]' }}
     strategy:
@@ -61,6 +69,10 @@ jobs:
       cache_go: true
     secrets: inherit
   push-manifest:
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
     runs-on: ubuntu-latest
     needs:
       - pre-checks
@@ -119,8 +131,3 @@ jobs:
       - name: Tag new manifest version
         run: |
           ./common/ci_scripts/manifest-versioning.sh tag
-
-permissions:
-  contents: read
-  security-events: write
-  id-token: write
