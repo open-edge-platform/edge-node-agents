@@ -1,6 +1,5 @@
 configs/node-agent.yaml etc/edge-node/node/confs
 configs/apparmor.d/opt.edge-node.bin.node-agent etc/apparmor.d
 configs/pua.caddy etc/caddy
-configs/containerd.caddy etc/caddy
 configs/incron-caddy.conf etc/incron.d
 configs/sudoers.d/node-agent etc/sudoers.d

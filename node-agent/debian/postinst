@@ -37,17 +37,6 @@ if [ ! -z "$RET" ]; then
     sed -i -e 's#localhost.*#localhost:'"$RET"' {#' /etc/caddy/pua.caddy
 fi
 
-db_get node-agent/proxy.imgRegistryURL
-if [ ! -z "$RET" ]; then
-    sed -i -e 's#reverse_proxy.*#reverse_proxy https://'"$RET"' {#' /etc/caddy/containerd.caddy
-fi
-
-db_get node-agent/proxy.imgRegistryProxyPort
-if [ ! -z "$RET" ]; then
-    sed -i -e 's#localhost\.internal.*#localhost\.internal:'"$RET"' {#' /etc/caddy/containerd.caddy
-    sed -i -E "s|(url: oci://[^:]+):[0-9]+/|\1:${RET}/|" /etc/edge-node/node/confs/node-agent.yaml
-fi
-
 if ! grep -q "EnvironmentFile" "/lib/systemd/system/caddy.service"; then
     sed -i '/^\[Service\]$/a EnvironmentFile=\/etc\/environment' /lib/systemd/system/caddy.service
 fi
@@ -56,7 +45,6 @@ db_get node-agent/auth.RSType
 if [ ! -z "$RET" ]; then
     if [ "$RET" == "no-auth" ]; then
         sed -i -e '/header_up Authorization.*/d' /etc/caddy/pua.caddy
-        sed -i -e '/header_up Authorization.*/d' /etc/caddy/containerd.caddy
     fi
 fi
 
@@ -83,9 +71,8 @@ chmod 640 /etc/intel_edge_node/tokens/release-service/access_token
 
 apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.node-agent
 
-# Entry for containerd proxy, Not adding to no_proxy as .internal expected
-if ! grep -q "127.0.0.1 localhost.internal localhost" "/etc/hosts"; then
-    echo "127.0.0.1 localhost.internal localhost" >> /etc/hosts
+if ! grep -q "127.0.0.1 localhost" "/etc/hosts"; then
+    echo "127.0.0.1 localhost" >> /etc/hosts
 fi
 
 # Add single line in main Caddyfile to use the other *.caddy files

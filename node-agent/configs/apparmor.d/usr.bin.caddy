@@ -16,7 +16,6 @@ include <tunables/global>
   network inet6 stream,
   /etc/caddy/ r,
   /etc/caddy/Caddyfile r,
-  /etc/caddy/containerd.caddy r,
   /etc/caddy/pua.caddy r,
   /etc/hosts r,
   /etc/machine-id r,
