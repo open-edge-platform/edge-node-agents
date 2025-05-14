@@ -104,7 +104,7 @@ func ConnectToEdgeInfrastructureManager(serverAddr string, tlsConfig *tls.Config
 	return hostManager, nil
 }
 
-func parseSystemInfo(serialNumber string, productName string, bmcAddr string, osInfo *system.Os, biosInfo *system.Bios, cpu *cpu.Cpu,
+func parseSystemInfo(serialNumber string, productName string, bmcAddr string, osInfo *system.Os, biosInfo *system.Bios, cpu *cpu.CPU,
 	storage []*disk.Disk, gpu []*gpu.Gpu, mem uint64, networks []*network.Network, bmType proto.BmInfo_BmType, usbInfo []*usb.Usb) *proto.SystemInfo {
 
 	gpuList := []*proto.SystemGPU{}
@@ -227,7 +227,7 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 					})
 				}
 				sockets = append(sockets, &proto.Socket{
-					SocketId:   socket.SocketId,
+					SocketId:   socket.SocketID,
 					CoreGroups: coreGroups,
 				})
 			}
@@ -311,7 +311,7 @@ func GenerateSystemInfoRequest(executor utils.CmdExecutor) *proto.SystemInfo {
 		log.Errorf("unable to get system BIOS information : %v", err)
 	}
 
-	cpu, err := cpu.GetCpuList(executor)
+	cpu, err := cpu.GetCPUList(executor)
 	if err != nil {
 		log.Errorf("unable to get cpu description : %v", err)
 	}

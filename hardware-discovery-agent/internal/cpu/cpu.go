@@ -12,7 +12,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
 )
 
-type Cpu struct {
+type CPU struct {
 	Arch     string
 	Vendor   string
 	Model    string
@@ -20,15 +20,15 @@ type Cpu struct {
 	Cores    uint32
 	Threads  uint32
 	Features []string
-	Topology *CpuTopology
+	Topology *CPUTopology
 }
 
-type CpuTopology struct {
+type CPUTopology struct {
 	Sockets []*Socket
 }
 
 type Socket struct {
-	SocketId   uint32
+	SocketID   uint32
 	CoreGroups []*CoreGroup
 }
 
@@ -38,21 +38,21 @@ type CoreGroup struct {
 }
 
 type cores struct {
-	Cpu    string
+	CPU    string
 	Socket string
 	MaxMhz string
 }
 
-// GetCpuList collects CPU information from `lscpu` and processes the result to generate structured CPU data
-// It returns with a Cpu struct
-func GetCpuList(executor utils.CmdExecutor) (*Cpu, error) {
+// GetCPUList collects CPU information from `lscpu` and processes the result to generate structured CPU data
+// It returns with a CPU struct.
+func GetCPUList(executor utils.CmdExecutor) (*CPU, error) {
 	dataBytes, err := utils.ReadFromCommand(executor, "lscpu")
 	if err != nil {
-		return &Cpu{}, fmt.Errorf("failed to read data from command; error: %w", err)
+		return &CPU{}, fmt.Errorf("failed to read data from command; error: %w", err)
 	}
 
 	lscpu := strings.Split(string(dataBytes), "\n")
-	var cpu Cpu
+	var cpu CPU
 	var maxMhz string
 	for _, attribute := range lscpu {
 		attr := strings.TrimSpace(attribute)
@@ -117,7 +117,7 @@ func GetCpuList(executor utils.CmdExecutor) (*Cpu, error) {
 			}
 			var core cores
 			coreValues := strings.Fields(coreData)
-			core.Cpu = coreValues[0]
+			core.CPU = coreValues[0]
 			core.Socket = coreValues[1]
 			coreMaxMhz := strings.Split(coreValues[2], "\n")
 			core.MaxMhz = coreMaxMhz[0]
@@ -136,9 +136,9 @@ func GetCpuList(executor utils.CmdExecutor) (*Cpu, error) {
 // number of cores listed in the output to the total physical cores and total
 // threads supported on the Edge Node.
 // Source: https://stackoverflow.com/questions/71122837/how-to-detect-e-cores-and-p-cores-in-linux-alder-lake-system
-func inferEPCores(sockets uint32, coreInfo []*cores, coreMaxFreq string) *CpuTopology {
+func inferEPCores(sockets uint32, coreInfo []*cores, coreMaxFreq string) *CPUTopology {
 	socketInfo := []*Socket{}
-	for socketId := uint32(0); socketId < sockets; socketId++ {
+	for socketID := uint32(0); socketID < sockets; socketID++ {
 		// Determine a target max frequency for E Core detection based on the max frequency from lscpu.
 		maxCoreFreq, err := strconv.ParseUint(strings.TrimSuffix(coreMaxFreq, ".0000"), 10, 64)
 		if err != nil {
@@ -147,13 +147,13 @@ func inferEPCores(sockets uint32, coreInfo []*cores, coreMaxFreq string) *CpuTop
 		}
 		coreFreq := uint32(maxCoreFreq)
 		eCoreTargetFreq := (3 * coreFreq) / 4
-		socketDetails := getCoreGroupsPerSocket(socketId, coreInfo, eCoreTargetFreq)
+		socketDetails := getCoreGroupsPerSocket(socketID, coreInfo, eCoreTargetFreq)
 		socketInfo = append(socketInfo, socketDetails)
 	}
-	return &CpuTopology{Sockets: socketInfo}
+	return &CPUTopology{Sockets: socketInfo}
 }
 
-func getCoreGroupsPerSocket(socketId uint32, coreInfo []*cores, coreMaxFreq uint32) *Socket {
+func getCoreGroupsPerSocket(socketID uint32, coreInfo []*cores, coreMaxFreq uint32) *Socket {
 	pCoreList := make([]uint32, 0)
 	eCoreList := make([]uint32, 0)
 
@@ -162,8 +162,8 @@ func getCoreGroupsPerSocket(socketId uint32, coreInfo []*cores, coreMaxFreq uint
 		if err != nil {
 			socket = 0
 		}
-		if uint32(socket) == socketId {
-			cpu, err := strconv.ParseUint(core.Cpu, 10, 64)
+		if socket == uint64(socketID) {
+			cpu, err := strconv.ParseUint(core.CPU, 10, 64)
 			if err != nil {
 				continue
 			}
@@ -176,7 +176,7 @@ func getCoreGroupsPerSocket(socketId uint32, coreInfo []*cores, coreMaxFreq uint
 			if err != nil {
 				continue
 			}
-			if uint32(coreFreq) <= coreMaxFreq {
+			if coreFreq <= uint64(coreMaxFreq) {
 				eCoreList = append(eCoreList, uint32(cpu))
 			} else {
 				pCoreList = append(pCoreList, uint32(cpu))
@@ -196,5 +196,5 @@ func getCoreGroupsPerSocket(socketId uint32, coreInfo []*cores, coreMaxFreq uint
 		})
 	}
 
-	return &Socket{SocketId: socketId, CoreGroups: coreGroups}
+	return &Socket{SocketID: socketID, CoreGroups: coreGroups}
 }
