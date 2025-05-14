@@ -16,6 +16,7 @@ import (
 
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
+	"golang.org/x/sys/unix"
 )
 
 // Updater is the concrete implementation of the Updater interface
@@ -24,7 +25,7 @@ type Updater struct {
 	CommandExecutor         utils.Executor
 	Request                 *pb.UpdateSystemSoftwareRequest
 	GetEstimatedSize        func(cmdExec utils.Executor) (bool, uint64, error)
-	GetFreeDiskSpaceInBytes func(path string) (uint64, error)
+	GetFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
 }
 
 // Update method for Ubuntu
@@ -51,7 +52,7 @@ func (u *Updater) Update() (bool, error) {
 
 	log.Printf("Estimated update size: %d bytes", updateSize)
 
-	freeSpace, err := u.GetFreeDiskSpaceInBytes("/")
+	freeSpace, err := u.GetFreeDiskSpaceInBytes("/", unix.Statfs)
 	if err != nil {
 		return false, fmt.Errorf("SOTA Aborted: Failed to get free disk space: %v", err)
 	}
@@ -120,7 +121,7 @@ func sizeToBytes(size string, unit string) uint64 {
 	}
 }
 
-const noUpdateAvailable = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+const noUpdateAvailable = "0 upgraded, 0 newly installed, 0 to remove"
 
 func getEstimatedSizeInBytesFromAptGetUpgrade(upgradeOutput string) (bool, uint64, error) {
 	log.Printf("Apt-get upgrade output: %s", upgradeOutput)

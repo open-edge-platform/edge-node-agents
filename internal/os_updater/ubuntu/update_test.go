@@ -13,6 +13,7 @@ import (
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/sys/unix"
 )
 
 type mockExecutor struct {
@@ -186,7 +187,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
 				return true, 500 * 1024, nil
 			},
-			GetFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
 		}
@@ -244,10 +245,10 @@ func TestUbuntuUpdater_Update(t *testing.T) {
         updater := &Updater{
             CommandExecutor: mockExec,
             Request:         &pb.UpdateSystemSoftwareRequest{},
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
+			GetEstimatedSize: func( utils.Executor) (bool, uint64, error){
 				return true, 500 * 1024 * 1024, nil
 			},
-			GetFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100 * 1024, nil // Simulate insufficient disk space
 			},
 		}
@@ -269,10 +270,10 @@ func TestUbuntuUpdater_Update(t *testing.T) {
             Request: &pb.UpdateSystemSoftwareRequest{
                 Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL,
             },
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
+			GetEstimatedSize: func(utils.Executor) (bool, uint64, error){
 				return true, 500 * 1024, nil
 			},
-			GetFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
         }
@@ -294,10 +295,10 @@ func TestUbuntuUpdater_Update(t *testing.T) {
             Request: &pb.UpdateSystemSoftwareRequest{
                 Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD,
             },
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
+			GetEstimatedSize: func(utils.Executor) (bool, uint64, error){
 				return true, 500 * 1024, nil
 			},
-			GetFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
         }
@@ -319,10 +320,10 @@ func TestUbuntuUpdater_Update(t *testing.T) {
             Request: &pb.UpdateSystemSoftwareRequest{
                 Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_DOWNLOAD_ONLY,
             },
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
+			GetEstimatedSize: func(utils.Executor) (bool, uint64, error){
 				return true, 500 * 1024, nil
 			},
-			GetFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
         }
@@ -343,7 +344,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
 				return true, 500 * 1024, nil
 			},
-			GetFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
         }

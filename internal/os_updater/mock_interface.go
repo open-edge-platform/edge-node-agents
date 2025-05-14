@@ -32,6 +32,16 @@ func (m *MockUpdater) Update() (bool, error) {
 	return proceedWithReboot, err
 }
 
+// MockSnapshotter is a mock implementation of the Snapshotter interface.
+type MockSnapshotter struct {
+	SnapshotFunc func() error
+}
+
+// Snapshot calls the SnapshotFunc.
+func (m *MockSnapshotter) Snapshot() error {
+	return m.SnapshotFunc()
+}
+
 // MockRebooter is a mock implementation of the Rebooter interface.
 type MockRebooter struct {
 	RebootFunc func() error
@@ -44,9 +54,10 @@ func (m *MockRebooter) Reboot() error {
 
 // MockUpdaterFactory is a mock implementation of the UpdaterFactory interface.
 type MockUpdaterFactory struct {
-	CreateDownloaderFunc func(*pb.UpdateSystemSoftwareRequest) Downloader
-	CreateUpdaterFunc    func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater
-	CreateRebooterFunc   func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter
+	CreateDownloaderFunc  func(*pb.UpdateSystemSoftwareRequest) Downloader
+	CreateUpdaterFunc     func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater
+	CreateRebooterFunc    func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter
+	CreateSnapshotterFunc func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter
 }
 
 // CreateDownloader calls the CreateDownloaderFunc.
@@ -62,4 +73,9 @@ func (m *MockUpdaterFactory) CreateUpdater(cmdExec utils.Executor, req *pb.Updat
 // CreateRebooter calls the CreateRebooterFunc.
 func (m *MockUpdaterFactory) CreateRebooter(cmdExec utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
 	return m.CreateRebooterFunc(cmdExec, req)
+}
+
+// CreateSnapshotter calls the CreateSnapshotterFunc.
+func (m *MockUpdaterFactory) CreateSnapshotter(cmdExec utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
+	return m.CreateSnapshotterFunc(cmdExec, req)
 }

@@ -45,8 +45,8 @@ func (i *executor[C]) Execute(args []string) ([]byte, []byte, error) {
 //   - executableCommand: A pointer to an exec.Cmd object representing the command to execute.
 //
 // Returns:
-//   - stderr: A byte slice containing the standard output of the command.
 //   - stdout: A byte slice containing the standard error output of the command.
+//   - stderr: A byte slice containing the standard output of the command.
 //   - err: An error object if the command fails, or nil if it succeeds.
 func ExecuteAndReadOutput(executableCommand *exec.Cmd) ([]byte, []byte, error) {
 	var stdout, stderr strings.Builder

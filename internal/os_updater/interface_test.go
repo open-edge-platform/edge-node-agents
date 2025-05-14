@@ -53,6 +53,11 @@ func TestEMTUpdater(t *testing.T) {
 		assert.IsType(t, &emt.Updater{}, updater)
 	})
 
+	t.Run("createSnapshotter returns EMTUpdater", func(t *testing.T) {
+		snapshotter := emtUpdater.CreateSnapshotter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
+		assert.IsType(t, &emt.Snapshotter{}, snapshotter)
+	})
+
 	t.Run("createRebooter returns EMTRebooter", func(t *testing.T) {
 		rebooter := emtUpdater.CreateRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
 		assert.IsType(t, &emt.Rebooter{}, rebooter)
@@ -75,6 +80,11 @@ func TestUbuntuUpdater(t *testing.T) {
 	t.Run("createUpdater returns UbuntuUpdater", func(t *testing.T) {
 		updater := ubuntuUpdater.CreateUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &req)
 		assert.IsType(t, &ubuntu.Updater{}, updater)
+	})
+
+	t.Run("createSnapshotter returns UbuntuSnapshotter", func(t *testing.T) {
+		snapshotter := ubuntuUpdater.CreateSnapshotter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &req)
+		assert.IsType(t, &ubuntu.Snapshotter{}, snapshotter)
 	})
 
 	t.Run("createRebooter returns UbuntuRebooter", func(t *testing.T) {

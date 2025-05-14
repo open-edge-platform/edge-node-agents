@@ -1,12 +1,53 @@
 package utils
 
 import (
+	"errors"
 	"os"
 	"testing"
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/sys/unix"
 )
+
+func TestIsBTRFSFileSystem_Success(t *testing.T) {
+    // Define a statfsFunc that simulates a BTRFS filesystem
+    statfsFunc := func(path string, stat *unix.Statfs_t) error {
+        stat.Type = 0x9123683E // BTRFS magic number
+        return nil
+    }
+
+    // Call IsBTRFS with the injected statfsFunc
+    isBtrfs, err := IsBTRFSFileSystem("/valid/path", statfsFunc)
+    assert.NoError(t, err)
+    assert.True(t, isBtrfs, "The filesystem should be identified as BTRFS")
+}
+
+func TestIsBTRFSFileSystem_NotBTRFS(t *testing.T) {
+    // Define a statfsFunc that simulates a non-BTRFS filesystem
+    statfsFunc := func(path string, stat *unix.Statfs_t) error {
+        stat.Type = 0xEF53 // EXT4 magic number
+        return nil
+    }
+
+    // Call IsBTRFS with the injected statfsFunc
+    isBtrfs, err := IsBTRFSFileSystem("/valid/path", statfsFunc)
+    assert.NoError(t, err)
+    assert.False(t, isBtrfs, "The filesystem should not be identified as BTRFS")
+}
+
+func TestIsBTRFSFileSystem_StatfsError(t *testing.T) {
+    // Define a statfsFunc that simulates an error
+    statfsFunc := func(path string, stat *unix.Statfs_t) error {
+        return errors.New("mock error")
+    }
+
+    // Call IsBTRFS with the injected statfsFunc
+    isBtrfs, err := IsBTRFSFileSystem("/invalid/path", statfsFunc)
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "mock error")
+    assert.False(t, isBtrfs, "The filesystem should not be identified as BTRFS due to an error")
+}
 
 func TestRemoveFile_Success(t *testing.T) {
 	fs := afero.NewOsFs()
@@ -14,7 +55,7 @@ func TestRemoveFile_Success(t *testing.T) {
 	// Create a mock file
 	filePath := "/tmp/testfile.txt"
 	err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
-	defer fs.Remove(filePath)
+
 	assert.NoError(t, err)
 
 	// Call RemoveFile
@@ -44,7 +85,11 @@ func TestRemoveFile_IsSymlink(t *testing.T) {
 	// Create a real file
 	err := afero.WriteFile(fs, targetPath, []byte("test content"), 0644)
 	assert.NoError(t, err)
-	defer fs.Remove(targetPath)
+	defer func() {
+		if err := fs.Remove(targetPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 
 	// Create a symlink pointing to the real file
 	err = os.Symlink(targetPath, symlinkPath)
@@ -78,7 +123,11 @@ func TestRemoveFile_OutsideAllowedDirectories(t *testing.T) {
 	filePath := "/unauthorized/testfile.txt"
 	err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
 	assert.NoError(t, err)
-	defer fs.Remove(filePath)
+	defer func() {
+		if err := fs.Remove(filePath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 
 	// Call RemoveFile
 	err = RemoveFile(fs, filePath)
@@ -94,12 +143,20 @@ func TestCopyFile_ValidFile(t *testing.T) {
 	// Create a source file
 	err := afero.WriteFile(fs, srcPath, []byte("test content"), 0644)
 	assert.NoError(t, err)
-	defer fs.Remove(srcPath)
+		defer func() {
+		if err := fs.Remove(srcPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 
 	// Call the CopyFile function
 	err = CopyFile(fs, srcPath, destPath)
 	assert.NoError(t, err)
-	defer fs.Remove(destPath)
+	defer func() {
+		if err := fs.Remove(destPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 
 	// Verify the destination file exists and has the correct content
 	content, err := afero.ReadFile(fs, destPath)
@@ -126,11 +183,16 @@ func TestCopyFile_DestinationPathInvalid(t *testing.T) {
 	// Create a source file
 	err := afero.WriteFile(fs, srcPath, []byte("test content"), 0644)
 	assert.NoError(t, err)
-	defer fs.Remove(srcPath)
+	defer func() {
+		if err := fs.Remove(srcPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 
 	// Call the CopyFile function
 	err = CopyFile(fs, srcPath, destPath)
-	defer fs.Remove(destPath)
+	// Can't remove destination file, since it doesn't get created due to the simulated error
+	
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "access to the file is outside the allowed directories")
 }
@@ -144,16 +206,25 @@ func TestCopyFile_SourceFileIsSymlink(t *testing.T) {
 	// Create a real file
 	err := afero.WriteFile(fs, targetPath, []byte("test content"), 0644)
 	assert.NoError(t, err)
-	defer fs.Remove(targetPath)
+	defer func() {
+		if err := fs.Remove(targetPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 
 	// Create a symlink pointing to the real file
 	err = os.Symlink(targetPath, symlinkPath)
 	assert.NoError(t, err)
-	defer os.Remove(symlinkPath)
+	defer func() {
+		if err := fs.Remove(symlinkPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 
 	// Call the CopyFile function with the symlink as the source
 	err = CopyFile(fs, symlinkPath, destPath)
-	defer fs.Remove(destPath)
+	// Can't remove destination file, since it doesn't get created due to the simulated error
+
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "file is a symlink")
 }
@@ -166,11 +237,16 @@ func TestCopyFile_SourceFileOutsideAllowedDirs(t *testing.T) {
 	// Create a source file outside the allowed directories
 	err := afero.WriteFile(fs, srcPath, []byte("test content"), 0644)
 	assert.NoError(t, err)
-	defer fs.Remove(srcPath)
+	defer func() {
+		if err := fs.Remove(srcPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 
 	// Call the CopyFile function
 	err = CopyFile(fs, srcPath, destPath)
-	defer fs.Remove(destPath)
+	// Can't remove destination file, since it doesn't get created due to the simulated error
+	
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "outside the allowed directories")
 }
@@ -181,12 +257,18 @@ func TestOpenFile_ValidFile(t *testing.T) {
 
 	// Create a valid file in the allowed directory
 	err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
-	defer fs.Remove(filePath)
+	// Can't remove file, since it doesn't get created due to the simulated error
+	
 	assert.NoError(t, err)
 
-	// Call the Open function
+	// Call the Open function	
 	file, err := OpenFile(fs, filePath, os.O_RDWR|os.O_CREATE, 0644)
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
+
 	assert.NoError(t, err)
 	assert.NotNil(t, file)
 
@@ -200,12 +282,17 @@ func TestOpenFile_FileOutsideAllowedDirs(t *testing.T) {
 
 	// Create a file outside the allowed directories
 	err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
-	defer fs.Remove(filePath)
+	defer func() {
+		if err := fs.Remove(filePath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 
 	// Call the Open function
 	file, err := OpenFile(fs, filePath, os.O_RDWR|os.O_CREATE, 0644)
-	defer file.Close()
+	// Can't close file, since it doesn't get opened due to the simulated error
+	
 	assert.Error(t, err)
 	assert.Nil(t, file)
 	assert.Contains(t, err.Error(), "outside the allowed directories")
@@ -218,22 +305,27 @@ func TestOpenFile_FileIsSymlink(t *testing.T) {
 
 	// Create a real file and a symlink pointing to it
 	err := afero.WriteFile(fs, targetPath, []byte("test content"), 0644)
-	defer fs.Remove(targetPath)
+	defer func() {
+		if err := fs.Remove(targetPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 	err = os.Symlink(targetPath, symlinkPath) // Use os.Symlink for creating symlinks
-	defer os.Remove(symlinkPath)
+	defer func() {
+		if err := fs.Remove(symlinkPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 
 	// Call the Open function with the symlink
 	file, err := OpenFile(fs, symlinkPath, os.O_RDWR|os.O_CREATE, 0644)
-	defer file.Close()
+	// Can't close file, since it doesn't get opened due to the simulated error
+
 	assert.Error(t, err)
 	assert.Nil(t, file)
 	assert.Contains(t, err.Error(), "file is a symlink")
-
-	// Clean up
-	_ = fs.Remove(targetPath)
-	_ = fs.Remove(symlinkPath)
 }
 
 func TestOpen_ValidFile(t *testing.T) {
@@ -242,17 +334,22 @@ func TestOpen_ValidFile(t *testing.T) {
 
 	// Create a valid file in the allowed directory
 	err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
-	defer fs.Remove(filePath)
+	defer func() {
+		if err := fs.Remove(filePath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 
 	// Call the Open function
 	file, err := Open(fs, filePath)
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 	assert.NotNil(t, file)
-
-	// Clean up
-	_ = fs.Remove(filePath)
 }
 
 func TestOpen_FileOutsideAllowedDirs(t *testing.T) {
@@ -261,12 +358,17 @@ func TestOpen_FileOutsideAllowedDirs(t *testing.T) {
 
 	// Create a file outside the allowed directories
 	err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
-	defer fs.Remove(filePath)
+	defer func() {
+		if err := fs.Remove(filePath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 
 	// Call the Open function
 	file, err := Open(fs, filePath)
-	defer file.Close()
+	// Can't close file, since it doesn't get opened due to the simulated error
+	
 	assert.Error(t, err)
 	assert.Nil(t, file)
 	assert.Contains(t, err.Error(), "outside the allowed directories")
@@ -279,15 +381,24 @@ func TestOpen_FileIsSymlink(t *testing.T) {
 
 	// Create a real file and a symlink pointing to it
 	err := afero.WriteFile(fs, targetPath, []byte("test content"), 0644)
-	defer fs.Remove(targetPath)
+	defer func() {
+		if err := fs.Remove(targetPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 	err = os.Symlink(targetPath, symlinkPath) // Use os.Symlink for creating symlinks
-	defer os.Remove(symlinkPath)
+	defer func() {
+		if err := fs.Remove(symlinkPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 
 	// Call the Open function with the symlink
 	file, err := Open(fs, symlinkPath)
-	defer file.Close()
+	// Can't close file, since it doesn't get opened due to the simulated error
+
 	assert.Error(t, err)
 	assert.Nil(t, file)
 	assert.Contains(t, err.Error(), "file is a symlink")
@@ -316,7 +427,11 @@ func TestIsFilePathSymLink_ValidFile(t *testing.T) {
 
 	// Create a valid file
 	err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
-	defer fs.Remove(filePath)
+	defer func() {
+		if err := fs.Remove(filePath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 
 	// Call the isFilePathSymLink function
@@ -331,12 +446,20 @@ func TestIsFilePathSymLink_IsSymlinkFile(t *testing.T) {
 
 	// Create a real file
 	err := afero.WriteFile(fs, targetPath, []byte("test content"), 0644)
-	defer fs.Remove(targetPath)
+	defer func() {
+		if err := fs.Remove(targetPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 
 	// Create a symlink pointing to the real file
 	err = os.Symlink(targetPath, symlinkPath) // Use os.Symlink for creating symlinks
-	defer os.Remove(symlinkPath)
+	defer func() {
+		if err := fs.Remove(symlinkPath); err != nil {
+			t.Errorf("failed to remove file: %v", err)
+		}
+	}()
 	assert.NoError(t, err)
 
 	// Verify the symlink

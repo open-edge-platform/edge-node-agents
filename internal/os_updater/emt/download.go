@@ -44,7 +44,7 @@ type Downloader struct {
 	httpClient              *http.Client
 	requestCreator          func(string, string, io.Reader) (*http.Request, error)
 	fs                      afero.Fs
-	getFreeDiskSpaceInBytes func(string) (uint64, error)
+	getFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
 	getFileSizeInBytesFunc  func(string, string) (int64, error)
 }
 
@@ -209,7 +209,7 @@ func (t *Downloader) downloadFile() error {
 
 // isDiskSpaceAvailable checks if there is enough disk space to download the artifacts.
 func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
-	availableSpace, err := t.getFreeDiskSpaceInBytes("/var/cache/manageability/repository-tool/sota")
+	availableSpace, err := t.getFreeDiskSpaceInBytes("/var/cache/manageability/repository-tool/sota", unix.Statfs)
 	if err != nil {
 		log.Printf("Error getting disk space: %v\n", err)
 		return false, err

@@ -31,6 +31,13 @@ func UpdateOS(req *pb.UpdateSystemSoftwareRequest, factory UpdaterFactory) (*pb.
 		}
 	}
 
+	snapshot := factory.CreateSnapshotter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
+	// Create a snapshot of the current system
+	err := snapshot.Snapshot()
+	if err != nil {
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+	}
+
 	// Update the OS
 	updater := factory.CreateUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
 	proceedWithReboot, err := updater.Update()
@@ -64,5 +71,5 @@ func UpdateOS(req *pb.UpdateSystemSoftwareRequest, factory UpdaterFactory) (*pb.
 		}
 	}
 
-	return &pb.UpdateResponse{StatusCode: 200, Error: ""}, nil
+	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
 }

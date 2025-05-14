@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/spf13/afero"
+	"golang.org/x/sys/unix"
 )
 
 // List of allowed base directories
@@ -25,6 +26,23 @@ var allowedBaseDirs = []string{
 	"/var/cache/manageability/repository-tool/sota",
 	"/var/intel-manageability",
 	"/var/log",
+}
+
+// IsBTRFSFileSystem checks if the filesystem type of the given path is BTRFS.
+func IsBTRFSFileSystem(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
+    var stat unix.Statfs_t
+
+    // Get filesystem statistics for the given path
+    err := statfsFunc(path, &stat)
+    if err != nil {
+        return false, fmt.Errorf("failed to get filesystem stats: %w", err)
+    }
+
+    // BTRFS filesystem type constant
+    const BTRFSFileSystemType = 0x9123683E
+
+    // Check if the filesystem type matches BTRFS
+    return stat.Type == BTRFSFileSystemType, nil
 }
 
 // RemoveFile removes a file at the given path using the provided filesystem.

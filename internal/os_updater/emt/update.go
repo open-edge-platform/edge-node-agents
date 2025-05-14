@@ -53,7 +53,7 @@ func (errReader) Read(_ []byte) (n int, err error) {
 	return 0, errors.New("error copying response body")
 }
 
-// Update method for Emt
+// Update method for EMT
 func (t *Updater) Update() (bool, error) {
 	// Print the value of tu.request.Mode
 	log.Printf("Mode: %v\n", t.request.Mode)
@@ -104,7 +104,7 @@ func (t *Updater) Update() (bool, error) {
 
 	if t.request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
 		log.Println("Save snapshot before applying the update.")
-		if err := Snapshot(t.fs); err != nil {
+		if err := NewSnapshotter(t.commandExecutor, t.request).Snapshot(); err != nil {
 			errMsg := fmt.Sprintf("Error taking snapshot: %v", err)
 			t.writeUpdateStatus(t.fs, FAIL, string(jsonString), errMsg)
 			t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INBM)

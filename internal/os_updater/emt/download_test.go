@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/sys/unix"
 
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 )
@@ -190,12 +191,12 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 		writeGranularLog        func(afero.Fs, string, string)
 		expectedResult          bool
 		expectedError           error
-		getFreeDiskSpaceInBytes func(string) (uint64, error)
+		getFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
 		getFileSizeInBytes      func(string, string) (int64, error)
 	}{
 		{
 			name: "successful check with enough disk space",
-			getFreeDiskSpaceInBytes: func(string) (uint64, error) {
+			getFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 1000 * 4096, nil
 			},
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
@@ -212,7 +213,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "", nil
 			},
-			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			getFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 0, errors.New("disk space error")
 			},
 			expectedResult: false,
@@ -220,7 +221,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 		},
 		{
 			name: "error reading JWT token",
-			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			getFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 1000 * 4096, nil
 			},
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
@@ -237,7 +238,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 		},
 		{
 			name: "error getting file size",
-			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			getFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 1000 * 4096, nil
 			},
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
@@ -257,7 +258,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 		},
 		{
 			name: "not enough disk space",
-			getFreeDiskSpaceInBytes: func(path string) (uint64, error) {
+			getFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 1000 * 4096, nil
 			},
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {

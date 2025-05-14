@@ -25,34 +25,42 @@ var (
 	dispatcherStatePath = "/var/intel-manageability/dispatcher_state"
 )
 
+// Snapshotter is the concrete implementation of the IUpdater interface
+// for the EMT OS.
+type Snapshotter struct {
+	commandExecutor   utils.Executor
+	fs                afero.Fs
+}
+
+// NewSnapshotter creates a new EMTSnapshotter.
+func NewSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) *Snapshotter {
+	return &Snapshotter{
+		commandExecutor:   commandExecutor,
+		fs:                afero.NewOsFs(),
+	}
+}
+
 // EMTState represents the JSON structure
-type EMTState struct {
+type state struct {
 	RestartReason string `json:"restart_reason"`
 	TiberVersion  string `json:"tiber-version"`
 }
 
 // Snapshot creates a snapshot of the system.
-func Snapshot(fs afero.Fs) error {
+func (t *Snapshotter) Snapshot() error {
 	log.Println("Take a snapshot.")
 
-	cmdExecutor := utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput)
-	// Clear the dispatcher state file before writing it.
-	// we use truncate rather than remove here as some OSes like Emt require files that need to persist
-	// between reboots to not be removed.
-	dispatcherStateTruncateCommand := []string{
-		"truncate", "-s", "0", dispatcherStatePath,
+	err := utils.ClearStateFile(t.commandExecutor)
+	if err != nil {
+		return fmt.Errorf("failed to clear dispatcher state file: %w", err)
 	}
 
-	if _, _, err := cmdExecutor.Execute(dispatcherStateTruncateCommand); err != nil {
-		return fmt.Errorf("failed to truncate dispatcher state file with command(%v)- %w", dispatcherStateTruncateCommand, err)
-	}
-
-	buildDate, err := GetImageBuildDate(fs)
+	buildDate, err := GetImageBuildDate(t.fs)
 	if err != nil || buildDate == "" {
 		return fmt.Errorf("failed to get image build date: %w", err)
 	}
-	// Create an instance of EmtState with the desired values
-	state := EMTState{
+	// Create an instance of EMTState with the desired values
+	state := state{
 		RestartReason: "sota",
 		TiberVersion:  buildDate,
 	}
@@ -63,7 +71,7 @@ func Snapshot(fs afero.Fs) error {
 	}
 
 	// Write the JSON to the dispatcher state file
-	if err := writeToDispatcherStateFile(fs, string(jsonData)); err != nil {
+	if err := writeToDispatcherStateFile(t.fs, string(jsonData)); err != nil {
 		return fmt.Errorf("failed to write to dispatcher state file: %w", err)
 	}
 	
@@ -141,13 +149,13 @@ func ReadDispatcherStateFile(fs afero.Fs, osType string) (string, error) {
 		}
 
 		// Parse the JSON content
-		var state EMTState
-		err = json.Unmarshal(fileContent, &state)
+		var stateJSON state
+		err = json.Unmarshal(fileContent, &stateJSON)
 		if err != nil {
 			log.Println("Error parsing JSON:", err)
 			return "", err
 		}
-		return state.TiberVersion, nil
+		return stateJSON.TiberVersion, nil
 	}
 
 	return "", fmt.Errorf("OS not supported")
@@ -158,8 +166,16 @@ func ReadDispatcherStateFile(fs afero.Fs, osType string) (string, error) {
 // If the versions are different, it commits the update; otherwise, it reverts to the previous image.
 func VerifyUpdateAfterReboot(fs afero.Fs, osType string) error {
 	// Check if dispatcher state file exist.
-	if _, err := os.Stat(dispatcherStatePath); err == nil {
+	fileInfo, err := os.Stat(dispatcherStatePath)
+	if err == nil {
+		if fileInfo.Size() == 0 {
+			log.Println("Dispatcher state file is empty. Skip post update verification.")
+			return nil
+		}
+
 		log.Println("Perform post update verification.")
+		// TODO:  This should call the correct function using the factory pattern.
+		// Currently hardcoded to use EMT.  It should also be able to call Ubuntu.
 		if osType == "EMT" {
 			previousVersion, err := ReadDispatcherStateFile(fs, osType)
 			if err != nil {

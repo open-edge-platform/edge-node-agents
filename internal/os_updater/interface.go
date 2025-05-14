@@ -19,6 +19,7 @@ import (
 type UpdaterFactory interface {
 	CreateDownloader(req *pb.UpdateSystemSoftwareRequest) Downloader
 	CreateUpdater(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Updater
+	CreateSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter
 	CreateRebooter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter
 }
 
@@ -47,6 +48,11 @@ func (f *EMTFactory) CreateUpdater(commandExecutor utils.Executor, req *pb.Updat
 	return emt.NewUpdater(commandExecutor, req)
 }
 
+// CreateSnapshotter creates a snapshotter concrete class for EMT OS.
+func (f *EMTFactory) CreateSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
+	return emt.NewSnapshotter(commandExecutor, req)
+}
+
 // CreateRebooter creates a rebooter concrete class for EMT OS.
 func (f *EMTFactory) CreateRebooter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
 	return emt.NewRebooter(commandExecutor, req)
@@ -67,6 +73,14 @@ func (f *UbuntuFactory) CreateUpdater(commandExecutor utils.Executor, req *pb.Up
 		Request:                 req,
 		GetEstimatedSize:        ubuntu.GetEstimatedSize,
 		GetFreeDiskSpaceInBytes: utils.GetFreeDiskSpaceInBytes,
+	}
+}
+
+// CreateSnapshotter creates a snapshotter concrete class for Ubuntu OS.
+func (f *UbuntuFactory) CreateSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
+	return &ubuntu.Snapshotter{
+		CommandExecutor:       commandExecutor,
+		IsBTRFSFileSystemFunc: utils.IsBTRFSFileSystem,
 	}
 }
 

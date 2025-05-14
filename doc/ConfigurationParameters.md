@@ -13,7 +13,8 @@ The configuration file is structured as follows:
 ```json
 {
     "os_updater": {
-        "trustedRepositories": []
+        "trustedRepositories": [],
+        "proceedWithoutRollback": true
     }
 }
 ```
@@ -31,6 +32,11 @@ The configuration file is structured as follows:
 - **Required:** Yes
 - **Default Value:** An empty array (`[]`)
 
+##### **`proceedWithoutRollback`**
+- **Description:** Indicates whether the OS updater should proceed with updates even if rollback functionality is unavailable.
+- **Type:** Boolean
+- **Required:** Yes
+- **Default Value:** `true`
 ---
 
 ## Example Configuration
@@ -43,7 +49,8 @@ Here is an example of a valid configuration file with trusted repositories:
         "trustedRepositories": [
             "https://repo1.example.com",
             "https://repo2.example.com"
-        ]
+        ],
+        "proceedWithoutRollback": false
     }
 }
 ```
@@ -53,8 +60,10 @@ Here is an example of a valid configuration file with trusted repositories:
 ## Notes
 
 - Ensure that all URLs in the `trustedRepositories` array are valid and accessible.
+- The `proceedWithoutRollback` field determines whether updates should proceed if rollback functionality is unavailable. Set this to `false` if rollback is critical for your environment.
 - The configuration file must conform to the JSON schema used for validation.
 - If the `trustedRepositories` array is empty, the OS updater will not have any repositories to use for updates.
+
 
 ---
 
@@ -81,6 +90,10 @@ The configuration file is located at:
 
 - **Issue:** Validation errors when saving the configuration file.
   - **Solution:** Verify the file against the JSON schema to ensure it conforms to the expected structure.
+
+- **Issue:** Updates fail due to rollback functionality being unavailable.
+  - **Solution:** Set `proceedWithoutRollback` to `true` to allow updates to proceed without rollback.
+
 
 ---
 

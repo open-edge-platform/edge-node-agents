@@ -11,13 +11,14 @@ import (
     "golang.org/x/sys/unix"
 )
 
+
 // GetFreeDiskSpaceInBytes returns the amount of free disk space in bytes for the given path.
 // It uses the unix.Statfs function to retrieve filesystem statistics.
-func GetFreeDiskSpaceInBytes(path string) (uint64, error) {
+func GetFreeDiskSpaceInBytes(path string, statfsFunc func(string, *unix.Statfs_t) error) (uint64, error) {
     var stat unix.Statfs_t
 
     // Get filesystem statistics for the given path
-    err := unix.Statfs(path, &stat)
+    err := statfsFunc(path, &stat)
     if err != nil {
         return 0, fmt.Errorf("failed to get filesystem stats: %w", err)
     }	

@@ -1,23 +1,26 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Intel Manageability Configuration Schema",
   "type": "object",
   "properties": {
-      "os_updater": {
-          "type": "object",
-          "properties": {
-              "trustedRepositories": {
-                  "type": "array",
-                  "items": {
-                      "type": "string",
-                      "format": "uri"
-                  },
-                  "description": "A list of trusted repository URLs."
-              }
+    "os_updater": {
+      "type": "object",
+      "properties": {
+        "trustedRepositories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
           },
-          "required": ["trustedRepositories"],
-          "additionalProperties": false
-      }
+          "description": "A list of trusted repository URLs."
+        },
+        "proceedWithoutRollback": {
+          "type": "boolean",
+          "description": "Indicates whether to proceed with updates without rollback support."
+        }
+      },
+      "required": ["trustedRepositories", "proceedWithoutRollback"],
+      "additionalProperties": false
+    }
   },
   "required": ["os_updater"],
   "additionalProperties": false

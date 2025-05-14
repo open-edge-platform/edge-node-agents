@@ -27,6 +27,11 @@ func TestUpdateOS_Success(t *testing.T) {
 				RebootFunc: func() error { return nil },
 			}
 		},
+		CreateSnapshotterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
+			return &MockSnapshotter{
+				SnapshotFunc: func() error { return nil },
+			}
+		},
 	}
 
 	req := &pb.UpdateSystemSoftwareRequest{Mode: *pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD.Enum()}
@@ -34,7 +39,7 @@ func TestUpdateOS_Success(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, int32(200), resp.StatusCode)
-	assert.Empty(t, resp.Error)
+	assert.Equal(t, "Success", resp.Error)
 }
 
 func TestUpdateOS_DownloadError(t *testing.T) {
@@ -59,6 +64,11 @@ func TestUpdateOS_UpdateError(t *testing.T) {
 		CreateDownloaderFunc: func(*pb.UpdateSystemSoftwareRequest) Downloader {
 			return &MockDownloader{
 				DownloadFunc: func() error { return nil },
+			}
+		},
+		CreateSnapshotterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
+			return &MockSnapshotter{
+				SnapshotFunc: func() error { return nil },
 			}
 		},
 		CreateUpdaterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
@@ -86,6 +96,11 @@ func TestUpdateOS_RebootError(t *testing.T) {
 		CreateUpdaterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
 			return &MockUpdater{
 				UpdateFunc: func() (bool, error) { return true, nil },
+			}
+		},
+		CreateSnapshotterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
+			return &MockSnapshotter{
+				SnapshotFunc: func() error { return nil },
 			}
 		},
 		CreateRebooterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {

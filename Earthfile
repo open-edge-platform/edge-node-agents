@@ -66,9 +66,10 @@ run-golang-unit-tests:
     RUN --mount=type=cache,target=/root/.cache/go-build \
         CGO_ENABLED=1 go test -race -shuffle on -short ./... \
         -coverpkg=./internal/... -coverprofile=cover.out
-    
+   
     # Enforce minimum coverage threshold for internal/ directory
-    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=59.8 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
+    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=62.0 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
+    
     SAVE ARTIFACT cover.out AS LOCAL build/cover.out
     
 generate-proto:
@@ -125,6 +126,10 @@ build-deb:
     RUN chown root:root usr/share/inbd_schema.json
     RUN chmod 644 usr/share/inbd_schema.json
 
+    # Copy the postinst script to the DEBIAN directory
+    COPY fpm-templates/DEBIAN/postinst DEBIAN/postinst
+    RUN chmod 755 DEBIAN/postinst
+    
     # Copy other files    
     COPY fpm-templates/etc/apparmor.d/usr.bin.inbd etc/apparmor.d/usr.bin.inbd
     COPY fpm-templates/usr/bin/provision-tc usr/bin/provision-tc
