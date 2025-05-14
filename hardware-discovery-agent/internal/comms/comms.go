@@ -110,7 +110,7 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 	gpuList := []*proto.SystemGPU{}
 	for _, gpuDetails := range gpu {
 		gpuList = append(gpuList, &proto.SystemGPU{
-			PciId:       gpuDetails.PciId,
+			PciId:       gpuDetails.PciID,
 			Product:     gpuDetails.Product,
 			Vendor:      gpuDetails.Vendor,
 			Name:        gpuDetails.Name,

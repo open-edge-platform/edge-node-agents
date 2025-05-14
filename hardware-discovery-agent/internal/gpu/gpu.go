@@ -12,7 +12,7 @@ import (
 )
 
 type Gpu struct {
-	PciId       string
+	PciID       string
 	Product     string
 	Vendor      string
 	Name        string
@@ -20,7 +20,7 @@ type Gpu struct {
 	Features    []string
 }
 
-var infoNotFound string = "Not Available"
+var infoNotFound = "Not Available"
 
 func parseGpuDetails(gpuDevice, infoType string) []string {
 	gpuInfo := strings.Split(gpuDevice, infoType)
@@ -71,7 +71,7 @@ func GetGpuList(executor utils.CmdExecutor) ([]*Gpu, error) {
 		}
 
 		gpuList = append(gpuList, &Gpu{
-			PciId:       pciAddress,
+			PciID:       pciAddress,
 			Product:     productName[0],
 			Vendor:      vendor[0],
 			Name:        device,
