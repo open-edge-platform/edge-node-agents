@@ -204,8 +204,8 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 		}
 		usbList = append(usbList, &proto.SystemUSB{
 			Class:       usbDetails.Class,
-			Idvendor:    usbDetails.VendorId,
-			Idproduct:   usbDetails.ProductId,
+			Idvendor:    usbDetails.VendorID,
+			Idproduct:   usbDetails.ProductID,
 			Bus:         usbDetails.Bus,
 			Addr:        usbDetails.Address,
 			Description: usbDetails.Description,
