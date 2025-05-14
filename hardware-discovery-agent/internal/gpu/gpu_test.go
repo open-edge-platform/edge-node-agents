@@ -6,38 +6,39 @@ package gpu_test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/gpu"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/gpu"
 )
 
-var testPciAddr1 string = "03:00.0"
-var testPciAddr2 string = "57:00.0"
-var testPciAddr3 string = "5b:00.0"
-var testProduct1 string = "Graphics Controller"
-var testProduct2 string = "Graphics Card"
-var testProduct3 string = "Graphics Card"
-var testVendor1 string = "Graphics"
-var testVendor2 string = "PCI"
-var testVendor3 string = "PCI"
-var testName string = "Graphics Controller"
-var testDescription1 string = "VGA compatible controller"
-var testDescription2 string = "PCI graphics card"
-var testDescription3 string = "PCI graphics card"
-var testFeatures1 []string = []string{"pm", "vga_controller", "bus_master", "cap_list", "rom", "fb"}
-var testFeatures2 []string = []string{"pciexpress", "msi", "pm", "bus_master", "cap_list"}
-var testFeatures3 []string = []string{"pciexpress", "msi", "pm", "bus_master", "cap_list"}
-var testNotFoundMsg string = "Not Available"
-var testNameNotFound string = "Info Not Available"
+var testPciAddr1 = "03:00.0"
+var testPciAddr2 = "57:00.0"
+var testPciAddr3 = "5b:00.0"
+var testProduct1 = "Graphics Controller"
+var testProduct2 = "Graphics Card"
+var testProduct3 = "Graphics Card"
+var testVendor1 = "Graphics"
+var testVendor2 = "PCI"
+var testVendor3 = "PCI"
+var testName = "Graphics Controller"
+var testDescription1 = "VGA compatible controller"
+var testDescription2 = "PCI graphics card"
+var testDescription3 = "PCI graphics card"
+var testFeatures1 = []string{"pm", "vga_controller", "bus_master", "cap_list", "rom", "fb"}
+var testFeatures2 = []string{"pciexpress", "msi", "pm", "bus_master", "cap_list"}
+var testFeatures3 = []string{"pciexpress", "msi", "pm", "bus_master", "cap_list"}
+var testNotFoundMsg = "Not Available"
+var testNameNotFound = "Info Not Available"
 
 func expectedOutput(expect []*gpu.Gpu, pci, prod, vendor, name, desc string, features []string) []*gpu.Gpu {
 	return append(expect, &gpu.Gpu{
-		PciId:       pci,
+		PciID:       pci,
 		Product:     prod,
 		Vendor:      vendor,
 		Name:        name,
@@ -51,20 +52,20 @@ func TestGetGpuList(t *testing.T) {
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
 		testVendor1, testName, testDescription1, testFeatures1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
 }
 
 func TestGetGpuListFailed(t *testing.T) {
 	out, err := gpu.GetGpuList(testCmdExecutorLshwFailed)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Equal(t, []*gpu.Gpu{}, out)
 }
 
 func TestGetGpuListLspciFailed(t *testing.T) {
 	out, err := gpu.GetGpuList(testCmdExecutorLspciFailed)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Equal(t, []*gpu.Gpu{}, out)
 }
 
@@ -77,7 +78,7 @@ func TestGetGpuListMultiDevicesSuccess(t *testing.T) {
 		testVendor2, testName, testDescription2, testFeatures2)
 	expect = expectedOutput(expect, testPciAddr3, testProduct3,
 		testVendor3, testName, testDescription3, testFeatures3)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
 }
@@ -87,7 +88,7 @@ func TestGetGpuListEmptyPciInfo(t *testing.T) {
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testNotFoundMsg, testProduct1,
 		testVendor1, testNameNotFound, testDescription1, testFeatures1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
 }
@@ -97,7 +98,7 @@ func TestGetGpuListEmptyProductName(t *testing.T) {
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testNotFoundMsg,
 		testVendor1, testName, testDescription1, testFeatures1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
 }
@@ -107,7 +108,7 @@ func TestGetGpuListEmptyVendor(t *testing.T) {
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
 		testNotFoundMsg, testName, testDescription1, testFeatures1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
 }
@@ -117,7 +118,7 @@ func TestGetGpuListEmptyDescription(t *testing.T) {
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
 		testVendor1, testName, testNotFoundMsg, testFeatures1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
 }
@@ -127,7 +128,7 @@ func TestGetGpuListEmptyFeatures(t *testing.T) {
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
 		testVendor1, testName, testDescription1, []string{testNotFoundMsg})
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
 }
@@ -137,7 +138,7 @@ func TestGetGpuListEmptyDeviceName(t *testing.T) {
 	expect := []*gpu.Gpu{}
 	expect = expectedOutput(expect, testPciAddr1, testProduct1,
 		testVendor1, testNameNotFound, testDescription1, testFeatures1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, out)
 	assert.Equal(t, expect, out)
 }
@@ -158,13 +159,13 @@ func testCmdExecutorSuccess(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorLshwFailed(command string, args ...string) *exec.Cmd {
@@ -182,13 +183,13 @@ func testCmdExecutorLspciFailed(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestGpuListExecutionFailed", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestGpuListExecutionFailed", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorMultiDevSuccess(command string, args ...string) *exec.Cmd {
@@ -198,13 +199,13 @@ func testCmdExecutorMultiDevSuccess(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorEmptyPciInfo(command string, args ...string) *exec.Cmd {
@@ -222,13 +223,13 @@ func testCmdExecutorEmptyProductName(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorEmptyVendorName(command string, args ...string) *exec.Cmd {
@@ -238,13 +239,13 @@ func testCmdExecutorEmptyVendorName(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorEmptyDescription(command string, args ...string) *exec.Cmd {
@@ -254,13 +255,13 @@ func testCmdExecutorEmptyDescription(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorEmptyFeatures(command string, args ...string) *exec.Cmd {
@@ -270,13 +271,13 @@ func testCmdExecutorEmptyFeatures(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestGpuListExecutionLspciSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorEmptyDeviceName(command string, args ...string) *exec.Cmd {
@@ -286,13 +287,13 @@ func testCmdExecutorEmptyDeviceName(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestGpuListExecutionLspciNoDeviceName", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestGpuListExecutionLspciNoDeviceName", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func TestGpuListExecutionLshwSuccess(t *testing.T) {
@@ -300,9 +301,7 @@ func TestGpuListExecutionLshwSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -312,14 +311,12 @@ func TestGpuListExecutionLspciSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu_name.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
 
-func TestGpuListExecutionFailed(t *testing.T) {
+func TestGpuListExecutionFailed(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -332,9 +329,7 @@ func TestGpuListExecutionMultiDevSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_multi_gpu.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -344,9 +339,7 @@ func TestGpuListExecutionEmptyPciInfo(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu_empty_pci_info.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -356,9 +349,7 @@ func TestGpuListExecutionEmptyProductName(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu_empty_product.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -368,9 +359,7 @@ func TestGpuListExecutionEmptyVendor(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu_empty_vendor.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -380,9 +369,7 @@ func TestGpuListExecutionEmptyDescription(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu_empty_description.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -392,9 +379,7 @@ func TestGpuListExecutionEmptyFeatures(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu_empty_features.txt")
-	if err != nil {
-			log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -404,9 +389,7 @@ func TestGpuListExecutionLspciNoDeviceName(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu_no_name.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
