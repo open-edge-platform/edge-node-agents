@@ -189,83 +189,70 @@ func TestProvisioningAccessTokenClientSecretSymlink(t *testing.T) {
 }
 
 func TestProvisionReleaseServiceToken(t *testing.T) {
-	accessToken := "TEST-ACCESS-TOKEN"
 	authConf := getAuthConfig()
-
 	token, err := testutil.GenerateJWT()
 	assert.Nil(t, err)
 	assert.NotEmpty(t, token)
-	ts := newTestIDPServer(t, http.MethodGet, token, "/token", http.StatusOK)
-	defer ts.Close()
 
-	u, _ := url.Parse(ts.URL)
+	tests := []struct {
+		name          string
+		accessToken   string
+		serverCode    int
+		expectedError bool
+		expectedToken string
+	}{
+		{
+			name:          "ValidToken",
+			accessToken:   "TEST-ACCESS-TOKEN",
+			serverCode:    http.StatusOK,
+			expectedError: false,
+			expectedToken: token,
+		},
+		{
+			name:          "AnonymousToken",
+			accessToken:   "TEST-ACCESS-TOKEN",
+			serverCode:    http.StatusOK,
+			expectedError: false,
+			expectedToken: "anonymous",
+		},
+		{
+			name:          "ErrorResponse",
+			accessToken:   "TEST-ACCESS-TOKEN",
+			serverCode:    http.StatusBadGateway,
+			expectedError: true,
+			expectedToken: "",
+		},
+	}
 
-	// Add mock server certificate to system cert pool
-	certPool, _ := x509.SystemCertPool()
-	certPool.AddCert(ts.Certificate())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := newTestIDPServer(t, http.MethodGet, tt.expectedToken, "/token", tt.serverCode)
+			defer ts.Close()
 
-	ctx := context.Background()
+			u, _ := url.Parse(ts.URL)
 
-	// Now create release service token
-	relAuthCli, err := comms.GetAuthCli(u.Host, guid, certPool)
-	assert.Nil(t, err)
+			// Add mock server certificate to system cert pool
+			certPool, _ := x509.SystemCertPool()
+			certPool.AddCert(ts.Certificate())
 
-	relToken, err := relAuthCli.ProvisionReleaseServiceToken(ctx, authConf, accessToken)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, relToken.AccessToken)
-	defer os.RemoveAll(testAuthClientCredsPath)
-}
+			ctx := context.Background()
 
-func TestProvisionReleaseServiceTokenAnonymous(t *testing.T) {
-	accessToken := "TEST-ACCESS-TOKEN"
-	authConf := getAuthConfig()
+			// Now create release service token
+			relAuthCli, err := comms.GetAuthCli(u.Host, guid, certPool)
+			assert.Nil(t, err)
 
-	token := "anonymous"
-	ts := newTestIDPServer(t, http.MethodGet, token, "/token", http.StatusOK)
-	defer ts.Close()
+			relToken, err := relAuthCli.ProvisionReleaseServiceToken(ctx, authConf, tt.accessToken)
 
-	u, _ := url.Parse(ts.URL)
-
-	// Add mock server certificate to system cert pool
-	certPool, _ := x509.SystemCertPool()
-	certPool.AddCert(ts.Certificate())
-
-	ctx := context.Background()
-
-	// Now create release service token
-	relAuthCli, err := comms.GetAuthCli(u.Host, guid, certPool)
-	assert.Nil(t, err)
-
-	relToken, err := relAuthCli.ProvisionReleaseServiceToken(ctx, authConf, accessToken)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, relToken.AccessToken)
-	assert.Equal(t, relToken.AccessToken, token)
-	defer os.RemoveAll(testAuthClientCredsPath)
-}
-
-func TestProvisionReleaseServiceTokenError(t *testing.T) {
-	accessToken := "TEST-ACCESS-TOKEN"
-	authConf := getAuthConfig()
-
-	token := ""
-	ts := newTestIDPServer(t, http.MethodGet, token, "/token", http.StatusBadGateway)
-	defer ts.Close()
-
-	u, _ := url.Parse(ts.URL)
-
-	// Add mock server certificate to system cert pool
-	certPool, _ := x509.SystemCertPool()
-	certPool.AddCert(ts.Certificate())
-
-	ctx := context.Background()
-
-	// Now create release service token
-	relAuthCli, err := comms.GetAuthCli(u.Host, guid, certPool)
-	assert.Nil(t, err)
-
-	relToken, err := relAuthCli.ProvisionReleaseServiceToken(ctx, authConf, accessToken)
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), fmt.Sprint(http.StatusBadGateway))
-	assert.Empty(t, relToken.AccessToken)
+			if tt.expectedError {
+				assert.NotNil(t, err)
+				assert.Contains(t, err.Error(), fmt.Sprint(tt.serverCode))
+				assert.Empty(t, relToken.AccessToken)
+			} else {
+				assert.Nil(t, err)
+				assert.NotEmpty(t, relToken.AccessToken)
+				assert.Equal(t, relToken.AccessToken, tt.expectedToken)
+			}
+		})
+	}
 	defer os.RemoveAll(testAuthClientCredsPath)
 }
