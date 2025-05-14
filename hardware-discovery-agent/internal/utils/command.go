@@ -24,7 +24,7 @@ func ReadFromCommand(executor CmdExecutor, command string, args ...string) (stdo
 	cmd.Stderr = &errbuf
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("%v; %v", errbuf.String(), err)
+		return nil, fmt.Errorf("%v; %w", errbuf.String(), err)
 	}
 
 	return out, nil
