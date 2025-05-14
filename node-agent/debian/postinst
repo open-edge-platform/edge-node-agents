@@ -35,6 +35,7 @@ fi
 db_get node-agent/proxy.aptSourceProxyPort
 if [ ! -z "$RET" ]; then
     sed -i -e 's#localhost.*#localhost:'"$RET"' {#' /etc/caddy/pua.caddy
+    sed -i -E '/name: client-proxy/,/url:/ s|(http://[^:]+:)[0-9]+|\1'"$RET"'|' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
 if ! grep -q "EnvironmentFile" "/lib/systemd/system/caddy.service"; then
