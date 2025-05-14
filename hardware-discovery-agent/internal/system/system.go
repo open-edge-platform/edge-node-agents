@@ -26,7 +26,7 @@ type OsKern struct {
 }
 
 type OsRel struct {
-	Id       string
+	ID       string
 	Version  string
 	Metadata []*OsMetadata
 }
@@ -95,12 +95,12 @@ func GetOsInfo(executor utils.CmdExecutor) (*Os, error) {
 	osKernel.Config = osKernelConfig
 
 	// Get OS release info
-	osId, err := utils.ReadFromCommand(executor, "lsb_release", "-i")
+	osID, err := utils.ReadFromCommand(executor, "lsb_release", "-i")
 	if err != nil {
 		return &Os{}, fmt.Errorf("failed to get OS information: %w", err)
 	}
-	osIdInfo := strings.Split(string(osId), ":")
-	osRelease.Id = strings.TrimSpace(osIdInfo[1])
+	osIDInfo := strings.Split(string(osID), ":")
+	osRelease.ID = strings.TrimSpace(osIDInfo[1])
 
 	osVersion, err := utils.ReadFromCommand(executor, "lsb_release", "-d")
 	if err != nil {

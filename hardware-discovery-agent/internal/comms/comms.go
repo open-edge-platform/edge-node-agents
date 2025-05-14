@@ -190,7 +190,7 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 			})
 		}
 		osRelease = proto.OsRelease{
-			Id:       osInfo.Release.Id,
+			Id:       osInfo.Release.ID,
 			Version:  osInfo.Release.Version,
 			Metadata: relMetadata,
 		}
