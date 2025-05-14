@@ -34,7 +34,7 @@ func parseGpuDetails(gpuDevice, infoType string) []string {
 func GetGpuList(executor utils.CmdExecutor) ([]*Gpu, error) {
 	gpuInfo, err := utils.ReadFromCommand(executor, "sudo", "lshw", "-C", "display")
 	if err != nil {
-		return []*Gpu{}, fmt.Errorf("failed to read data from command; error: %v", err)
+		return []*Gpu{}, fmt.Errorf("failed to read data from command; error: %w", err)
 	}
 
 	gpuDevices := strings.Split(string(gpuInfo), "*-display")
@@ -61,7 +61,7 @@ func GetGpuList(executor utils.CmdExecutor) ([]*Gpu, error) {
 		if pciAddress != infoNotFound {
 			deviceInfo, err := utils.ReadFromCommand(executor, "lspci", "-v", "-s", pciAddress)
 			if err != nil {
-				return []*Gpu{}, fmt.Errorf("failed to read data from command; error: %v", err)
+				return []*Gpu{}, fmt.Errorf("failed to read data from command; error: %w", err)
 			}
 			deviceName := strings.Split(string(deviceInfo), " (")
 			devName := strings.Split(deviceName[0], ": ")

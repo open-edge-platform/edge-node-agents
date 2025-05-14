@@ -48,7 +48,7 @@ type cores struct {
 func GetCpuList(executor utils.CmdExecutor) (*Cpu, error) {
 	dataBytes, err := utils.ReadFromCommand(executor, "lscpu")
 	if err != nil {
-		return &Cpu{}, fmt.Errorf("failed to read data from command; error: %v", err)
+		return &Cpu{}, fmt.Errorf("failed to read data from command; error: %w", err)
 	}
 
 	lscpu := strings.Split(string(dataBytes), "\n")
@@ -107,7 +107,7 @@ func GetCpuList(executor utils.CmdExecutor) (*Cpu, error) {
 		coreInfo := []*cores{}
 		coreDetails, err := utils.ReadFromCommand(executor, "lscpu", "--extended=CPU,SOCKET,MAXMHZ")
 		if err != nil {
-			return &cpu, fmt.Errorf("failed to read data from command; error: %v", err)
+			return &cpu, fmt.Errorf("failed to read data from command; error: %w", err)
 		}
 		parseCoreDetails := strings.SplitAfter(string(coreDetails), "\n")
 

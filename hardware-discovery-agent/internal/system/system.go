@@ -39,17 +39,17 @@ type Os struct {
 func GetBiosInfo(executor utils.CmdExecutor) (*Bios, error) {
 	version, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "bios-version")
 	if err != nil {
-		return &Bios{}, fmt.Errorf("failed to get BIOS version: %v", err)
+		return &Bios{}, fmt.Errorf("failed to get BIOS version: %w", err)
 	}
 
 	releaseDate, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "bios-release-date")
 	if err != nil {
-		return &Bios{}, fmt.Errorf("failed to get Bios release date: %v", err)
+		return &Bios{}, fmt.Errorf("failed to get Bios release date: %w", err)
 	}
 
 	vendor, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "bios-vendor")
 	if err != nil {
-		return &Bios{}, fmt.Errorf("failed to get Bios vendor: %v", err)
+		return &Bios{}, fmt.Errorf("failed to get Bios vendor: %w", err)
 	}
 
 	biosInfo := Bios{
@@ -68,14 +68,14 @@ func GetOsInfo(executor utils.CmdExecutor) (*Os, error) {
 	// Get OS kernel info
 	osKernelVersion, err := utils.ReadFromCommand(executor, "uname", "-r")
 	if err != nil {
-		return &Os{}, fmt.Errorf("failed to get OS information: %v", err)
+		return &Os{}, fmt.Errorf("failed to get OS information: %w", err)
 	}
 	osKernel.Version = string(osKernelVersion)
 
 	osKernelConfig := []*OsMetadata{}
 	osHwPlatform, err := utils.ReadFromCommand(executor, "uname", "-i")
 	if err != nil {
-		return &Os{}, fmt.Errorf("failed to get OS information: %v", err)
+		return &Os{}, fmt.Errorf("failed to get OS information: %w", err)
 	}
 	kernelHwConfig := OsMetadata{
 		Key:   "Platform",
@@ -85,7 +85,7 @@ func GetOsInfo(executor utils.CmdExecutor) (*Os, error) {
 
 	osOperatingSystem, err := utils.ReadFromCommand(executor, "uname", "-o")
 	if err != nil {
-		return &Os{}, fmt.Errorf("failed to get OS information: %v", err)
+		return &Os{}, fmt.Errorf("failed to get OS information: %w", err)
 	}
 	kernelOperatingSystemConfig := OsMetadata{
 		Key:   "Operating System",
@@ -97,14 +97,14 @@ func GetOsInfo(executor utils.CmdExecutor) (*Os, error) {
 	// Get OS release info
 	osId, err := utils.ReadFromCommand(executor, "lsb_release", "-i")
 	if err != nil {
-		return &Os{}, fmt.Errorf("failed to get OS information: %v", err)
+		return &Os{}, fmt.Errorf("failed to get OS information: %w", err)
 	}
 	osIdInfo := strings.Split(string(osId), ":")
 	osRelease.Id = strings.TrimSpace(osIdInfo[1])
 
 	osVersion, err := utils.ReadFromCommand(executor, "lsb_release", "-d")
 	if err != nil {
-		return &Os{}, fmt.Errorf("failed to get OS information: %v", err)
+		return &Os{}, fmt.Errorf("failed to get OS information: %w", err)
 	}
 	osVersionInfo := strings.Split(string(osVersion), ":")
 	osRelease.Version = strings.TrimSpace(osVersionInfo[1])
@@ -112,7 +112,7 @@ func GetOsInfo(executor utils.CmdExecutor) (*Os, error) {
 	osRelMetadataList := []*OsMetadata{}
 	osCodeName, err := utils.ReadFromCommand(executor, "lsb_release", "-c")
 	if err != nil {
-		return &Os{}, fmt.Errorf("failed to get OS information: %v", err)
+		return &Os{}, fmt.Errorf("failed to get OS information: %w", err)
 	}
 	osCodeNameInfo := strings.Split(string(osCodeName), ":")
 	osRelMetadata := OsMetadata{
@@ -133,7 +133,7 @@ func GetOsInfo(executor utils.CmdExecutor) (*Os, error) {
 func GetProductName(executor utils.CmdExecutor) (string, error) {
 	productName, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "system-product-name")
 	if err != nil {
-		return "", fmt.Errorf("failed to get product name: %v", err)
+		return "", fmt.Errorf("failed to get product name: %w", err)
 	}
 	return strings.TrimSpace(string(productName)), nil
 }
@@ -141,7 +141,7 @@ func GetProductName(executor utils.CmdExecutor) (string, error) {
 func GetSerialNumber(executor utils.CmdExecutor) (string, error) {
 	serialNumber, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "system-serial-number")
 	if err != nil {
-		return "", fmt.Errorf("failed to get serial number: %v", err)
+		return "", fmt.Errorf("failed to get serial number: %w", err)
 	}
 	return strings.TrimSpace(string(serialNumber)), nil
 }
@@ -149,7 +149,7 @@ func GetSerialNumber(executor utils.CmdExecutor) (string, error) {
 func GetSystemUUID(executor utils.CmdExecutor) (string, error) {
 	uuid, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "system-uuid")
 	if err != nil {
-		return "", fmt.Errorf("failed to get uuid: %v", err)
+		return "", fmt.Errorf("failed to get uuid: %w", err)
 	}
 	return strings.TrimSpace(string(uuid)), nil
 }

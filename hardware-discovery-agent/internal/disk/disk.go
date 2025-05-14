@@ -40,12 +40,12 @@ func GetDiskList(executor utils.CmdExecutor) ([]*Disk, error) {
 
 	dataBytes, err := utils.ReadFromCommand(executor, "lsblk", "-o", "SERIAL,KNAME,VENDOR,MODEL,SIZE,WWN,TYPE", "-J", "-b")
 	if err != nil {
-		return []*Disk{}, fmt.Errorf("failed to read data from command; error: %v", err)
+		return []*Disk{}, fmt.Errorf("failed to read data from command; error: %w", err)
 	}
 
 	err = json.Unmarshal(dataBytes, &diskStruct)
 	if err != nil {
-		return []*Disk{}, fmt.Errorf("failed to unmarshal data; error: %v", err)
+		return []*Disk{}, fmt.Errorf("failed to unmarshal data; error: %w", err)
 	}
 
 	for _, disk := range diskStruct.Disk {
