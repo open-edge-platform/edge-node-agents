@@ -265,7 +265,7 @@ func TestProvisionReleaseServiceTokenError(t *testing.T) {
 
 	relToken, err := relAuthCli.ProvisionReleaseServiceToken(ctx, authConf, accessToken)
 	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "502")
+	assert.Contains(t, err.Error(), fmt.Sprint(http.StatusBadGateway))
 	assert.Empty(t, relToken.AccessToken)
 	defer os.RemoveAll(testAuthClientCredsPath)
 }
