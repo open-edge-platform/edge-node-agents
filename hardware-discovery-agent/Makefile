@@ -37,7 +37,7 @@ lint: golint
 
 cover_unit:
 	mkdir -p $(BUILD_DIR)/coverage/unit
-	go test -v ./internal/... -cover -covermode count -args -test.gocoverdir=$(shell pwd)/$(BUILD_DIR)/coverage/unit | tee $(BUILD_DIR)/coverage/unit/unit.out
+	go test -v ./common/... -cover -covermode count -args -test.gocoverdir=$(shell pwd)/$(BUILD_DIR)/coverage/unit | tee $(BUILD_DIR)/coverage/unit/unit.out
 	go tool covdata percent -i=$(BUILD_DIR)/coverage/unit
 	go tool covdata func -i=$(BUILD_DIR)/coverage/unit
 
@@ -69,20 +69,20 @@ cover: cover_unit cover_integration
 hdabuild:
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
 	$(GOCMD) build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w -extldflags=-static \
-	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/info.version=$(VERSION) \
-	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/info.commit=$(COMMIT)" \
+	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/info.version=$(VERSION) \
+	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/info.commit=$(COMMIT)" \
 	-o $(BUILD_DIR)/$(NAME) cmd/hdagent/hdagent.go
 
 hdabuild_with_race:
 	CGO_ENABLED=1 go build -race -ldflags=" \
-	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/info.version=$(VERSION) \
-	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/info.commit=$(COMMIT)" \
+	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/info.version=$(VERSION) \
+	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/info.commit=$(COMMIT)" \
 	-o $(BUILD_DIR)/$(NAME)_race cmd/hdagent/hdagent.go
 
 hdabuild_with_cover:
 	CGO_ENABLED=0 go build -cover -coverpkg=./cmd/hdagent -covermode count -ldflags=" \
-	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/info.version=$(VERSION) \
-	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/info.commit=$(COMMIT)" \
+	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/info.version=$(VERSION) \
+	-X github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/info.commit=$(COMMIT)" \
 	-o $(BUILD_DIR)/$(NAME)_cover cmd/hdagent/hdagent.go
 
 hmmbuild:
@@ -99,7 +99,10 @@ build: hdabuild hmmbuild ssmbuild
 
 build-linux: $(BUILD_DIR)/hdagent-linux-amd64 $(BUILD_DIR)/hdagent-linux-arm64
 
-test: common-unit-test
+test:
+	@echo "---MAKEFILE TEST---"
+	$(GOCMD) test ./common/...  -race
+	@echo "---END MAKEFILE TEST---"
 
 integration_test: hdabuild_with_race hmmbuild ssmbuild
 	sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
@@ -163,7 +166,7 @@ package_test:
 
 tarball:
 	mkdir -p $(TARBALL_DIR)
-	cp -r cmd/ config/ debian/copyright internal/ Makefile VERSION go.mod go.sum ../common.mk $(TARBALL_DIR)
+	cp -r cmd/ config/ debian/copyright common/ Makefile VERSION go.mod go.sum ../common.mk $(TARBALL_DIR)
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile
 	cd $(TARBALL_DIR) && go mod tidy && go mod vendor
 	tar -zcf $(BUILD_DIR)/$(FULL_NAME)-$(PKG_VERSION).tar.gz --directory=$(BUILD_DIR) $(FULL_NAME)-$(PKG_VERSION)

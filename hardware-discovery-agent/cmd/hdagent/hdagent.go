@@ -22,11 +22,11 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/status"
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/comms"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/config"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/info"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/logger"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/system"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/comms"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/config"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/info"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/logger"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/system"
 	"github.com/sirupsen/logrus"
 )
 
