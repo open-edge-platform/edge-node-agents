@@ -4,14 +4,15 @@ package usb_test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/usb"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/usb"
 )
 
 func getExpectedOutput(serial string) []*usb.Usb {
@@ -21,8 +22,8 @@ func getExpectedOutput(serial string) []*usb.Usb {
 	testInterfaces = append(testInterfaces, interfaces)
 	expected := &usb.Usb{
 		Class:       "Hub",
-		VendorId:    "1d6b",
-		ProductId:   "0003",
+		VendorID:    "1d6b",
+		ProductID:   "0003",
 		Bus:         2,
 		Address:     1,
 		Description: "Linux Foundation 3.0 root hub",
@@ -38,7 +39,7 @@ func TestGetUsbList(t *testing.T) {
 	testOutput := getExpectedOutput("0000:00:14.0")
 	assert.NotNil(t, out)
 	assert.Equal(t, testOutput, out)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestGetUsbListNoSerial(t *testing.T) {
@@ -46,31 +47,31 @@ func TestGetUsbListNoSerial(t *testing.T) {
 	testOutput := getExpectedOutput("Not available")
 	assert.NotNil(t, out)
 	assert.Equal(t, testOutput, out)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestGetUsbListFirstLSUSBFailed(t *testing.T) {
 	out, err := usb.GetUsbList(testCmdExecutorFirstCommandFailed)
 	assert.Equal(t, []*usb.Usb{}, out)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestGetUsbListSecondLSUSBFailed(t *testing.T) {
 	out, err := usb.GetUsbList(testCmdExecutorSecondCommandFailed)
 	assert.Equal(t, []*usb.Usb{}, out)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestGetUsbListGetBusFailed(t *testing.T) {
 	out, err := usb.GetUsbList(testCmdExecutorFailedGetBus)
 	assert.Equal(t, []*usb.Usb{}, out)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestGetUsbListGetAddressFailed(t *testing.T) {
 	out, err := usb.GetUsbList(testCmdExecutorFailedGetAddress)
 	assert.Equal(t, []*usb.Usb{}, out)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func testCmdReceived(args ...string) bool {
@@ -89,13 +90,12 @@ func testCmdExecutorSuccessLSUSB(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestUsbListVerboseExecutionSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestUsbListVerboseExecutionSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorSuccessNoSerial(command string, args ...string) *exec.Cmd {
@@ -105,13 +105,12 @@ func testCmdExecutorSuccessNoSerial(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestUsbListVerboseExecutionNoSerial", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestUsbListVerboseExecutionNoSerial", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorFirstCommandFailed(command string, args ...string) *exec.Cmd {
@@ -129,13 +128,12 @@ func testCmdExecutorSecondCommandFailed(command string, args ...string) *exec.Cm
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestUsbListExecutionCommandFailed", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestUsbListExecutionCommandFailed", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorFailedGetBus(command string, args ...string) *exec.Cmd {
@@ -145,13 +143,12 @@ func testCmdExecutorFailedGetBus(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestUsbListVerboseExecutionSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestUsbListVerboseExecutionSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorFailedGetAddress(command string, args ...string) *exec.Cmd {
@@ -161,13 +158,12 @@ func testCmdExecutorFailedGetAddress(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestUsbListVerboseExecutionSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestUsbListVerboseExecutionSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func TestUsbListBasicExecutionSuccess(t *testing.T) {
@@ -175,9 +171,7 @@ func TestUsbListBasicExecutionSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_usb.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -187,9 +181,7 @@ func TestUsbListVerboseExecutionSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_usb_verbose.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -199,14 +191,12 @@ func TestUsbListVerboseExecutionNoSerial(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_usb_verbose_no_serial_data.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
 
-func TestUsbListExecutionCommandFailed(t *testing.T) {
+func TestUsbListExecutionCommandFailed(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -219,9 +209,7 @@ func TestUsbListExecutionIncorrectBus(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_usb_incorrect_usb_bus.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -231,9 +219,7 @@ func TestUsbListExecutionIncorrectAddress(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_usb_incorrect_usb_address.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
