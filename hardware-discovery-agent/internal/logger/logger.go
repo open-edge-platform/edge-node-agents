@@ -4,6 +4,7 @@ package logger
 
 import (
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/logger"
+
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/info"
 )
 
