@@ -134,9 +134,9 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 	networkList := []*proto.SystemNetwork{}
 	for _, networkDetails := range networks {
 		ipAddressList := []*proto.IPAddress{}
-		for _, ipAddress := range networkDetails.IpAddresses {
+		for _, ipAddress := range networkDetails.IPAddresses {
 			ipAddressList = append(ipAddressList, &proto.IPAddress{
-				IpAddress:         ipAddress.IpAddress,
+				IpAddress:         ipAddress.IPAddress,
 				NetworkPrefixBits: ipAddress.NetPrefBits,
 				ConfigMode:        ipAddress.ConfigMode,
 			})
