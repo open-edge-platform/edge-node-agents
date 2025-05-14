@@ -52,7 +52,7 @@ func newTestIDPServer(t *testing.T, method string, response any, resource string
 		require.Equal(t, resource, req.URL.String())
 		require.Equal(t, method, req.Method)
 		if returnCode != http.StatusOK {
-			rw.WriteHeader(http.StatusInternalServerError)
+			rw.WriteHeader(returnCode)
 			return
 		}
 		_, err := io.ReadAll(req.Body)
@@ -240,5 +240,32 @@ func TestProvisionReleaseServiceTokenAnonymous(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, relToken.AccessToken)
 	assert.Equal(t, relToken.AccessToken, token)
+	defer os.RemoveAll(testAuthClientCredsPath)
+}
+
+func TestProvisionReleaseServiceTokenError(t *testing.T) {
+	accessToken := "TEST-ACCESS-TOKEN"
+	authConf := getAuthConfig()
+
+	token := ""
+	ts := newTestIDPServer(t, http.MethodGet, token, "/token", http.StatusBadGateway)
+	defer ts.Close()
+
+	u, _ := url.Parse(ts.URL)
+
+	// Add mock server certificate to system cert pool
+	certPool, _ := x509.SystemCertPool()
+	certPool.AddCert(ts.Certificate())
+
+	ctx := context.Background()
+
+	// Now create release service token
+	relAuthCli, err := comms.GetAuthCli(u.Host, guid, certPool)
+	assert.Nil(t, err)
+
+	relToken, err := relAuthCli.ProvisionReleaseServiceToken(ctx, authConf, accessToken)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "502")
+	assert.Empty(t, relToken.AccessToken)
 	defer os.RemoveAll(testAuthClientCredsPath)
 }
