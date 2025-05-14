@@ -3,7 +3,7 @@ module github.com/open-edge-platform/edge-node-agents/common
 go 1.24.1
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250307204501-0409229c3780.1
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250425153114-8976f5be98c1.1
 	github.com/bufbuild/protovalidate-go v0.9.2
 	github.com/golang/mock v1.6.0
 	github.com/pkg/errors v0.9.1
@@ -14,8 +14,8 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.35.0
 	go.opentelemetry.io/otel/sdk v1.35.0
 	go.opentelemetry.io/otel/sdk/metric v1.35.0
-	golang.org/x/oauth2 v0.28.0
-	google.golang.org/grpc v1.71.1
+	golang.org/x/oauth2 v0.30.0
+	google.golang.org/grpc v1.72.1
 	google.golang.org/protobuf v1.36.6
 )
 
