@@ -16,9 +16,9 @@ type disk struct {
 	Name   string `json:"kname"`
 	Vendor string `json:"vendor"`
 	Model  string `json:"model"`
-	Size   uint64 `json:"size"` //in bytes
+	Size   uint64 `json:"size"` // in bytes
 	Type   string `json:"type"`
-	Wwn    string `json:"wwn"` //world wide name may also be referred to as WWID
+	Wwn    string `json:"wwn"` // world wide name may also be referred to as WWID
 }
 
 type disks struct {
