@@ -11,7 +11,6 @@ db_input low node-agent/auth.accessTokenURL || true
 db_input low node-agent/auth.rsTokenURL || true
 db_input low node-agent/proxy.aptSourceURL || true
 db_input low node-agent/proxy.aptSourceProxyPort || true
-db_input low node-agent/proxy.imgRegistryURL || true
-db_input low node-agent/proxy.imgRegistryProxyPort || true
+db_input low node-agent/proxy.aptSourceFilesRSRoot || true
 db_input low node-agent/auth.RSType || true
 db_go || true

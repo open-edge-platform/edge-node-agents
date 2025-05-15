@@ -38,6 +38,11 @@ if [ ! -z "$RET" ]; then
     sed -i -E '/name: client-proxy/,/url:/ s|(http://[^:]+:)[0-9]+|\1'"$RET"'|' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
+db_get node-agent/proxy.aptSourceFilesRSRoot
+if [ ! -z "$RET" ]; then
+   sed -i -E '/name: client-proxy/,/url:/ s|(http://[^/]+/)[^/]+|\1'"$RET"'|' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
 if ! grep -q "EnvironmentFile" "/lib/systemd/system/caddy.service"; then
     sed -i '/^\[Service\]$/a EnvironmentFile=\/etc\/environment' /lib/systemd/system/caddy.service
 fi
