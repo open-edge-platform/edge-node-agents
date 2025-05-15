@@ -9,8 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/system"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/system"
 )
 
 var expectedProductName = "Test Product"
@@ -22,10 +24,9 @@ var expectedVersion = "1.2.3"
 var expectedKernelVersion = "5.15.0-82-generic"
 var expectedKernelPlatform = "x86_64"
 var expectedKernelOS = "GNU/Linux"
-var expectedReleaseId = "Ubuntu"
+var expectedReleaseID = "Ubuntu"
 var expectedReleaseVersion = "Ubuntu 20.04 LTS"
 
-// Test cases
 func TestGetBiosInfoSuccess(t *testing.T) {
 	biosInfo, err := system.GetBiosInfo(testCmdExecutorSuccessBiosInfo)
 
@@ -35,25 +36,25 @@ func TestGetBiosInfoSuccess(t *testing.T) {
 		Vendor:  expectedVendor,
 	}
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expectedInfo, biosInfo)
 }
 
 func TestGetBiosInfoVersionFailure(t *testing.T) {
 	biosInfo, err := system.GetBiosInfo(testCmdExecutorFailure)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, biosInfo)
 }
 
 func TestGetBiosInfoReleaseDateFailure(t *testing.T) {
 	biosInfo, err := system.GetBiosInfo(testCmdExecutorFailureBiosInfoReleaseDate)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, biosInfo)
 }
 
 func TestGetBiosInfoVendorFailure(t *testing.T) {
 	biosInfo, err := system.GetBiosInfo(testCmdExecutorFailureBiosInfoVendor)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, biosInfo)
 }
 
@@ -85,83 +86,83 @@ func TestGetOsInfoSuccess(t *testing.T) {
 			Config:  expectedConfig,
 		},
 		Release: &system.OsRel{
-			Id:       expectedReleaseId,
+			ID:       expectedReleaseID,
 			Version:  expectedReleaseVersion,
 			Metadata: expectedMetadata,
 		},
 	}
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expectedInfo, osInfo)
 }
 
 func TestGetOsInfoKernelVersionFailure(t *testing.T) {
 	osInfo, err := system.GetOsInfo(testCmdExecutorFailure)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, osInfo)
 }
 
 func TestGetOsInfoKernelConfigFailure(t *testing.T) {
 	osInfo, err := system.GetOsInfo(testCmdExecutorFailureOsInfoKernelPlatform)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, osInfo)
 
 	osInfo, err = system.GetOsInfo(testCmdExecutorFailureOsInfoKernelOs)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, osInfo)
 }
 
 func TestGetOsInfoReleaseIdFailure(t *testing.T) {
-	osInfo, err := system.GetOsInfo(testCmdExecutorFailureOsInfoReleaseId)
-	assert.Error(t, err)
+	osInfo, err := system.GetOsInfo(testCmdExecutorFailureOsInfoReleaseID)
+	require.Error(t, err)
 	assert.Empty(t, osInfo)
 }
 
 func TestGetOsInfoReleaseVersionFailure(t *testing.T) {
 	osInfo, err := system.GetOsInfo(testCmdExecutorFailureOsInfoReleaseVersion)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, osInfo)
 }
 
 func TestGetOsInfoReleaseMetadataFailure(t *testing.T) {
 	osInfo, err := system.GetOsInfo(testCmdExecutorFailureOsInfoReleaseMetadata)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, osInfo)
 }
 
 func TestGetProductNameSuccess(t *testing.T) {
 	pn, err := system.GetProductName(testCmdExecutorSuccessProductName)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expectedProductName, pn)
 }
 
 func TestGetProductNameFailure(t *testing.T) {
 	pn, err := system.GetProductName(testCmdExecutorFailure)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, pn)
 }
 
 func TestGetSerialNumberSuccess(t *testing.T) {
 	sn, err := system.GetSerialNumber(testCmdExecutorSuccessSN)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expectedSN, sn)
 }
 
 func TestGetSerialNumberFailure(t *testing.T) {
 	sn, err := system.GetSerialNumber(testCmdExecutorFailure)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, sn)
 }
 
 func TestGetUuidSuccess(t *testing.T) {
 	uuid, err := system.GetSystemUUID(testCmdExecutorSuccessUUID)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expectedUUID, uuid)
 }
 
 func TestGetUuidFailure(t *testing.T) {
 	uuid, err := system.GetSystemUUID(testCmdExecutorFailure)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, uuid)
 }
 
@@ -198,9 +199,8 @@ func testCmdOsInfoKernelTest(command string, args ...string) []string {
 		return []string{"--test.run=TestOsInfoKernelVersionSuccess", "--", command}
 	} else if strings.Contains(args[0], "-i") {
 		return []string{"--test.run=TestOsInfoKernelPlatformSuccess", "--", command}
-	} else {
-		return []string{"--test.run=TestOsInfoKernelOperatingSystemSuccess", "--", command}
 	}
+	return []string{"--test.run=TestOsInfoKernelOperatingSystemSuccess", "--", command}
 }
 
 func testCmdOsInfoReleaseTest(command string, isErrorCase bool, args ...string) []string {
@@ -208,13 +208,11 @@ func testCmdOsInfoReleaseTest(command string, isErrorCase bool, args ...string) 
 		return []string{"--test.run=TestOsInfoReleaseIdSuccess", "--", command}
 	} else if strings.Contains(args[0], "-d") {
 		return []string{"--test.run=TestOsInfoReleaseVersionSuccess", "--", command}
-	} else {
-		if !isErrorCase {
-			return []string{"--test.run=TestOsInfoReleaseMetadataSuccess", "--", command}
-		} else {
-			return []string{"--test.run=TestGenericExecutionFailure", "--", command}
-		}
 	}
+	if !isErrorCase {
+		return []string{"--test.run=TestOsInfoReleaseMetadataSuccess", "--", command}
+	}
+	return []string{"--test.run=TestGenericExecutionFailure", "--", command}
 }
 
 func testCmdExecutorSuccessOsInfo(command string, args ...string) *exec.Cmd {
@@ -224,13 +222,12 @@ func testCmdExecutorSuccessOsInfo(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := testCmdOsInfoReleaseTest(command, false, args...)
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := testCmdOsInfoReleaseTest(command, false, args...)
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorFailureOsInfoKernelPlatform(command string, args ...string) *exec.Cmd {
@@ -261,20 +258,19 @@ func testCmdExecutorFailureOsInfoKernelOs(command string, args ...string) *exec.
 	return cmd
 }
 
-func testCmdExecutorFailureOsInfoReleaseId(command string, args ...string) *exec.Cmd {
+func testCmdExecutorFailureOsInfoReleaseID(command string, args ...string) *exec.Cmd {
 	if strings.Contains(command, "uname") {
 		cs := testCmdOsInfoKernelTest(command, args...)
 		cs = append(cs, args...)
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"--test.run=TestGenericExecutionFailure", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"--test.run=TestGenericExecutionFailure", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorFailureOsInfoReleaseVersion(command string, args ...string) *exec.Cmd {
@@ -284,18 +280,17 @@ func testCmdExecutorFailureOsInfoReleaseVersion(command string, args ...string) 
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		var cs []string
-		if strings.Contains(args[0], "-i") {
-			cs = []string{"--test.run=TestOsInfoReleaseIdSuccess", "--", command}
-		} else {
-			cs = []string{"--test.run=TestGenericExecutionFailure", "--", command}
-		}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	var cs []string
+	if strings.Contains(args[0], "-i") {
+		cs = []string{"--test.run=TestOsInfoReleaseIdSuccess", "--", command}
+	} else {
+		cs = []string{"--test.run=TestGenericExecutionFailure", "--", command}
+	}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorFailureOsInfoReleaseMetadata(command string, args ...string) *exec.Cmd {
@@ -305,13 +300,12 @@ func testCmdExecutorFailureOsInfoReleaseMetadata(command string, args ...string)
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := testCmdOsInfoReleaseTest(command, true, args...)
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := testCmdOsInfoReleaseTest(command, true, args...)
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorFailure(command string, args ...string) *exec.Cmd {
@@ -369,7 +363,7 @@ func testCmdExecutorFailureBiosInfoVendor(command string, args ...string) *exec.
 // the GO_TEST_PROCESS flag ensures that if it is called as part of the test suite, it is
 // skipped.
 
-func TestOsInfoKernelVersionSuccess(t *testing.T) {
+func TestOsInfoKernelVersionSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -378,7 +372,7 @@ func TestOsInfoKernelVersionSuccess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestOsInfoKernelPlatformSuccess(t *testing.T) {
+func TestOsInfoKernelPlatformSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -387,7 +381,7 @@ func TestOsInfoKernelPlatformSuccess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestOsInfoKernelOperatingSystemSuccess(t *testing.T) {
+func TestOsInfoKernelOperatingSystemSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -396,16 +390,16 @@ func TestOsInfoKernelOperatingSystemSuccess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestOsInfoReleaseIdSuccess(t *testing.T) {
+func TestOsInfoReleaseIdSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
 	// Print out the test value to stdout
-	fmt.Fprintf(os.Stdout, "%v", "Distributor ID: "+expectedReleaseId)
+	fmt.Fprintf(os.Stdout, "%v", "Distributor ID: "+expectedReleaseID)
 	os.Exit(0)
 }
 
-func TestOsInfoReleaseVersionSuccess(t *testing.T) {
+func TestOsInfoReleaseVersionSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -414,7 +408,7 @@ func TestOsInfoReleaseVersionSuccess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestOsInfoReleaseMetadataSuccess(t *testing.T) {
+func TestOsInfoReleaseMetadataSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -423,7 +417,7 @@ func TestOsInfoReleaseMetadataSuccess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestSystemExecutionSuccessProductName(t *testing.T) {
+func TestSystemExecutionSuccessProductName(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -432,7 +426,7 @@ func TestSystemExecutionSuccessProductName(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestBiosInfoVersionSuccess(t *testing.T) {
+func TestBiosInfoVersionSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -441,7 +435,7 @@ func TestBiosInfoVersionSuccess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestBiosInfoReleaseDateSuccess(t *testing.T) {
+func TestBiosInfoReleaseDateSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -450,7 +444,7 @@ func TestBiosInfoReleaseDateSuccess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestBiosInfoVendorSuccess(t *testing.T) {
+func TestBiosInfoVendorSuccess(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -459,7 +453,7 @@ func TestBiosInfoVendorSuccess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestSerialNumberExecutionSuccessUUID(t *testing.T) {
+func TestSerialNumberExecutionSuccessUUID(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -468,7 +462,7 @@ func TestSerialNumberExecutionSuccessUUID(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestSerialNumberExecutionSuccessSN(t *testing.T) {
+func TestSerialNumberExecutionSuccessSN(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -477,7 +471,7 @@ func TestSerialNumberExecutionSuccessSN(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestGenericExecutionFailure(t *testing.T) {
+func TestGenericExecutionFailure(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}

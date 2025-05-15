@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/logger"
 	"gopkg.in/yaml.v3"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/logger"
 )
 
 var log = logger.Logger

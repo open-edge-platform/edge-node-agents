@@ -7,16 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"gopkg.in/yaml.v3"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/config"
 )
 
 func createConfigFile(t *testing.T, version string, logLevel string, url string, interval time.Duration, accessTokenPath string) string {
-	f, err := os.CreateTemp("", "test_config")
-	require.Nil(t, err)
+	f, err := os.CreateTemp(t.TempDir(), "test_config")
+	require.NoError(t, err)
 
 	c := config.Config{
 		Version:  version,
@@ -31,17 +31,16 @@ func createConfigFile(t *testing.T, version string, logLevel string, url string,
 	}
 
 	file, err := yaml.Marshal(c)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	_, err = f.Write(file)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	err = f.Close()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	return f.Name()
 }
 
-// Unit test
 func TestNewValidConfigNoArgs(t *testing.T) {
 	logLevel := "info"
 	version := "v0.2.0"
@@ -52,7 +51,7 @@ func TestNewValidConfigNoArgs(t *testing.T) {
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, version, cfg.Version)
 	assert.Equal(t, logLevel, cfg.LogLevel)
 	assert.Equal(t, url, cfg.Onboarding.ServiceURL)
@@ -62,20 +61,20 @@ func TestNewValidConfigNoArgs(t *testing.T) {
 
 func TestNewInvalidConfigPath(t *testing.T) {
 	cfg, err := config.New("non_existent_path")
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, cfg)
 }
 
 func TestNewInvalidConfigContent(t *testing.T) {
-	f, err := os.CreateTemp("", "test_config")
-	require.Nil(t, err)
+	f, err := os.CreateTemp(t.TempDir(), "test_config")
+	require.NoError(t, err)
 	defer os.Remove(f.Name()) // clean up
 
 	_, err = f.WriteString("not a yaml for onboarding or tls")
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	cfg, err := config.New(f.Name())
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, cfg)
 }
 
@@ -91,10 +90,10 @@ func TestSymlinkConfigPath(t *testing.T) {
 	symlinkConfig := "/tmp/symlink_config.txt"
 	defer os.Remove(symlinkConfig)
 	err := os.Symlink(fileName, symlinkConfig)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	cfg, err := config.New(symlinkConfig)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, cfg)
 }
 
@@ -105,7 +104,7 @@ func TestPartialConfigFile(t *testing.T) {
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "v0.2.0", cfg.Version)
 	assert.Equal(t, "info", cfg.LogLevel)
 	assert.Equal(t, url, cfg.Onboarding.ServiceURL)
@@ -114,36 +113,32 @@ func TestPartialConfigFile(t *testing.T) {
 }
 
 func TestInvalidLogLevel(t *testing.T) {
-
 	fileName := createConfigFile(t, "v0.2.0", "invalid", "localhost", 15*time.Second, "/etc/intel_edge_node/tokens/hd-agent/access_token")
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, cfg)
 }
 
 func TestNoServiceURL(t *testing.T) {
-
 	fileName := createConfigFile(t, "v0.2.0", "info", "", 15*time.Second, "/etc/intel_edge_node/tokens/hd-agent/access_token")
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, cfg)
 }
 
 func TestNoTokenPath(t *testing.T) {
-
 	fileName := createConfigFile(t, "v0.2.0", "info", "localhost", 15*time.Second, "")
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Nil(t, cfg)
 }
 
-// Fuzz test
 func FuzzNew(f *testing.F) {
 	f.Add("/tmp/test_file.yaml")
 	f.Fuzz(func(t *testing.T, testConfigPath string) {
@@ -189,7 +184,7 @@ func FuzzConfigNew(f *testing.F) {
 	exampleConfigFileContents := []byte("# SPDX-FileCopyrightText: (C) 2025 Intel Corporation\n#\n# SPDX-License-Identifier: Apache-2.0\n\n---\nversion: v0.2.0\nlogLevel: info\nonboarding:\n  serviceURL: \"localhost\"\ninterval: \"30s\"\njwt:\n accessTokenPath: /etc/intel_edge_node/tokens/hd-agent/access_token\n :")
 	f.Add(exampleConfigFileContents)
 	f.Fuzz(func(t *testing.T, testConfigFileContents []byte) {
-		testFile, err := os.CreateTemp("", "example_config.yaml")
+		testFile, err := os.CreateTemp(t.TempDir(), "example_config.yaml")
 		if err != nil {
 			t.Error("Error creating test config file")
 		}

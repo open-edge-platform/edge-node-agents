@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -18,15 +19,16 @@ import (
 	"testing"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/testutils"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/comms"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/network"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/tool"
 	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/test/bufconn"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/comms"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/network"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/tool"
 )
 
 type mockServer struct {
@@ -37,13 +39,13 @@ type failedServer struct {
 	proto.HostmgrServer
 }
 
-func (srv *mockServer) UpdateHostSystemInfoByGUID(ctx context.Context, req *proto.UpdateHostSystemInfoByGUIDRequest) (*proto.UpdateHostSystemInfoByGUIDResponse, error) { //nolint:unused
+func (*mockServer) UpdateHostSystemInfoByGUID(_ context.Context, _ *proto.UpdateHostSystemInfoByGUIDRequest) (*proto.UpdateHostSystemInfoByGUIDResponse, error) { //nolint:unused
 	updateHostSystemInfoByGUIDResponse := proto.UpdateHostSystemInfoByGUIDResponse{}
 	return &updateHostSystemInfoByGUIDResponse, nil
 }
 
-func (srv *failedServer) UpdateHostSystemInfoByGUID(ctx context.Context, req *proto.UpdateHostSystemInfoByGUIDRequest) (*proto.UpdateHostSystemInfoByGUIDResponse, error) { //nolint:unused
-	return nil, fmt.Errorf("Failed to update system info!")
+func (*failedServer) UpdateHostSystemInfoByGUID(_ context.Context, _ *proto.UpdateHostSystemInfoByGUIDRequest) (*proto.UpdateHostSystemInfoByGUIDResponse, error) { //nolint:unused
+	return nil, errors.New("failed to update system info")
 }
 
 func runMockServer(certFile string, keyFile string) *bufconn.Listener {
@@ -72,10 +74,10 @@ func runFailedServer(certFile string, keyFile string) *bufconn.Listener {
 	return lis
 }
 
-// Helper function for dailing to a server using the bufconn package
-func WithBufconnDialer(ctx context.Context, lis *bufconn.Listener) func(*comms.Client) {
+// Helper function for dailing to a server using the bufconn package.
+func WithBufconnDialer(_ context.Context, lis *bufconn.Listener) func(*comms.Client) {
 	return func(s *comms.Client) {
-		s.Dialer = grpc.WithContextDialer(func(ctx context.Context, s string) (net.Conn, error) {
+		s.Dialer = grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
 			return lis.Dial()
 		})
 	}
@@ -83,31 +85,31 @@ func WithBufconnDialer(ctx context.Context, lis *bufconn.Listener) func(*comms.C
 
 // Mock file read functions for TestGenerateUpdateDeviceRequestSuccess
 
-var TESTDATA_PATH string = "../../test/data"
+var testdataPath = "../../test/data"
 
 type file struct {
 	name string
 }
 
-func (f *file) Name() string               { return f.name }
-func (f *file) IsDir() bool                { return false }
-func (f *file) Type() fs.FileMode          { return 0 }
-func (f *file) Info() (fs.FileInfo, error) { return nil, nil }
+func (f *file) Name() string             { return f.name }
+func (*file) IsDir() bool                { return false }
+func (*file) Type() fs.FileMode          { return 0 }
+func (*file) Info() (fs.FileInfo, error) { return nil, nil }
 
 func parsedFilePathIntoTestData(path string) (ret string) {
 	return strings.ReplaceAll(path, "/", "_")[1:]
 }
 
-func mocked_ReadFile(path string) ([]byte, error) {
+func mockedReadFile(path string) ([]byte, error) {
 	mockedPath := "file-" + parsedFilePathIntoTestData(path)
-	return os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	return os.ReadFile(filepath.Join(testdataPath, mockedPath))
 }
 
-func mocked_ReadDir(path string) (ret []fs.DirEntry, err error) {
+func mockedReadDir(path string) (ret []fs.DirEntry, err error) {
 	mockedPath := "dir-" + parsedFilePathIntoTestData(path)
 
 	fileList := make([]fs.DirEntry, 0)
-	source, err := os.Open(filepath.Join(TESTDATA_PATH, mockedPath))
+	source, err := os.Open(filepath.Join(testdataPath, mockedPath))
 	if err != nil {
 		return ret, err
 	}
@@ -124,14 +126,14 @@ func mocked_ReadDir(path string) (ret []fs.DirEntry, err error) {
 	return fileList, nil
 }
 
-func mocked_Readlink(path string) (string, error) {
+func mockedReadlink(path string) (string, error) {
 	mockedPath := "link-" + parsedFilePathIntoTestData(path)
-	out, err := os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	out, err := os.ReadFile(filepath.Join(testdataPath, mockedPath))
 
 	return string(out), err
 }
 
-func mocked_CollectEthtoolData(nicName string) (*tool.EthtoolValues, error) {
+func mockedCollectEthtoolData(_ string) (*tool.EthtoolValues, error) {
 	ret := &tool.EthtoolValues{
 		LinkState: true,
 		SupportedLinkMode: []string{
@@ -158,18 +160,18 @@ func mocked_CollectEthtoolData(nicName string) (*tool.EthtoolValues, error) {
 	return ret, nil
 }
 
-func mocked_Stat(path string) (fs.FileInfo, error) {
+func mockedStat(path string) (fs.FileInfo, error) {
 	mockedPath := "file-" + parsedFilePathIntoTestData(path)
-	_, err := os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	_, err := os.ReadFile(filepath.Join(testdataPath, mockedPath))
 	return nil, err
 }
 
 func TestSystemInfoUpdate(t *testing.T) {
 	certFile, keyFile, err := testutils.CreateTestCertificates()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer os.Remove(certFile)
 	defer os.Remove(keyFile)
-	ctx := context.Background()
+	ctx := t.Context()
 	lis := runMockServer(certFile, keyFile)
 	tlsConfig := &tls.Config{
 		RootCAs:            x509.NewCertPool(),
@@ -177,21 +179,21 @@ func TestSystemInfoUpdate(t *testing.T) {
 	}
 
 	hostMgr := comms.NewClient("", tlsConfig, WithBufconnDialer(ctx, lis))
-	assert.NoError(t, hostMgr.Connect())
+	require.NoError(t, hostMgr.Connect())
 
 	resp, err := hostMgr.UpdateHostSystemInfoByGUID(ctx, "dummy_guid", &proto.SystemInfo{})
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, resp)
 }
 
 func TestFailedSystemInfoUpdate(t *testing.T) {
 	certFile, keyFile, err := testutils.CreateTestCertificates()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer os.Remove(certFile)
 	defer os.Remove(keyFile)
 	lis := runFailedServer(certFile, keyFile)
-	ctx := context.Background()
+	ctx := t.Context()
 	tlsConfig := &tls.Config{
 		RootCAs:            x509.NewCertPool(),
 		InsecureSkipVerify: true,
@@ -199,11 +201,9 @@ func TestFailedSystemInfoUpdate(t *testing.T) {
 
 	testClient := comms.NewClient("dummy-addr", tlsConfig, WithBufconnDialer(ctx, lis))
 	err = testClient.Connect()
-	if err != nil {
-		log.Fatalf("Failed to connect to server!")
-	}
+	require.NoError(t, err)
 	resp, err := testClient.UpdateHostSystemInfoByGUID(ctx, "dummy-token", &proto.SystemInfo{})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, resp)
 }
 
@@ -276,28 +276,30 @@ func getBiosInfo() *proto.BiosInfo {
 func getCpuInfo() *proto.SystemCPU {
 	socket := []*proto.Socket{}
 	coreGroupsSocket0 := []*proto.CoreGroup{}
-	coreGroupsSocket0 = append(coreGroupsSocket0, &proto.CoreGroup{
-		CoreType: "P-Core",
-		CoreList: []uint32{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46},
-	})
-	coreGroupsSocket0 = append(coreGroupsSocket0, &proto.CoreGroup{
-		CoreType: "E-Core",
-		CoreList: []uint32{48, 50, 52, 54},
-	})
+	coreGroupsSocket0 = append(coreGroupsSocket0,
+		&proto.CoreGroup{
+			CoreType: "P-Core",
+			CoreList: []uint32{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46},
+		},
+		&proto.CoreGroup{
+			CoreType: "E-Core",
+			CoreList: []uint32{48, 50, 52, 54},
+		})
 	socket = append(socket, &proto.Socket{
 		SocketId:   0,
 		CoreGroups: coreGroupsSocket0,
 	})
 
 	coreGroupsSocket1 := []*proto.CoreGroup{}
-	coreGroupsSocket1 = append(coreGroupsSocket1, &proto.CoreGroup{
-		CoreType: "P-Core",
-		CoreList: []uint32{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47},
-	})
-	coreGroupsSocket1 = append(coreGroupsSocket1, &proto.CoreGroup{
-		CoreType: "E-Core",
-		CoreList: []uint32{49, 51, 53, 55},
-	})
+	coreGroupsSocket1 = append(coreGroupsSocket1,
+		&proto.CoreGroup{
+			CoreType: "P-Core",
+			CoreList: []uint32{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47},
+		},
+		&proto.CoreGroup{
+			CoreType: "E-Core",
+			CoreList: []uint32{49, 51, 53, 55},
+		})
 	socket = append(socket, &proto.Socket{
 		SocketId:   1,
 		CoreGroups: coreGroupsSocket1,
@@ -341,9 +343,7 @@ func getStorageInfo() []*proto.SystemDisk {
 		Size:         800166076416,
 		Wwid:         "eui.01000000010000005cd2e43cf16e5451",
 	}
-	result = append(result, disk1)
-	result = append(result, disk2)
-	result = append(result, disk3)
+	result = append(result, disk1, disk2, disk3)
 	return result
 }
 
@@ -445,11 +445,11 @@ func TestGenerateUpdateDeviceRequestErr(t *testing.T) {
 }
 
 func TestGenerateUpdateDeviceRequestSuccessAllInfo(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassed)
 	expected := expectedSystemInfoResult("12A34B5", "Test Product", "192.168.1.50", getOsInfo(), getBiosInfo(), getCpuInfo(), getStorageInfo(), getGpuInfo(), 17179869184, getNetworkInfo(), proto.BmInfo_IPMI, getUsbInfo())
 	require.NotNil(t, json)
@@ -556,11 +556,11 @@ func TestGenerateUpdateDeviceRequestSuccessMemoryOnly(t *testing.T) {
 }
 
 func TestGenerateUpdateDeviceRequestSuccessNetworkOnly(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassedNetworkOnly)
 	osKern := proto.OsKernel{}
 	osRelease := proto.OsRelease{}
@@ -773,9 +773,7 @@ func TestGenerateUpdateDeviceRequestCommandCpuDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -785,9 +783,7 @@ func TestGenerateUpdateDeviceRequestCommandCoreDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -797,9 +793,7 @@ func TestGenerateUpdateDeviceRequestCommandDiskDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_disks.json")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -809,9 +803,7 @@ func TestGenerateUpdateDeviceRequestCommandGpuDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -821,9 +813,7 @@ func TestGenerateUpdateDeviceRequestCommandGpuPciDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_gpu_name.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -833,9 +823,7 @@ func TestGenerateUpdateDeviceRequestCommandMemoryDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_memory.json")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -845,9 +833,7 @@ func TestGenerateUpdateDeviceRequestCommandIpmiDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ipmitool.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -857,9 +843,7 @@ func TestGenerateUpdateDeviceRequestCommandIpDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ip_addr.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }

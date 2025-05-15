@@ -6,44 +6,45 @@ package cpu_test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/cpu"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/cpu"
 )
 
-var features []string = []string{"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce", "cx8", "apic", "sep", "mtrr", "pge", "mca", "cmov", "pat", "pse36", "clflush", "dts", "acpi", "mmx", "fxsr", "sse", "sse2", "ss", "ht", "tm", "pbe", "syscall", "nx", "pdpe1gb", "rdtscp", "lm", "constant_tsc", "arch_perfmon", "pebs", "bts", "rep_good", "nopl", "xtopology", "nonstop_tsc", "cpuid", "aperfmperf", "pni", "pclmulqdq", "dtes64", "monitor", "ds_cpl", "vmx", "smx", "est", "tm2", "ssse3", "sdbg", "fma", "cx16", "xtpr", "pdcm", "pcid", "dca", "sse4_1", "sse4_2", "x2apic", "movbe", "popcnt", "tsc_deadline_timer", "aes", "xsave", "avx", "f16c", "rdrand", "lahf_lm", "abm", "3dnowprefetch", "cpuid_fault", "epb", "cat_l3", "cdp_l3", "invpcid_single", "pti", "ssbd", "ibrs", "ibpb", "stibp", "tpr_shadow", "vnmi", "flexpriority", "ept", "vpid", "ept_ad", "fsgsbase", "tsc_adjust", "bmi1", "hle", "avx2", "smep", "bmi2", "erms", "invpcid", "rtm", "cqm", "rdt_a", "rdseed", "adx", "smap", "intel_pt", "xsaveopt", "cqm_llc", "cqm_occup_llc", "cqm_mbm_total", "cqm_mbm_local", "dtherm", "ida", "arat", "pln", "pts", "md_clear", "flush_l1d"}
+var features = []string{"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce", "cx8", "apic", "sep", "mtrr", "pge", "mca", "cmov", "pat", "pse36", "clflush", "dts", "acpi", "mmx", "fxsr", "sse", "sse2", "ss", "ht", "tm", "pbe", "syscall", "nx", "pdpe1gb", "rdtscp", "lm", "constant_tsc", "arch_perfmon", "pebs", "bts", "rep_good", "nopl", "xtopology", "nonstop_tsc", "cpuid", "aperfmperf", "pni", "pclmulqdq", "dtes64", "monitor", "ds_cpl", "vmx", "smx", "est", "tm2", "ssse3", "sdbg", "fma", "cx16", "xtpr", "pdcm", "pcid", "dca", "sse4_1", "sse4_2", "x2apic", "movbe", "popcnt", "tsc_deadline_timer", "aes", "xsave", "avx", "f16c", "rdrand", "lahf_lm", "abm", "3dnowprefetch", "cpuid_fault", "epb", "cat_l3", "cdp_l3", "invpcid_single", "pti", "ssbd", "ibrs", "ibpb", "stibp", "tpr_shadow", "vnmi", "flexpriority", "ept", "vpid", "ept_ad", "fsgsbase", "tsc_adjust", "bmi1", "hle", "avx2", "smep", "bmi2", "erms", "invpcid", "rtm", "cqm", "rdt_a", "rdseed", "adx", "smap", "intel_pt", "xsaveopt", "cqm_llc", "cqm_occup_llc", "cqm_mbm_total", "cqm_mbm_local", "dtherm", "ida", "arat", "pln", "pts", "md_clear", "flush_l1d"}
 
-var pcoresMultiSocket0 []uint32 = []uint32{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46}
-var pcoresMultiSocket1 []uint32 = []uint32{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47}
-var pcoresMultiSocket0NoHt []uint32 = []uint32{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22}
-var pcoresMultiSocket1NoHt []uint32 = []uint32{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23}
-var ecoresMultiSocket0 []uint32 = []uint32{48, 50, 52, 54}
-var ecoresMultiSocket1 []uint32 = []uint32{49, 51, 53, 55}
-var ecoresMultiSocket0NoHt []uint32 = []uint32{24, 26, 28, 30}
-var ecoresMultiSocket1NoHt []uint32 = []uint32{25, 27, 29, 31}
+var pcoresMultiSocket0 = []uint32{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46}
+var pcoresMultiSocket1 = []uint32{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47}
+var pcoresMultiSocket0NoHt = []uint32{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22}
+var pcoresMultiSocket1NoHt = []uint32{1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23}
+var ecoresMultiSocket0 = []uint32{48, 50, 52, 54}
+var ecoresMultiSocket1 = []uint32{49, 51, 53, 55}
+var ecoresMultiSocket0NoHt = []uint32{24, 26, 28, 30}
+var ecoresMultiSocket1NoHt = []uint32{25, 27, 29, 31}
 
-var pcoresSingleSocket []uint32 = []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
-var pcoresSingleSocketNoHt []uint32 = []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-var pcoresSingleSocketSameCoreCount []uint32 = []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
-var pcoresSingleSocketSameCoreCountNoThreads []uint32 = []uint32{0, 1, 2, 3, 4, 5, 6, 7}
-var ecoresSingleSocket []uint32 = []uint32{24, 25, 26, 27, 28, 29, 30, 31}
-var ecoresSingleSocketNoHt []uint32 = []uint32{12, 13, 14, 15, 16, 17, 18, 19}
-var ecoresSingleSocketSameCoreCount []uint32 = []uint32{16, 17, 18, 19, 20, 21, 22, 23}
-var ecoresSingleSocketSameCoreCountNoThreads []uint32 = []uint32{8, 9, 10, 11, 12, 13, 14, 15}
+var pcoresSingleSocket = []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
+var pcoresSingleSocketNoHt = []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+var pcoresSingleSocketSameCoreCount = []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+var pcoresSingleSocketSameCoreCountNoThreads = []uint32{0, 1, 2, 3, 4, 5, 6, 7}
+var ecoresSingleSocket = []uint32{24, 25, 26, 27, 28, 29, 30, 31}
+var ecoresSingleSocketNoHt = []uint32{12, 13, 14, 15, 16, 17, 18, 19}
+var ecoresSingleSocketSameCoreCount = []uint32{16, 17, 18, 19, 20, 21, 22, 23}
+var ecoresSingleSocketSameCoreCountNoThreads = []uint32{8, 9, 10, 11, 12, 13, 14, 15}
 
-var pcoresMultiSocketInvalidSocketId []uint32 = []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
-var pcoresMultiSocketInvalidPCoreId0 []uint32 = []uint32{0, 4, 8, 12, 14, 16, 18, 20, 22}
-var pcoresMultiSocketInvalidPCoreId1 []uint32 = []uint32{1, 5, 9, 13, 15, 17, 19, 21, 23}
-var ecoresMultiSocketInvalidSocketId []uint32 = []uint32{24, 25, 26, 27, 28, 29, 30, 31}
-var ecoresMultiSocketInvalidECoreId0 []uint32 = []uint32{28, 30}
-var ecoresMultiSocketInvalidECoreId1 []uint32 = []uint32{29, 31}
+var pcoresMultiSocketInvalidSocketID = []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
+var pcoresMultiSocketInvalidPCoreID0 = []uint32{0, 4, 8, 12, 14, 16, 18, 20, 22}
+var pcoresMultiSocketInvalidPCoreID1 = []uint32{1, 5, 9, 13, 15, 17, 19, 21, 23}
+var ecoresMultiSocketInvalidSocketID = []uint32{24, 25, 26, 27, 28, 29, 30, 31}
+var ecoresMultiSocketInvalidECoreID0 = []uint32{28, 30}
+var ecoresMultiSocketInvalidECoreID1 = []uint32{29, 31}
 
-func getSocketResult(socketId uint32, pCores, eCores []uint32) *cpu.Socket {
+func getSocketResult(socketID uint32, pCores, eCores []uint32) *cpu.Socket {
 	coreGroups := []*cpu.CoreGroup{}
 	coreGroups = append(coreGroups, &cpu.CoreGroup{
 		Type: "P-Core",
@@ -56,16 +57,15 @@ func getSocketResult(socketId uint32, pCores, eCores []uint32) *cpu.Socket {
 		})
 	}
 
-	return &cpu.Socket{SocketId: socketId, CoreGroups: coreGroups}
+	return &cpu.Socket{SocketID: socketID, CoreGroups: coreGroups}
 }
 
-func getExpectedResultMultiSocket(cores, threads uint32, pCoresSocket0, pCoresSocket1, eCoresSocket0, eCoresSocket1 []uint32) *cpu.Cpu {
+func getExpectedResultMultiSocket(cores, threads uint32, pCoresSocket0, pCoresSocket1, eCoresSocket0, eCoresSocket1 []uint32) *cpu.CPU {
 	socket := []*cpu.Socket{}
 	socket0 := getSocketResult(0, pCoresSocket0, eCoresSocket0)
 	socket1 := getSocketResult(1, pCoresSocket1, eCoresSocket1)
-	socket = append(socket, socket0)
-	socket = append(socket, socket1)
-	expected := &cpu.Cpu{
+	socket = append(socket, socket0, socket1)
+	expected := &cpu.CPU{
 		Arch:     "x86_64",
 		Sockets:  2,
 		Vendor:   "GenuineIntel",
@@ -73,16 +73,16 @@ func getExpectedResultMultiSocket(cores, threads uint32, pCoresSocket0, pCoresSo
 		Cores:    cores,
 		Threads:  threads,
 		Features: features,
-		Topology: &cpu.CpuTopology{Sockets: socket},
+		Topology: &cpu.CPUTopology{Sockets: socket},
 	}
 	return expected
 }
 
-func getExpectedResultSingleSocket(cores, threads uint32, pCores, eCores []uint32) *cpu.Cpu {
+func getExpectedResultSingleSocket(cores, threads uint32, pCores, eCores []uint32) *cpu.CPU {
 	socket := []*cpu.Socket{}
 	socket0 := getSocketResult(0, pCores, eCores)
 	socket = append(socket, socket0)
-	expected := &cpu.Cpu{
+	expected := &cpu.CPU{
 		Arch:     "x86_64",
 		Sockets:  1,
 		Vendor:   "GenuineIntel",
@@ -90,13 +90,13 @@ func getExpectedResultSingleSocket(cores, threads uint32, pCores, eCores []uint3
 		Cores:    cores,
 		Threads:  threads,
 		Features: features,
-		Topology: &cpu.CpuTopology{Sockets: socket},
+		Topology: &cpu.CPUTopology{Sockets: socket},
 	}
 	return expected
 }
 
-func getExpectedResultFailure(sockets, cores, threads uint32) *cpu.Cpu {
-	expected := &cpu.Cpu{
+func getExpectedResultFailure(sockets, cores, threads uint32) *cpu.CPU {
+	expected := &cpu.CPU{
 		Arch:     "x86_64",
 		Sockets:  sockets,
 		Vendor:   "GenuineIntel",
@@ -109,139 +109,139 @@ func getExpectedResultFailure(sockets, cores, threads uint32) *cpu.Cpu {
 }
 
 func Test_GetCpuList(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccess)
+	out, err := cpu.GetCPUList(testSuccess)
 	expected := getExpectedResultMultiSocket(32, 56, pcoresMultiSocket0, pcoresMultiSocket1, ecoresMultiSocket0, ecoresMultiSocket1)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListNoThreads(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessNoHT)
+	out, err := cpu.GetCPUList(testSuccessNoHT)
 	expected := getExpectedResultMultiSocket(32, 32, pcoresMultiSocket0NoHt, pcoresMultiSocket1NoHt, ecoresMultiSocket0NoHt, ecoresMultiSocket1NoHt)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListNoEcores(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessNoEcores)
+	out, err := cpu.GetCPUList(testSuccessNoEcores)
 	expected := getExpectedResultMultiSocket(24, 48, pcoresMultiSocket0, pcoresMultiSocket1, []uint32{}, []uint32{})
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListNoEcoresNoThreads(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessNoEcoresNoHT)
+	out, err := cpu.GetCPUList(testSuccessNoEcoresNoHT)
 	expected := getExpectedResultMultiSocket(24, 24, pcoresMultiSocket0NoHt, pcoresMultiSocket1NoHt, []uint32{}, []uint32{})
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListSingleSocket(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessOneSocket)
+	out, err := cpu.GetCPUList(testSuccessOneSocket)
 	expected := getExpectedResultSingleSocket(20, 32, pcoresSingleSocket, ecoresSingleSocket)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListSingleSocketNoThreads(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessNoHTOneSocket)
+	out, err := cpu.GetCPUList(testSuccessNoHTOneSocket)
 	expected := getExpectedResultSingleSocket(20, 20, pcoresSingleSocketNoHt, ecoresSingleSocketNoHt)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListSingleSocketNoEcores(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessNoEcoresOneSocket)
+	out, err := cpu.GetCPUList(testSuccessNoEcoresOneSocket)
 	expected := getExpectedResultSingleSocket(12, 24, pcoresSingleSocket, []uint32{})
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListSingleSocketNoEcoresNoThreads(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessNoEcoresNoHTOneSocket)
+	out, err := cpu.GetCPUList(testSuccessNoEcoresNoHTOneSocket)
 	expected := getExpectedResultSingleSocket(12, 12, pcoresSingleSocketNoHt, []uint32{})
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListSingleSocketSamePcoreEcoreCount(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessSamePcoreEcoreCount)
+	out, err := cpu.GetCPUList(testSuccessSamePcoreEcoreCount)
 	expected := getExpectedResultSingleSocket(16, 24, pcoresSingleSocketSameCoreCount, ecoresSingleSocketSameCoreCount)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListSingleSocketSamePcoreEcoreCountNoThreads(t *testing.T) {
-	out, err := cpu.GetCpuList(testSuccessSamePcoreEcoreCountNoHT)
+	out, err := cpu.GetCPUList(testSuccessSamePcoreEcoreCountNoHT)
 	expected := getExpectedResultSingleSocket(16, 16, pcoresSingleSocketSameCoreCountNoThreads, ecoresSingleSocketSameCoreCountNoThreads)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListFailedFirstLscpu(t *testing.T) {
-	out, err := cpu.GetCpuList(testFailureFirstLscpu)
-	assert.Equal(t, &cpu.Cpu{}, out)
+	out, err := cpu.GetCPUList(testFailureFirstLscpu)
+	assert.Equal(t, &cpu.CPU{}, out)
 	assert.Error(t, err)
 }
 
 func Test_GetCpuListFailedSecondLscpu(t *testing.T) {
-	out, err := cpu.GetCpuList(testFailureSecondLscpu)
+	out, err := cpu.GetCPUList(testFailureSecondLscpu)
 	expected := getExpectedResultFailure(2, 32, 56)
 	assert.Equal(t, expected, out)
 	assert.Error(t, err)
 }
 
 func Test_GetCpuListInvalidSocket(t *testing.T) {
-	out, err := cpu.GetCpuList(testFailureSocketParse)
+	out, err := cpu.GetCPUList(testFailureSocketParse)
 	expected := getExpectedResultFailure(0, 0, 56)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListInvalidCpus(t *testing.T) {
-	out, err := cpu.GetCpuList(testInvalidCpuParse)
+	out, err := cpu.GetCPUList(testInvalidCPUParse)
 	expected := getExpectedResultMultiSocket(32, 0, pcoresMultiSocket0NoHt, pcoresMultiSocket1NoHt, ecoresMultiSocket0NoHt, ecoresMultiSocket1NoHt)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListInvalidCoreCount(t *testing.T) {
-	out, err := cpu.GetCpuList(testInvalidCoreParse)
+	out, err := cpu.GetCPUList(testInvalidCoreParse)
 	expected := getExpectedResultMultiSocket(0, 56, pcoresMultiSocket0NoHt, pcoresMultiSocket1NoHt, ecoresMultiSocket0NoHt, ecoresMultiSocket1NoHt)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListInvalidSocketId(t *testing.T) {
-	out, err := cpu.GetCpuList(testSocketIdParse)
-	expected := getExpectedResultMultiSocket(32, 32, pcoresMultiSocketInvalidSocketId, []uint32{}, ecoresMultiSocketInvalidSocketId, []uint32{})
+	out, err := cpu.GetCPUList(testSocketIDParse)
+	expected := getExpectedResultMultiSocket(32, 32, pcoresMultiSocketInvalidSocketID, []uint32{}, ecoresMultiSocketInvalidSocketID, []uint32{})
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListInvalidPCoreId(t *testing.T) {
-	out, err := cpu.GetCpuList(testPCoreIdParse)
-	expected := getExpectedResultMultiSocket(32, 32, pcoresMultiSocketInvalidPCoreId0, pcoresMultiSocketInvalidPCoreId1, ecoresMultiSocket0NoHt, ecoresMultiSocket1NoHt)
+	out, err := cpu.GetCPUList(testPCoreIDParse)
+	expected := getExpectedResultMultiSocket(32, 32, pcoresMultiSocketInvalidPCoreID0, pcoresMultiSocketInvalidPCoreID1, ecoresMultiSocket0NoHt, ecoresMultiSocket1NoHt)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListInvalidECoreId(t *testing.T) {
-	out, err := cpu.GetCpuList(testECoreIdParse)
-	expected := getExpectedResultMultiSocket(32, 32, pcoresMultiSocket0NoHt, pcoresMultiSocket1NoHt, ecoresMultiSocketInvalidECoreId0, ecoresMultiSocketInvalidECoreId1)
+	out, err := cpu.GetCPUList(testECoreIDParse)
+	expected := getExpectedResultMultiSocket(32, 32, pcoresMultiSocket0NoHt, pcoresMultiSocket1NoHt, ecoresMultiSocketInvalidECoreID0, ecoresMultiSocketInvalidECoreID1)
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListNoMaxMhzDetected(t *testing.T) {
-	out, err := cpu.GetCpuList(testNoMaxMhzParse)
+	out, err := cpu.GetCPUList(testNoMaxMhzParse)
 	expected := getExpectedResultSingleSocket(12, 24, pcoresSingleSocket, []uint32{})
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
 }
 
 func Test_GetCpuListInvalidMaxMhzDetected(t *testing.T) {
-	out, err := cpu.GetCpuList(testInvalidMaxMhzParse)
+	out, err := cpu.GetCPUList(testInvalidMaxMhzParse)
 	expected := getExpectedResultSingleSocket(12, 24, []uint32{}, []uint32{})
 	assert.Equal(t, expected, out)
 	assert.NoError(t, err)
@@ -324,7 +324,7 @@ func testFailureSocketParse(command string, args ...string) *exec.Cmd {
 	return testCmd("TestFailureSocketParse", command, args...)
 }
 
-func testInvalidCpuParse(command string, args ...string) *exec.Cmd {
+func testInvalidCPUParse(command string, args ...string) *exec.Cmd {
 	return testLscpuCmd("TestInvalidCpuParse", "TestSuccessSecondLscpuNoHT", command, args...)
 }
 
@@ -332,15 +332,15 @@ func testInvalidCoreParse(command string, args ...string) *exec.Cmd {
 	return testLscpuCmd("TestInvalidCoreParse", "TestSuccessSecondLscpuNoHT", command, args...)
 }
 
-func testSocketIdParse(command string, args ...string) *exec.Cmd {
+func testSocketIDParse(command string, args ...string) *exec.Cmd {
 	return testLscpuCmd("TestSuccessFirstLscpuNoHT", "TestSuccessLscpuInvalidSocketId", command, args...)
 }
 
-func testPCoreIdParse(command string, args ...string) *exec.Cmd {
+func testPCoreIDParse(command string, args ...string) *exec.Cmd {
 	return testLscpuCmd("TestSuccessFirstLscpuNoHT", "TestSuccessLscpuInvalidPCoreId", command, args...)
 }
 
-func testECoreIdParse(command string, args ...string) *exec.Cmd {
+func testECoreIDParse(command string, args ...string) *exec.Cmd {
 	return testLscpuCmd("TestSuccessFirstLscpuNoHT", "TestSuccessLscpuInvalidECoreId", command, args...)
 }
 
@@ -357,9 +357,7 @@ func TestSuccessFirstLscpu(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -369,9 +367,7 @@ func TestSuccessFirstLscpuNoHT(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_noHT.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -381,9 +377,7 @@ func TestSuccessFirstLscpuNoEcores(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_noecores.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -393,9 +387,7 @@ func TestSuccessFirstLscpuNoEcoresNoHT(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_noecores_noHT.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -405,9 +397,7 @@ func TestSuccessFirstLscpuOneSocket(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_onesocket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -417,9 +407,7 @@ func TestSuccessFirstLscpuNoHTOneSocket(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_noHT_onesocket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -429,9 +417,7 @@ func TestSuccessFirstLscpuNoEcoresOneSocket(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_noecores_onesocket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -441,9 +427,7 @@ func TestSuccessFirstLscpuNoEcoresNoHTOneSocket(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_noecores_noHT_onesocket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -453,9 +437,7 @@ func TestSuccessFirstLscpuSamePcoreEcoreCount(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_same_pcore_ecore_count.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -465,9 +447,7 @@ func TestSuccessFirstLscpuSamePcoreEcoreCountNoHT(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_same_pcore_ecore_count_noHT.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -477,9 +457,7 @@ func TestSuccessFirstLscpuNoMaxMhz(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_no_max_mhz.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -489,9 +467,7 @@ func TestSuccessSecondLscpu(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -501,9 +477,7 @@ func TestSuccessSecondLscpuNoHT(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_noHT.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -513,9 +487,7 @@ func TestSuccessSecondLscpuNoEcores(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_noecores.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -525,9 +497,7 @@ func TestSuccessSecondLscpuNoEcoresNoHT(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_noecores_noHT.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -537,9 +507,7 @@ func TestSuccessSecondLscpuOneSocket(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_onesocket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -549,9 +517,7 @@ func TestSuccessSecondLscpuNoHTOneSocket(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_noHT_onesocket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -561,9 +527,7 @@ func TestSuccessSecondLscpuNoEcoresOneSocket(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_noecores_onesocket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -573,9 +537,7 @@ func TestSuccessSecondLscpuNoEcoresNoHTOneSocket(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_noecores_noHT_onesocket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -585,9 +547,7 @@ func TestSuccessSecondLscpuSamePcoreEcoreCount(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_same_pcore_ecore_count.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -597,9 +557,7 @@ func TestSuccessSecondLscpuSamePcoreEcoreCountNoHT(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_same_pcore_ecore_count_noHT.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -609,14 +567,12 @@ func TestSuccessSecondLscpuNoMaxMhz(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details_no_max_mhz.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
 
-func TestFailureCommand(t *testing.T) {
+func TestFailureCommand(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -629,9 +585,7 @@ func TestFailureSocketParse(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_invalid_socket.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -641,9 +595,7 @@ func TestInvalidCpuParse(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_invalid_cpu.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -653,9 +605,7 @@ func TestInvalidCoreParse(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_invalid_core.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -665,9 +615,7 @@ func TestSuccessLscpuInvalidSocketId(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_invalid_socket_id.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -677,9 +625,7 @@ func TestSuccessLscpuInvalidPCoreId(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_invalid_pcore_id.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -689,9 +635,7 @@ func TestSuccessLscpuInvalidECoreId(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_invalid_ecore_id.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -701,9 +645,7 @@ func TestSuccessSecondLscpuInvalidMaxMhz(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_invalid_max_mhz.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }

@@ -6,13 +6,14 @@ package memory_test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"testing"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/memory"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/memory"
 )
 
 var expectedTotal uint64 = 17179869184
@@ -20,19 +21,19 @@ var expectedTotal uint64 = 17179869184
 func Test_GetMemory(t *testing.T) {
 	out, err := memory.GetMemory(testCmdExecutorSuccessLSMEM)
 	assert.Equal(t, expectedTotal, out)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func Test_GetMemoryUnmarshalFailed(t *testing.T) {
 	out, err := memory.GetMemory(testCmdExecutorFailedUnmarshal)
 	assert.Equal(t, uint64(0), out)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func Test_GetMemoryCommandFailed(t *testing.T) {
 	out, err := memory.GetMemory(testCmdExecutorCommandFailed)
 	assert.Equal(t, uint64(0), out)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func testCmdExecutorSuccessLSMEM(command string, args ...string) *exec.Cmd {
@@ -64,14 +65,12 @@ func TestMemoryListExecutionSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_memory.json")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
 
-func TestMemoryListExecutionUnmarshalFail(t *testing.T) {
+func TestMemoryListExecutionUnmarshalFail(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -79,7 +78,7 @@ func TestMemoryListExecutionUnmarshalFail(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestMemoryListExecutionCommandFailed(t *testing.T) {
+func TestMemoryListExecutionCommandFailed(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}

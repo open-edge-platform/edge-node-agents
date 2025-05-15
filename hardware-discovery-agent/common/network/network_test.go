@@ -6,9 +6,9 @@ package network_test
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,12 +17,14 @@ import (
 	"testing"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/network"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/tool"
 	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
+	"github.com/stretchr/testify/require"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/network"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/tool"
 )
 
-var TESTDATA_PATH string = "../../test/data"
+var testDataPath = "../../test/data"
 
 func parseFilePathIntoTestData(path string) (ret string) {
 	// make /sys/block/sda into _sys_block_sda and trim out the first character
@@ -39,21 +41,21 @@ type file struct {
 	name string
 }
 
-func (f *file) Name() string               { return f.name }
-func (f *file) IsDir() bool                { return false }
-func (f *file) Type() fs.FileMode          { return 0 }
-func (f *file) Info() (fs.FileInfo, error) { return nil, nil }
+func (f *file) Name() string             { return f.name }
+func (*file) IsDir() bool                { return false }
+func (*file) Type() fs.FileMode          { return 0 }
+func (*file) Info() (fs.FileInfo, error) { return nil, nil }
 
 // Mocked_ReadDir implements simple version of os.ReadDir, it reads directory file list from
 // a file named "some_path_in_os_content", the file must ends with "_content".
 // It returns a []fs.DirEntry slice which has nil on every field except Name.
-func mocked_ReadDir(path string) (ret []fs.DirEntry, err error) {
+func mockedReadDir(path string) (ret []fs.DirEntry, err error) {
 	// content is a special keyword, when a testdata with "content" suffix
 	// it represents it's a directory list
 	mockedPath := "dir-" + parseFilePathIntoTestData(path)
 
 	fileList := make([]fs.DirEntry, 0)
-	source, err := os.Open(filepath.Join(TESTDATA_PATH, mockedPath))
+	source, err := os.Open(filepath.Join(testDataPath, mockedPath))
 	if err != nil {
 		return ret, err
 	}
@@ -70,15 +72,15 @@ func mocked_ReadDir(path string) (ret []fs.DirEntry, err error) {
 	return fileList, nil
 }
 
-func mocked_ReadDirFailure(path string) (ret []fs.DirEntry, err error) {
+func mockedReadDirFailure(path string) (ret []fs.DirEntry, err error) {
 	return []fs.DirEntry{}, fmt.Errorf("Failed to read %v, exiting", path)
 }
 
-func mocked_ReadDirNoSriov(path string) (ret []fs.DirEntry, err error) {
+func mockedReadDirNoSriov(path string) (ret []fs.DirEntry, err error) {
 	mockedPath := "dir-no-sriov-" + parseFilePathIntoTestData(path)
 
 	fileList := make([]fs.DirEntry, 0)
-	source, err := os.Open(filepath.Join(TESTDATA_PATH, mockedPath))
+	source, err := os.Open(filepath.Join(testDataPath, mockedPath))
 	if err != nil {
 		return ret, err
 	}
@@ -95,11 +97,11 @@ func mocked_ReadDirNoSriov(path string) (ret []fs.DirEntry, err error) {
 	return fileList, nil
 }
 
-func mocked_ReadDirIncorrectVFs(path string) (ret []fs.DirEntry, err error) {
+func mockedReadDirIncorrectVFs(path string) (ret []fs.DirEntry, err error) {
 	mockedPath := "dir-incorrect-vfs-" + parseFilePathIntoTestData(path)
 
 	fileList := make([]fs.DirEntry, 0)
-	source, err := os.Open(filepath.Join(TESTDATA_PATH, mockedPath))
+	source, err := os.Open(filepath.Join(testDataPath, mockedPath))
 	if err != nil {
 		return ret, err
 	}
@@ -116,11 +118,11 @@ func mocked_ReadDirIncorrectVFs(path string) (ret []fs.DirEntry, err error) {
 	return fileList, nil
 }
 
-func mocked_ReadDirIncorrectNicInfo(path string) (ret []fs.DirEntry, err error) {
+func mockedReadDirIncorrectNicInfo(path string) (ret []fs.DirEntry, err error) {
 	mockedPath := "dir-incorrect-nic-info-" + parseFilePathIntoTestData(path)
 
 	fileList := make([]fs.DirEntry, 0)
-	source, err := os.Open(filepath.Join(TESTDATA_PATH, mockedPath))
+	source, err := os.Open(filepath.Join(testDataPath, mockedPath))
 	if err != nil {
 		return ret, err
 	}
@@ -137,11 +139,11 @@ func mocked_ReadDirIncorrectNicInfo(path string) (ret []fs.DirEntry, err error) 
 	return fileList, nil
 }
 
-func mocked_ReadDirNoSriovTotalVFs(path string) (ret []fs.DirEntry, err error) {
+func mockedReadDirNoSriovTotalVFs(path string) (ret []fs.DirEntry, err error) {
 	mockedPath := "dir-no-sriov-total-vfs-" + parseFilePathIntoTestData(path)
 
 	fileList := make([]fs.DirEntry, 0)
-	source, err := os.Open(filepath.Join(TESTDATA_PATH, mockedPath))
+	source, err := os.Open(filepath.Join(testDataPath, mockedPath))
 	if err != nil {
 		return ret, err
 	}
@@ -158,11 +160,11 @@ func mocked_ReadDirNoSriovTotalVFs(path string) (ret []fs.DirEntry, err error) {
 	return fileList, nil
 }
 
-func mocked_ReadDirIncorrectTotalVFs(path string) (ret []fs.DirEntry, err error) {
+func mockedReadDirIncorrectTotalVFs(path string) (ret []fs.DirEntry, err error) {
 	mockedPath := "dir-incorrect-total-vfs-" + parseFilePathIntoTestData(path)
 
 	fileList := make([]fs.DirEntry, 0)
-	source, err := os.Open(filepath.Join(TESTDATA_PATH, mockedPath))
+	source, err := os.Open(filepath.Join(testDataPath, mockedPath))
 	if err != nil {
 		return ret, err
 	}
@@ -179,132 +181,127 @@ func mocked_ReadDirIncorrectTotalVFs(path string) (ret []fs.DirEntry, err error)
 	return fileList, nil
 }
 
-func mocked_ReadFile(path string) ([]byte, error) {
+func mockedReadFile(path string) ([]byte, error) {
 	mockedPath := "file-" + parseFilePathIntoTestData(path)
-	return os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	return os.ReadFile(filepath.Join(testDataPath, mockedPath))
 }
 
-func mocked_ReadFileNoPhysAddress(path string) ([]byte, error) {
+func mockedReadFileNoPhysAddress(path string) ([]byte, error) {
 	return []byte{}, fmt.Errorf("Failed to read %v", path)
 }
 
-func mocked_ReadFilePhysAddressSymlink(path string) ([]byte, error) {
+func mockedReadFilePhysAddressSymlink(path string) ([]byte, error) {
 	mockedPath := "file-" + parseFilePathIntoTestData(path)
 	if strings.Contains(mockedPath, "ens3_address") {
 		symlinkPath := "/tmp/symlink_file.txt"
-		err := os.Symlink(filepath.Join(TESTDATA_PATH, mockedPath), symlinkPath)
+		err := os.Symlink(filepath.Join(testDataPath, mockedPath), symlinkPath)
 		if err != nil {
-			return os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+			return os.ReadFile(filepath.Join(testDataPath, mockedPath))
 		}
 		defer os.Remove(symlinkPath)
 		return utils.ReadFileNoLinks(symlinkPath)
-	} else {
-		return os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
 	}
+	return os.ReadFile(filepath.Join(testDataPath, mockedPath))
 }
 
-func mocked_ReadFileSriovNumVfsSymlink(path string) ([]byte, error) {
+func mockedReadFileSriovNumVfsSymlink(path string) ([]byte, error) {
 	mockedPath := "file-" + parseFilePathIntoTestData(path)
 	if strings.Contains(mockedPath, "device_sriov_numvfs") {
 		symlinkPath := "/tmp/symlink_file.txt"
-		err := os.Symlink(filepath.Join(TESTDATA_PATH, mockedPath), symlinkPath)
+		err := os.Symlink(filepath.Join(testDataPath, mockedPath), symlinkPath)
 		if err != nil {
-			return os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+			return os.ReadFile(filepath.Join(testDataPath, mockedPath))
 		}
 		defer os.Remove(symlinkPath)
 		return utils.ReadFileNoLinks(symlinkPath)
-	} else {
-		return os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
 	}
+	return os.ReadFile(filepath.Join(testDataPath, mockedPath))
 }
 
-func mocked_ReadFileSriovTotalVfsSymlink(path string) ([]byte, error) {
+func mockedReadFileSriovTotalVfsSymlink(path string) ([]byte, error) {
 	mockedPath := "file-" + parseFilePathIntoTestData(path)
 	if strings.Contains(mockedPath, "device_sriov_totalvfs") {
 		symlinkPath := "/tmp/symlink_file.txt"
-		err := os.Symlink(filepath.Join(TESTDATA_PATH, mockedPath), symlinkPath)
+		err := os.Symlink(filepath.Join(testDataPath, mockedPath), symlinkPath)
 		if err != nil {
-			return os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+			return os.ReadFile(filepath.Join(testDataPath, mockedPath))
 		}
 		defer os.Remove(symlinkPath)
 		return utils.ReadFileNoLinks(symlinkPath)
-	} else {
-		return os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
 	}
+	return os.ReadFile(filepath.Join(testDataPath, mockedPath))
 }
 
-func mocked_Readlink(path string) (string, error) {
+func mockedReadlink(path string) (string, error) {
 	mockedPath := "link-" + parseFilePathIntoTestData(path)
-	out, err := os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	out, err := os.ReadFile(filepath.Join(testDataPath, mockedPath))
 
 	return string(out), err
 }
 
-func mocked_ReadlinkNoDevice(path string) (string, error) {
+func mockedReadlinkNoDevice(path string) (string, error) {
 	return "", fmt.Errorf("Failed to read %v", path)
 }
 
-// check for first or second call for mocked_ReadlinkNoNicDir
-var CHECK_CALL bool = false
+// check for first or second call for mockedReadlinkNoNicDir.
+var checkCall = false
 
 func setCheckCall() bool {
-	if !CHECK_CALL {
-		CHECK_CALL = true
+	if !checkCall {
+		checkCall = true
 		return true
-	} else {
-		return false
 	}
+	return false
 }
 
-func mocked_ReadlinkNoNicDir(path string) (string, error) {
+func mockedReadlinkNoNicDir(path string) (string, error) {
 	if setCheckCall() {
 		return "", nil
-	} else {
-		return "", fmt.Errorf("Failed to read %v", path)
 	}
+	return "", fmt.Errorf("failed to read %v", path)
 }
 
-func mocked_ReadlinkNoNicDevice(path string) (string, error) {
+func mockedReadlinkNoNicDevice(path string) (string, error) {
 	mockedPath := "link-no-dev-" + parseFilePathIntoTestData(path)
-	out, err := os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	out, err := os.ReadFile(filepath.Join(testDataPath, mockedPath))
 
 	return string(out), err
 }
 
-func mocked_ReadlinkNoNicSubsystem(path string) (string, error) {
+func mockedReadlinkNoNicSubsystem(path string) (string, error) {
 	mockedPath := "link-no-subsystem-" + parseFilePathIntoTestData(path)
-	out, err := os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	out, err := os.ReadFile(filepath.Join(testDataPath, mockedPath))
 
 	return string(out), err
 }
 
-func mocked_ReadlinkNonPciDevice(path string) (string, error) {
+func mockedReadlinkNonPciDevice(path string) (string, error) {
 	mockedPath := "link-non-pci-dev-" + parseFilePathIntoTestData(path)
-	out, err := os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	out, err := os.ReadFile(filepath.Join(testDataPath, mockedPath))
 
 	return string(out), err
 }
 
-// Mocked_Stat will mock os.Stat, which is used to check if file exist
+// mockedStat will mock os.Stat, which is used to check if file exist
 // Since we can make sure the testing data exists in test/data, we can return without err
-// to make the function works well
-func mocked_Stat(path string) (fs.FileInfo, error) {
+// to make the function works well.
+func mockedStat(path string) (fs.FileInfo, error) {
 	mockedPath := "file-" + parseFilePathIntoTestData(path)
-	_, err := os.ReadFile(filepath.Join(TESTDATA_PATH, mockedPath))
+	_, err := os.ReadFile(filepath.Join(testDataPath, mockedPath))
 	return nil, err
 }
 
-func mocked_StatSriovFailure(path string) (fs.FileInfo, error) {
+func mockedStatSriovFailure(path string) (fs.FileInfo, error) {
 	_ = "file-" + parseFilePathIntoTestData(path)
 	return nil, nil
 }
 
-func mocked_StatNoBMC(path string) (fs.FileInfo, error) {
+func mockedStatNoBMC(path string) (fs.FileInfo, error) {
 	_ = "file-" + parseFilePathIntoTestData(path)
 	return nil, os.ErrNotExist
 }
 
-func mocked_CollectEthtoolData(nicName string) (*tool.EthtoolValues, error) {
+func mockedCollectEthtoolData(_ string) (*tool.EthtoolValues, error) {
 	ret := &tool.EthtoolValues{
 		LinkState: true,
 		SupportedLinkMode: []string{
@@ -336,14 +333,14 @@ func mocked_CollectEthtoolData(nicName string) (*tool.EthtoolValues, error) {
 	return ret, nil
 }
 
-func mocked_CollectEthtoolDataFailure(nicName string) (*tool.EthtoolValues, error) {
-	return &tool.EthtoolValues{}, fmt.Errorf("Failed to collect Ethtool information")
+func mockedCollectEthtoolDataFailure(_ string) (*tool.EthtoolValues, error) {
+	return &tool.EthtoolValues{}, errors.New("Failed to collect Ethtool information")
 }
 
-func expectedIpAddressIPv4() []*network.IPAddress {
+func expectedIPAddressIPv4() []*network.IPAddress {
 	expectedIPAddresses := []*network.IPAddress{}
 	expectedIP := &network.IPAddress{
-		IpAddress:   "192.168.1.50",
+		IPAddress:   "192.168.1.50",
 		NetPrefBits: 24,
 		ConfigMode:  proto.ConfigMode_CONFIG_MODE_DYNAMIC,
 	}
@@ -351,10 +348,10 @@ func expectedIpAddressIPv4() []*network.IPAddress {
 	return expectedIPAddresses
 }
 
-func expectedIpAddressIPv6() []*network.IPAddress {
+func expectedIPAddressIPv6() []*network.IPAddress {
 	expectedIPAddresses := []*network.IPAddress{}
 	expectedIP := &network.IPAddress{
-		IpAddress:   "192.168.192.168.1.50",
+		IPAddress:   "192.168.192.168.1.50",
 		NetPrefBits: 40,
 		ConfigMode:  proto.ConfigMode_CONFIG_MODE_STATIC,
 	}
@@ -362,11 +359,11 @@ func expectedIpAddressIPv6() []*network.IPAddress {
 	return expectedIPAddresses
 }
 
-func expectedIpAddresses(ipAddress []string, prefix []int32, configMode []proto.ConfigMode) []*network.IPAddress {
+func expectedIPAddresses(ipAddress []string, prefix []int32, configMode []proto.ConfigMode) []*network.IPAddress {
 	expectedIPAddresses := []*network.IPAddress{}
 	for index, ipAddr := range ipAddress {
 		expectedIP := &network.IPAddress{
-			IpAddress:   ipAddr,
+			IPAddress:   ipAddr,
 			NetPrefBits: prefix[index],
 			ConfigMode:  configMode[index],
 		}
@@ -375,12 +372,12 @@ func expectedIpAddresses(ipAddress []string, prefix []int32, configMode []proto.
 	return expectedIPAddresses
 }
 
-func expectedResult(name string, pciId string, sriovEnabled bool, sriovVfs uint32, sriovTotalVfs uint32, ipAddresses []*network.IPAddress, isBmc bool) []*network.Network {
+func expectedResult(name string, pciID string, sriovEnabled bool, sriovVfs uint32, sriovTotalVfs uint32, ipAddresses []*network.IPAddress, isBmc bool) []*network.Network {
 
 	expect := []*network.Network{}
 	expectedRes := &network.Network{
 		Name:          name,
-		PciID:         pciId,
+		PciID:         pciID,
 		Mac:           "52:54:00:12:34:56",
 		LinkState:     true,
 		CurrentSpeed:  1000,
@@ -411,7 +408,7 @@ func expectedResult(name string, pciId string, sriovEnabled bool, sriovVfs uint3
 		SriovEnabled:  sriovEnabled,
 		SriovNumVfs:   sriovVfs,
 		SriovVfsTotal: sriovTotalVfs,
-		IpAddresses:   ipAddresses,
+		IPAddresses:   ipAddresses,
 		Mtu:           1500,
 		BmcNet:        isBmc,
 	}
@@ -436,40 +433,40 @@ func checkResultPositiveCase(t *testing.T, err error, bmcType proto.BmInfo_BmTyp
 }
 
 func TestGetNICList(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens3", "0000:00:03.0", true, 2, 64, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListSriovDisabled(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirNoSriov
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirNoSriov
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens4", "0000:00:04.0", false, 0, 0, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListNoBMC(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirNoSriov
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_StatNoBMC
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirNoSriov
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStatNoBMC
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens4", "0000:00:04.0", false, 0, 0, ipAddress, false)
 	if err != nil {
 		t.Errorf("Received err %v", err)
@@ -486,7 +483,7 @@ func TestGetNICListNoBMC(t *testing.T) {
 }
 
 func TestFailedNICDeviceList(t *testing.T) {
-	network.ReadDir = mocked_ReadDirFailure
+	network.ReadDir = mockedReadDirFailure
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
 	if err == nil {
@@ -505,9 +502,9 @@ func TestFailedNICDeviceList(t *testing.T) {
 }
 
 func TestFailedNICDeviceRead(t *testing.T) {
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_ReadlinkNoDevice
-	network.Stat = mocked_Stat
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlinkNoDevice
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
 	res := []*network.Network{}
@@ -515,11 +512,11 @@ func TestFailedNICDeviceRead(t *testing.T) {
 }
 
 func TestGetNICListEthtoolFail(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolDataFailure
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolDataFailure
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
 	res := []*network.Network{}
@@ -527,89 +524,89 @@ func TestGetNICListEthtoolFail(t *testing.T) {
 }
 
 func TestGetNICListNumVfsSriovReadFailed(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirNoSriov
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_StatSriovFailure
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirNoSriov
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStatSriovFailure
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens4", "0000:00:04.0", true, 0, 0, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListNumVfsSriovSymlink(t *testing.T) {
-	network.ReadFile = mocked_ReadFileSriovNumVfsSymlink
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFileSriovNumVfsSymlink
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens3", "0000:00:03.0", true, 0, 0, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListNumVfsSriovIncorrect(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirIncorrectVFs
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirIncorrectVFs
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens5", "0000:00:05.0", true, 0, 0, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListTotalVfsSriovReadFailed(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirNoSriovTotalVFs
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirNoSriovTotalVFs
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens6", "0000:00:06.0", true, 2, 0, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListTotalVfsSriovSymlink(t *testing.T) {
-	network.ReadFile = mocked_ReadFileSriovTotalVfsSymlink
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFileSriovTotalVfsSymlink
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens3", "0000:00:03.0", true, 2, 0, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListTotalVfsSriovIncorrect(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirIncorrectTotalVFs
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirIncorrectTotalVFs
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens7", "0000:00:07.0", true, 2, 0, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListNoPhysAddress(t *testing.T) {
-	network.ReadFile = mocked_ReadFileNoPhysAddress
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFileNoPhysAddress
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
 	res := []*network.Network{}
@@ -644,7 +641,7 @@ func TestGetNICListNoPhysAddress(t *testing.T) {
 			"tx-vlan-hw-insert",
 		},
 		SriovEnabled: true,
-		IpAddresses:  expectedIpAddressIPv4(),
+		IPAddresses:  expectedIPAddressIPv4(),
 		Mtu:          1500,
 		BmcNet:       true,
 	}
@@ -653,11 +650,11 @@ func TestGetNICListNoPhysAddress(t *testing.T) {
 }
 
 func TestGetNICListPhysAddressSymlink(t *testing.T) {
-	network.ReadFile = mocked_ReadFilePhysAddressSymlink
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFilePhysAddressSymlink
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
 	res := []*network.Network{}
@@ -694,7 +691,7 @@ func TestGetNICListPhysAddressSymlink(t *testing.T) {
 		SriovEnabled:  true,
 		SriovNumVfs:   2,
 		SriovVfsTotal: 64,
-		IpAddresses:   expectedIpAddressIPv4(),
+		IPAddresses:   expectedIPAddressIPv4(),
 		Mtu:           1500,
 		BmcNet:        true,
 	}
@@ -703,63 +700,63 @@ func TestGetNICListPhysAddressSymlink(t *testing.T) {
 }
 
 func TestGetNICListNoNicDirectory(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirIncorrectNicInfo
-	network.Readlink = mocked_ReadlinkNoNicDir
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirIncorrectNicInfo
+	network.Readlink = mockedReadlinkNoNicDir
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens3", "", true, 2, 64, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListNoNicDevice(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirIncorrectNicInfo
-	network.Readlink = mocked_ReadlinkNoNicDevice
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirIncorrectNicInfo
+	network.Readlink = mockedReadlinkNoNicDevice
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens3", "", true, 2, 64, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListNoNicSubsystem(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirIncorrectNicInfo
-	network.Readlink = mocked_ReadlinkNoNicSubsystem
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirIncorrectNicInfo
+	network.Readlink = mockedReadlinkNoNicSubsystem
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens3", "", true, 2, 64, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListNonPciDevice(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirIncorrectNicInfo
-	network.Readlink = mocked_ReadlinkNonPciDevice
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirIncorrectNicInfo
+	network.Readlink = mockedReadlinkNonPciDevice
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorSuccess)
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens3", "", true, 2, 64, ipAddress, true)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListIpmiFailed(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDirNoSriov
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDirNoSriov
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorIpmiFailed)
 	if err != nil {
@@ -771,7 +768,7 @@ func TestGetNICListIpmiFailed(t *testing.T) {
 	if bmcAddr != "" {
 		t.Errorf("Non-empty bmcAddr received")
 	}
-	ipAddress := expectedIpAddressIPv4()
+	ipAddress := expectedIPAddressIPv4()
 	res := expectedResult("ens4", "0000:00:04.0", false, 0, 0, ipAddress, false)
 	if !reflect.DeepEqual(got, res) {
 		t.Errorf("Got %v, expect %v", got, res)
@@ -779,21 +776,21 @@ func TestGetNICListIpmiFailed(t *testing.T) {
 }
 
 func TestGetNICListIpAddrFailed(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.Stat = mockedStat
 
-	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorIpAddrFailed)
+	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorIPAddrFailed)
 	res := []*network.Network{}
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListIpAddrMtuFailed(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorMtuFailed)
 	res := []*network.Network{}
@@ -801,10 +798,10 @@ func TestGetNICListIpAddrMtuFailed(t *testing.T) {
 }
 
 func TestGetNICListIpAddrNetPrefixFailed(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorPrefixFailed)
 	res := []*network.Network{}
@@ -812,42 +809,42 @@ func TestGetNICListIpAddrNetPrefixFailed(t *testing.T) {
 }
 
 func TestGetNICListStaticIPv6(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
 	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorStaticIPv6Success)
-	ipAddress := expectedIpAddressIPv6()
+	ipAddress := expectedIPAddressIPv6()
 	res := expectedResult("ens3", "0000:00:03.0", true, 2, 64, ipAddress, false)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListMultipleIpAddresses(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
-	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorMultipleIpAddressesSuccess)
+	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorMultipleIPAddressesSuccess)
 	addresses := []string{"192.168.1.25", "192.168.5.37"}
 	prefixes := []int32{24, 24}
 	configModes := []proto.ConfigMode{proto.ConfigMode_CONFIG_MODE_DYNAMIC, proto.ConfigMode_CONFIG_MODE_STATIC}
-	ipAddresses := expectedIpAddresses(addresses, prefixes, configModes)
+	ipAddresses := expectedIPAddresses(addresses, prefixes, configModes)
 	res := expectedResult("ens3", "0000:00:03.0", true, 2, 64, ipAddresses, false)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
 
 func TestGetNICListNoAddress(t *testing.T) {
-	network.ReadFile = mocked_ReadFile
-	network.ReadDir = mocked_ReadDir
-	network.Readlink = mocked_Readlink
-	network.CollectEthtoolData = mocked_CollectEthtoolData
-	network.Stat = mocked_Stat
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
 
-	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorNoIpAddress)
+	got, bmType, bmcAddr, err := network.GetNICList(testCmdExecutorNoIPAddress)
 	res := expectedResult("ens3", "0000:00:03.0", true, 2, 64, []*network.IPAddress{}, false)
 	checkResultPositiveCase(t, err, bmType, bmcAddr, got, res)
 }
@@ -868,13 +865,13 @@ func testCmdExecutorSuccess(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestIpAddrExecutionSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+
+	cs := []string{"-test.run=TestIpAddrExecutionSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorIpmiFailed(command string, args ...string) *exec.Cmd {
@@ -884,29 +881,27 @@ func testCmdExecutorIpmiFailed(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestIpAddrExecutionSuccess", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestIpAddrExecutionSuccess", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
-func testCmdExecutorIpAddrFailed(command string, args ...string) *exec.Cmd {
+func testCmdExecutorIPAddrFailed(command string, args ...string) *exec.Cmd {
 	if testCmdReceived(args...) {
 		cs := []string{"-test.run=TestIpmiExecutionSuccess", "--", command}
 		cs = append(cs, args...)
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestExecutionFailed", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestExecutionFailed", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorMtuFailed(command string, args ...string) *exec.Cmd {
@@ -916,13 +911,12 @@ func testCmdExecutorMtuFailed(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestIpAddrExecutionIncorrectMtu", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestIpAddrExecutionIncorrectMtu", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorPrefixFailed(command string, args ...string) *exec.Cmd {
@@ -932,13 +926,12 @@ func testCmdExecutorPrefixFailed(command string, args ...string) *exec.Cmd {
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestIpAddrExecutionIncorrectPrefix", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestIpAddrExecutionIncorrectPrefix", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func testCmdExecutorStaticIPv6Success(command string, args ...string) *exec.Cmd {
@@ -948,45 +941,42 @@ func testCmdExecutorStaticIPv6Success(command string, args ...string) *exec.Cmd 
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestIpAddrExecutionStaticIPv6", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestIpAddrExecutionStaticIPv6", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
-func testCmdExecutorMultipleIpAddressesSuccess(command string, args ...string) *exec.Cmd {
+func testCmdExecutorMultipleIPAddressesSuccess(command string, args ...string) *exec.Cmd {
 	if testCmdReceived(args...) {
 		cs := []string{"-test.run=TestIpmiExecutionSuccess", "--", command}
 		cs = append(cs, args...)
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestIpAddrExecutionMultipleAddresses", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestIpAddrExecutionMultipleAddresses", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
-func testCmdExecutorNoIpAddress(command string, args ...string) *exec.Cmd {
+func testCmdExecutorNoIPAddress(command string, args ...string) *exec.Cmd {
 	if testCmdReceived(args...) {
 		cs := []string{"-test.run=TestIpmiExecutionSuccess", "--", command}
 		cs = append(cs, args...)
 		cmd := exec.Command(os.Args[0], cs...)
 		cmd.Env = []string{"GO_TEST_PROCESS=1"}
 		return cmd
-	} else {
-		cs := []string{"-test.run=TestIpAddrExecutionNoAddress", "--", command}
-		cs = append(cs, args...)
-		cmd := exec.Command(os.Args[0], cs...)
-		cmd.Env = []string{"GO_TEST_PROCESS=1"}
-		return cmd
 	}
+	cs := []string{"-test.run=TestIpAddrExecutionNoAddress", "--", command}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
 }
 
 func TestIpmiExecutionSuccess(t *testing.T) {
@@ -994,9 +984,7 @@ func TestIpmiExecutionSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ipmitool.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -1006,14 +994,12 @@ func TestIpAddrExecutionSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ip_addr.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
 
-func TestExecutionFailed(t *testing.T) {
+func TestExecutionFailed(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -1026,9 +1012,7 @@ func TestIpAddrExecutionIncorrectMtu(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ip_addr_mtu.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -1038,9 +1022,7 @@ func TestIpAddrExecutionIncorrectPrefix(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ip_addr_prefix.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -1050,9 +1032,7 @@ func TestIpAddrExecutionStaticIPv6(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ip_addr_static_ipv6.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -1062,9 +1042,7 @@ func TestIpAddrExecutionMultipleAddresses(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ip_addr_multi.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
@@ -1074,9 +1052,7 @@ func TestIpAddrExecutionNoAddress(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_ip_addr_no_addr.txt")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }

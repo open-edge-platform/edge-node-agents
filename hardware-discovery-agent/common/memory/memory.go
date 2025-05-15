@@ -26,12 +26,12 @@ func GetMemory(executor utils.CmdExecutor) (uint64, error) {
 
 	dataBytes, err := utils.ReadFromCommand(executor, "lsmem", "-J", "-b")
 	if err != nil {
-		return 0, fmt.Errorf("failed to read data from command; error: %v", err)
+		return 0, fmt.Errorf("failed to read data from command; error: %w", err)
 	}
 
 	err = json.Unmarshal(dataBytes, &dataStruct)
 	if err != nil {
-		return 0, fmt.Errorf("failed to unmarshal data; error: %v", err)
+		return 0, fmt.Errorf("failed to unmarshal data; error: %w", err)
 	}
 
 	for _, mem := range dataStruct.Memory {

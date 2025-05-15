@@ -6,13 +6,14 @@ package disk_test
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"testing"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/disk"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/disk"
 )
 
 func Test_GetDisks(t *testing.T) {
@@ -42,23 +43,21 @@ func Test_GetDisks(t *testing.T) {
 		Size:      800166076416,
 		Wwid:      "eui.01000000010000005cd2e43cf16e5451",
 	}
-	expected = append(expected, disk1Res)
-	expected = append(expected, disk2Res)
-	expected = append(expected, disk3Res)
+	expected = append(expected, disk1Res, disk2Res, disk3Res)
 	assert.Equal(t, expected, out)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 }
 
 func Test_GetDisksUnmarshalFailed(t *testing.T) {
 	out, err := disk.GetDiskList(testCmdExecutorFailedUnmarshal)
 	assert.Equal(t, []*disk.Disk{}, out)
-	assert.NotNil(t, err)
+	assert.Error(t, err)
 }
 
 func Test_GetDisksCommandFailed(t *testing.T) {
 	out, err := disk.GetDiskList(testCmdExecutorCommandFailed)
 	assert.Equal(t, []*disk.Disk{}, out)
-	assert.NotNil(t, err)
+	assert.Error(t, err)
 }
 
 func testCmdExecutorSuccessLSBLK(command string, args ...string) *exec.Cmd {
@@ -90,14 +89,12 @@ func TestDisksListExecutionSuccess(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_disks.json")
-	if err != nil {
-		log.Fatal()
-	}
+	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
 }
 
-func TestDisksListExecutionUnmarshalFail(t *testing.T) {
+func TestDisksListExecutionUnmarshalFail(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
@@ -105,7 +102,7 @@ func TestDisksListExecutionUnmarshalFail(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestDisksListExecutionCommandFailed(t *testing.T) {
+func TestDisksListExecutionCommandFailed(_ *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}

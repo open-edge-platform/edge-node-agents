@@ -149,6 +149,9 @@ func (cli *Client) ProvisionReleaseServiceToken(ctx context.Context, authConf co
 	if err != nil {
 		return token, fmt.Errorf("failed to read resp.Body:%v", err)
 	}
+	if response.StatusCode != http.StatusOK {
+		return token, fmt.Errorf("response code: %s", response.Status)
+	}
 	relToken := string(bodyBytes)
 
 	log.Infoln("release service token retrieved successfully")
