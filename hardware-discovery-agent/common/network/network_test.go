@@ -20,8 +20,8 @@ import (
 	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/network"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/tool"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/network"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/tool"
 )
 
 var testDataPath = "../../test/data"

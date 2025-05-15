@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/memory"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/memory"
 )
 
 var expectedTotal uint64 = 17179869184

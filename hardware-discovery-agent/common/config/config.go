@@ -11,7 +11,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/logger"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/logger"
 )
 
 var log = logger.Logger

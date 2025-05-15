@@ -14,9 +14,9 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/logger"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/tool"
-	hda_utils "github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/logger"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/tool"
+	hda_utils "github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/utils"
 )
 
 var log = logger.Logger

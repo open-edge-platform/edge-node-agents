@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/config"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/config"
 )
 
 func createConfigFile(t *testing.T, version string, logLevel string, url string, interval time.Duration, accessTokenPath string) string {

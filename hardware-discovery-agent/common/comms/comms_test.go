@@ -26,9 +26,9 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/test/bufconn"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/comms"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/network"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/tool"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/comms"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/network"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/tool"
 )
 
 type mockServer struct {

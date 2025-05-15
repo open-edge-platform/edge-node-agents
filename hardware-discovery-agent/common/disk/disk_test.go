@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/disk"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/disk"
 )
 
 func Test_GetDisks(t *testing.T) {

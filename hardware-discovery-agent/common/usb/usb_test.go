@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/usb"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/usb"
 )
 
 func getExpectedOutput(serial string) []*usb.Usb {

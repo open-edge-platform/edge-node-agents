@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/gpu"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/common/gpu"
 )
 
 var testPciAddr1 = "03:00.0"
