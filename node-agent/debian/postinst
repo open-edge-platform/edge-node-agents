@@ -62,7 +62,6 @@ if [ ! -e "/etc/incron.allow" ] || ! grep -q "node-agent" "/etc/incron.allow"; t
     echo "node-agent" >> /etc/incron.allow
 fi
 
-chmod -R 710 etc/intel_edge_node/caddy
 chmod 700 etc/intel_edge_node/client-credentials
 chmod 600 etc/intel_edge_node/client-credentials/*
 chmod -R 750 etc/intel_edge_node/tokens
@@ -81,7 +80,10 @@ if ! grep -q "127.0.0.1 localhost" "/etc/hosts"; then
     echo "127.0.0.1 localhost" >> /etc/hosts
 fi
 
-# Add single line in main Caddyfile to use the other *.caddy files
+# Ensure cleanup of stale files for upgrades
+rm -f /etc/caddy/containerd.caddy
+rm -rf /etc/intel_edge_node/caddy
+# Add single line in main Caddyfile to use the other *.caddy file
 echo "import /etc/caddy/*.caddy" > /etc/caddy/Caddyfile
 
 # Update file/dir ownership
@@ -89,7 +91,6 @@ chown -R node-agent:bm-agents /etc/edge-node/node
 chown node-agent:bm-agents /etc/intel_edge_node
 chown -R node-agent:bm-agents /etc/intel_edge_node/client-credentials
 chown -R node-agent:bm-agents /etc/intel_edge_node/tokens
-chown -R caddy:caddy /etc/intel_edge_node/caddy
 usermod -a -G bm-agents caddy
 
 chmod 750 /etc/caddy
