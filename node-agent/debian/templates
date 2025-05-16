@@ -33,15 +33,10 @@ Type: string
 Default: 60444
 Description: Apt source proxy port:
 
-Template: node-agent/proxy.imgRegistryURL
+Template: node-agent/proxy.aptSourceFilesRSRoot
 Type: string
-Default: localhost:443
-Description: Image registry URL:
-
-Template: node-agent/proxy.imgRegistryProxyPort
-Type: string
-Default: 9443
-Description: Image registry proxy port:
+Default: files-edge-orch
+Description: Apt source files root:
 
 Template: node-agent/auth.RSType
 Type: string

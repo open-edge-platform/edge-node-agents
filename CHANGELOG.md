@@ -33,6 +33,9 @@
 
 ## Node Agent Changelog
 
+### 1.7.2
+- Drop TLS on caddy internal endpoint
+
 ### 1.7.1
 - Error on RS token if not HTTP OK
 

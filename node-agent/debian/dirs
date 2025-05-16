@@ -1,8 +1,5 @@
 etc/edge-node/node/confs
 etc/intel_edge_node
-etc/intel_edge_node/caddy
-etc/intel_edge_node/caddy/certs
-etc/intel_edge_node/caddy/.keys
 etc/intel_edge_node/client-credentials
 etc/intel_edge_node/tokens
 etc/intel_edge_node/tokens/attestation-manager
