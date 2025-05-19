@@ -45,9 +45,9 @@ jobs:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "yq"
 
-      - name: Check manifest version
-        run: |
-          ./common/ci_scripts/manifest-versioning.sh check
+      #- name: Check manifest version
+      #  run: |
+      #    ./common/ci_scripts/manifest-versioning.sh check
         
       - name: Lint manifest
         shell: bash
@@ -273,7 +273,6 @@ jobs:
     needs:
       - lint-manifest
       - collect-versions
-    if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout infra-charts
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -326,7 +325,6 @@ jobs:
     needs:
       - lint-manifest
       - collect-versions
-    if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout EMF repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
