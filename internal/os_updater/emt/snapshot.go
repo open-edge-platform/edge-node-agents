@@ -11,18 +11,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
-	"os/exec"
 	"strings"
 
-	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
+	utils "github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
 )
 
 var (
-	emtImageIDPath      = "/etc/image-id"
-	dispatcherStatePath = "/var/intel-manageability/dispatcher_state"
+	imageIDPath      = "/etc/image-id"
 )
 
 // Snapshotter is the concrete implementation of the IUpdater interface
@@ -40,17 +37,11 @@ func NewSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftware
 	}
 }
 
-// EMTState represents the JSON structure
-type state struct {
-	RestartReason string `json:"restart_reason"`
-	TiberVersion  string `json:"tiber-version"`
-}
-
 // Snapshot creates a snapshot of the system.
 func (t *Snapshotter) Snapshot() error {
 	log.Println("Take a snapshot.")
 
-	err := utils.ClearStateFile(t.commandExecutor)
+	err := utils.ClearStateFile(t.commandExecutor, utils.StateFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to clear dispatcher state file: %w", err)
 	}
@@ -60,7 +51,7 @@ func (t *Snapshotter) Snapshot() error {
 		return fmt.Errorf("failed to get image build date: %w", err)
 	}
 	// Create an instance of EMTState with the desired values
-	state := state{
+	state := utils.INBDState{
 		RestartReason: "sota",
 		TiberVersion:  buildDate,
 	}
@@ -70,9 +61,9 @@ func (t *Snapshotter) Snapshot() error {
 		return fmt.Errorf("error marshalling JSON: %w", err)
 	}
 
-	// Write the JSON to the dispatcher state file
-	if err := writeToDispatcherStateFile(t.fs, string(jsonData)); err != nil {
-		return fmt.Errorf("failed to write to dispatcher state file: %w", err)
+	// Write the JSON to the state file
+	if err := utils.WriteToStateFile(t.fs, utils.StateFilePath, string(jsonData)); err != nil {
+		return fmt.Errorf("failed to write to state file: %w", err)
 	}
 	
 	log.Println("Snapshot created successfully.")
@@ -82,7 +73,7 @@ func (t *Snapshotter) Snapshot() error {
 // GetImageBuildDate get the image build date.
 func GetImageBuildDate(fs afero.Fs) (string, error) {
 	// Open the file
-	file, err := utils.Open(fs, emtImageIDPath)
+	file, err := utils.Open(fs, imageIDPath)
 	if err != nil {
 		log.Println("Error opening file:", err)
 		return "", err
@@ -107,132 +98,4 @@ func GetImageBuildDate(fs afero.Fs) (string, error) {
 
 	log.Println("IMAGE_BUILD_DATE not found.")
 	return "", nil
-}
-
-// writeToDispatcherStateFile writes the content to the dispatcher state file.
-func writeToDispatcherStateFile(fs afero.Fs, content string) error {
-	// Open the file for writing
-	file, err := utils.OpenFile(fs, dispatcherStatePath, os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		log.Println("Error opening file:", err)
-		return err
-	}
-	defer file.Close()
-
-	// Write the content to the file
-	_, err = file.WriteString(content)
-	if err != nil {
-		log.Println("Error writing file:", err)
-		return fmt.Errorf("error writing to file: %w", err)
-	}
-
-	return nil
-}
-
-// ReadDispatcherStateFile reads the content from the dispatcher state file.
-// It returns the image version.
-func ReadDispatcherStateFile(fs afero.Fs, osType string) (string, error) {
-
-	if osType == "EMT" {
-		file, err := utils.Open(fs, dispatcherStatePath)
-		if err != nil {
-			log.Println("Error opening file:", err)
-			return "", err
-		}
-		defer file.Close()
-
-		// Read the file content
-		fileContent, err := os.ReadFile(dispatcherStatePath)
-		if err != nil {
-			log.Println("Error reading file:", err)
-			return "", err
-		}
-
-		// Parse the JSON content
-		var stateJSON state
-		err = json.Unmarshal(fileContent, &stateJSON)
-		if err != nil {
-			log.Println("Error parsing JSON:", err)
-			return "", err
-		}
-		return stateJSON.TiberVersion, nil
-	}
-
-	return "", fmt.Errorf("OS not supported")
-}
-
-// VerifyUpdateAfterReboot verifies the update after a reboot.
-// It checks if the dispatcher state file exists and compares the previous and current versions.
-// If the versions are different, it commits the update; otherwise, it reverts to the previous image.
-func VerifyUpdateAfterReboot(fs afero.Fs, osType string) error {
-	// Check if dispatcher state file exist.
-	fileInfo, err := os.Stat(dispatcherStatePath)
-	if err == nil {
-		if fileInfo.Size() == 0 {
-			log.Println("Dispatcher state file is empty. Skip post update verification.")
-			return nil
-		}
-
-		log.Println("Perform post update verification.")
-		// TODO:  This should call the correct function using the factory pattern.
-		// Currently hardcoded to use EMT.  It should also be able to call Ubuntu.
-		if osType == "EMT" {
-			previousVersion, err := ReadDispatcherStateFile(fs, osType)
-			if err != nil {
-				return fmt.Errorf("error reading dispatcher state file: %w", err)
-			}
-
-			currentVersion, err := GetImageBuildDate(fs)
-			if err != nil {
-				return fmt.Errorf("error getting image build date: %w", err)
-			}
-
-			// Remove dispatcher state file before rebooting.
-			err = utils.RemoveFile(fs, dispatcherStatePath)
-			if err != nil {
-				log.Printf("[Warning] Error removing dispatcher state file: %v", err)
-			}
-
-			// Compare the versions
-			if currentVersion != previousVersion {
-				log.Printf("Update Success. Previous image: %v, Current image: %v", previousVersion, currentVersion)
-				emtUpdater := NewUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
-				err = emtUpdater.commitUpdate()
-				if err != nil {
-					return fmt.Errorf("error committing update: %w", err)
-				}
-
-				// Write status to the log file.
-				writeUpdateStatus(fs, SUCCESS, "", "")
-				if err != nil {
-					log.Printf("[Warning] Error writing update status: %v", err)
-				}
-
-				log.Println("SUCCESSFUL INSTALL: Overall SOTA update successful.  System has been properly updated.")
-
-				writeGranularLog(fs, SUCCESS, "")
-				if err != nil {
-					log.Printf("[Warning] Error writing granular log: %v", err)
-				}
-			} else {
-				log.Println("Update failed. Reverting to previous image.")
-				// Write the status to the log file.
-				writeUpdateStatus(fs, FAIL, "", "Update failed. Versions are the same.")
-				writeGranularLog(fs, FAIL, FAILURE_REASON_BOOTLOADER)
-
-				log.Println("Rebooting...")
-				// Reboot the system without commit.
-				emtRebooter := NewRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
-				err = emtRebooter.Reboot()
-				if err != nil {
-					return fmt.Errorf("error rebooting system: %w", err)
-				}
-			}
-		}
-
-	} else {
-		log.Println("No dispatcher state file. Skip post update verification.")
-	}
-
-	return nil
 }

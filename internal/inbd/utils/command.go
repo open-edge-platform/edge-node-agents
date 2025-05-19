@@ -56,7 +56,7 @@ func ExecuteAndReadOutput(executableCommand *exec.Cmd) ([]byte, []byte, error) {
 
 	err := executableCommand.Run()
 
-	fmt.Printf("'%v' stderr: %v, stdout: %v", executableCommand.String(), stderr.String(), stdout.String())
+	fmt.Printf("'%v' stderr: %v, stdout: %v\n", executableCommand.String(), stderr.String(), stdout.String())
 	if err != nil {
 		return []byte(stdout.String()), []byte(stderr.String()), fmt.Errorf("failed to run '%v' command - %v", executableCommand.String(), err)
 	}

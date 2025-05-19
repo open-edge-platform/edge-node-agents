@@ -2,14 +2,14 @@ package ubuntu
 
 import (
 	"errors"
-	//"os/exec"
+	"fmt"
 	"testing"
 
-	//"github.com/intel/intel-inb-manageability/internal/inbd/utils"
+	utils "github.com/intel/intel-inb-manageability/internal/inbd/utils"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/sys/unix"
-	//"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 )
 
 // MockExecutor is a mock implementation of utils.Executor
@@ -36,23 +36,26 @@ func (m *MockExitError) ExitCode() int {
 func TestSnapshot_Success(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 
-	// Mock isSnapperInstalled to return true
-	mockExecutor.On("Execute", []string{"which", "snapper"}).Return("/usr/bin/snapper", "", nil)
-
-	// Mock ClearStateFile to succeed
-	mockExecutor.On("Execute", mock.Anything).Return("", "", nil)
-
-	// Mock ensureSnapperConfig to succeed
-	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "list-configs"}).Return("rootConfig", "", nil)
-
 	// Mock snapshot creation to succeed
-	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("", "", nil)
+	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("1", "", nil)
 
 	snapshotter := Snapshotter{
 		CommandExecutor: mockExecutor,
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
 		},
+        IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+            return true, nil
+        },
+        EnsureSnapperConfigFunc: func(cmdExecutor utils.Executor, configName string) error {
+            return nil
+        },
+        ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+            return nil
+        },
+        WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
+            return nil
+        },
 	}
 
 	// Call Snapshot
@@ -83,14 +86,14 @@ func TestSnapshot_NotBTRFS(t *testing.T) {
 func TestSnapshot_SnapperNotInstalled(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 
-	// Mock isSnapperInstalled to return false
-	mockExecutor.On("Execute", []string{"which", "snapper"}).Return("", "", nil)
-
 	snapshotter := Snapshotter{
 		CommandExecutor: mockExecutor,
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
 		},
+        IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+            return false, nil
+        },
 	}
 
 	// Call Snapshot
@@ -102,7 +105,7 @@ func TestSnapshot_SnapperNotInstalled(t *testing.T) {
 	mockExecutor.AssertExpectations(t)
 }
 
-func TestSnapshot_WarningInStderr(t *testing.T) {
+func TestSnapshot_SnapshotIDNotValidInteger(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 
 	// Mock IsBTRFSFileSystem to return true
@@ -110,29 +113,96 @@ func TestSnapshot_WarningInStderr(t *testing.T) {
 		return true, nil
 	}
 
-	// Mock isSnapperInstalled to return true
-	mockExecutor.On("Execute", []string{"which", "snapper"}).Return("/usr/bin/snapper", "", nil)
-
-	// Mock ClearStateFile to succeed
-	mockExecutor.On("Execute", mock.Anything).Return("", "", nil)
-
-	// Mock ensureSnapperConfig to succeed
-	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "list-configs"}).Return("rootConfig", "", nil)
-
 	// Mock snapshot creation to produce a warning in stderr
 	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("Snapshot created", "Warning: minor issue", nil)
 
 	snapshotter := Snapshotter{
 		CommandExecutor:       mockExecutor,
 		IsBTRFSFileSystemFunc: isBtrfsFunc,
+        IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+            return true, nil
+        },
+        ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+            return nil
+        },
+        EnsureSnapperConfigFunc: func(cmdExecutor utils.Executor, configName string) error {
+            return nil
+        },
+        WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
+            return nil
+        },
 	}
 
 	// Call Snapshot
 	err := snapshotter.Snapshot()
 
 	// Assertions
-	assert.NoError(t, err)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "snapshot ID is not a valid integer")
 	mockExecutor.AssertExpectations(t)
+}
+
+func TestSnapshot_ClearStateFileError(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper create" command to succeed
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("42", "", nil)
+
+    // Mock other dependencies to succeed
+    snapshotter := Snapshotter{
+        CommandExecutor: mockExecutor,
+        IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
+            return true, nil
+        },
+        IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+            return true, nil
+        },
+        ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+            return fmt.Errorf("mock clear state file error")
+        },
+        Fs: afero.NewMemMapFs(),
+    }
+
+    // Call Snapshot
+    err := snapshotter.Snapshot()
+
+    // Assertions
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "failed to clear dispatcher state file")
+    assert.Contains(t, err.Error(), "mock clear state file error")
+}
+
+func TestSnapshot_EnsureSnapperConfigError(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper create" command to succeed
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("42", "", nil)
+
+    // Mock other dependencies to succeed
+    snapshotter := Snapshotter{
+        CommandExecutor: mockExecutor,
+        IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
+            return true, nil
+        },
+        IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+            return true, nil
+        },
+        ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+            return nil
+        },
+        EnsureSnapperConfigFunc: func(cmdExecutor utils.Executor, configName string) error {
+            return fmt.Errorf("mock ensure snapper config error")
+        },
+        Fs: afero.NewMemMapFs(),
+    }
+
+    // Call Snapshot
+    err := snapshotter.Snapshot()
+
+    // Assertions
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "failed to ensure snapper config exists")
+    assert.Contains(t, err.Error(), "mock ensure snapper config error")
 }
 
 func TestIsSnapperInstalled_Success(t *testing.T) {
@@ -142,7 +212,7 @@ func TestIsSnapperInstalled_Success(t *testing.T) {
 	mockExecutor.On("Execute", []string{"which", "snapper"}).Return("/usr/bin/snapper", "", nil)
 
 	// Call isSnapperInstalled
-	isInstalled, err := isSnapperInstalled(mockExecutor)
+	isInstalled, err := IsSnapperInstalled(mockExecutor)
 
 	// Assertions
 	assert.NoError(t, err)
@@ -159,7 +229,7 @@ func TestIsSnapperInstalled_CommandError(t *testing.T) {
 	mockExecutor.On("Execute", []string{"which", "snapper"}).Return(string([]byte("")), string([]byte("mock stderr")), errors.New("mock command error"))
 
 	// Call isSnapperInstalled
-	isInstalled, err := isSnapperInstalled(mockExecutor)
+	isInstalled, err := IsSnapperInstalled(mockExecutor)
 
 	// Assertions
 	assert.Error(t, err)
@@ -175,7 +245,7 @@ func TestEnsureSnapperConfig_ConfigExists(t *testing.T) {
 	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "list-configs"}).Return("rootConfig", "", nil)
 
 	// Call ensureSnapperConfig
-	err := ensureSnapperConfig(mockExecutor, "rootConfig")
+	err := EnsureSnapperConfig(mockExecutor, "rootConfig")
 
 	// Assertions
 	assert.NoError(t, err)
@@ -192,7 +262,7 @@ func TestEnsureSnapperConfig_CreateConfig(t *testing.T) {
 	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create-config", "/"}).Return("", "", nil)
 
 	// Call ensureSnapperConfig
-	err := ensureSnapperConfig(mockExecutor, "rootConfig")
+	err := EnsureSnapperConfig(mockExecutor, "rootConfig")
 
 	// Assertions
 	assert.NoError(t, err)
@@ -207,7 +277,7 @@ func TestEnsureSnapperConfig_ListConfigsError(t *testing.T) {
 	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "list-configs"}).Return("", "mock stderr", errors.New("mock error"))
 
 	// Call ensureSnapperConfig
-	err := ensureSnapperConfig(mockExecutor, "rootConfig")
+	err := EnsureSnapperConfig(mockExecutor, "rootConfig")
 
 	// Assertions
 	assert.Error(t, err)
@@ -225,11 +295,47 @@ func TestEnsureSnapperConfig_CreateConfigError(t *testing.T) {
 	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create-config", "/"}).Return("", "mock stderr", errors.New("mock error"))
 
 	// Call ensureSnapperConfig
-	err := ensureSnapperConfig(mockExecutor, "rootConfig")
+	err := EnsureSnapperConfig(mockExecutor, "rootConfig")
 
 	// Assertions
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create snapper config")
 	mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "-c", "rootConfig", "list-configs"})
 	mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "-c", "rootConfig", "create-config", "/"})
+}
+
+func TestSnapshot_WriteToStateFileError(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper create" command to succeed
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("42", "", nil)
+
+    // Mock the other dependencies to succeed
+    snapshotter := Snapshotter{
+        CommandExecutor: mockExecutor,
+        IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
+            return true, nil
+        },
+        IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+            return true, nil
+        },
+        EnsureSnapperConfigFunc: func(cmdExecutor utils.Executor, configName string) error {
+            return nil
+        },
+        ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+            return nil
+        },
+        WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
+            return fmt.Errorf("mock write to state file error")
+        },
+        Fs: afero.NewMemMapFs(),
+    }
+
+    // Call Snapshot
+    err := snapshotter.Snapshot()
+
+    // Assertions
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "failed to write to state file")
+    assert.Contains(t, err.Error(), "mock write to state file error")
 }

@@ -13,6 +13,7 @@ import (
 	emt "github.com/intel/intel-inb-manageability/internal/os_updater/emt"
 	ubuntu "github.com/intel/intel-inb-manageability/internal/os_updater/ubuntu"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 )
 
 // UpdaterFactory is an interface that contains the methods to create the concrete classes for the OS updater.
@@ -79,8 +80,13 @@ func (f *UbuntuFactory) CreateUpdater(commandExecutor utils.Executor, req *pb.Up
 // CreateSnapshotter creates a snapshotter concrete class for Ubuntu OS.
 func (f *UbuntuFactory) CreateSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
 	return &ubuntu.Snapshotter{
-		CommandExecutor:       commandExecutor,
-		IsBTRFSFileSystemFunc: utils.IsBTRFSFileSystem,
+		CommandExecutor:         commandExecutor,
+		IsBTRFSFileSystemFunc:   utils.IsBTRFSFileSystem,
+		IsSnapperInstalledFunc:  ubuntu.IsSnapperInstalled,
+		EnsureSnapperConfigFunc: ubuntu.EnsureSnapperConfig,
+		ClearStateFileFunc:      utils.ClearStateFile,
+		WriteToStateFileFunc:    utils.WriteToStateFile,
+		Fs:                      afero.NewOsFs(),
 	}
 }
 

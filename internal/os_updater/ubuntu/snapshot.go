@@ -7,20 +7,28 @@
 package ubuntu
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
+	"github.com/spf13/afero"
 	"golang.org/x/sys/unix"
 )
 
 // Snapshotter is the concrete implementation of the Updater interface
 // for the Ubuntu OS.
 type Snapshotter struct {
-	CommandExecutor utils.Executor
-	IsBTRFSFileSystemFunc func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error)
+	CommandExecutor         utils.Executor
+	IsBTRFSFileSystemFunc   func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error)
+	IsSnapperInstalledFunc  func(cmdExecutor utils.Executor) (bool, error)
+	EnsureSnapperConfigFunc func(cmdExecutor utils.Executor, configName string) error
+	ClearStateFileFunc      func(cmdExecutor utils.Executor, stateFilePath string) error
+	WriteToStateFileFunc    func(fs afero.Fs, stateFilePath string, content string) error
+	Fs                      afero.Fs
 }
 
 // Snapshot method for Ubuntu
@@ -34,7 +42,7 @@ func (u *Snapshotter) Snapshot() error {
 		log.Println("OS is Ubuntu and FileSystem is BTRFS.  Take a snapshot.")
 
 		// Check if snapper is installed
-		isInstalled, err := isSnapperInstalled(u.CommandExecutor)
+		isInstalled, err := u.IsSnapperInstalledFunc(u.CommandExecutor)
 		if err != nil {
 			return fmt.Errorf("snapper installation check failed: %w", err)
 		}
@@ -42,12 +50,11 @@ func (u *Snapshotter) Snapshot() error {
 			return fmt.Errorf("snapper is not installed")
 		}
 
-		// Clear the dispatcher state file before writing it.
-		if err := utils.ClearStateFile(u.CommandExecutor); err != nil {
+		if err := u.ClearStateFileFunc(u.CommandExecutor, utils.StateFilePath); err != nil {
 			return fmt.Errorf("failed to clear dispatcher state file: %w", err)
 		}
 
-		err = ensureSnapperConfig(u.CommandExecutor, "rootConfig")
+		err = u.EnsureSnapperConfigFunc(u.CommandExecutor, "rootConfig")
 		if err != nil {
 			return fmt.Errorf("failed to ensure snapper config exists: %w", err)
 		}
@@ -60,12 +67,38 @@ func (u *Snapshotter) Snapshot() error {
 		if err != nil {
 			return fmt.Errorf("error executing command: %s, stderr: %s, err: %w", stdout, stderr, err)
 		}
-		
+
 		// Log a warning if stderr is non-empty but the command succeeded
 		if string(stderr) != "" {
 			log.Printf("Warning: snapshot command produced stderr: %s", stderr)
 		}
-		log.Println("Snapshot created successfully.")
+		log.Println("Snapshot created successfully. SnapshotID: ", string(stdout))
+
+		// Ensure stdout is not blank and is an integer
+		snapshotID := strings.TrimSpace(string(stdout))
+		if snapshotID == "" {
+			return fmt.Errorf("snapshot ID is blank")
+		}
+		snapshotNumber, err := strconv.Atoi(snapshotID)
+		if err != nil {
+			return fmt.Errorf("snapshot ID is not a valid integer: %s", snapshotID)
+		}
+
+		state := utils.INBDState{
+			RestartReason:  "sota",
+			SnapshotNumber: snapshotNumber,
+		}
+
+		stateJSON, err := json.Marshal(state)
+		if err != nil {
+			return fmt.Errorf("failed to serialize state to JSON: %w", err)
+		}
+		log.Printf("State JSON: %s", string(stateJSON))
+		err = u.WriteToStateFileFunc(u.Fs, utils.StateFilePath, string(stateJSON))
+		if err != nil {
+			return fmt.Errorf("failed to write to state file: %w", err)
+		}
+		log.Printf("Snapshot ID: %s", snapshotID)
 	} else {
 		// TODO: Check if ProceedWithRollback flag is set to false.
 		// If it set to false, send error and do not proceed.
@@ -74,8 +107,8 @@ func (u *Snapshotter) Snapshot() error {
 	return nil
 }
 
-// isSnapperInstalled checks if the snapper package is installed on the system.
-func isSnapperInstalled(cmdExecutor utils.Executor) (bool, error) {
+// IsSnapperInstalled checks if the snapper package is installed on the system.
+func IsSnapperInstalled(cmdExecutor utils.Executor) (bool, error) {
 	findSnapper := []string{
 		"which", "snapper",
 	}
@@ -97,22 +130,23 @@ func isSnapperInstalled(cmdExecutor utils.Executor) (bool, error) {
 	return true, nil // snapper is installed
 }
 
-func ensureSnapperConfig(cmdExecutor utils.Executor, configName string) error {
-    log.Println("Ensuring snapper config exists.")
+// EnsureSnapperConfig checks if the snapper config exists and creates it if not.
+func EnsureSnapperConfig(cmdExecutor utils.Executor, configName string) error {
+	log.Println("Ensuring snapper config exists.")
 	checkConfigCmd := []string{"snapper", "-c", configName, "list-configs"}
-    stdout, stderr, err := cmdExecutor.Execute(checkConfigCmd)
-    if err != nil {
-        return fmt.Errorf("failed to check snapper config: %s, stderr: %s, err: %w", stdout, stderr, err)
-    }
+	stdout, stderr, err := cmdExecutor.Execute(checkConfigCmd)
+	if err != nil {
+		return fmt.Errorf("failed to check snapper config: %s, stderr: %s, err: %w", stdout, stderr, err)
+	}
 
-    if !strings.Contains(string(stdout), configName) {
-        createConfigCmd := []string{"snapper", "-c", configName, "create-config", "/"}
-        _, stderr, err := cmdExecutor.Execute(createConfigCmd)
-        if err != nil {
-            return fmt.Errorf("failed to create snapper config: stderr: %s, err: %w", stderr, err)
-        }
-    }
+	if !strings.Contains(string(stdout), configName) {
+		createConfigCmd := []string{"snapper", "-c", configName, "create-config", "/"}
+		_, stderr, err := cmdExecutor.Execute(createConfigCmd)
+		if err != nil {
+			return fmt.Errorf("failed to create snapper config: stderr: %s, err: %w", stderr, err)
+		}
+	}
 
 	log.Println("Snapper config exists or was created successfully.")
-    return nil
+	return nil
 }

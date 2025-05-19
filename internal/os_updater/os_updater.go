@@ -31,7 +31,8 @@ func UpdateOS(req *pb.UpdateSystemSoftwareRequest, factory UpdaterFactory) (*pb.
 		}
 	}
 
-	snapshot := factory.CreateSnapshotter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
+	snapshot := factory.CreateSnapshotter(
+		utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
 	// Create a snapshot of the current system
 	err := snapshot.Snapshot()
 	if err != nil {
@@ -54,7 +55,7 @@ func UpdateOS(req *pb.UpdateSystemSoftwareRequest, factory UpdaterFactory) (*pb.
 
 	log.Println("Update completed successfully.")
       
-  // Remove the artifacts after update success.
+  	// Remove the artifacts after update success.
 	err = cleaner.DeleteAll(emt.DownloadDir + "/")
 	if err != nil {
 		log.Printf("[Warning] %v", err.Error())

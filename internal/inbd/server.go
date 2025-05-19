@@ -9,9 +9,10 @@ import (
 	"net"
 	"os"
 
-	emt "github.com/intel/intel-inb-manageability/internal/os_updater/emt"
 	"github.com/spf13/afero"
 	"google.golang.org/grpc"
+
+	osUpdater "github.com/intel/intel-inb-manageability/internal/os_updater"
 )
 
 const configFilePath = "/etc/intel_manageability.conf"
@@ -63,14 +64,12 @@ func RunServer(deps ServerDeps) error {
 
 	fs := afero.NewOsFs()
 
-	// TODO: This should call the correct function using the factory pattern.
-	// Currently hardcoded to use EMT.  It should also be able to call Ubuntu.
-	err = emt.VerifyUpdateAfterReboot(fs, "EMT")
+	err = osUpdater.VerifyUpdateAfterReboot(fs)
 	if err != nil {
 		return fmt.Errorf("[Post verification failed] error verifying update after reboot: %w", err)
 	}
 
-	isValidConfig, err := deps.IsValidJSON(afero.Afero{Fs: afero.NewOsFs()}, schemaFilePath, configFilePath)
+	isValidConfig, err := deps.IsValidJSON(afero.Afero{Fs: fs}, schemaFilePath, configFilePath)
 	if err != nil {
 		return fmt.Errorf("error validating INBD Configuration file: %w", err)
 	}

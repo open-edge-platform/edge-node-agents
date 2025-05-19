@@ -77,7 +77,7 @@ func IsFileExist(fs afero.Fs, filePath string) bool {
 
 // Open opens a file at the given path using the provided filesystem.
 // It returns an error if the file is a symlink or if there was an error opening the file.
-func Open(fs afero.Fs, filePath string) (afero.File, error) {
+var Open = func(fs afero.Fs, filePath string) (afero.File, error) {
 	if err := isFilePathAbsolute(filePath); err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
