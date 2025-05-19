@@ -6,6 +6,9 @@
 
 ## Cluster Agent Changelog
 
+### 1.7.1
+- Remove dependency on caddy service for rancher
+
 ### 1.7.0
 - Fix readiness reporting to NA during cluster install
 

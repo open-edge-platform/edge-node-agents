@@ -9,7 +9,6 @@ path = [
     "**/config/apparmor.d/**",
     "**/config/sudoers.d/**",
     "**/configs/apparmor.d/**",
-    "**/configs/rancher-system-agent.service.d/caddy.conf",
     "**/configs/sudoers.d/**",
     "**/configs/**.caddy",
     "**/configs/**.conf",
