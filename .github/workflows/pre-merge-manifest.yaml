@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           yamllint ena-manifest.yaml
-    collect-versions:
+  collect-versions:
     permissions:
       contents: read
     runs-on: ubuntu-latest
