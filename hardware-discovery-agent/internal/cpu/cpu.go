@@ -69,7 +69,7 @@ func GetCPUList(executor utils.CmdExecutor) (*CPU, error) {
 		}
 		if strings.HasPrefix(attr, "Socket(s)") {
 			socketStr := strings.TrimSpace(strings.TrimPrefix(attr, "Socket(s):"))
-			sockets, err := strconv.ParseUint(socketStr, 10, 64)
+			sockets, err := strconv.ParseUint(socketStr, 10, 32)
 			if err != nil {
 				continue
 			}
@@ -77,7 +77,7 @@ func GetCPUList(executor utils.CmdExecutor) (*CPU, error) {
 		}
 		if strings.HasPrefix(attr, "CPU(s)") {
 			cpuStr := strings.TrimSpace(strings.TrimPrefix(attr, "CPU(s):"))
-			cpus, err := strconv.ParseUint(cpuStr, 10, 64)
+			cpus, err := strconv.ParseUint(cpuStr, 10, 32)
 			if err != nil {
 				continue
 			}
@@ -85,7 +85,7 @@ func GetCPUList(executor utils.CmdExecutor) (*CPU, error) {
 		}
 		if strings.HasPrefix(attr, "Core(s) per socket") {
 			coresStr := strings.TrimSpace(strings.TrimPrefix(attr, "Core(s) per socket:"))
-			cores, err := strconv.ParseUint(coresStr, 10, 64)
+			cores, err := strconv.ParseUint(coresStr, 10, 32)
 			if err != nil {
 				continue
 			}
@@ -140,7 +140,7 @@ func inferEPCores(sockets uint32, coreInfo []*cores, coreMaxFreq string) *CPUTop
 	socketInfo := []*Socket{}
 	for socketID := uint32(0); socketID < sockets; socketID++ {
 		// Determine a target max frequency for E Core detection based on the max frequency from lscpu.
-		maxCoreFreq, err := strconv.ParseUint(strings.TrimSuffix(coreMaxFreq, ".0000"), 10, 64)
+		maxCoreFreq, err := strconv.ParseUint(strings.TrimSuffix(coreMaxFreq, ".0000"), 10, 32)
 		if err != nil {
 			// If max frequency cannot be retrieved from lscpu, default to 0 so that all cores are considered P Cores.
 			maxCoreFreq = 0
@@ -158,12 +158,12 @@ func getCoreGroupsPerSocket(socketID uint32, coreInfo []*cores, coreMaxFreq uint
 	eCoreList := make([]uint32, 0)
 
 	for _, core := range coreInfo {
-		socket, err := strconv.ParseUint(core.Socket, 10, 64)
+		socket, err := strconv.ParseUint(core.Socket, 10, 32)
 		if err != nil {
 			socket = 0
 		}
 		if socket == uint64(socketID) {
-			cpu, err := strconv.ParseUint(core.CPU, 10, 64)
+			cpu, err := strconv.ParseUint(core.CPU, 10, 32)
 			if err != nil {
 				continue
 			}
