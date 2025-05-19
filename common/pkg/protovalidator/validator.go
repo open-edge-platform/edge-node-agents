@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bufbuild/protovalidate-go"
+	protovalidate "github.com/bufbuild/protovalidate-go"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
 

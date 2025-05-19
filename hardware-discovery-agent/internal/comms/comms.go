@@ -9,6 +9,11 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
+	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/cpu"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/disk"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/gpu"
@@ -18,13 +23,9 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/system"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/usb"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
-	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
-const CONN_TIMEOUT = 5 * time.Second
+const connTimeout = 5 * time.Second
 
 var log = logger.Logger
 
@@ -38,14 +39,14 @@ type Client struct {
 
 func WithNetworkDialer(serverAddr string) func(*Client) {
 	return func(s *Client) {
-		s.Dialer = grpc.WithContextDialer(func(ctx context.Context, s string) (net.Conn, error) {
+		s.Dialer = grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
 			return net.Dial("tcp", serverAddr)
 		})
 	}
 }
 
 // NewClient creates grpc client to Edge Infrastructure Manager southbound API
-// by default it uses tcp network dialer
+// by default it uses tcp network dialer.
 func NewClient(serverAddr string, tlsConfig *tls.Config, options ...func(*Client)) *Client {
 	cli := &Client{}
 	cli.ServerAddr = serverAddr
@@ -65,7 +66,7 @@ func NewClient(serverAddr string, tlsConfig *tls.Config, options ...func(*Client
 // In case of an error the function will return the error.
 func (cli *Client) Connect() (err error) {
 	cli.GrpcConn, err = grpc.Dial(cli.ServerAddr, cli.Transport, cli.Dialer, //nolint:staticcheck
-		grpc.WithUnaryInterceptor(timeout.UnaryClientInterceptor(CONN_TIMEOUT)),
+		grpc.WithUnaryInterceptor(timeout.UnaryClientInterceptor(connTimeout)),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 	if err != nil {
 		log.Errorf("Connection to Edge Infrastructure Manager failed : %v", err)
@@ -77,7 +78,7 @@ func (cli *Client) Connect() (err error) {
 
 // UpdateHostSystemInfoByGuid client method sends UpdateHostSystemInfoByGuidRequest message to the server. It receives UpdateHostSystemInfoResponse message.
 // The message will be an empty string if successful.
-// In case of an error, the function will return an error
+// In case of an error, the function will return an error.
 func (cli *Client) UpdateHostSystemInfoByGUID(ctx context.Context, guid string, systemInfo *proto.SystemInfo) (*proto.UpdateHostSystemInfoByGUIDResponse, error) {
 	log.Debugf("Sending System info: %+v", systemInfo)
 	updateHostSystemInfoByGUIDRequest := proto.UpdateHostSystemInfoByGUIDRequest{HostGuid: guid, SystemInfo: systemInfo}
@@ -103,13 +104,13 @@ func ConnectToEdgeInfrastructureManager(serverAddr string, tlsConfig *tls.Config
 	return hostManager, nil
 }
 
-func parseSystemInfo(serialNumber string, productName string, bmcAddr string, osInfo *system.Os, biosInfo *system.Bios, cpu *cpu.Cpu,
+func parseSystemInfo(serialNumber string, productName string, bmcAddr string, osInfo *system.Os, biosInfo *system.Bios, cpu *cpu.CPU,
 	storage []*disk.Disk, gpu []*gpu.Gpu, mem uint64, networks []*network.Network, bmType proto.BmInfo_BmType, usbInfo []*usb.Usb) *proto.SystemInfo {
 
 	gpuList := []*proto.SystemGPU{}
 	for _, gpuDetails := range gpu {
 		gpuList = append(gpuList, &proto.SystemGPU{
-			PciId:       gpuDetails.PciId,
+			PciId:       gpuDetails.PciID,
 			Product:     gpuDetails.Product,
 			Vendor:      gpuDetails.Vendor,
 			Name:        gpuDetails.Name,
@@ -133,9 +134,9 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 	networkList := []*proto.SystemNetwork{}
 	for _, networkDetails := range networks {
 		ipAddressList := []*proto.IPAddress{}
-		for _, ipAddress := range networkDetails.IpAddresses {
+		for _, ipAddress := range networkDetails.IPAddresses {
 			ipAddressList = append(ipAddressList, &proto.IPAddress{
-				IpAddress:         ipAddress.IpAddress,
+				IpAddress:         ipAddress.IPAddress,
 				NetworkPrefixBits: ipAddress.NetPrefBits,
 				ConfigMode:        ipAddress.ConfigMode,
 			})
@@ -189,7 +190,7 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 			})
 		}
 		osRelease = proto.OsRelease{
-			Id:       osInfo.Release.Id,
+			Id:       osInfo.Release.ID,
 			Version:  osInfo.Release.Version,
 			Metadata: relMetadata,
 		}
@@ -203,8 +204,8 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 		}
 		usbList = append(usbList, &proto.SystemUSB{
 			Class:       usbDetails.Class,
-			Idvendor:    usbDetails.VendorId,
-			Idproduct:   usbDetails.ProductId,
+			Idvendor:    usbDetails.VendorID,
+			Idproduct:   usbDetails.ProductID,
 			Bus:         usbDetails.Bus,
 			Addr:        usbDetails.Address,
 			Description: usbDetails.Description,
@@ -226,7 +227,7 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 					})
 				}
 				sockets = append(sockets, &proto.Socket{
-					SocketId:   socket.SocketId,
+					SocketId:   socket.SocketID,
 					CoreGroups: coreGroups,
 				})
 			}
@@ -310,7 +311,7 @@ func GenerateSystemInfoRequest(executor utils.CmdExecutor) *proto.SystemInfo {
 		log.Errorf("unable to get system BIOS information : %v", err)
 	}
 
-	cpu, err := cpu.GetCpuList(executor)
+	cpu, err := cpu.GetCPUList(executor)
 	if err != nil {
 		log.Errorf("unable to get cpu description : %v", err)
 	}

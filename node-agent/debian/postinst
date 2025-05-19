@@ -35,17 +35,12 @@ fi
 db_get node-agent/proxy.aptSourceProxyPort
 if [ ! -z "$RET" ]; then
     sed -i -e 's#localhost.*#localhost:'"$RET"' {#' /etc/caddy/pua.caddy
+    sed -i -E '/name: client-proxy/,/url:/ s|(http://[^:]+:)[0-9]+|\1'"$RET"'|' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/proxy.imgRegistryURL
+db_get node-agent/proxy.aptSourceFilesRSRoot
 if [ ! -z "$RET" ]; then
-    sed -i -e 's#reverse_proxy.*#reverse_proxy https://'"$RET"' {#' /etc/caddy/containerd.caddy
-fi
-
-db_get node-agent/proxy.imgRegistryProxyPort
-if [ ! -z "$RET" ]; then
-    sed -i -e 's#localhost\.internal.*#localhost\.internal:'"$RET"' {#' /etc/caddy/containerd.caddy
-    sed -i -E "s|(url: oci://[^:]+):[0-9]+/|\1:${RET}/|" /etc/edge-node/node/confs/node-agent.yaml
+   sed -i -E '/name: client-proxy/,/url:/ s|(http://[^/]+/)[^/]+|\1'"$RET"'|' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
 if ! grep -q "EnvironmentFile" "/lib/systemd/system/caddy.service"; then
@@ -56,7 +51,6 @@ db_get node-agent/auth.RSType
 if [ ! -z "$RET" ]; then
     if [ "$RET" == "no-auth" ]; then
         sed -i -e '/header_up Authorization.*/d' /etc/caddy/pua.caddy
-        sed -i -e '/header_up Authorization.*/d' /etc/caddy/containerd.caddy
     fi
 fi
 
@@ -68,7 +62,6 @@ if [ ! -e "/etc/incron.allow" ] || ! grep -q "node-agent" "/etc/incron.allow"; t
     echo "node-agent" >> /etc/incron.allow
 fi
 
-chmod -R 710 etc/intel_edge_node/caddy
 chmod 700 etc/intel_edge_node/client-credentials
 chmod 600 etc/intel_edge_node/client-credentials/*
 chmod -R 750 etc/intel_edge_node/tokens
@@ -83,29 +76,14 @@ chmod 640 /etc/intel_edge_node/tokens/release-service/access_token
 
 apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.node-agent
 
-# create self-signed cert for caddy client/forward proxy
-if [ ! -e "/etc/intel_edge_node/caddy/certs/caddy-apt-cert.pem" ]; then
-    openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/intel_edge_node/caddy/.keys/caddy-apt-key.pem -out /etc/intel_edge_node/caddy/certs/caddy-apt-cert.pem -config /etc/edge-node/node/confs/san_apt.conf -extensions 'v3_req'
-    cp /etc/intel_edge_node/caddy/certs/caddy-apt-cert.pem /usr/local/share/ca-certificates/caddy-apt-cert.crt
+if ! grep -q "127.0.0.1 localhost" "/etc/hosts"; then
+    echo "127.0.0.1 localhost" >> /etc/hosts
 fi
 
-# create self signed cert for Containerd with SAN
-if [ ! -e "/etc/intel_edge_node/caddy/certs/caddy-containerd-cert.pem" ]; then
-    openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/intel_edge_node/caddy/.keys/caddy-containerd-key.pem -out /etc/intel_edge_node/caddy/certs/caddy-containerd-cert.pem -config /etc/edge-node/node/confs/san.conf -extensions 'v3_req'
-    cp /etc/intel_edge_node/caddy/certs/caddy-containerd-cert.pem /usr/local/share/ca-certificates/caddy-containerd-cert.crt
-fi
-
-chmod 600 /etc/intel_edge_node/caddy/.keys/caddy-apt-key.pem
-chmod 600 /etc/intel_edge_node/caddy/.keys/caddy-containerd-key.pem
-
-# Entry for containerd proxy, Not adding to no_proxy as .internal expected
-if ! grep -q "127.0.0.1 localhost.internal localhost" "/etc/hosts"; then
-    echo "127.0.0.1 localhost.internal localhost" >> /etc/hosts
-fi
-
-update-ca-certificates
-
-# Add single line in main Caddyfile to use the other *.caddy files
+# Ensure cleanup of stale files for upgrades
+rm -f /etc/caddy/containerd.caddy
+rm -rf /etc/intel_edge_node/caddy
+# Add single line in main Caddyfile to use the other *.caddy file
 echo "import /etc/caddy/*.caddy" > /etc/caddy/Caddyfile
 
 # Update file/dir ownership
@@ -113,7 +91,6 @@ chown -R node-agent:bm-agents /etc/edge-node/node
 chown node-agent:bm-agents /etc/intel_edge_node
 chown -R node-agent:bm-agents /etc/intel_edge_node/client-credentials
 chown -R node-agent:bm-agents /etc/intel_edge_node/tokens
-chown -R caddy:caddy /etc/intel_edge_node/caddy
 usermod -a -G bm-agents caddy
 
 chmod 750 /etc/caddy

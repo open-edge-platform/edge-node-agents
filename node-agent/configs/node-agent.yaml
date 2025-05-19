@@ -14,8 +14,8 @@ status:
   serviceClients: [ hardware-discovery-agent, cluster-agent, platform-update-agent, platform-telemetry-agent ]
   outboundClients: [ platform-observability-collector, platform-observability-health-check, platform-observability-logging, platform-observability-metrics ]
   networkEndpoints:
-    - name: caddy
-      url: oci://localhost.internal:9443/edge-orch/en/files/ena-manifest:main
+    - name: client-proxy
+      url: http://localhost:60444/files-edge-orch/edge-node.asc
 metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
 metricsInterval: 10s
 auth:
