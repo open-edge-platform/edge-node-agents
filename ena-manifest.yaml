@@ -4,7 +4,7 @@
 ---
 metadata:
   schemaVersion: 2.0.0
-  release: 1.1.0-dev
+  release: 1.1.1-dev
 repository:
   codename: 3.1
   component: main
