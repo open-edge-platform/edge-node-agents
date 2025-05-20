@@ -227,7 +227,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          inbm_agent_check=$(echo "${{ needs.collect-versions.outputs.inbm_version" | grep 'dev')
+          inbm_agent_check=$(echo "${{ needs.collect-versions.outputs.inbm_version }}" | grep 'dev')
           if [ "${inbm_agent_check}" != "" ]; then
             echo "Skipping INBM version update as no new version created"
           else
