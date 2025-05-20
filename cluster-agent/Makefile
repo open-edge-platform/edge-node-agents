@@ -15,7 +15,7 @@ else
 	PKG_VERSION = $(VERSION)
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
-CA_VERSION="Cluster Agent v$(VERSION)-$(COMMIT)" \
+CA_VERSION="Cluster Agent v$(VERSION)-$(COMMIT)"
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
