@@ -19,6 +19,8 @@ import (
 	hda_utils "github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
 )
 
+const bitSize int = 32
+
 var log = logger.Logger
 
 var (
@@ -173,7 +175,7 @@ func parseIpmiInfo(ipmiData []byte) string {
 func parseIPInfo(ipInfo string, bmcAddr string) ([]*IPAddress, bool, uint32, error) {
 	mtuInfo := strings.Split(ipInfo, "mtu ")
 	mtu := strings.Split(mtuInfo[1], " ")
-	interfaceMtu, err := strconv.ParseUint(mtu[0], 10, 32)
+	interfaceMtu, err := strconv.ParseUint(mtu[0], 10, bitSize)
 	if err != nil {
 		log.Errorf("parsing mtu error : %v", err)
 		return []*IPAddress{}, false, 0, err
@@ -198,7 +200,7 @@ func parseIPInfo(ipInfo string, bmcAddr string) ([]*IPAddress, bool, uint32, err
 		}
 
 		netPrefix := strings.Split(ipAddress[1], " ")
-		prefix, err := strconv.ParseInt(netPrefix[0], 10, 32)
+		prefix, err := strconv.ParseInt(netPrefix[0], 10, bitSize)
 		if err != nil {
 			log.Errorf("parsing network prefix error : %v", err)
 			return []*IPAddress{}, false, 0, err
