@@ -68,7 +68,7 @@ jobs:
       platform_telemetry_agent_version: ${{ steps.agent-versions.outputs.platform_telemetry_agent }}
       platform_update_agent_version: ${{ steps.agent-versions.outputs.platform_update_agent }}
       inbm_version: ${{ steps.inbm-version.outputs.inbm_version }}
-      caddy_version: ${{ steps.caddy-version.outputs.inbm_version }}
+      caddy_version: ${{ steps.caddy-version.outputs.caddy_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -112,9 +112,7 @@ jobs:
         run: |
           LINE_NUM=$(grep -n 'name: caddy' ena-manifest.yaml | cut -d ':' -f 1)
           VERSION_LINE_NUM=$((${LINE_NUM}+1))
-          caddy_version=$(grep -ne 'version: ' ena-manifest.yaml | grep ${VERSION_LINE_NUM} | cut -d ':' -f 3 | cut -d ' ' -f 2)
-          echo ${caddy_version}
-          echo "caddy_version=${caddy_version}" >> ${GITHUB_OUTPUT}
+          echo "caddy_version=$(grep -ne 'version: ' ena-manifest.yaml | grep ${VERSION_LINE_NUM} | cut -d ':' -f 3 | cut -d ' ' -f 2)" >> ${GITHUB_OUTPUT}
   update-manifest-virtual-edge-node:
     permissions:
       contents: read
