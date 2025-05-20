@@ -162,7 +162,7 @@ jobs:
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@40d61a820157bc9b70d3f2bdc5aec786073d48f2
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
-          ref: "base,yq"
+          bootstrap_tools: "base,yq"
 
       - name: Get manifest version
         id: manifest-version
@@ -216,7 +216,7 @@ jobs:
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@40d61a820157bc9b70d3f2bdc5aec786073d48f2
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
-          ref: "base"
+          bootstrap_tools: "base"
 
       - name: Set up Git identity
         shell: bash
@@ -372,7 +372,7 @@ jobs:
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@40d61a820157bc9b70d3f2bdc5aec786073d48f2
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
-          ref: 'base'
+          bootstrap_tools: 'base'
 
       - name: Set up Git identity
         shell: bash
