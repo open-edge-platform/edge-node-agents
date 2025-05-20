@@ -15,6 +15,7 @@
 #### Go Targets ####
 
 GOCMD := go
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 #### Lint targets ####
 

@@ -141,5 +141,5 @@ package_test:
 	sudo apt-get purge -y cluster-agent
 
 tarball: common-tarball
-#common deb package
+#common deb package push
 deb-push: common-deb-push
