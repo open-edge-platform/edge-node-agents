@@ -112,7 +112,9 @@ jobs:
         run: |
           LINE_NUM=$(grep -n 'name: caddy' ena-manifest.yaml | cut -d ':' -f 1)
           VERSION_LINE_NUM=$((${LINE_NUM}+1))
-          echo "caddy_version=$(grep -ne 'version: ' ena-manifest.yaml | grep ${VERSION_LINE_NUM} | cut -d ':' -f 3 | cut -d ' ' -f 2)" >> ${GITHUB_OUTPUT}
+          caddy_version=$(grep -ne 'version: ' ena-manifest.yaml | grep ${VERSION_LINE_NUM} | cut -d ':' -f 3 | cut -d ' ' -f 2)
+          echo ${caddy_version}
+          echo "caddy_version=${caddy_version}" >> ${GITHUB_OUTPUT}
   update-manifest-virtual-edge-node:
     permissions:
       contents: read
@@ -144,8 +146,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          manifest_check=$(echo "${{ needs.collect-versions.outputs.manifest_version }}" | grep 'dev')
-          if [ "${manifest_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.manifest_version }}" == *"dev"* ]]; then
             echo "Skipping manifest version update as no new version created"
           else
             echo "${{ needs.collect-versions.outputs.manifest_version }}" > edge-node-container/EN_MANIFEST_VERSION
@@ -155,8 +156,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          cluster_agent_check=$(echo "${{ needs.collect-versions.outputs.cluster_agent_version }}" | grep 'dev')
-          if [ "${cluster_agent_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.cluster_agent_version }}" == *"dev"* ]]; then
             echo "Skipping cluster agent version update as no new version created"
           else
             sed -i "s#cluster_agent_version: .*#cluster_agent_version: ${{ needs.collect-versions.outputs.cluster_agent_version }}#" edge-node-container/chart/bma_values.yaml
@@ -167,8 +167,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          hardware_discovery_agent_check=$(echo "${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}" | grep 'dev')
-          if [ "${hardware_discovery_agent_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}" == *"dev"* ]]; then
             echo "Skipping hardware discovery agent version update as no new version created"
           else
             sed -i "s#hardware_discovery_agent_version: .*#hardware_discovery_agent_version: ${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}#" edge-node-container/chart/bma_values.yaml
@@ -179,8 +178,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          node_agent_check=$(echo "${{ needs.collect-versions.outputs.node_agent_version }}" | grep 'dev')
-          if [ "${node_agent_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.node_agent_version }}" == *"dev"* ]]; then
             echo "Skipping node agent version update as no new version created"
           else
             sed -i "s#node_agent_version: .*#node_agent_version: ${{ needs.collect-versions.outputs.node_agent_version }}#" edge-node-container/chart/bma_values.yaml
@@ -191,8 +189,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          platform_observability_agent_check=$(echo "${{ needs.collect-versions.outputs.platform_observability_agent_version }}" | grep 'dev')
-          if [ "${platform_observability_agent_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.platform_observability_agent_version }}" == *"dev"* ]]; then
             echo "Skipping platform observability agent version update as no new version created"
           else
             sed -i "s#platform_observability_agent_version: .*#platform_observability_agent_version: ${{ needs.collect-versions.outputs.platform_observability_agent_version }}#" edge-node-container/chart/bma_values.yaml
@@ -203,8 +200,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          platform_telemetry_agent_check=$(echo "${{ needs.collect-versions.outputs.platform_telemetry_agent_version }}" | grep 'dev')
-          if [ "${platform_telemetry_agent_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.platform_telemetry_agent_version }}" == *"dev"* ]]; then
             echo "Skipping platform telemetry agent version update as no new version created"
           else
             sed -i "s#platform_telemetry_agent_version: .*#platform_telemetry_agent_version: ${{ needs.collect-versions.outputs.platform_telemetry_agent_version }}#" edge-node-container/chart/bma_values.yaml
@@ -215,8 +211,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          platform_update_agent_check=$(echo "${{ needs.collect-versions.outputs.platform_update_agent_version }}" | grep 'dev')
-          if [ "${platform_update_agent_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.platform_update_agent_version }}" == *"dev"* ]]; then
             echo "Skipping platform update agent version update as no new version created"
           else
             sed -i "s#platform_update_agent_version: .*#platform_update_agent_version: ${{ needs.collect-versions.outputs.platform_update_agent_version }}#" edge-node-container/chart/bma_values.yaml
@@ -227,8 +222,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
-          inbm_agent_check=$(echo "${{ needs.collect-versions.outputs.inbm_version }}" | grep 'dev')
-          if [ "${inbm_agent_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.inbm_version }}" == *"dev"* ]]; then
             echo "Skipping INBM version update as no new version created"
           else
             sed -i "s#inbc_program_version: .*#inbc_program_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
@@ -307,8 +301,7 @@ jobs:
         shell: bash
         working-directory: infra-charts
         run: |
-          manifest_check=$(echo "${{ needs.collect-versions.outputs.manifest_version }}" | grep 'dev')
-          if [ "${manifest_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.manifest_version }}" == *"dev"* ]]; then
             echo "Skipping manifest version update as no new version created"
           else
             sed -i "s#  enAgentManifestTag:  .*#  enAgentManifestTag: \"${{ needs.collect-versions.outputs.manifest_version }}\"#" infra-config/values.yaml
@@ -363,8 +356,7 @@ jobs:
         shell: bash
         working-directory: edge-manageability-framework
         run: |
-          manifest_check=$(echo "${{ needs.collect-versions.outputs.manifest_version }}" | grep 'dev')
-          if [ "${manifest_check}" != "" ]; then
+          if [[ "${{ needs.collect-versions.outputs.manifest_version }}" == *"dev"* ]]; then
             echo "Skipping manifest version update as no new version created"
           else
             sed -i "s#    enAgentManifestTag: .*#    enAgentManifestTag: \""${{ needs.collect-versions.outputs.manifest_version }}"\"#" argocd/applications/configs/infra-onboarding.yaml
