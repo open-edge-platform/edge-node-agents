@@ -255,7 +255,7 @@ jobs:
         working-directory: virtual-edge-node
         run: |
           check_changed_files=$(git status -s)
-          if [ ${check_changed_files} != "" ]; then
+          if [ "${check_changed_files}" != "" ]; then
             current_date=$(date +%d-%m-%Y-%H%M%S)
             branch_name="update-versions-${current_date}"
             git checkout -b $branch_name
@@ -300,14 +300,14 @@ jobs:
           if [[ "${{ needs.collect-versions.outputs.manifest_version }}" = .*dev ]]; then
             echo "Skipping manifest version update as no new version created"
           else
-            sed -i "s#  enAgentManifestTag:  .*#  enAgentManifestTag: "${{ needs.collect-versions.outputs.manifest_version }}"#" infra-config/values.yaml
+            sed -i "s#  enAgentManifestTag:  .*#  enAgentManifestTag: \"${{ needs.collect-versions.outputs.manifest_version }}\"#" infra-config/values.yaml
 
       - name: Commit changes to branch and create PR
         shell: bash
         working-directory: infra-charts
         run: |
           check_changed_files=$(git status -s)
-          if [ ${check_changed_files} != "" ]; then
+          if [ "${check_changed_files}" != "" ]; then
             current_date=$(date +%d-%m-%Y-%H%m%S)
             branch_name="update-manifest-version-${current-date}"
             git checkout -b $branch_name
@@ -360,7 +360,7 @@ jobs:
         working-directory: edge-manageability-framework
         run: |
           check_changed_files=$(git status -s)
-          if [ ${check_changed_files} != "" ]; then
+          if [ "${check_changed_files}" != "" ]; then
             current_date=$(date +%d-%m-%Y-%H%M%S)
             branch_name="update-manifest-version-${current_date}"
             git checkout -b $branch_name
