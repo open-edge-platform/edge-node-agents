@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 SHELL=/bin/bash -o pipefail
+REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 NAME ?= cluster-agent
 BUILD_DIR ?= build/artifacts
 GO_MOD ?= readonly
@@ -15,7 +16,6 @@ else
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
 CA_VERSION="Cluster Agent v$(VERSION)-$(COMMIT)" \
-REGISTRY="080137407410.dkr.ecr.us-west-2.amazonaws.com"
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
