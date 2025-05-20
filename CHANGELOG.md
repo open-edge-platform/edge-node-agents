@@ -57,6 +57,9 @@
 
 ## Platform Observability Agent Changelog
 
+### 1.9.0
+- Add collection of cloud-init service logs
+
 ### 1.8.1
 - Update log and metrics service to start after collector service
 
