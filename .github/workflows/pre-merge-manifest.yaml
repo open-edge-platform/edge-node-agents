@@ -253,6 +253,8 @@ jobs:
       - name: Commit changes to branch and create PR
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
@@ -301,10 +303,13 @@ jobs:
             echo "Skipping manifest version update as no new version created"
           else
             sed -i "s#  enAgentManifestTag:  .*#  enAgentManifestTag: \"${{ needs.collect-versions.outputs.manifest_version }}\"#" infra-config/values.yaml
+          fi
 
       - name: Commit changes to branch and create PR
         shell: bash
         working-directory: infra-charts
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
@@ -358,6 +363,8 @@ jobs:
       - name: Commit changes to branch and create PR
         shell: bash
         working-directory: edge-manageability-framework
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
