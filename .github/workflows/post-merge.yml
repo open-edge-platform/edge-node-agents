@@ -129,6 +129,8 @@ jobs:
             ${REGISTRY}/${REPOSITORY}:${GITHUB_REF_NAME},${version} ${MANIFEST}
 
       - name: Tag new manifest version
+        env:
+          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
           ./common/ci_scripts/manifest-versioning.sh tag
   collect-versions:
