@@ -12,6 +12,8 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
 )
 
+const bitSize int = 32
+
 type CPU struct {
 	Arch     string
 	Vendor   string
@@ -69,7 +71,7 @@ func GetCPUList(executor utils.CmdExecutor) (*CPU, error) {
 		}
 		if strings.HasPrefix(attr, "Socket(s)") {
 			socketStr := strings.TrimSpace(strings.TrimPrefix(attr, "Socket(s):"))
-			sockets, err := strconv.ParseUint(socketStr, 10, 64)
+			sockets, err := strconv.ParseUint(socketStr, 10, bitSize)
 			if err != nil {
 				continue
 			}
@@ -77,7 +79,7 @@ func GetCPUList(executor utils.CmdExecutor) (*CPU, error) {
 		}
 		if strings.HasPrefix(attr, "CPU(s)") {
 			cpuStr := strings.TrimSpace(strings.TrimPrefix(attr, "CPU(s):"))
-			cpus, err := strconv.ParseUint(cpuStr, 10, 64)
+			cpus, err := strconv.ParseUint(cpuStr, 10, bitSize)
 			if err != nil {
 				continue
 			}
@@ -85,7 +87,7 @@ func GetCPUList(executor utils.CmdExecutor) (*CPU, error) {
 		}
 		if strings.HasPrefix(attr, "Core(s) per socket") {
 			coresStr := strings.TrimSpace(strings.TrimPrefix(attr, "Core(s) per socket:"))
-			cores, err := strconv.ParseUint(coresStr, 10, 64)
+			cores, err := strconv.ParseUint(coresStr, 10, bitSize)
 			if err != nil {
 				continue
 			}
@@ -145,25 +147,24 @@ func inferEPCores(sockets uint32, coreInfo []*cores, coreMaxFreq string) *CPUTop
 			// If max frequency cannot be retrieved from lscpu, default to 0 so that all cores are considered P Cores.
 			maxCoreFreq = 0
 		}
-		coreFreq := uint32(maxCoreFreq)
-		eCoreTargetFreq := (3 * coreFreq) / 4
+		eCoreTargetFreq := (3 * maxCoreFreq) / 4
 		socketDetails := getCoreGroupsPerSocket(socketID, coreInfo, eCoreTargetFreq)
 		socketInfo = append(socketInfo, socketDetails)
 	}
 	return &CPUTopology{Sockets: socketInfo}
 }
 
-func getCoreGroupsPerSocket(socketID uint32, coreInfo []*cores, coreMaxFreq uint32) *Socket {
+func getCoreGroupsPerSocket(socketID uint32, coreInfo []*cores, coreMaxFreq uint64) *Socket {
 	pCoreList := make([]uint32, 0)
 	eCoreList := make([]uint32, 0)
 
 	for _, core := range coreInfo {
-		socket, err := strconv.ParseUint(core.Socket, 10, 64)
+		socket, err := strconv.ParseUint(core.Socket, 10, bitSize)
 		if err != nil {
 			socket = 0
 		}
 		if socket == uint64(socketID) {
-			cpu, err := strconv.ParseUint(core.CPU, 10, 64)
+			cpu, err := strconv.ParseUint(core.CPU, 10, bitSize)
 			if err != nil {
 				continue
 			}
@@ -176,7 +177,7 @@ func getCoreGroupsPerSocket(socketID uint32, coreInfo []*cores, coreMaxFreq uint
 			if err != nil {
 				continue
 			}
-			if coreFreq <= uint64(coreMaxFreq) {
+			if coreFreq <= coreMaxFreq {
 				eCoreList = append(eCoreList, uint32(cpu))
 			} else {
 				pCoreList = append(pCoreList, uint32(cpu))

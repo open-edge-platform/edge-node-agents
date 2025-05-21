@@ -91,7 +91,7 @@ func getID(usbDeviceInfo string, idType string) string {
 }
 
 func getAddr(usbAddrInfo string) (uint32, error) {
-	addr, err := strconv.ParseUint(usbAddrInfo, 10, 64)
+	addr, err := strconv.ParseUint(usbAddrInfo, 10, 32)
 	if err != nil {
 		return 0, err
 	}
