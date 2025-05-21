@@ -173,7 +173,7 @@ func TestAptMirror_IsDeprecatedFormat_shouldBeFalseWhenMultiLineFormat(t *testin
 
 func TestAptMirror_ConfigureForwardProxy_happyPath(t *testing.T) {
 	repoUri := "https://target-file-server.com"
-	forwardProxyUri := "https://localhost"
+	forwardProxyUri := "http://localhost"
 	customRepos := []string{fmt.Sprintf("#ReleaseService\nTypes: deb\nURIs: %v\nSuites: example\nComponents: release\nSigned-By:\npublic GPG key", repoUri)}
 	aptController := AptController{}
 	rpConfigFile, err := os.CreateTemp("/tmp", "forward-proxy.conf")
@@ -238,7 +238,7 @@ func TestAptMirror_ConfigureForwardProxy_shouldFailWhenRpConfigIsEmpty(t *testin
 
 func TestAptMirror_readAndReplaceToRPUrl_shouldFailAsUriKeyIsMissing(t *testing.T) {
 	repoMissingUriKey := "#ReleaseService\nTypes: deb\nSuites: example\nComponents: release\nSigned-By:\npublic GPG key"
-	forwardProxyUrl = "https://localhost"
+	forwardProxyUrl = "http://localhost"
 
 	updatedRepo, releaseServiceUrl, err := readAndReplaceToRPUrl(repoMissingUriKey)
 
@@ -249,7 +249,7 @@ func TestAptMirror_readAndReplaceToRPUrl_shouldFailAsUriKeyIsMissing(t *testing.
 
 func TestAptMirror_readAndReplaceToRPUrl_shouldFailAsNewlineIsMissing(t *testing.T) {
 	repoMissingUriKey := "Types: deb\nURIs: https://test.com"
-	forwardProxyUrl = "https://localhost"
+	forwardProxyUrl = "http://localhost"
 
 	updatedRepo, releaseServiceUrl, err := readAndReplaceToRPUrl(repoMissingUriKey)
 

@@ -76,6 +76,10 @@
 - Dependency import updates
 
 ## Platform Update Agent Changelog
+
+### 1.5.0
+- Downgrade internal caddy endpoint to no TLS
+
 ### 1.4.2
 - Update INBM to 4.2.8.6
 
