@@ -23,15 +23,18 @@ jobs:
       manifest: ${{ contains(steps.check-files.outputs.changed_files, 'ena-manifest.yaml') }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
       - name: "Discover Changed Subfolders"
         id: discover-changes
         uses: open-edge-platform/orch-ci/discover-changed-subfolders@40d61a820157bc9b70d3f2bdc5aec786073d48f2
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
+        env:
+          changed_projects: ${{ steps.discover-changes.outputs.changed_projects }}
         run: |
           folders_to_remove='[".github",".reuse","LICENSES"]'
 
-          changed_projects='${{ steps.discover-changes.outputs.changed_projects }}'
           filtered_projects=$(echo "$changed_projects" | jq -cr --argjson folders_to_remove "$folders_to_remove" 'map(select(. as $item | $folders_to_remove | index($item) | not))')
           echo "filtered_projects=${filtered_projects}" >> ${GITHUB_OUTPUT}
 
@@ -67,7 +70,12 @@ jobs:
       project_folder: ${{ matrix.project_folder }}
       remove_cache_go: true
       cache_go: true
-    secrets: inherit
+    secrets:
+      SYS_ORCH_GITHUB: ${{ secrets.SYS_ORCH_GITHUB }}
+      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+      NO_AUTH_ECR_PUSH_USERNAME: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}
+      NO_AUTH_ECR_PUSH_PASSWD: ${{ secrets.NO_AUTH_ECR_PUSH_PASSWD }}
   push-manifest:
     permissions:
       contents: read
@@ -85,6 +93,7 @@ jobs:
           fetch-depth: 0 # Fetch all history, WO sporadic issue with missing tags
           fetch-tags: true # Fetch tags
           ref: ${{ github.head_ref }} # Checkout the branch that triggered the workflow to avoid detached HEAD
+          persist-credentials: false
 
       - name: Checkout action repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -92,6 +101,7 @@ jobs:
           repository: open-edge-platform/orch-ci
           path: ci
           token: ${{ secrets.SYS_ORCH_GITHUB }}
+          persist-credentials: false
 
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b39f8770ac653e73001e07f9f47028e1d590be5c  # 0.1.13
@@ -159,6 +169,7 @@ jobs:
           fetch-depth: 0 # Fetch all history, WO sporadic issue with missing tags
           fetch-tags: true # Fetch tags
           ref: ${{ github.head_ref }} # Checkout the branch that triggered the workflow to avoid detached HEAD
+          persist-credentials: false
 
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b39f8770ac653e73001e07f9f47028e1d590be5c  # 0.1.13
@@ -213,6 +224,7 @@ jobs:
           repository: open-edge-platform/virtual-edge-node
           path: virtual-edge-node
           token: ${{ secrets.SYS_ORCH_GITHUB }}
+          persist-credentials: false
 
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b39f8770ac653e73001e07f9f47028e1d590be5c  # 0.1.13
@@ -229,112 +241,130 @@ jobs:
       - name: Update manifest version in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.manifest_version: ${{ needs.collect-versions.outputs.manifest_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.manifest_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.manifest_version}" == *"dev"* ]]; then
             echo "Skipping manifest version update as no new version created"
           else
-            echo "${{ needs.collect-versions.outputs.manifest_version }}" > edge-node-container/EN_MANIFEST_VERSION
+            echo "${collect-versions.outputs.manifest_version}" > edge-node-container/EN_MANIFEST_VERSION
           fi
 
       - name: Update cluster-agent versions in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.cluster_agent_version: ${{ needs.collect-versions.outputs.cluster_agent_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.cluster_agent_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.cluster_agent_version}" == *"dev"* ]]; then
             echo "Skipping cluster agent version update as no new version created"
           else
-            sed -i "s#cluster_agent_version: .*#cluster_agent_version: ${{ needs.collect-versions.outputs.cluster_agent_version }}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  cluster_agent_version: .*#  cluster_agent_version: ${{ needs.collect-versions.outputs.cluster_agent_version }}#" edge-node-container/chart/values.yaml
+            sed -i "s#cluster_agent_version: .*#cluster_agent_version: ${collect-versions.outputs.cluster_agent_version}#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  cluster_agent_version: .*#  cluster_agent_version: ${collect-versions.outputs.cluster_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update hardware-discovery-agent versions in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.hardware_discovery_agent_version: ${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.hardware_discovery_agent_version}" == *"dev"* ]]; then
             echo "Skipping hardware discovery agent version update as no new version created"
           else
-            sed -i "s#hardware_discovery_agent_version: .*#hardware_discovery_agent_version: ${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  hardware_discovery_agent_version: .*#  hardware_discovery_agent_version: ${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}#" edge-node-container/chart/values.yaml
+            sed -i "s#hardware_discovery_agent_version: .*#hardware_discovery_agent_version: ${collect-versions.outputs.hardware_discovery_agent_version}#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  hardware_discovery_agent_version: .*#  hardware_discovery_agent_version: ${collect-versions.outputs.hardware_discovery_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update node-agent versions in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.node_agent_version: ${{ needs.collect-versions.outputs.node_agent_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.node_agent_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.node_agent_version}" == *"dev"* ]]; then
             echo "Skipping node agent version update as no new version created"
           else
-            sed -i "s#node_agent_version: .*#node_agent_version: ${{ needs.collect-versions.outputs.node_agent_version }}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  node_agent_version: .*#  node_agent_version: ${{ needs.collect-versions.outputs.node_agent_version }}#" edge-node-container/chart/values.yaml
+            sed -i "s#node_agent_version: .*#node_agent_version: ${collect-versions.outputs.node_agent_version}#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  node_agent_version: .*#  node_agent_version: ${collect-versions.outputs.node_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update platform-observability-agent versions in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.platform_observability_agent_version: ${{ needs.collect-versions.outputs.platform_observability_agent_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.platform_observability_agent_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.platform_observability_agent_version}" == *"dev"* ]]; then
             echo "Skipping platform observability agent version update as no new version created"
           else
-            sed -i "s#platform_observability_agent_version: .*#platform_observability_agent_version: ${{ needs.collect-versions.outputs.platform_observability_agent_version }}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  platform_observability_agent_version: .*#  platform_observability_agent_version: ${{ needs.collect-versions.outputs.platform_observability_agent_version }}#" edge-node-container/chart/values.yaml
+            sed -i "s#platform_observability_agent_version: .*#platform_observability_agent_version: ${collect-versions.outputs.platform_observability_agent_version}#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  platform_observability_agent_version: .*#  platform_observability_agent_version: ${collect-versions.outputs.platform_observability_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update platform-telemetry-agent versions in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.platform_telemetry_agent_version: ${{ needs.collect-versions.outputs.platform_telemetry_agent_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.platform_telemetry_agent_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.platform_telemetry_agent_version}" == *"dev"* ]]; then
             echo "Skipping platform telemetry agent version update as no new version created"
           else
-            sed -i "s#platform_telemetry_agent_version: .*#platform_telemetry_agent_version: ${{ needs.collect-versions.outputs.platform_telemetry_agent_version }}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  platform_telemetry_agent_version: .*#  platform_telemetry_agent_version: ${{ needs.collect-versions.outputs.platform_telemetry_agent_version }}#" edge-node-container/chart/values.yaml
+            sed -i "s#platform_telemetry_agent_version: .*#platform_telemetry_agent_version: ${collect-versions.outputs.platform_telemetry_agent_version}#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  platform_telemetry_agent_version: .*#  platform_telemetry_agent_version: ${collect-versions.outputs.platform_telemetry_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update platform-update-agent versions in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.platform_update_agent_version: ${{ needs.collect-versions.outputs.platform_update_agent_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.platform_update_agent_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.platform_update_agent_version}" == *"dev"* ]]; then
             echo "Skipping platform update agent version update as no new version created"
           else
-            sed -i "s#platform_update_agent_version: .*#platform_update_agent_version: ${{ needs.collect-versions.outputs.platform_update_agent_version }}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  platform_update_agent_version: .*#  platform_update_agent_version: ${{ needs.collect-versions.outputs.platform_update_agent_version }}#" edge-node-container/chart/values.yaml
+            sed -i "s#platform_update_agent_version: .*#platform_update_agent_version: ${collect-versions.outputs.platform_update_agent_version}#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  platform_update_agent_version: .*#  platform_update_agent_version: ${collect-versions.outputs.platform_update_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update INBM versions in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.inbm_version: ${{ needs.collect-versions.outputs.inbm_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.inbm_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.inbm_version}" == *"dev"* ]]; then
             echo "Skipping INBM version update as no new version created"
           else
-            sed -i "s#inbc_program_version: .*#inbc_program_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbc_program_version: .*#  inbc_program_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_cloudadapter_agent_version: .*#inbm_cloudadapter_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_cloudadapter_agent_version: .*#  inbm_cloudadapter_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_configuration_agent_version: .*#inbm_configuration_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_configuration_agent_version: .*#  inbm_configuration_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_diagnostic_agent_version: .*#inbm_diagnostic_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_diagnostic_agent_version: .*#  inbm_diagnostic_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_dispatcher_agent_version: .*#inbm_dispatcher_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_dispatcher_agent_version: .*#  inbm_dispatcher_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_telemetry_agent_version: .*#inbm_telemetry_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_telemetry_agent_version: .*#  inbm_telemetry_agent_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#mqtt_version: .*#mqtt_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  mqtt_version: .*#  mqtt_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#tpm_provision_version: .*#tpm_provision_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  tpm_provision_version: .*#  tpm_provision_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#trtl_version: .*#trtl_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  trtl_version: .*#  trtl_version:${{ needs.collect-versions.outputs.inbm_version }}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#inbc_program_version: .*#inbc_program_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  inbc_program_version: .*#  inbc_program_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#inbm_cloudadapter_agent_version: .*#inbm_cloudadapter_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  inbm_cloudadapter_agent_version: .*#  inbm_cloudadapter_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#inbm_configuration_agent_version: .*#inbm_configuration_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  inbm_configuration_agent_version: .*#  inbm_configuration_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#inbm_diagnostic_agent_version: .*#inbm_diagnostic_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  inbm_diagnostic_agent_version: .*#  inbm_diagnostic_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#inbm_dispatcher_agent_version: .*#inbm_dispatcher_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  inbm_dispatcher_agent_version: .*#  inbm_dispatcher_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#inbm_telemetry_agent_version: .*#inbm_telemetry_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  inbm_telemetry_agent_version: .*#  inbm_telemetry_agent_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#mqtt_version: .*#mqtt_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  mqtt_version: .*#  mqtt_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#tpm_provision_version: .*#tpm_provision_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  tpm_provision_version: .*#  tpm_provision_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#trtl_version: .*#trtl_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  trtl_version: .*#  trtl_version:${collect-versions.outputs.inbm_version}-1#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update Caddy versions in chart
         shell: bash
         working-directory: virtual-edge-node
+        env:
+          collect-versions.outputs.caddy_version: ${{ needs.collect-versions.outputs.caddy_version }}
         run: |
-          sed -i "s#caddy_version: .*#caddy_version: ${{ needs.collect-versions.outputs.caddy_version }}#" edge-node-container/chart/bma_values.yaml
-          sed -i "s#  caddy_version: .*#  caddy_version: ${{ needs.collect-versions.outputs.caddy_version }}#" edge-node-container/chart/values.yaml
+          sed -i "s#caddy_version: .*#caddy_version: ${collect-versions.outputs.caddy_version}#" edge-node-container/chart/bma_values.yaml
+          sed -i "s#  caddy_version: .*#  caddy_version: ${collect-versions.outputs.caddy_version}#" edge-node-container/chart/values.yaml
 
       - name: Commit changes to branch and create PR
         shell: bash
@@ -371,6 +401,7 @@ jobs:
           repository: open-edge-platform/infra-charts
           path: infra-charts
           token: ${{ secrets.SYS_ORCH_GITHUB }}
+          persist-credentials: false
 
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b39f8770ac653e73001e07f9f47028e1d590be5c  # 0.1.13
@@ -387,11 +418,13 @@ jobs:
       - name: Update manifest version in chart
         shell: bash
         working-directory: infra-charts
+        env:
+          collect-versions.outputs.manifest_version: ${{ needs.collect-versions.outputs.manifest_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.manifest_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.manifest_version}" == *"dev"* ]]; then
             echo "Skipping manifest version update as no new version created"
           else
-            sed -i "s#  enAgentManifestTag:  .*#  enAgentManifestTag: \"${{ needs.collect-versions.outputs.manifest_version }}\"#" infra-config/values.yaml
+            sed -i "s#  enAgentManifestTag:  .*#  enAgentManifestTag: \"${collect-versions.outputs.manifest_version}\"#" infra-config/values.yaml
           fi
 
       - name: Commit changes to branch and create PR
@@ -429,6 +462,7 @@ jobs:
           repository: open-edge-platform/edge-manageability-framework
           path: edge-manageability-framework
           token: ${{ secrets.SYS_ORCH_GITHUB }}
+          persist-credentials: false
 
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b39f8770ac653e73001e07f9f47028e1d590be5c  # 0.1.13
@@ -445,11 +479,13 @@ jobs:
       - name: Update manifest version in chart
         shell: bash
         working-directory: edge-manageability-framework
+        env:
+          collect-versions.outputs.manifest_version: ${{ needs.collect-versions.outputs.manifest_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.manifest_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.manifest_version}" == *"dev"* ]]; then
             echo "Skipping manifest version update as no new version created"
           else
-            sed -i "s#    enAgentManifestTag: .*#    enAgentManifestTag: \""${{ needs.collect-versions.outputs.manifest_version }}"\"#" argocd/applications/configs/infra-onboarding.yaml
+            sed -i "s#    enAgentManifestTag: .*#    enAgentManifestTag: \""${collect-versions.outputs.manifest_version}"\"#" argocd/applications/configs/infra-onboarding.yaml
           fi
 
       - name: Commit changes to branch and create PR

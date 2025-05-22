@@ -39,6 +39,7 @@ jobs:
           repository: open-edge-platform/orch-ci
           path: ci
           token: ${{ secrets.SYS_ORCH_GITHUB }}
+          persist-credentials: false
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b39f8770ac653e73001e07f9f47028e1d590be5c  # 0.1.13
         with:
