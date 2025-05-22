@@ -28,8 +28,6 @@ import (
 
 var (
 	jwtTokenPath   = "/etc/intel_edge_node/tokens/release-service/access_token"
-	// DownloadDir is the directory where the downloaded file will be stored.
-	DownloadDir = "/var/cache/manageability/repository-tool/sota"
 )
 
 // Downloader is the concrete implementation of the IDownloader interface
@@ -123,7 +121,7 @@ func (t *Updater) VerifyHash() error {
 	// Extract the file name from the URL
 	urlParts := strings.Split(t.request.Url, "/")
 	fileName := urlParts[len(urlParts)-1]
-	filePath := DownloadDir + "/" + fileName
+	filePath := utils.DownloadDir + "/" + fileName
 
 	file, err := utils.Open(t.fs, filePath)
 	if err != nil {
@@ -192,7 +190,7 @@ func (t *Downloader) downloadFile() error {
 	fileName := urlParts[len(urlParts)-1]
 
 	// Create the file
-	file, err := t.fs.Create(DownloadDir + "/" + fileName)
+	file, err := t.fs.Create(utils.DownloadDir + "/" + fileName)
 	if err != nil {
 		return fmt.Errorf("error creating file: %v", err)
 	}

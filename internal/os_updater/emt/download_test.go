@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sys/unix"
 
+	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 )
 
@@ -46,11 +47,11 @@ func TestDownloader_downloadFile(t *testing.T) {
 		err := downloader.downloadFile()
 		assert.NoError(t, err)
 
-		exists, err := afero.Exists(fs, DownloadDir+"/file.txt")
+		exists, err := afero.Exists(fs, utils.DownloadDir+"/file.txt")
 		assert.NoError(t, err)
 		assert.True(t, exists)
 
-		content, err := afero.ReadFile(fs, DownloadDir+"/file.txt")
+		content, err := afero.ReadFile(fs, utils.DownloadDir+"/file.txt")
 		assert.NoError(t, err)
 		assert.Equal(t, "file content", string(content))
 	})

@@ -27,6 +27,11 @@ func TestUpdateOS_Success(t *testing.T) {
 				RebootFunc: func() error { return nil },
 			}
 		},
+		CreateCleanerFunc: func(executor utils.Executor, path string) Cleaner {
+			return &MockCleaner{
+				CleanFunc: func() error { return nil },
+			}
+		},
 		CreateSnapshotterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
 			return &MockSnapshotter{
 				SnapshotFunc: func() error { return nil },
@@ -59,6 +64,33 @@ func TestUpdateOS_DownloadError(t *testing.T) {
 	assert.Equal(t, "download error", resp.Error)
 }
 
+func TestUpdateOS_SnapshotError(t *testing.T) {
+	mockFactory := &MockUpdaterFactory{
+		CreateDownloaderFunc: func(*pb.UpdateSystemSoftwareRequest) Downloader {
+			return &MockDownloader{
+				DownloadFunc: func() error { return nil },
+			}
+		},
+		CreateSnapshotterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
+			return &MockSnapshotter{
+				SnapshotFunc: func() error { return fmt.Errorf("snapshot error") },
+			}
+		},
+		CreateCleanerFunc: func(utils.Executor, string) Cleaner {
+			return &MockCleaner{
+				CleanFunc: func() error { return nil },
+			}
+		},
+	}
+
+	req := &pb.UpdateSystemSoftwareRequest{Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL}
+	resp, err := UpdateOS(req, mockFactory)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int32(500), resp.StatusCode)
+	assert.Equal(t, "snapshot error", resp.Error)
+}
+
 func TestUpdateOS_UpdateError(t *testing.T) {
 	mockFactory := &MockUpdaterFactory{
 		CreateDownloaderFunc: func(*pb.UpdateSystemSoftwareRequest) Downloader {
@@ -74,6 +106,11 @@ func TestUpdateOS_UpdateError(t *testing.T) {
 		CreateUpdaterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
 			return &MockUpdater{
 				UpdateFunc: func() (bool, error) { return false, fmt.Errorf("update error") },
+			}
+		},
+		CreateCleanerFunc: func(utils.Executor, string) Cleaner {
+			return &MockCleaner{
+				CleanFunc: func() error { return nil },
 			}
 		},
 	}
@@ -101,6 +138,11 @@ func TestUpdateOS_RebootError(t *testing.T) {
 		CreateSnapshotterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
 			return &MockSnapshotter{
 				SnapshotFunc: func() error { return nil },
+			}
+		},
+		CreateCleanerFunc: func(utils.Executor, string) Cleaner {
+			return &MockCleaner{
+				CleanFunc: func() error { return nil },
 			}
 		},
 		CreateRebooterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {

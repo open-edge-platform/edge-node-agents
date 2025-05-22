@@ -13,6 +13,7 @@ import (
 
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	"github.com/intel/intel-inb-manageability/internal/os_updater/emt"
+	"github.com/intel/intel-inb-manageability/internal/os_updater/ubuntu"
 	"github.com/spf13/afero"
 )
 
@@ -45,10 +46,14 @@ func VerifyUpdateAfterReboot(fs afero.Fs) error {
 				return err
 			}
 		} else if osType == "Ubuntu" {
-			return nil // TODO: Implement Ubuntu verification
+			err := ubuntu.VerifyUpdateAfterReboot(fs, state)
+			if err != nil {
+				return err
+			}
 		} else {
 			return fmt.Errorf("Unsupported OS type: %s", osType)
 		}
+		log.Println("Post update verification completed.")
 	} else {
 		log.Println("No dispatcher state file. Skip post update verification.")
 	}

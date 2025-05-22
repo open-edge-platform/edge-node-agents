@@ -8,3 +8,6 @@ package utils
 
 // ConfigFilePath is the path to the configuration file.
 const ConfigFilePath = "/etc/intel_manageability.conf"
+
+// DownloadDir is the directory where the downloaded file will be stored.
+const DownloadDir = "/var/cache/manageability/repository-tool/sota"

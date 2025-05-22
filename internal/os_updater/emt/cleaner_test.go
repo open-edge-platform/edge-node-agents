@@ -19,11 +19,11 @@ import (
 
 type MockExecutor struct{}
 
-func (m *MockExecutor) Execute(command string, args ...string) error {
+func (m *MockExecutor) Execute(string, ...string) error {
 	return nil
 }
 
-func TestDeleteAll_Success(t *testing.T) {
+func TestClean_Success(t *testing.T) {
 	// Create a temporary directory with files for testing
 	tempDir := t.TempDir()
 	file1 := filepath.Join(tempDir, "file1.txt")
@@ -31,9 +31,9 @@ func TestDeleteAll_Success(t *testing.T) {
 	_ = os.WriteFile(file1, []byte("test"), fs.ModePerm)
 	_ = os.WriteFile(file2, []byte("test"), fs.ModePerm)
 
-	cleaner := NewCleaner(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput))
+	cleaner := NewCleaner(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), tempDir)
 
-	err := cleaner.DeleteAll(tempDir)
+	err := cleaner.Clean()
 	assert.NoError(t, err)
 
 	// Verify files are deleted
@@ -43,12 +43,12 @@ func TestDeleteAll_Success(t *testing.T) {
 	assert.True(t, os.IsNotExist(err))
 }
 
-func TestDeleteAll_NonExistentPath(t *testing.T) {
+func TestClean_NonExistentPath(t *testing.T) {
 	nonExistentPath := "nonexistent/path"
 
-	cleaner := NewCleaner(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput))
+	cleaner := NewCleaner(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), nonExistentPath)
 
-	err := cleaner.DeleteAll(nonExistentPath)
+	err := cleaner.Clean()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "no such file or directory")
 }

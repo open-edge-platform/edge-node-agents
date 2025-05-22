@@ -205,11 +205,123 @@ func TestSnapshot_EnsureSnapperConfigError(t *testing.T) {
     assert.Contains(t, err.Error(), "mock ensure snapper config error")
 }
 
+func TestUndoChange_Success(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper undochange" command to succeed
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "undochange", "42..0"}).Return("Undo successful", "", nil)
+
+    // Call UndoChange
+    err := UndoChange(mockExecutor, 42)
+
+    // Assertions
+    assert.NoError(t, err)
+    mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "-c", "rootConfig", "undochange", "42..0"})
+}
+
+func TestUndoChange_CommandError(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper undochange" command to fail
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "undochange", "42..0"}).Return("", "mock stderr", fmt.Errorf("mock command error"))
+
+    // Call UndoChange
+    err := UndoChange(mockExecutor, 42)
+
+    // Assertions
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "error executing command")
+    assert.Contains(t, err.Error(), "mock stderr")
+    assert.Contains(t, err.Error(), "mock command error")
+    mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "-c", "rootConfig", "undochange", "42..0"})
+}
+
+func TestUndoChange_StderrWarning(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper undochange" command to succeed with a warning in stderr
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "undochange", "42..0"}).Return("Undo successful", "mock warning", nil)
+
+    // Call UndoChange
+    err := UndoChange(mockExecutor, 42)
+
+    // Assertions
+    assert.NoError(t, err)
+    mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "-c", "rootConfig", "undochange", "42..0"})
+}
+
+func TestUndoChange_SnapshotNumberZero(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Call UndoChange with snapshotNumber set to 0
+    err := UndoChange(mockExecutor, 0)
+
+    // Assertions
+    assert.NoError(t, err)
+    mockExecutor.AssertNotCalled(t, "Execute") // Ensure no command is executed
+}
+
+func TestDeleteSnapshot_Success(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper delete" command to succeed
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "delete", "42"}).Return("Delete successful", "", nil)
+
+    // Call DeleteSnapshot
+    err := DeleteSnapshot(mockExecutor, 42)
+
+    // Assertions
+    assert.NoError(t, err)
+    mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "-c", "rootConfig", "delete", "42"})
+}
+
+func TestDeleteSnapshot_SnapshotNumberZero(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Call DeleteSnapshot with snapshotNumber set to 0
+    err := DeleteSnapshot(mockExecutor, 0)
+
+    // Assertions
+    assert.NoError(t, err)
+    mockExecutor.AssertNotCalled(t, "Execute") // Ensure no command is executed
+}
+
+func TestDeleteSnapshot_CommandError(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper delete" command to fail
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "delete", "42"}).Return("", "mock stderr", fmt.Errorf("mock command error"))
+
+    // Call DeleteSnapshot
+    err := DeleteSnapshot(mockExecutor, 42)
+
+    // Assertions
+    assert.Error(t, err)
+    assert.Contains(t, err.Error(), "error executing command")
+    assert.Contains(t, err.Error(), "mock stderr")
+    assert.Contains(t, err.Error(), "mock command error")
+    mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "-c", "rootConfig", "delete", "42"})
+}
+
+func TestDeleteSnapshot_StderrWarning(t *testing.T) {
+    mockExecutor := new(MockExecutor)
+
+    // Mock the "snapper delete" command to succeed with a warning in stderr
+    mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "delete", "42"}).Return("Delete successful", "mock warning", nil)
+
+    // Call DeleteSnapshot
+    err := DeleteSnapshot(mockExecutor, 42)
+
+    // Assertions
+    assert.NoError(t, err)
+    mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "-c", "rootConfig", "delete", "42"})
+}
+
 func TestIsSnapperInstalled_Success(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 
 	// Mock the "which snapper" command to simulate snapper being installed
-	mockExecutor.On("Execute", []string{"which", "snapper"}).Return("/usr/bin/snapper", "", nil)
+	mockExecutor.On("Execute", []string{"snapper", "--version"}).Return("/usr/bin/snapper", "", nil)
 
 	// Call isSnapperInstalled
 	isInstalled, err := IsSnapperInstalled(mockExecutor)
@@ -217,7 +329,7 @@ func TestIsSnapperInstalled_Success(t *testing.T) {
 	// Assertions
 	assert.NoError(t, err)
 	assert.True(t, isInstalled, "Snapper should be detected as installed")
-	mockExecutor.AssertCalled(t, "Execute", []string{"which", "snapper"})
+	mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "--version"})
 }
 
 // TODO: Create test that hits the false, no error case
@@ -225,8 +337,8 @@ func TestIsSnapperInstalled_Success(t *testing.T) {
 func TestIsSnapperInstalled_CommandError(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 
-	// Mock the "which snapper" command to simulate a command execution error
-	mockExecutor.On("Execute", []string{"which", "snapper"}).Return(string([]byte("")), string([]byte("mock stderr")), errors.New("mock command error"))
+	// Mock the "snapper --version" command to simulate a command execution error
+	mockExecutor.On("Execute", []string{"snapper", "--version"}).Return(string([]byte("")), string([]byte("mock stderr")), errors.New("mock command error"))
 
 	// Call isSnapperInstalled
 	isInstalled, err := IsSnapperInstalled(mockExecutor)
@@ -235,7 +347,7 @@ func TestIsSnapperInstalled_CommandError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "snapper is not installed")
 	assert.False(t, isInstalled, "Snapper should not be detected as installed on error")
-	mockExecutor.AssertCalled(t, "Execute", []string{"which", "snapper"})
+	mockExecutor.AssertCalled(t, "Execute", []string{"snapper", "--version"})
 }
 
 func TestEnsureSnapperConfig_ConfigExists(t *testing.T) {

@@ -107,12 +107,59 @@ func (u *Snapshotter) Snapshot() error {
 	return nil
 }
 
+// UndoChange reverts the changes made after the snapshot version.
+func UndoChange(cmdExecutor utils.Executor, snapshotNumber int) error {
+	log.Println("Undoing changes made after the snapshot version.")
+
+	if snapshotNumber == 0 {
+		log.Println("Update System Software rollback skipped.  Snapshot number is 0.")
+		return nil
+	}
+
+	undoChangeRange := strconv.Itoa(snapshotNumber) + "..0"
+	revertCmd := []string{
+		"snapper", "-c", "rootConfig", "undochange", undoChangeRange,
+	}
+	stdout, stderr, err := cmdExecutor.Execute(revertCmd)
+	if err != nil {
+		return fmt.Errorf("error executing command: %s, stderr: %s, err: %w", stdout, stderr, err)
+	}
+
+	if string(stderr) != "" {
+		log.Printf("Warning: undochange command produced stderr: %s", stderr)
+	}
+	log.Println("UndoChange completed successfully.")
+	return nil
+}
+
+// DeleteSnapshot deletes a snapshot version
+func DeleteSnapshot(cmdExecutor utils.Executor, snapshotNumber int) error {
+	log.Println("Deleting the snapshot version.")
+
+	if snapshotNumber == 0 {
+		log.Println("Snapshot number is 0 (dummy snapshot); no need to delete.")
+		return nil
+	}
+
+	deleteCmd := []string{
+		"snapper", "-c", "rootConfig", "delete", strconv.Itoa(snapshotNumber),
+	}
+	stdout, stderr, err := cmdExecutor.Execute(deleteCmd)
+	if err != nil {
+		return fmt.Errorf("error executing command: %s, stderr: %s, err: %w", stdout, stderr, err)
+	}
+
+	if string(stderr) != "" {
+		log.Printf("Warning: delete snapshot command produced stderr: %s", stderr)
+	}
+	log.Println("DeleteSnapshot completed successfully.")
+	return nil
+}
+
 // IsSnapperInstalled checks if the snapper package is installed on the system.
 func IsSnapperInstalled(cmdExecutor utils.Executor) (bool, error) {
-	findSnapper := []string{
-		"which", "snapper",
-	}
-	stdout, _, err := cmdExecutor.Execute(findSnapper)
+	checkSnapperCmd := []string{"snapper", "--version"}
+	stdout, _, err := cmdExecutor.Execute(checkSnapperCmd)
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
 			log.Println("Snapper is not installed.")
@@ -121,7 +168,7 @@ func IsSnapperInstalled(cmdExecutor utils.Executor) (bool, error) {
 		return false, fmt.Errorf("snapper is not installed")
 	}
 
-	if string(stdout) == "" {
+	if strings.TrimSpace(string(stdout)) == "" {
 		log.Println("Snapper is not installed.")
 		return false, nil
 	}

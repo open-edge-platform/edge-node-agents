@@ -81,7 +81,7 @@ func (t *Updater) Update() (bool, error) {
 		fileName := urlParts[len(urlParts)-1]
 
 		// Create the file
-		filePath := DownloadDir + "/" + fileName
+		filePath := utils.DownloadDir + "/" + fileName
 
 		updateToolWriteCommand := []string{
 			osUpdateToolPath, "-w", "-u", filePath, "-s", t.request.Signature,

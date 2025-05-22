@@ -18,10 +18,11 @@ import (
 
 // UpdaterFactory is an interface that contains the methods to create the concrete classes for the OS updater.
 type UpdaterFactory interface {
-	CreateDownloader(req *pb.UpdateSystemSoftwareRequest) Downloader
-	CreateUpdater(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Updater
-	CreateSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter
-	CreateRebooter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter
+	CreateDownloader(*pb.UpdateSystemSoftwareRequest) Downloader
+	CreateUpdater(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater
+	CreateSnapshotter(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter
+	CreateCleaner(utils.Executor, string) Cleaner
+	CreateRebooter(utils.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter
 }
 
 // GetOSUpdaterFactory returns the correct concrete classes for the OS updater based on the OS type.
@@ -29,7 +30,6 @@ func GetOSUpdaterFactory(os string) (UpdaterFactory, error) {
 	if os == "EMT" {
 		return &EMTFactory{}, nil
 	}
-
 	if os == "Ubuntu" {
 		return &UbuntuFactory{}, nil
 	}
@@ -52,6 +52,11 @@ func (f *EMTFactory) CreateUpdater(commandExecutor utils.Executor, req *pb.Updat
 // CreateSnapshotter creates a snapshotter concrete class for EMT OS.
 func (f *EMTFactory) CreateSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
 	return emt.NewSnapshotter(commandExecutor, req)
+}
+
+// CreateCleaner creates a cleaner concrete class for EMT OS.
+func (f *EMTFactory) CreateCleaner(commandExecutor utils.Executor, path string) Cleaner {
+	return emt.NewCleaner(commandExecutor, path)
 }
 
 // CreateRebooter creates a rebooter concrete class for EMT OS.
@@ -87,6 +92,14 @@ func (f *UbuntuFactory) CreateSnapshotter(commandExecutor utils.Executor, req *p
 		ClearStateFileFunc:      utils.ClearStateFile,
 		WriteToStateFileFunc:    utils.WriteToStateFile,
 		Fs:                      afero.NewOsFs(),
+	}
+}
+
+// CreateCleaner creates a cleaner concrete class for Ubuntu OS.
+func (f *UbuntuFactory) CreateCleaner(commandExecutor utils.Executor, path string) Cleaner {
+	return &ubuntu.Cleaner{
+		CommandExecutor: commandExecutor,
+		Path:            path,
 	}
 }
 

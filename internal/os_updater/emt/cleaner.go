@@ -23,22 +23,24 @@ type CleanerInterface interface {
 // Cleaner is the concrete implementation of the CleanerInterface
 type Cleaner struct {
 	commandExecutor utils.Executor
+	path            string
 	fs              afero.Fs
 }
 
 // NewCleaner creates a new Cleaner instance
-func NewCleaner(commandExecutor utils.Executor) *Cleaner {
+func NewCleaner(commandExecutor utils.Executor, path string) *Cleaner {
 	return &Cleaner{
 		commandExecutor: commandExecutor,
+		path:            path,
 		fs:              afero.NewOsFs(),
 	}
 }
 
-// DeleteAll removes all files in the specified path
-func (c *Cleaner) DeleteAll(path string) error {
+// Clean removes all files in the specified path
+func (c *Cleaner) Clean() error {
 	log.Println("Removes file after update")
 	// Walk through the directory and remove all files
-	err := filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+	err := filepath.Walk(c.path, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -56,7 +58,7 @@ func (c *Cleaner) DeleteAll(path string) error {
 		return err
 	})
 	if err != nil {
-		log.Printf("Failed to delete files in path %s: %v\n", path, err)
+		log.Printf("Failed to delete files in path %s: %v\n", c.path, err)
 		return err
 	}
 	return nil

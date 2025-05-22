@@ -42,6 +42,16 @@ func (m *MockSnapshotter) Snapshot() error {
 	return m.SnapshotFunc()
 }
 
+// MockCleaner is a mock implementation of the Cleaner interface.
+type MockCleaner struct {
+	CleanFunc func() error
+}
+
+// Clean calls the CleanFunc.
+func (m *MockCleaner) Clean() error {
+	return m.CleanFunc()
+}
+
 // MockRebooter is a mock implementation of the Rebooter interface.
 type MockRebooter struct {
 	RebootFunc func() error
@@ -56,6 +66,7 @@ func (m *MockRebooter) Reboot() error {
 type MockUpdaterFactory struct {
 	CreateDownloaderFunc  func(*pb.UpdateSystemSoftwareRequest) Downloader
 	CreateUpdaterFunc     func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater
+	CreateCleanerFunc     func(utils.Executor, string) Cleaner
 	CreateRebooterFunc    func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter
 	CreateSnapshotterFunc func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter
 }
@@ -68,6 +79,11 @@ func (m *MockUpdaterFactory) CreateDownloader(req *pb.UpdateSystemSoftwareReques
 // CreateUpdater calls the CreateUpdaterFunc.
 func (m *MockUpdaterFactory) CreateUpdater(cmdExec utils.Executor, req *pb.UpdateSystemSoftwareRequest) Updater {
 	return m.CreateUpdaterFunc(cmdExec, req)
+}
+
+// CreateCleaner calls the CreateCleanerFunc.
+func (m *MockUpdaterFactory) CreateCleaner(cmdExec utils.Executor, path string) Cleaner {
+	return m.CreateCleanerFunc(cmdExec, path)
 }
 
 // CreateRebooter calls the CreateRebooterFunc.
