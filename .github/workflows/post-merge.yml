@@ -269,7 +269,7 @@ jobs:
         env:
           collect-versions.outputs.hardware_discovery_agent_version: ${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.hardware_discovery_agent_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.hardware_discovery_agent_version}" == *"dev"* ]]; then
             echo "Skipping hardware discovery agent version update as no new version created"
           else
             sed -i "s#hardware_discovery_agent_version: .*#hardware_discovery_agent_version: ${collect-versions.outputs.hardware_discovery_agent_version}#" edge-node-container/chart/bma_values.yaml
@@ -418,11 +418,13 @@ jobs:
       - name: Update manifest version in chart
         shell: bash
         working-directory: infra-charts
+        env:
+          collect-versions.outputs.manifest_version: ${{ needs.collect-versions.outputs.manifest_version }}
         run: |
-          if [[ "${{ needs.collect-versions.outputs.manifest_version }}" == *"dev"* ]]; then
+          if [[ "${collect-versions.outputs.manifest_version}" == *"dev"* ]]; then
             echo "Skipping manifest version update as no new version created"
           else
-            sed -i "s#  enAgentManifestTag:  .*#  enAgentManifestTag: \"${{ needs.collect-versions.outputs.manifest_version }}\"#" infra-config/values.yaml
+            sed -i "s#  enAgentManifestTag:  .*#  enAgentManifestTag: \"${collect-versions.outputs.manifest_version}\"#" infra-config/values.yaml
           fi
 
       - name: Commit changes to branch and create PR
