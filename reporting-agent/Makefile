@@ -91,3 +91,6 @@ fuzztest: common-fuzztest
 
 integration_test:
 	echo "Running integration tests..."
+
+package:
+	echo "Packaging..."
