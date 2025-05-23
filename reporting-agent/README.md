@@ -36,7 +36,7 @@ reporting-agent
 
 ### Source tarball
 
-Run the `make tarball` command to generate a tarball of the repoting agent code. The tarball can be found in the `build/artifacts` directory.
+Run the `make tarball` command to generate a tarball of the reporting agent code. The tarball can be found in the `build/artifacts` directory.
 
 Example
 
