@@ -6,7 +6,6 @@
 SHELL = bash -eu -o pipefail
 
 FULL_NAME ?= reporting-agent
-VENV_NAME ?= venv_reportingagent
 BUILD_DIR ?= build/artifacts
 PREFIX ?= /usr/local
 PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
@@ -62,17 +61,6 @@ rabuild_with_cover:
 build: rabuild
 
 test: common-unit-test
-
-$(VENV_NAME): requirements.txt
-	python3 -m venv $@;\
-	. ./$@/bin/activate ; set -u ;\
-	python -m pip install --upgrade pip;\
-	python -m pip install -r requirements.txt
-	echo "To enter virtualenv, run 'source $@/bin/activate'"
-
-yamllint: $(VENV_NAME)
-	. ./$</bin/activate ; set -u ;\
-  	yamllint .
 
 clean:
 	rm -rf build
