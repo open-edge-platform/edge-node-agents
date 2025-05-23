@@ -33,11 +33,10 @@ all: test build
 lint: golint
 
 cover_unit:
-	@echo "Running unit tests with coverage..."
-	# mkdir -p $(BUILD_DIR)/coverage/unit
-	# go test -v ./internal/... -cover -covermode count -args -test.gocoverdir=$(shell pwd)/$(BUILD_DIR)/coverage/unit | tee $(BUILD_DIR)/coverage/unit/unit.out
-	# go tool covdata percent -i=$(BUILD_DIR)/coverage/unit
-	# go tool covdata func -i=$(BUILD_DIR)/coverage/unit
+	mkdir -p $(BUILD_DIR)/coverage/unit
+	go test -v ./internal/... -cover -covermode count -args -test.gocoverdir=$(shell pwd)/$(BUILD_DIR)/coverage/unit | tee $(BUILD_DIR)/coverage/unit/unit.out
+	go tool covdata percent -i=$(BUILD_DIR)/coverage/unit
+	go tool covdata func -i=$(BUILD_DIR)/coverage/unit
 
 cover: cover_unit
 	go tool covdata textfmt -i=$(BUILD_DIR)/coverage/unit -o $(BUILD_DIR)/coverage/profile
