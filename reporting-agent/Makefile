@@ -27,8 +27,8 @@ else ifneq ("$(wildcard ./common.mk)","")
 	include ./common.mk
 endif
 
-.PHONY: test build tarball $(BUILD_DIR)/reporting-agent-linux-amd64 $(BUILD_DIR)/reporting-agent-linux-arm64
-all: test build $(BUILD_DIR)/reporting-agent-linux-amd64 $(BUILD_DIR)/reporting-agent-linux-arm64
+.PHONY: test build tarball
+all: test build
 
 lint: golint
 
@@ -61,8 +61,6 @@ rabuild_with_cover:
 	-o $(BUILD_DIR)/$(NAME)_cover cmd/reporting-agent.go
 
 build: rabuild
-
-build-linux: $(BUILD_DIR)/reporting-agent-linux-amd64 $(BUILD_DIR)/reporting-agent-linux-arm64
 
 test: common-unit-test
 
