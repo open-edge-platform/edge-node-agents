@@ -92,3 +92,6 @@ integration_test:
 
 package:
 	echo "Packaging..."
+
+deb-push:
+	echo "Debian package is not supported"
