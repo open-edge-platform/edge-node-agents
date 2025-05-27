@@ -45,4 +45,10 @@ RUN envsubst < /etc/systemd/system/containerd.service.d/proxy.conf.template > /e
 RUN envsubst < /etc/systemd/system/docker.service.d/proxy.conf.template > /etc/systemd/system/docker.service.d/proxy.conf
 RUN envsubst < /etc/default/rke2-server.template > /etc/default/rke2-server
 
+# Install k3s package to enable air gap installs
+RUN mkdir -p /var/lib/rancher/k3s/agent/images/
+RUN curl -L -o /var/lib/rancher/k3s/agent/images/k3s-airgap-images-amd64.tar.zst "https://github.com/k3s-io/k3s/releases/download/v1.33.0%2Bk3s1/k3s-airgap-images-amd64.tar.zst"
+RUN curl -L -o /usr/local/bin/k3s https://github.com/k3s-io/k3s/releases/download/v1.33.0%2Bk3s1/k3s && chmod +x /usr/local/bin/k3s
+RUN curl -L -o /opt/install.sh https://get.k3s.io && chmod +x /opt/install.sh
+
 RUN systemctl enable cluster-agent
