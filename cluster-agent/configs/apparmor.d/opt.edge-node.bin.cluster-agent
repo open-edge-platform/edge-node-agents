@@ -76,6 +76,7 @@ profile ca_dash {
 
   /dev/null r,
   /run/systemd/resolve/stub-resolv.conf r,
+  /usr/bin/base64 ix,
   /usr/bin/cat ix,
   /usr/bin/chmod ix,
   /usr/bin/chown ix,

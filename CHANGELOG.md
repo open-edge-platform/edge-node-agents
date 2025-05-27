@@ -6,6 +6,9 @@
 
 ## Cluster Agent Changelog
 
+### 1.7.2
+- Update AppArmor profile to allow base64 exec
+
 ### 1.7.1
 - Remove dependency on caddy service for rancher
 
