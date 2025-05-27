@@ -10,7 +10,7 @@ repository:
   component: main
 packages:
   - name: cluster-agent
-    version: 1.7.1
+    version: 1.7.2
     ociArtifact: edge-orch/en/deb/cluster-agent
   - name: hardware-discovery-agent
     version: 1.7.0
