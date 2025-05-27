@@ -13,6 +13,13 @@ spec:
       labels:
         app: cluster-agent
     spec:
+      initContainers:
+      - name: init-copy
+        image: registry.espdprod.infra-host.com/edge-orch/cluster/cluster-agent:lw-enic
+        command: ["/bin/sh", "-c", "cp -r /var/lib/rancher/* /mnt/rancher-volume/"]
+        volumeMounts:
+        - name: rancher-volume
+          mountPath: /mnt/rancher-volume
       containers:
       - name: cluster-agent
         image: registry.espdprod.infra-host.com/edge-orch/cluster/cluster-agent:lw-enic
