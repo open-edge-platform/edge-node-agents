@@ -370,7 +370,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         env:
-          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
+          GH_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
@@ -431,7 +431,7 @@ jobs:
         shell: bash
         working-directory: infra-charts
         env:
-          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
+          GH_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
@@ -492,7 +492,7 @@ jobs:
         shell: bash
         working-directory: edge-manageability-framework
         env:
-          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
+          GH_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
