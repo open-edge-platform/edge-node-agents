@@ -7,65 +7,93 @@
 package osupdater
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 
 	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
-	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"	
+	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 )
 
-// UpdateOS updates the OS depending on the OS type.
-func UpdateOS(req *pb.UpdateSystemSoftwareRequest, factory UpdaterFactory) (*pb.UpdateResponse, error) {
-	log.Printf("Request Mode: %v\n", req.Mode)
+// OSUpdater is the main struct that contains the methods to update the OS.
+type OSUpdater struct {
+	req                          *pb.UpdateSystemSoftwareRequest
+	isProceedWithoutRollbackFunc func(*utils.Configurations) bool
+	loadConfigFunc               func(afero.Fs, string) (*utils.Configurations, error)
+}
 
-	if req.Mode != pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
+// NewOSUpdater creates a new OSUpdater instance.
+func NewOSUpdater(req *pb.UpdateSystemSoftwareRequest) *OSUpdater {
+	return &OSUpdater{
+		req:                          req,
+		isProceedWithoutRollbackFunc: utils.IsProceedWithoutRollback,
+		loadConfigFunc:               utils.LoadConfig,
+	}
+}
+
+// UpdateOS updates the OS depending on the OS type.
+func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error) {
+	log.Printf("Request Mode: %v\n", u.req.Mode)
+
+	if u.req.Mode != pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
 		// Download the update
-		downloader := factory.CreateDownloader(req)
+		downloader := factory.CreateDownloader(u.req)
 		err := downloader.Download()
 		if err != nil {
 			return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
 		}
 	}
 	execCmd := utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput)
-	cleaner := factory.CreateCleaner(execCmd, utils.DownloadDir + "/")
+	cleaner := factory.CreateCleaner(execCmd, utils.DownloadDir+"/")
 
-	snapshot := factory.CreateSnapshotter(execCmd, req)
+	snapshot := factory.CreateSnapshotter(execCmd, u.req)
 	// Create a snapshot of the current system
 	err := snapshot.Snapshot()
 	if err != nil {
-		if errClean := cleaner.Clean(); errClean != nil {
-			log.Printf("[Warning] unable to cleanup files: %v", errClean.Error())
+		// Get the ProceedWithoutRollback flag from the config file to see if we should proceed with the update
+		config, loadErr := u.loadConfigFunc(afero.NewOsFs(), utils.ConfigFilePath)
+		if loadErr != nil {
+			cleanFiles(cleaner)
+			return &pb.UpdateResponse{StatusCode: 500, Error: loadErr.Error()}, nil
 		}
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		proceedWithoutRollback := u.isProceedWithoutRollbackFunc(config)
+		if !proceedWithoutRollback {
+			// If we are not proceeding with rollback, clean up the files
+			cleanFiles(cleaner)
+			return &pb.UpdateResponse{StatusCode: 500, Error: fmt.Sprintf("proceedWithoutRollback configuration flag is false; can not proceed as snapshot failed: %v", err.Error())}, nil
+		}
 	}
 
 	// Update the OS
-	updater := factory.CreateUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
+	updater := factory.CreateUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), u.req)
 	proceedWithReboot, err := updater.Update()
 	if err != nil {
 		// Remove the artifacts if failure happens.
-		if errClean := cleaner.Clean(); errClean != nil {
-			log.Printf("[Warning] %v", errClean.Error())
-		}
+		cleanFiles(cleaner)
 		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
 	}
 
 	log.Println("Update completed successfully.")
-      
-  	// Remove the artifacts after update success.
-	if err = cleaner.Clean(); err != nil {
-		log.Printf("[Warning] %v", err.Error())
-	}
-      
+
+	// Remove the artifacts after update success.
+	cleanFiles(cleaner)
+
 	if proceedWithReboot {
-		if req.Mode != pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_DOWNLOAD_ONLY {
+		if u.req.Mode != pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_DOWNLOAD_ONLY {
 			// Reboot the system
-			rebooter := factory.CreateRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
-			if err =rebooter.Reboot(); err != nil {
+			rebooter := factory.CreateRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), u.req)
+			if err = rebooter.Reboot(); err != nil {
 				return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
 			}
 		}
 	}
 
 	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
+}
+
+func cleanFiles(cleaner Cleaner) {
+	if err := cleaner.Clean(); err != nil {
+		log.Printf("[Warning] unable to cleanup files: %v", err.Error())
+	}
 }

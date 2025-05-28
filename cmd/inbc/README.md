@@ -134,8 +134,8 @@ inbc source application add
 
 **NOTE:** In the Signed-By: Section, use the following guidelines.
 
-   - Each blank line has a period in it. -> " ."
-   - Each line after the Signed-By: starts with a space -> " gibberish"
+- Each blank line has a period in it. -> " ."
+- Each line after the Signed-By: starts with a space -> " gibberish"
 
 ```commandline
 inbc source application add 

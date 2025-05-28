@@ -4,7 +4,7 @@
  */
 
 // Package inbd provides the main functionality for the Intel Manageability Daemon (IMD).
-package inbd
+package utils
 
 import (
 	"fmt"

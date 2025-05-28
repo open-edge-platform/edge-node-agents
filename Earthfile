@@ -68,7 +68,7 @@ run-golang-unit-tests:
         -coverpkg=./internal/... -coverprofile=cover.out
    
     # Enforce minimum coverage threshold for internal/ directory
-    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=62.8 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
+    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=63.0 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
     
     SAVE ARTIFACT cover.out AS LOCAL build/cover.out
     
@@ -117,14 +117,14 @@ build-deb:
         
     # Set ownership and permissions for the configuration file
     RUN chown root:root etc/intel_manageability.conf
-    RUN chmod 644 etc/intel_manageability.conf
+    RUN chmod 640 etc/intel_manageability.conf
 
     # Copy the schema file to the package directory
     COPY fpm-templates/usr/share/inbd_schema.json usr/share/inbd_schema.json
     
     # Set ownership and permissions for the schema file
     RUN chown root:root usr/share/inbd_schema.json
-    RUN chmod 644 usr/share/inbd_schema.json
+    RUN chmod 640 usr/share/inbd_schema.json
 
     # Copy the postinst script to the DEBIAN directory
     COPY fpm-templates/DEBIAN/postinst DEBIAN/postinst

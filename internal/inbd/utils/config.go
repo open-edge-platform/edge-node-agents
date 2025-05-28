@@ -19,6 +19,7 @@ import (
 type Configurations struct {
 	OSUpdater struct {
 		TrustedRepositories []string `json:"trustedRepositories"`
+		ProceedWithoutRollback bool `json:"proceedWithoutRollback"`
 	} `json:"os_updater"`	
 }
 
@@ -49,4 +50,10 @@ func IsTrustedRepository(url string, config *Configurations) bool {
 		}
 	}
 	return false
+}
+
+// IsProceedWithoutRollback checks if the rollback is allowed based on the configuration
+func IsProceedWithoutRollback(config *Configurations) bool {
+	log.Printf("Checking if rollback is allowed")
+	return config.OSUpdater.ProceedWithoutRollback
 }

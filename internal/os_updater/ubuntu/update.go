@@ -30,7 +30,7 @@ type Updater struct {
 
 // Update method for Ubuntu
 func (u *Updater) Update() (bool, error) {
-	// Set the environment variable DEBIAN_FRONTEND to noninteractive
+	// Set the environment variable DEBIAN_FRONTEND to non-interactive
 	err := os.Setenv("DEBIAN_FRONTEND", "noninteractive")
 	if err != nil {
 		return false, fmt.Errorf("SOTA Aborted: Failed to set environment variable: %v", err)

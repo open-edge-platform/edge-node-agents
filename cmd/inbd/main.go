@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/intel/intel-inb-manageability/internal/inbd"
+	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
 )
@@ -41,7 +42,7 @@ func main() {
 			return gs.Serve(lis)
 		},
 		IsValidJSON: func(fs afero.Afero, filePath string, schemaPath string) (bool, error) {
-			return inbd.IsValidJSON(afero.Afero{Fs: afero.NewOsFs()}, filePath, schemaPath)
+			return utils.IsValidJSON(afero.Afero{Fs: afero.NewOsFs()}, filePath, schemaPath)
 		},
 	}
 

@@ -15,6 +15,7 @@ import (
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 )
 
+// InbdServer implements the InbServiceServer interface
 type InbdServer struct {
 	pb.UnimplementedInbServiceServer
 }
@@ -32,7 +33,7 @@ func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSys
 		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
 	}
 
-	resp, err := osUpdater.UpdateOS(req, sotaFactory)
+	resp, err := osUpdater.NewOSUpdater(req).UpdateOS(sotaFactory)
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
 	}

@@ -1,4 +1,4 @@
-package inbd
+package utils
 
 import (
 	"errors"
