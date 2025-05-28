@@ -18,7 +18,7 @@ import (
 var (
 	aptSourceDirectory         = "/etc/apt/sources.list.d/"
 	forwardProxyConfPath       = "/etc/caddy/pua.caddy"
-	forwardProxyUrl            = "https://localhost:60444"
+	forwardProxyUrl            = "http://localhost:60444"
 	aptSourcesListTemplatePath = "/etc/edge-node/node/confs/apt.sources.list.template"
 )
 

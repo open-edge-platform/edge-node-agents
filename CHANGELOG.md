@@ -6,6 +6,12 @@
 
 ## Cluster Agent Changelog
 
+### 1.7.2
+- Update AppArmor profile to allow base64 exec
+
+### 1.7.1
+- Remove dependency on caddy service for rancher
+
 ### 1.7.0
 - Fix readiness reporting to NA during cluster install
 
@@ -33,6 +39,12 @@
 
 ## Node Agent Changelog
 
+### 1.7.2
+- Drop TLS on caddy internal endpoint
+
+### 1.7.1
+- Error on RS token if not HTTP OK
+
 ### 1.7.0
 - Update release service token check for anonymous token
 
@@ -47,6 +59,9 @@
 - Dependency import updates
 
 ## Platform Observability Agent Changelog
+
+### 1.9.0
+- Add collection of cloud-init service logs
 
 ### 1.8.1
 - Update log and metrics service to start after collector service
@@ -64,6 +79,10 @@
 - Dependency import updates
 
 ## Platform Update Agent Changelog
+
+### 1.5.0
+- Downgrade internal caddy endpoint to no TLS
+
 ### 1.4.2
 - Update INBM to 4.2.8.6
 

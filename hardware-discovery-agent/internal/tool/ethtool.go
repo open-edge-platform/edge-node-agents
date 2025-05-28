@@ -12,7 +12,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/logger"
 )
 
-var ETHTOOL_LINK_MODE_MAP = map[int]string{
+var EthToolLinkModeMap = map[int]string{
 	0x001:              "10baseT Half",
 	0x002:              "10baseT Full",
 	0x004:              "100baseT Half",
@@ -79,7 +79,7 @@ type EthtoolValues struct {
 
 func ParseLinkModeCode(linkMode uint64) []string {
 	modes := make([]string, 0)
-	for k, v := range ETHTOOL_LINK_MODE_MAP {
+	for k, v := range EthToolLinkModeMap {
 		if linkMode&uint64(k) != 0 {
 			modes = append(modes, v)
 		}
@@ -120,7 +120,6 @@ func ParseFeatureList(features map[string]bool) []string {
 }
 
 func CollectEthtoolData(nicName string) (*EthtoolValues, error) {
-
 	// ethHandle needs to be initialized every time on every interface
 	ethHandle, ethHandleErr := ethtool.NewEthtool()
 	if ethHandleErr != nil {

@@ -16,8 +16,8 @@ type Interface struct {
 
 type Usb struct {
 	Class       string
-	VendorId    string
-	ProductId   string
+	VendorID    string
+	ProductID   string
 	Bus         uint32
 	Address     uint32
 	Description string
@@ -28,7 +28,7 @@ type Usb struct {
 func GetUsbList(executor utils.CmdExecutor) ([]*Usb, error) {
 	usbDevList, err := utils.ReadFromCommand(executor, "lsusb")
 	if err != nil {
-		return []*Usb{}, fmt.Errorf("failed to read data from command; error: %v", err)
+		return []*Usb{}, fmt.Errorf("failed to read data from command; error: %w", err)
 	}
 	parseUsbDevList := strings.SplitAfter(string(usbDevList), "\n")
 
@@ -40,28 +40,28 @@ func GetUsbList(executor utils.CmdExecutor) ([]*Usb, error) {
 
 		var usb Usb
 		usbDeviceDetails := strings.SplitAfter(usbDevData, " ")
-		usbDeviceId := strings.Split(usbDeviceDetails[3], ":")
+		usbDeviceID := strings.Split(usbDeviceDetails[3], ":")
 		usbBusInfo := strings.Split(usbDeviceDetails[1], " ")
 
-		usbDevAddr := usbBusInfo[0] + ":" + usbDeviceId[0]
+		usbDevAddr := usbBusInfo[0] + ":" + usbDeviceID[0]
 		usbDeviceInfo, err := utils.ReadFromCommand(executor, "lsusb", "-v", "-s", usbDevAddr)
 		if err != nil {
-			return []*Usb{}, fmt.Errorf("failed to read data from command; error: %v", err)
+			return []*Usb{}, fmt.Errorf("failed to read data from command; error: %w", err)
 		}
 		parseUsbDeviceInfo := string(usbDeviceInfo)
 
 		usb.Class = getDeviceClass(parseUsbDeviceInfo)
-		usb.VendorId = getId(parseUsbDeviceInfo, "idVendor")
-		usb.ProductId = getId(parseUsbDeviceInfo, "idProduct")
+		usb.VendorID = getID(parseUsbDeviceInfo, "idVendor")
+		usb.ProductID = getID(parseUsbDeviceInfo, "idProduct")
 
 		usb.Bus, err = getAddr(usbBusInfo[0])
 		if err != nil {
-			return []*Usb{}, fmt.Errorf("failed to read data from command; error: %v", err)
+			return []*Usb{}, fmt.Errorf("failed to read data from command; error: %w", err)
 		}
 
-		usb.Address, err = getAddr(usbDeviceId[0])
+		usb.Address, err = getAddr(usbDeviceID[0])
 		if err != nil {
-			return []*Usb{}, fmt.Errorf("failed to read data from command; error: %v", err)
+			return []*Usb{}, fmt.Errorf("failed to read data from command; error: %w", err)
 		}
 
 		usb.Description = getDeviceDescription(usbDevData)
@@ -82,16 +82,16 @@ func getDeviceClass(usbDeviceInfo string) string {
 	return dev[devLen-1]
 }
 
-func getId(usbDeviceInfo string, idType string) string {
-	usbDeviceId := strings.SplitAfter(usbDeviceInfo, idType)
-	deviceId := strings.Split(usbDeviceId[1], "\n")
-	devId := strings.SplitAfter(deviceId[0], "0x")
-	id := strings.Split(devId[1], " ")
+func getID(usbDeviceInfo string, idType string) string {
+	usbDeviceID := strings.SplitAfter(usbDeviceInfo, idType)
+	deviceID := strings.Split(usbDeviceID[1], "\n")
+	devID := strings.SplitAfter(deviceID[0], "0x")
+	id := strings.Split(devID[1], " ")
 	return id[0]
 }
 
 func getAddr(usbAddrInfo string) (uint32, error) {
-	addr, err := strconv.ParseUint(usbAddrInfo, 10, 64)
+	addr, err := strconv.ParseUint(usbAddrInfo, 10, 32)
 	if err != nil {
 		return 0, err
 	}
@@ -114,9 +114,8 @@ func getSerial(usbDeviceInfo string) string {
 		deviceSerial := strings.SplitAfter(serialInfo[0], " ")
 		length := len(deviceSerial)
 		return deviceSerial[length-1] + ":" + serial[1] + serial[2]
-	} else {
-		return "Not available"
 	}
+	return "Not available"
 }
 
 func getInterfaces(usbDeviceInfo string) []*Interface {

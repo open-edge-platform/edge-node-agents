@@ -12,16 +12,19 @@ import (
 	"strings"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
+	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
+
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/logger"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/tool"
 	hda_utils "github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
-	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
 )
+
+const bitSize int = 32
 
 var log = logger.Logger
 
 var (
-	// The functions will be mocked during the testing
+	// The functions will be mocked during the testing.
 	ReadFile           = utils.ReadFileNoLinks
 	ReadDir            = os.ReadDir
 	Readlink           = os.Readlink
@@ -30,10 +33,10 @@ var (
 	CollectEthtoolData = tool.CollectEthtoolData
 )
 
-var NETROOT string = filepath.Join("/sys", "class", "net")
+var NETROOT = filepath.Join("/sys", "class", "net")
 
 type IPAddress struct {
-	IpAddress   string
+	IPAddress   string
 	NetPrefBits int32
 	ConfigMode  proto.ConfigMode
 }
@@ -56,7 +59,7 @@ type Network struct {
 	PeerMac             string
 	PeerManagementIP    string
 	PeerPort            string
-	IpAddresses         []*IPAddress
+	IPAddresses         []*IPAddress
 	Mtu                 uint32
 	BmcNet              bool
 }
@@ -118,16 +121,16 @@ func GetNICList(executor hda_utils.CmdExecutor) ([]*Network, proto.BmInfo_BmType
 		nic.Mac = getNICPhysicalAddress(filename)
 
 		// Collect the IP addresses
-		interfaceIpInfo, err := hda_utils.ReadFromCommand(executor, "ip", "addr", "show", filename)
+		interfaceIPInfo, err := hda_utils.ReadFromCommand(executor, "ip", "addr", "show", filename)
 		if err != nil {
 			log.Errorf("failed to get interface IP information : %v", err)
 			continue
 		}
-		ipAddresses, bmcNet, mtu, err := parseIpInfo(string(interfaceIpInfo), bmcAddr)
+		ipAddresses, bmcNet, mtu, err := parseIPInfo(string(interfaceIPInfo), bmcAddr)
 		if err != nil {
 			continue
 		}
-		nic.IpAddresses = ipAddresses
+		nic.IPAddresses = ipAddresses
 		nic.BmcNet = bmcNet
 		nic.Mtu = mtu
 
@@ -147,14 +150,13 @@ func GetNICList(executor hda_utils.CmdExecutor) ([]*Network, proto.BmInfo_BmType
 			// and we will not collect the information of this NIC as a result.
 			log.Errorf("collecting ethtool data for %s failed, skip\n : %v", filename, err)
 			continue
-		} else {
-			nic.Features = ethValues.Features
-			nic.LinkState = ethValues.LinkState
-			nic.CurrentSpeed = ethValues.CurrentSpeed
-			nic.CurrentDuplex = ethValues.CurrentDuplex
-			nic.SupportedLinkMode = ethValues.SupportedLinkMode
-			nic.AdvertisingLinkMode = ethValues.AdvertisingLinkMode
 		}
+		nic.Features = ethValues.Features
+		nic.LinkState = ethValues.LinkState
+		nic.CurrentSpeed = ethValues.CurrentSpeed
+		nic.CurrentDuplex = ethValues.CurrentDuplex
+		nic.SupportedLinkMode = ethValues.SupportedLinkMode
+		nic.AdvertisingLinkMode = ethValues.AdvertisingLinkMode
 
 		nicList = append(nicList, &nic)
 	}
@@ -170,10 +172,10 @@ func parseIpmiInfo(ipmiData []byte) string {
 	return addr[0]
 }
 
-func parseIpInfo(ipInfo string, bmcAddr string) ([]*IPAddress, bool, uint32, error) {
+func parseIPInfo(ipInfo string, bmcAddr string) ([]*IPAddress, bool, uint32, error) {
 	mtuInfo := strings.Split(ipInfo, "mtu ")
 	mtu := strings.Split(mtuInfo[1], " ")
-	interfaceMtu, err := strconv.ParseUint(mtu[0], 10, 64)
+	interfaceMtu, err := strconv.ParseUint(mtu[0], 10, bitSize)
 	if err != nil {
 		log.Errorf("parsing mtu error : %v", err)
 		return []*IPAddress{}, false, 0, err
@@ -190,7 +192,7 @@ func parseIpInfo(ipInfo string, bmcAddr string) ([]*IPAddress, bool, uint32, err
 
 		var address IPAddress
 		ipAddress := strings.Split(netDetails, "/")
-		address.IpAddress = ipAddress[0]
+		address.IPAddress = ipAddress[0]
 
 		// Check if this is the BMC connection
 		if bmcAddr == ipAddress[0] && !isBmcInterface {
@@ -198,7 +200,7 @@ func parseIpInfo(ipInfo string, bmcAddr string) ([]*IPAddress, bool, uint32, err
 		}
 
 		netPrefix := strings.Split(ipAddress[1], " ")
-		prefix, err := strconv.ParseInt(netPrefix[0], 10, 64)
+		prefix, err := strconv.ParseInt(netPrefix[0], 10, bitSize)
 		if err != nil {
 			log.Errorf("parsing network prefix error : %v", err)
 			return []*IPAddress{}, false, 0, err
@@ -269,7 +271,7 @@ func getNICPhysicalAddress(nicName string) string {
 }
 
 // getNICPCIAddress uses the softlink of networkinterfacecard to extract PCI id
-// It returns a string with NIC's PCI address
+// It returns a string with NIC's PCI address.
 func getNICPCIAddress(nicName string) string {
 	netPath := filepath.Join(NETROOT, nicName)
 	dest, err := Readlink(netPath)

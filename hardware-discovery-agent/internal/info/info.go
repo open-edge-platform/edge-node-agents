@@ -7,5 +7,5 @@ import "fmt"
 var version string // injected at build time
 var commit string  // injected at build time
 
-var Component string = "Hardware Discovery Agent"
-var Version string = fmt.Sprintf("%s-%v", version, commit)
+var Component = "Hardware Discovery Agent"
+var Version = fmt.Sprintf("%s-%v", version, commit)

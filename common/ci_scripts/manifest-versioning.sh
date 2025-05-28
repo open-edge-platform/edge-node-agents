@@ -5,6 +5,11 @@
 
 return_code=0
 
+#remove any entries from the auth header
+git config --global --unset http.https://github.com/.extraheader || true
+# Use token
+git config http.https://github.com/.extraheader "AUTHORIZATION: basic $(echo -n x-access-token:"$GITHUB_TOKEN" | base64)"
+
 # Check version in manifest file
 manifest_version=$(yq '.metadata.release' < ena-manifest.yaml)
 echo "manifest_version: ${manifest_version}"
@@ -124,5 +129,8 @@ else
 	tag_check
 	new_version_check
 fi
+
+#remove any entries from the auth header
+git config --global --unset http.https://github.com/.extraheader || true
 
 exit $return_code
