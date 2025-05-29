@@ -41,7 +41,7 @@ jobs:
           token: ${{ secrets.SYS_ORCH_GITHUB }}
           persist-credentials: false
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@251aa50fb5878404cbe4e2834bfc5885c6af3568  # 0.1.15
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@69af6d89005b367c332671121e3481766de8e147  # 0.1.16
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "yq"
