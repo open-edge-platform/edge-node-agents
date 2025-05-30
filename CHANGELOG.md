@@ -6,6 +6,9 @@
 
 ## Cluster Agent Changelog
 
+### 1.7.3
+- Add retry/backoff to status call
+
 ### 1.7.2
 - Update AppArmor profile to allow base64 exec
 
@@ -32,6 +35,9 @@
 - Dependency import updates
 
 ## Hardware Discovery Agent Changelog
+
+### 1.7.1
+- Add retry/backoff to status call
 
 ### 1.6.0
 - Initial hardware discovery agent release
@@ -71,6 +77,9 @@
 
 ## Platform Telemetry Agent Changelog
 
+### 1.4.0
+- Add retry/backoff to status call
+
 ### 1.3.1
 - Update common to 1.6.8
 
@@ -79,6 +88,9 @@
 - Dependency import updates
 
 ## Platform Update Agent Changelog
+
+### 1.5.2
+- Add retry/backoff to status call
 
 ### 1.5.0
 - Downgrade internal caddy endpoint to no TLS

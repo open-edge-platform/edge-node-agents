@@ -109,7 +109,7 @@ func TestHDAgentAndMock(t *testing.T) {
 
 	fmt.Println("Testing wrong host manager address INFO level configuration...")
 	startStopHDA(ctx, infoWrongAddressConfig, 5*time.Second, t)
-	require.Contains(t, hdaBuffer.String(), "The protobuf UpdateHostSystemInfoByGUID function failed!")
+	require.Contains(t, hdaBuffer.String(), "UpdateHostSystemInfoByGUID failed!")
 	hdaBuffer.Reset()
 
 	fmt.Println("Stopping host manager mock...")

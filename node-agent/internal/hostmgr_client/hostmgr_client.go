@@ -107,7 +107,7 @@ func (cli *Client) UpdateInstanceStatus(ctx context.Context, insState proto.Inst
 	op := func() error {
 		_, err := cli.InfraSouthboundClient.UpdateInstanceStateStatusByHostGUID(ctx, &updateInstanceStatusRequest)
 		if err != nil {
-			log.Errorf("protobuf client UpdateInstanceStatus function failed with error: %v", err)
+			log.Errorf("UpdateInstanceStatus failed with error: %v", err)
 			return err
 		}
 		return nil

@@ -31,6 +31,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 )
 
+const NUM_RETRIES = 3
 const CONN_TIMEOUT = 5 * time.Second
 
 var log = logger.Logger
@@ -120,22 +121,37 @@ func (cli *Client) UpdateClusterStatus(ctx context.Context, state string, nodeAu
 
 	logPrefix := fmt.Sprintf("Cluster Agent state update: state=%v guid=%v", state, nodeAuthToken)
 
-	updateClusterStatusResponsePtr, err := cli.CoSouthboundClient.UpdateClusterStatus(ctx, &updateClusterStatusRequest)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unknown:
-			log.Errorf("%v Edge Cluster Manager error: %v", logPrefix, err)
-
-		default:
-			log.Errorf("%v error: %v", logPrefix, err)
+	var updateClusterStatusResponsePtr *proto.UpdateClusterStatusResponse
+	op := func() error {
+		resp, err := cli.CoSouthboundClient.UpdateClusterStatus(ctx, &updateClusterStatusRequest)
+		if err != nil {
+			switch status.Code(err) {
+			case codes.Unknown:
+				log.Errorf("%v Edge Cluster Manager error: %v", logPrefix, err)
+			default:
+				log.Errorf("%v error: %v", logPrefix, err)
+			}
+			return err
 		}
-
+		updateClusterStatusResponsePtr = resp
+		return nil
+	}
+	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.WithContext(backoff.NewExponentialBackOff(), ctx), NUM_RETRIES))
+	if err != nil {
+		log.Errorf("will try to reconnect because of failure: %v", err)
+		conn_err := cli.GrpcConn.Close()
+		if conn_err != nil {
+			return nil, conn_err
+		}
+		conn_err = cli.Connect()
+		if conn_err != nil {
+			return nil, conn_err
+		}
 		return nil, err
 	}
+	log.Debugf("%v Edge Cluster Manager response: %s", logPrefix, updateClusterStatusResponsePtr.GetActionRequest())
 
-	log.Debugf("%v Edge Cluster Manager response: %s", logPrefix, updateClusterStatusResponsePtr.ActionRequest)
-
-	return updateClusterStatusResponsePtr, nil
+	return updateClusterStatusResponsePtr, err
 }
 
 // registerToClusterOrch client method uses comms API's to register to the Cluster Orchestrator cluster

@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -24,6 +25,7 @@ var log = logger.Logger
 var LastResp *pb.GetTelemetryConfigResponse
 var LastProfile []ProfileGroup
 
+const NUM_RETRIES = 3
 const CONN_TIMEOUT = 5 * time.Second
 
 type Client struct {
@@ -115,7 +117,18 @@ func GetConfig(ctx context.Context, cli pb.TelemetryMgrClient, nodeId string, jw
 		return nil, err
 	}
 	ctxAuth := utils.GetAuthContext(ctx, jwtTokenPath)
-	resp, err := cli.GetTelemetryConfigByGUID(ctxAuth, &pb.GetTelemetryConfigByGuidRequest{Guid: nodeId})
+
+	var resp *pb.GetTelemetryConfigResponse
+	op := func() error {
+		getTelemetryConfigByGuidResp, err := cli.GetTelemetryConfigByGUID(ctxAuth, &pb.GetTelemetryConfigByGuidRequest{Guid: nodeId})
+		if err != nil {
+			log.Errorf("GetTelemetryConfigByGUID failed! : %v", err)
+			return err
+		}
+		resp = getTelemetryConfigByGuidResp
+		return nil
+	}
+	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.WithContext(backoff.NewExponentialBackOff(), ctx), NUM_RETRIES))
 	return resp, err
 }
 
