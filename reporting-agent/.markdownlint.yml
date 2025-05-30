@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+# The rule definition can be found here:
+# https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+default: true
+MD004:
+  style: dash
+MD010:
+  # Code blocks may have hard tabs.
+  code_blocks: false
+MD013: false  # Disable line length checking.
+MD024: false  # Allow duplicate headers.
+MD026:
+  punctuation: ".,;:!。，；：！"
+MD029:
+  style: one

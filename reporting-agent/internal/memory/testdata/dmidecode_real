@@ -1,0 +1,2005 @@
+# dmidecode 3.6
+Getting SMBIOS data from sysfs.
+SMBIOS 2.7 present.
+
+Handle 0x0084, DMI type 5, 46 bytes
+Memory Controller Information
+	Error Detecting Method: None
+	Error Correcting Capabilities:
+		None
+	Supported Interleave: One-way Interleave
+	Current Interleave: One-way Interleave
+	Maximum Memory Module Size: 32768 MB
+	Maximum Total Memory Size: 491520 MB
+	Supported Speeds:
+		70 ns
+		60 ns
+	Supported Memory Types:
+		FPM
+		EDO
+		DIMM
+		SDRAM
+	Memory Module Voltage: 3.3 V
+	Associated Memory Slots: 15
+		0x0006
+		0x0007
+		0x0008
+		0x0009
+		0x000A
+		0x000B
+		0x000C
+		0x000D
+		0x000E
+		0x000F
+		0x0010
+		0x0011
+		0x0012
+		0x0013
+		0x0014
+	Enabled Error Correcting Capabilities:
+		None
+
+Handle 0x0085, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #0
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: EDO DIMM
+	Installed Size: 16384 MB (Single-bank Connection)
+	Enabled Size: 16384 MB (Single-bank Connection)
+	Error Status: OK
+
+Handle 0x0086, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #1
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: EDO DIMM
+	Installed Size: 16384 MB (Single-bank Connection)
+	Enabled Size: 16384 MB (Single-bank Connection)
+	Error Status: OK
+
+Handle 0x0087, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #2
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x0088, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #3
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x0089, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #4
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x008A, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #5
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x008B, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #6
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x008C, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #7
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x008D, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #8
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x008E, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #9
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x008F, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #10
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x0090, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #11
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x0091, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #12
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x0092, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #13
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x0093, DMI type 6, 12 bytes
+Memory Module Information
+	Socket Designation: RAM socket #14
+	Bank Connections: None
+	Current Speed: Unknown
+	Type: DIMM
+	Installed Size: Not Installed
+	Enabled Size: Not Installed
+	Error Status: OK
+
+Handle 0x01A2, DMI type 16, 23 bytes
+Physical Memory Array
+	Location: System Board Or Motherboard
+	Use: System Memory
+	Error Correction Type: None
+	Maximum Capacity: 513 GB
+	Error Information Handle: Not Provided
+	Number Of Devices: 64
+
+Handle 0x01A3, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: 16 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #0
+	Bank Locator: RAM slot #0
+	Type: DRAM
+	Type Detail: EDO
+	Speed: Unknown
+	Manufacturer: Not Specified
+	Serial Number: Not Specified
+	Asset Tag: Not Specified
+	Part Number: Not Specified
+	Rank: Unknown
+	Configured Memory Speed: Unknown
+
+Handle 0x01A4, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: 16 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #1
+	Bank Locator: RAM slot #1
+	Type: DRAM
+	Type Detail: EDO
+	Speed: Unknown
+	Manufacturer: Not Specified
+	Serial Number: Not Specified
+	Asset Tag: Not Specified
+	Part Number: Not Specified
+	Rank: Unknown
+	Configured Memory Speed: Unknown
+
+Handle 0x01A5, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #2
+	Bank Locator: RAM slot #2
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01A6, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #3
+	Bank Locator: RAM slot #3
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01A7, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #4
+	Bank Locator: RAM slot #4
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01A8, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #5
+	Bank Locator: RAM slot #5
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01A9, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #6
+	Bank Locator: RAM slot #6
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01AA, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #7
+	Bank Locator: RAM slot #7
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01AB, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #8
+	Bank Locator: RAM slot #8
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01AC, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #9
+	Bank Locator: RAM slot #9
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01AD, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #10
+	Bank Locator: RAM slot #10
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01AE, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #11
+	Bank Locator: RAM slot #11
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01AF, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #12
+	Bank Locator: RAM slot #12
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B0, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #13
+	Bank Locator: RAM slot #13
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B1, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #14
+	Bank Locator: RAM slot #14
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B2, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #15
+	Bank Locator: RAM slot #15
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B3, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #16
+	Bank Locator: RAM slot #16
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B4, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #17
+	Bank Locator: RAM slot #17
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B5, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #18
+	Bank Locator: RAM slot #18
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B6, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #19
+	Bank Locator: RAM slot #19
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B7, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #20
+	Bank Locator: RAM slot #20
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B8, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #21
+	Bank Locator: RAM slot #21
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01B9, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #22
+	Bank Locator: RAM slot #22
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01BA, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #23
+	Bank Locator: RAM slot #23
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01BB, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #24
+	Bank Locator: RAM slot #24
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01BC, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #25
+	Bank Locator: RAM slot #25
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01BD, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #26
+	Bank Locator: RAM slot #26
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01BE, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #27
+	Bank Locator: RAM slot #27
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01BF, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #28
+	Bank Locator: RAM slot #28
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C0, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #29
+	Bank Locator: RAM slot #29
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C1, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #30
+	Bank Locator: RAM slot #30
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C2, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #31
+	Bank Locator: RAM slot #31
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C3, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #32
+	Bank Locator: RAM slot #32
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C4, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #33
+	Bank Locator: RAM slot #33
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C5, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #34
+	Bank Locator: RAM slot #34
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C6, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #35
+	Bank Locator: RAM slot #35
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C7, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #36
+	Bank Locator: RAM slot #36
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C8, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #37
+	Bank Locator: RAM slot #37
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01C9, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #38
+	Bank Locator: RAM slot #38
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01CA, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #39
+	Bank Locator: RAM slot #39
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01CB, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #40
+	Bank Locator: RAM slot #40
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01CC, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #41
+	Bank Locator: RAM slot #41
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01CD, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #42
+	Bank Locator: RAM slot #42
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01CE, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #43
+	Bank Locator: RAM slot #43
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01CF, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #44
+	Bank Locator: RAM slot #44
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D0, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #45
+	Bank Locator: RAM slot #45
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D1, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #46
+	Bank Locator: RAM slot #46
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D2, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #47
+	Bank Locator: RAM slot #47
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D3, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #48
+	Bank Locator: RAM slot #48
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D4, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #49
+	Bank Locator: RAM slot #49
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D5, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #50
+	Bank Locator: RAM slot #50
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D6, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #51
+	Bank Locator: RAM slot #51
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D7, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #52
+	Bank Locator: RAM slot #52
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D8, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #53
+	Bank Locator: RAM slot #53
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01D9, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #54
+	Bank Locator: RAM slot #54
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01DA, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #55
+	Bank Locator: RAM slot #55
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01DB, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #56
+	Bank Locator: RAM slot #56
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01DC, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #57
+	Bank Locator: RAM slot #57
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01DD, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #58
+	Bank Locator: RAM slot #58
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01DE, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #59
+	Bank Locator: RAM slot #59
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01DF, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #60
+	Bank Locator: RAM slot #60
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01E0, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #61
+	Bank Locator: RAM slot #61
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01E1, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #62
+	Bank Locator: RAM slot #62
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01E2, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x01A2
+	Error Information Handle: No Error
+	Total Width: Unknown
+	Data Width: Unknown
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: RAM slot #63
+	Bank Locator: RAM slot #63
+	Type: DRAM
+	Type Detail: Unknown
+
+Handle 0x01E3, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #0
+	Bank Locator: NVD #0
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01E4, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #1
+	Bank Locator: NVD #1
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01E5, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #2
+	Bank Locator: NVD #2
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01E6, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #3
+	Bank Locator: NVD #3
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01E7, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #4
+	Bank Locator: NVD #4
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01E8, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #5
+	Bank Locator: NVD #5
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01E9, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #6
+	Bank Locator: NVD #6
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01EA, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #7
+	Bank Locator: NVD #7
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01EB, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #8
+	Bank Locator: NVD #8
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01EC, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #9
+	Bank Locator: NVD #9
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01ED, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #10
+	Bank Locator: NVD #10
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01EE, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #11
+	Bank Locator: NVD #11
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01EF, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #12
+	Bank Locator: NVD #12
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F0, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #13
+	Bank Locator: NVD #13
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F1, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #14
+	Bank Locator: NVD #14
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F2, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #15
+	Bank Locator: NVD #15
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F3, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #16
+	Bank Locator: NVD #16
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F4, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #17
+	Bank Locator: NVD #17
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F5, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #18
+	Bank Locator: NVD #18
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F6, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #19
+	Bank Locator: NVD #19
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F7, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #20
+	Bank Locator: NVD #20
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F8, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #21
+	Bank Locator: NVD #21
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01F9, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #22
+	Bank Locator: NVD #22
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01FA, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #23
+	Bank Locator: NVD #23
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01FB, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #24
+	Bank Locator: NVD #24
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01FC, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #25
+	Bank Locator: NVD #25
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01FD, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #26
+	Bank Locator: NVD #26
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01FE, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #27
+	Bank Locator: NVD #27
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x01FF, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #28
+	Bank Locator: NVD #28
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0200, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #29
+	Bank Locator: NVD #29
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0201, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #30
+	Bank Locator: NVD #30
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0202, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #31
+	Bank Locator: NVD #31
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0203, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #32
+	Bank Locator: NVD #32
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0204, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #33
+	Bank Locator: NVD #33
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0205, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #34
+	Bank Locator: NVD #34
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0206, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #35
+	Bank Locator: NVD #35
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0207, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #36
+	Bank Locator: NVD #36
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0208, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #37
+	Bank Locator: NVD #37
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0209, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #38
+	Bank Locator: NVD #38
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x020A, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #39
+	Bank Locator: NVD #39
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x020B, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #40
+	Bank Locator: NVD #40
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x020C, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #41
+	Bank Locator: NVD #41
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x020D, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #42
+	Bank Locator: NVD #42
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x020E, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #43
+	Bank Locator: NVD #43
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x020F, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #44
+	Bank Locator: NVD #44
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0210, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #45
+	Bank Locator: NVD #45
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0211, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #46
+	Bank Locator: NVD #46
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0212, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #47
+	Bank Locator: NVD #47
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0213, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #48
+	Bank Locator: NVD #48
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0214, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #49
+	Bank Locator: NVD #49
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0215, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #50
+	Bank Locator: NVD #50
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0216, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #51
+	Bank Locator: NVD #51
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0217, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #52
+	Bank Locator: NVD #52
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0218, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #53
+	Bank Locator: NVD #53
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0219, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #54
+	Bank Locator: NVD #54
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x021A, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #55
+	Bank Locator: NVD #55
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x021B, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #56
+	Bank Locator: NVD #56
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x021C, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #57
+	Bank Locator: NVD #57
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x021D, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #58
+	Bank Locator: NVD #58
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x021E, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #59
+	Bank Locator: NVD #59
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x021F, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #60
+	Bank Locator: NVD #60
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0220, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #61
+	Bank Locator: NVD #61
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0221, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #62
+	Bank Locator: NVD #62
+	Type: Other
+	Type Detail: Unknown
+
+Handle 0x0222, DMI type 17, 34 bytes
+Memory Device
+	Array Handle: 0x0025
+	Error Information Handle: No Error
+	Total Width: 32 bits
+	Data Width: 32 bits
+	Size: No Module Installed
+	Form Factor: DIMM
+	Set: None
+	Locator: NVD #63
+	Bank Locator: NVD #63
+	Type: Other
+	Type Detail: Unknown
