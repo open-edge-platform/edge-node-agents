@@ -51,7 +51,7 @@ reporting-agent-<VERSION>  reporting-agent-<VERSION>.tar.gz
 
 To run the Reporting agent binary after compiling:
 
-```
+```shell
 ./build/artifacts/reporting-agent
 ```
 
@@ -59,28 +59,27 @@ To run the Reporting agent binary after compiling:
 
 - **Build reporting agent binary and mock binaries**:
 
-    ```
+    ```shell
     make build
     ```
 
 - **Run unit tests**:
 
-    ```
+    ```shell
     make test
     ```
 
 - **Run linters**:
 
-    ```
+    ```shell
     make lint
     ```
 
 - **Get code coverage from unit tests**:
 
-    ```
+    ```shell
     make cover
     ```
-
 
 ## License
 

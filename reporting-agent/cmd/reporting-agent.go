@@ -4,12 +4,44 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"time"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
+	"github.com/spf13/cobra"
+
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/logger"
 )
 
 func main() {
-	dataCollected := model.InitializeRoot()
-	fmt.Printf("Hello, I'm Reporting Agent and I will collect the data in this format: %v", dataCollected)
+	log := logger.Get()
+	// flushes buffer, if any
+	defer log.Sync() //nolint:errcheck // Ignoring error as it doesn't make sense to handle it during shutdown
+
+	var rootCmd = &cobra.Command{
+		Use:   "agent",
+		Short: "Reporting Service Agent",
+		Run: func(cmd *cobra.Command, _ []string) {
+			start := time.Now()
+			log.Infow("Agent started")
+
+			cfg := config.LoadConfig(cmd)
+			collector := internal.NewCollector()
+			dataCollected := collector.CollectData(cfg)
+
+			log.Infow("Agent finished collecting data", "duration", time.Since(start).String())
+
+			jsonDataCollected, err := json.MarshalIndent(dataCollected, "", "  ")
+			if err != nil {
+				log.Errorf("Error occurred while marshalling data: %v", err)
+				return
+			}
+
+			// TODO: for now, to track progress, will be removed later
+			println("Collected data:\n" + string(jsonDataCollected))
+		},
+	}
+	rootCmd.Flags().StringP("config", "c", "", "path to config file")
+	_ = rootCmd.Execute() //nolint:errcheck // Ignoring error as it will be handled in the command execution
 }

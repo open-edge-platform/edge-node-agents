@@ -1,0 +1,61 @@
+{
+  "items": [
+    {
+      "metadata": {
+        "namespace": "foo",
+        "labels": {
+          "com.intel.edgeplatform.application.name": "intel-app",
+          "com.intel.edgeplatform.application.version": "1.2.3",
+          "app.kubernetes.io/name": "k8s-app",
+          "app.kubernetes.io/version": "2.3.4",
+          "app.kubernetes.io/part-of": "intel"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "namespace": "foo",
+        "labels": {
+          "app.kubernetes.io/name": "only-k8s",
+          "app.kubernetes.io/version": "v2"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "namespace": "foo",
+        "labels": {
+          "com.intel.edgeplatform.application.name": "only-intel",
+          "com.intel.edgeplatform.application.version": "v1"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "namespace": "foo",
+        "labels": {
+          "app.kubernetes.io/version": "v2"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "namespace": "foo",
+        "labels": {
+          "com.intel.edgeplatform.application.version": "v1"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "namespace": "foo",
+        "labels": {}
+      }
+    },
+    {
+      "metadata": {
+        "namespace": "foo"
+      }
+    }
+  ]
+}

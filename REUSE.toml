@@ -22,13 +22,14 @@ path = [
     "**/debian/**",
     "**/go.mod",
     "**/go.sum",
-    "**/internal/config/testdata/fuzz/**",
+    "**/testdata/**",
     "**/mocks/**",
     "**/pkg/api/buf.lock",
     "**/pkg/api/status/proto/agent_status_grpc.pb.go",
     "**/release/data/sources_for_maintenance_manager.json",
     "**/test/**",
     "**/.github/workflows/**",
+    "**/.tool-versions",
     "ci/**",
     "ci/scripts/**"
 ]
