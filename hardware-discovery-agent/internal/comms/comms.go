@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -25,6 +26,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
 )
 
+const NUM_RETRIES = 3
 const connTimeout = 5 * time.Second
 
 var log = logger.Logger
@@ -82,13 +84,32 @@ func (cli *Client) Connect() (err error) {
 func (cli *Client) UpdateHostSystemInfoByGUID(ctx context.Context, guid string, systemInfo *proto.SystemInfo) (*proto.UpdateHostSystemInfoByGUIDResponse, error) {
 	log.Debugf("Sending System info: %+v", systemInfo)
 	updateHostSystemInfoByGUIDRequest := proto.UpdateHostSystemInfoByGUIDRequest{HostGuid: guid, SystemInfo: systemInfo}
-	updateHostSystemInfoByGUIDResponsePtr, err := cli.SouthboundClient.UpdateHostSystemInfoByGUID(ctx, &updateHostSystemInfoByGUIDRequest)
+
+	var resp *proto.UpdateHostSystemInfoByGUIDResponse
+	op := func() error {
+		updateHostSystemInfoByGUIDResponsePtr, err := cli.SouthboundClient.UpdateHostSystemInfoByGUID(ctx, &updateHostSystemInfoByGUIDRequest)
+		if err != nil {
+			log.Errorf("UpdateHostSystemInfoByGUID failed! : %v", err)
+			return err
+		}
+		resp = updateHostSystemInfoByGUIDResponsePtr
+		return nil
+	}
+	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.WithContext(backoff.NewExponentialBackOff(), ctx), NUM_RETRIES))
 	if err != nil {
-		log.Errorf("The protobuf UpdateHostSystemInfoByGUID function failed! : %v", err)
+		log.Errorf("will try to reconnect because of failure: %v", err)
+		conn_err := cli.GrpcConn.Close()
+		if conn_err != nil {
+			return nil, conn_err
+		}
+		conn_err = cli.Connect()
+		if conn_err != nil {
+			return nil, conn_err
+		}
 		return nil, err
 	}
 	log.Infof("HW Discovery Agent comms: UpdateHostSystemInfoByGUIDRequest sent successfully")
-	return updateHostSystemInfoByGUIDResponsePtr, nil
+	return resp, nil
 }
 
 // ConnectToEdgeInfrastructureManager function uses comms API's and the Edge Infrastructure Manager address to connect with GRPC the Edge Infrastructure Manager server.
