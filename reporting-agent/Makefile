@@ -6,7 +6,7 @@
 # Shell config variable
 SHELL := bash -eu -o pipefail
 
-PROJECT_NAME        ?= reporting-agent
+PROJECT_NAME        := reporting-agent
 BUILD_DIR           ?= ./build
 PACKAGE_BUILD_DIR   ?= $(BUILD_DIR)/package
 
