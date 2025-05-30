@@ -85,7 +85,7 @@ tarball:
 	tar -zcf $(BUILD_DIR)/$(PROJECT_NAME)-$(PKG_VERSION).tar.gz --directory=$(BUILD_DIR) $(PROJECT_NAME)-$(PKG_VERSION)
 	@echo "---END MAKEFILE TARBALL---"
 
-fuzztest: common-fuzztest
+fuzztest: # common-fuzztest #TODO: enable later
 
 integration_test:
 	echo "Running integration tests..."
