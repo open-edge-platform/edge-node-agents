@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/user"
+	"strconv"
 
 	"github.com/spf13/afero"
 	"google.golang.org/grpc"
@@ -50,6 +52,19 @@ func RunServer(deps ServerDeps) error {
 	// and then restore the previous value afterward.
 	oldUmask := deps.Umask(0177)
 	lis, err := deps.NetListen("unix", deps.Socket)
+
+	inbcGroupID, err := getInbcGroupID()
+	if err != nil {
+		return fmt.Errorf("failed to get inbc group GID: %w", err)
+	}
+
+	if err := os.Chown(deps.Socket, 0, inbcGroupID); err != nil {
+		return fmt.Errorf("could not chown socket: %w", err)
+	}
+	if err := os.Chmod(deps.Socket, 0660); err != nil {
+		return fmt.Errorf("could not chmod socket: %w", err)
+	}
+
 	deps.Umask(oldUmask)
 	if err != nil {
 		return fmt.Errorf("error listening on socket: %w", err)
@@ -77,4 +92,16 @@ func RunServer(deps ServerDeps) error {
 		return fmt.Errorf("INBD Configuration file is not valid")
 	}
 	return deps.ServeFunc(grpcServer, lis)
+}
+
+func getInbcGroupID() (int, error) {
+    grp, err := user.LookupGroup("inbc")
+    if err != nil {
+        return 0, fmt.Errorf("could not find group 'inbc': %w", err)
+    }
+    gid, err := strconv.Atoi(grp.Gid)
+    if err != nil {
+        return 0, fmt.Errorf("could not parse GID: %w", err)
+    }
+    return gid, nil
 }
