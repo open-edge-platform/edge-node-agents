@@ -14,40 +14,40 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/testutil"
 )
 
-// TestGetPartnerIDSuccess checks that GetPartnerID returns the correct value when the file exists and is non-empty.
-func TestGetPartnerIDSuccess(t *testing.T) {
+// TestGetGroupIDSuccess checks that GetGroupID returns the correct value when the file exists and is non-empty.
+func TestGetGroupIDSuccess(t *testing.T) {
 	dir := t.TempDir()
-	file := filepath.Join(dir, "partner_id")
-	require.NoError(t, os.WriteFile(file, []byte("partner-xyz"), 0640), "Should write partner_id file with 0640 permissions")
+	file := filepath.Join(dir, "group_id")
+	require.NoError(t, os.WriteFile(file, []byte("group-xyz"), 0640), "Should write group_id file with 0640 permissions")
 	idt := newTestIdentity(dir)
-	id, err := idt.GetPartnerID()
-	require.NoError(t, err, "GetPartnerID should not return error for valid file")
-	require.Equal(t, "partner-xyz", id, "GetPartnerID should return correct partner ID")
+	id, err := idt.GetGroupID()
+	require.NoError(t, err, "GetGroupID should not return error for valid file")
+	require.Equal(t, "group-xyz", id, "GetGroupID should return correct group ID")
 }
 
-// TestGetPartnerIDFileNotExist checks that GetPartnerID returns an error when the file does not exist.
-func TestGetPartnerIDFileNotExist(t *testing.T) {
+// TestGetGroupIDFileNotExist checks that GetGroupID returns an error when the file does not exist.
+func TestGetGroupIDFileNotExist(t *testing.T) {
 	idt := newTestIdentityCustom("", "", "", "/not/existing/file", "")
-	_, err := idt.GetPartnerID()
-	require.ErrorContains(t, err, "failed to get partner ID file stat", "GetPartnerID should error if file does not exist")
+	_, err := idt.GetGroupID()
+	require.ErrorContains(t, err, "failed to get group ID file stat", "GetGroupID should error if file does not exist")
 }
 
-// TestGetPartnerIDEmptyFile checks that GetPartnerID returns an error when the file is empty.
-func TestGetPartnerIDEmptyFile(t *testing.T) {
+// TestGetGroupIDEmptyFile checks that GetGroupID returns an error when the file is empty.
+func TestGetGroupIDEmptyFile(t *testing.T) {
 	dir := t.TempDir()
-	file := filepath.Join(dir, "partner_id")
-	require.NoError(t, os.WriteFile(file, []byte(""), 0640), "Should write empty partner_id file with 0640 permissions")
+	file := filepath.Join(dir, "group_id")
+	require.NoError(t, os.WriteFile(file, []byte(""), 0640), "Should write empty group_id file with 0640 permissions")
 	idt := newTestIdentity(dir)
-	_, err := idt.GetPartnerID()
-	require.ErrorContains(t, err, "partner ID file is empty", "GetPartnerID should error if file is empty")
+	_, err := idt.GetGroupID()
+	require.ErrorContains(t, err, "group ID file is empty", "GetGroupID should error if file is empty")
 }
 
-// TestGetPartnerIDReadError checks that GetPartnerID returns an error when the path is a directory (simulates read error).
-func TestGetPartnerIDReadError(t *testing.T) {
+// TestGetGroupIDReadError checks that GetGroupID returns an error when the path is a directory (simulates read error).
+func TestGetGroupIDReadError(t *testing.T) {
 	// Simulate read error by pointing to a directory instead of a file
 	idt := newTestIdentityCustom("", "", "", t.TempDir(), "")
-	_, err := idt.GetPartnerID()
-	require.ErrorContains(t, err, "failed to read partner ID file", "GetPartnerID should error if file is not readable")
+	_, err := idt.GetGroupID()
+	require.ErrorContains(t, err, "failed to read group ID file", "GetGroupID should error if file is not readable")
 }
 
 // TestCalculateMachineIDSuccess checks that CalculateMachineID returns a valid hash when all system info is available.
@@ -137,7 +137,7 @@ func TestSaveMachineIDsMkdirAllMachineIDError(t *testing.T) {
 		dir,
 		machineDir,
 		filepath.Join(dir, "machine_id"),
-		filepath.Join(dir, "partner_id"),
+		filepath.Join(dir, "group_id"),
 		filepath.Join(machineDir, "metrics"),
 	)
 	require.NoError(t, os.WriteFile(idt.initialMachineIDFilePath, []byte("abc"), 0640), "Should write file with 0640 permissions")
@@ -180,7 +180,7 @@ func TestSaveMachineIDsStatErrorNotExist(t *testing.T) {
 		dir,
 		dir,
 		filepath.Join(dir, "subdir", "machine_id"),
-		filepath.Join(dir, "partner_id"),
+		filepath.Join(dir, "group_id"),
 		filepath.Join(dir, "metrics"),
 	)
 
@@ -198,17 +198,17 @@ func newTestIdentity(dir string) *Identity {
 		metricsPath:              dir,
 		machineIDPath:            dir,
 		initialMachineIDFilePath: filepath.Join(dir, "machine_id"),
-		partnerIDFilePath:        filepath.Join(dir, "partner_id"),
+		groupIDFilePath:          filepath.Join(dir, "group_id"),
 		currentMachineIDFilePath: filepath.Join(dir, "metrics"),
 	}
 }
 
-func newTestIdentityCustom(metricsPath, machineIDPath, initialMachineIDFilePath, partnerIDFilePath, currentMachineIDFilePath string) *Identity {
+func newTestIdentityCustom(metricsPath, machineIDPath, initialMachineIDFilePath, groupIDFilePath, currentMachineIDFilePath string) *Identity {
 	return &Identity{
 		metricsPath:              metricsPath,
 		machineIDPath:            machineIDPath,
 		initialMachineIDFilePath: initialMachineIDFilePath,
-		partnerIDFilePath:        partnerIDFilePath,
+		groupIDFilePath:          groupIDFilePath,
 		currentMachineIDFilePath: currentMachineIDFilePath,
 	}
 }

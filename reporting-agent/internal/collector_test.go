@@ -30,7 +30,7 @@ func TestCollectorCollectDataSuccess(t *testing.T) {
 	require.NotNil(t, root.ComputerSystem.Memory.Devices, "Memory.Devices should be set")
 	require.NotNil(t, root.ComputerSystem.Disk, "Disk should be set")
 	require.Equal(t, "k3s", root.Kubernetes.Provider, "Kubernetes.Provider should be set")
-	require.Equal(t, "pid", root.Identity.PartnerID, "PartnerID should be set")
+	require.Equal(t, "gid", root.Identity.GroupID, "GroupID should be set")
 	require.Equal(t, "mid", root.Identity.MachineID, "MachineID should be set")
 	require.Equal(t, "imid", root.Identity.InitialMachineID, "InitialMachineID should be set")
 }
@@ -41,7 +41,7 @@ func TestCollectorCollectDataShort(t *testing.T) {
 	root := c.CollectDataShort(cfg)
 	require.InDelta(t, 123.0, root.OperatingSystem.UptimeSeconds, 0.0001, "UptimeSeconds should be set")
 	require.Equal(t, "k3s", root.Kubernetes.Provider, "Kubernetes.Provider should be set")
-	require.Equal(t, "pid", root.Identity.PartnerID, "PartnerID should be set")
+	require.Equal(t, "gid", root.Identity.GroupID, "GroupID should be set")
 	require.Equal(t, "mid", root.Identity.MachineID, "MachineID should be set")
 	require.Equal(t, "imid", root.Identity.InitialMachineID, "InitialMachineID should be set")
 	// All other fields should be zero values
@@ -68,7 +68,7 @@ func TestCollectorCollectDataAllFailures(t *testing.T) {
 	require.NotNil(t, root.ComputerSystem.Memory.Devices, "Memory.Devices should be set (empty slice)")
 	require.NotNil(t, root.ComputerSystem.Disk, "Disk should be set (empty slice)")
 	require.Empty(t, root.Kubernetes.Provider, "Kubernetes.Provider should be empty on error")
-	require.Empty(t, root.Identity.PartnerID, "PartnerID should be empty on error")
+	require.Empty(t, root.Identity.GroupID, "GroupID should be empty on error")
 	require.Empty(t, root.Identity.MachineID, "MachineID should be empty on error")
 	require.Empty(t, root.Identity.InitialMachineID, "InitialMachineID should be empty on error")
 }
@@ -79,7 +79,7 @@ func TestCollectorCollectDataShortAllFailures(t *testing.T) {
 	root := c.CollectDataShort(cfg)
 	require.InDelta(t, 0.0, root.OperatingSystem.UptimeSeconds, 0.0001, "UptimeSeconds should be zero on error")
 	require.Empty(t, root.Kubernetes.Provider, "Kubernetes.Provider should be empty on error")
-	require.Empty(t, root.Identity.PartnerID, "PartnerID should be empty on error")
+	require.Empty(t, root.Identity.GroupID, "GroupID should be empty on error")
 	require.Empty(t, root.Identity.MachineID, "MachineID should be empty on error")
 	require.Empty(t, root.Identity.InitialMachineID, "InitialMachineID should be empty on error")
 	// All other fields should be zero values
@@ -97,7 +97,7 @@ func TestCollectorCollectIdentitySuccess(t *testing.T) {
 	c := collectorAllSuccess()
 	root := model.InitializeRoot()
 	c.collectIdentity(&root)
-	require.Equal(t, "pid", root.Identity.PartnerID, "PartnerID should be set")
+	require.Equal(t, "gid", root.Identity.GroupID, "GroupID should be set")
 	require.Equal(t, "mid", root.Identity.MachineID, "MachineID should be set")
 	require.Equal(t, "imid", root.Identity.InitialMachineID, "InitialMachineID should be set")
 }
@@ -107,15 +107,15 @@ func TestCollectorCollectIdentityFailures(t *testing.T) {
 	c := collectorAllFailures()
 	root := model.InitializeRoot()
 	c.collectIdentity(&root)
-	require.Empty(t, root.Identity.PartnerID, "PartnerID should be empty on error")
+	require.Empty(t, root.Identity.GroupID, "GroupID should be empty on error")
 	require.Empty(t, root.Identity.MachineID, "MachineID should be empty on error")
 	require.Empty(t, root.Identity.InitialMachineID, "InitialMachineID should be empty on error")
 }
 
 // identityMock is a mock for the Identity interface used in tests.
 type identityMock struct {
-	partnerID           string
-	partnerIDErr        error
+	groupID             string
+	groupIDErr          error
 	machineID           string
 	machineIDErr        error
 	initialMachineID    string
@@ -123,8 +123,8 @@ type identityMock struct {
 }
 
 // Implement the identity.Provider interface.
-func (i *identityMock) GetPartnerID() (string, error) {
-	return i.partnerID, i.partnerIDErr
+func (i *identityMock) GetGroupID() (string, error) {
+	return i.groupID, i.groupIDErr
 }
 func (i *identityMock) CalculateMachineID(utils.CmdExecutor) (string, error) {
 	return i.machineID, i.machineIDErr
@@ -165,7 +165,7 @@ func collectorAllSuccess() *Collector {
 			return model.Kubernetes{Provider: "k3s"}, nil
 		},
 		newIdentity: mockIdentityProviderFactory(identityMock{
-			partnerID:        "pid",
+			groupID:          "gid",
 			machineID:        "mid",
 			initialMachineID: "imid",
 		}),
@@ -191,7 +191,7 @@ func collectorAllFailures() *Collector {
 			return model.Kubernetes{}, errors.New("fail")
 		},
 		newIdentity: mockIdentityProviderFactory(identityMock{
-			partnerIDErr:        errors.New("fail"),
+			groupIDErr:          errors.New("fail"),
 			machineIDErr:        errors.New("fail"),
 			initialMachineIDErr: errors.New("fail"),
 		}),
