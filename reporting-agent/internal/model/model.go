@@ -15,7 +15,7 @@ type Root struct {
 type Identity struct {
 	MachineID        string `json:"MachineId"`
 	InitialMachineID string `json:"InitialMachineId"`
-	PartnerID        string `json:"PartnerId"`
+	GroupID          string `json:"GroupId"`
 }
 
 type OperatingSystem struct {
