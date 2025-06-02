@@ -35,6 +35,25 @@ func TestCollectorCollectDataSuccess(t *testing.T) {
 	require.Equal(t, "imid", root.Identity.InitialMachineID, "InitialMachineID should be set")
 }
 
+func TestCollectorCollectDataShort(t *testing.T) {
+	c := collectorAllSuccess()
+	cfg := config.Config{}
+	root := c.CollectDataShort(cfg)
+	require.InDelta(t, 123.0, root.OperatingSystem.UptimeSeconds, 0.0001, "UptimeSeconds should be set")
+	require.Equal(t, "k3s", root.Kubernetes.Provider, "Kubernetes.Provider should be set")
+	require.Equal(t, "pid", root.Identity.PartnerID, "PartnerID should be set")
+	require.Equal(t, "mid", root.Identity.MachineID, "MachineID should be set")
+	require.Equal(t, "imid", root.Identity.InitialMachineID, "InitialMachineID should be set")
+	// All other fields should be zero values
+	require.Empty(t, root.OperatingSystem.Timezone, "Timezone should be empty in short mode")
+	require.Empty(t, root.OperatingSystem.Locale.CountryName, "Locale.CountryName should be empty in short mode")
+	require.Empty(t, root.OperatingSystem.Kernel.Name, "Kernel.Name should be empty in short mode")
+	require.Empty(t, root.OperatingSystem.Release.ID, "Release.ID should be empty in short mode")
+	require.True(t, root.ComputerSystem.CPU.IsZero(), "CPU should be zero in short mode")
+	require.True(t, root.ComputerSystem.Memory.IsZero(), "Memory should be zero in short mode")
+	require.Empty(t, root.ComputerSystem.Disk, "Disk should be empty in short mode")
+}
+
 // TestCollectorCollectDataAllFailures checks that CollectData returns zero values on all errors.
 func TestCollectorCollectDataAllFailures(t *testing.T) {
 	c := collectorAllFailures()
@@ -52,6 +71,25 @@ func TestCollectorCollectDataAllFailures(t *testing.T) {
 	require.Empty(t, root.Identity.PartnerID, "PartnerID should be empty on error")
 	require.Empty(t, root.Identity.MachineID, "MachineID should be empty on error")
 	require.Empty(t, root.Identity.InitialMachineID, "InitialMachineID should be empty on error")
+}
+
+func TestCollectorCollectDataShortAllFailures(t *testing.T) {
+	c := collectorAllFailures()
+	cfg := config.Config{}
+	root := c.CollectDataShort(cfg)
+	require.InDelta(t, 0.0, root.OperatingSystem.UptimeSeconds, 0.0001, "UptimeSeconds should be zero on error")
+	require.Empty(t, root.Kubernetes.Provider, "Kubernetes.Provider should be empty on error")
+	require.Empty(t, root.Identity.PartnerID, "PartnerID should be empty on error")
+	require.Empty(t, root.Identity.MachineID, "MachineID should be empty on error")
+	require.Empty(t, root.Identity.InitialMachineID, "InitialMachineID should be empty on error")
+	// All other fields should be zero values
+	require.Empty(t, root.OperatingSystem.Timezone, "Timezone should be empty in short mode")
+	require.Empty(t, root.OperatingSystem.Locale.CountryName, "Locale.CountryName should be empty in short mode")
+	require.Empty(t, root.OperatingSystem.Kernel.Name, "Kernel.Name should be empty in short mode")
+	require.Empty(t, root.OperatingSystem.Release.ID, "Release.ID should be empty in short mode")
+	require.True(t, root.ComputerSystem.CPU.IsZero(), "CPU should be zero in short mode")
+	require.True(t, root.ComputerSystem.Memory.IsZero(), "Memory should be zero in short mode")
+	require.Empty(t, root.ComputerSystem.Disk, "Disk should be empty in short mode")
 }
 
 // TestCollectorCollectIdentitySuccess checks that collectIdentity fills the model.Identity fields on success.
