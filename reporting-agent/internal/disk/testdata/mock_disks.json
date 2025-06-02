@@ -1,0 +1,143 @@
+{
+  "blockdevices": [
+    {
+      "kname": "loop0",
+      "vendor": null,
+      "model": null,
+      "size": 64970752,
+      "type": "loop"
+    },
+    {
+      "kname": "loop1",
+      "vendor": null,
+      "model": null,
+      "size": 83832832,
+      "type": "loop"
+    },
+    {
+      "kname": "loop2",
+      "vendor": null,
+      "model": null,
+      "size": 49242112,
+      "type": "loop"
+    },
+    {
+      "kname": "nvme0n1p1",
+      "vendor": null,
+      "model": null,
+      "size": 1127219200,
+      "type": "disk"
+    },
+    {
+      "kname": "sda",
+      "vendor": "DELL    ",
+      "model": "PERC H730P Mini",
+      "size": 240057409536,
+      "type": "disk",
+      "children": [
+        {
+          "kname": "sda1",
+          "vendor": null,
+          "model": null,
+          "size": 313524224,
+          "type": "part"
+        },
+        {
+          "kname": "sda2",
+          "vendor": null,
+          "model": null,
+          "size": 1296039936,
+          "type": "part",
+          "children": [
+            {
+              "kname": "dm-0",
+              "vendor": null,
+              "model": null,
+              "size": 1296039936,
+              "type": "crypt"
+            }
+          ]
+        },
+        {
+          "kname": "sda3",
+          "vendor": null,
+          "model": null,
+          "size": 99595845632,
+          "type": "part"
+        },
+        {
+          "kname": "sda4",
+          "vendor": null,
+          "model": null,
+          "size": 104857600,
+          "type": "part",
+          "children": [
+            {
+              "kname": "dm-0",
+              "vendor": null,
+              "model": null,
+              "size": 1296039936,
+              "type": "crypt"
+            }
+          ]
+        },
+        {
+          "kname": "sda5",
+          "vendor": null,
+          "model": null,
+          "size": 104857600,
+          "type": "part"
+        },
+        {
+          "kname": "sda6",
+          "vendor": null,
+          "model": null,
+          "size": 3758096384,
+          "type": "part"
+        },
+        {
+          "kname": "sda7",
+          "vendor": null,
+          "model": null,
+          "size": 52428800,
+          "type": "part"
+        },
+        {
+          "kname": "sda8",
+          "vendor": null,
+          "model": null,
+          "size": 134217728000,
+          "type": "part"
+        }
+      ]
+    },
+    {
+      "kname": "dm-0",
+      "vendor": null,
+      "model": null,
+      "size": 107374182400,
+      "type": "lvm"
+    },
+    {
+      "kname": "nvme0n1",
+      "vendor": null,
+      "model": "INTEL SSDPEDMD800G4",
+      "size": 800166076416,
+      "type": "disk"
+    },
+    {
+      "kname": "nvme0n1p2",
+      "vendor": null,
+      "model": null,
+      "size": 2147483648,
+      "type": "part"
+    },
+    {
+      "kname": "nvme0n1p3",
+      "vendor": null,
+      "model": null,
+      "size": 796888399872,
+      "type": "part"
+    }
+  ]
+}

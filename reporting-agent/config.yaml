@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+k8s:
+  k3sKubectlPath: "/var/lib/rancher/k3s/bin/k3s kubectl"
+  k3sKubeConfigPath: "/etc/rancher/k3s/k3s.yaml"
+  rke2KubectlPath: "/var/lib/rancher/rke2/bin/kubectl"
+  rke2KubeConfigPath: "/etc/rancher/rke2/rke2.yaml"
