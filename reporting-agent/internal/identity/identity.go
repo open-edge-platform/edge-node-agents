@@ -46,7 +46,7 @@ func (id *Identity) GetGroupID() (string, error) {
 		return "", fmt.Errorf("failed to read group ID file: %w", err)
 	}
 
-	return string(groupID), nil
+	return utils.TrimSpaceInBytes(groupID), nil
 }
 
 func (*Identity) CalculateMachineID(executor utils.CmdExecutor) (string, error) {
