@@ -118,6 +118,26 @@ func (c *Collector) CollectData(cfg config.Config) model.Root {
 	return dataCollected
 }
 
+// CollectDataShort collects only Identity, UptimeSeconds and Kubernetes data.
+func (c *Collector) CollectDataShort(cfg config.Config) model.Root {
+	var err error
+	dataCollected := model.InitializeRoot()
+
+	dataCollected.OperatingSystem.UptimeSeconds, err = c.getUptimeData(c.execCmd)
+	if err != nil {
+		c.log.Errorf("Error occurred while collecting uptime data: %v", err)
+	}
+
+	dataCollected.Kubernetes, err = c.getKubernetesData(c.execCmd, cfg.K8s)
+	if err != nil {
+		c.log.Errorf("Error occurred while collecting k8s data: %v", err)
+	}
+
+	c.collectIdentity(&dataCollected)
+
+	return dataCollected
+}
+
 func (c *Collector) collectIdentity(data *model.Root) {
 	idt := c.newIdentity()
 	partnerID, err := idt.GetPartnerID()
