@@ -140,11 +140,11 @@ func (c *Collector) CollectDataShort(cfg config.Config) model.Root {
 
 func (c *Collector) collectIdentity(data *model.Root) {
 	idt := c.newIdentity()
-	partnerID, err := idt.GetPartnerID()
+	groupID, err := idt.GetGroupID()
 	if err != nil {
-		c.log.Errorf("Failed to get partner ID: %v", err)
+		c.log.Errorf("Failed to get group ID: %v", err)
 	}
-	data.Identity.PartnerID = partnerID
+	data.Identity.GroupID = groupID
 
 	machineID, err := idt.CalculateMachineID(c.execCmd)
 	if err != nil {

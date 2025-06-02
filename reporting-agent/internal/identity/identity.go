@@ -19,7 +19,7 @@ import (
 )
 
 type Provider interface {
-	GetPartnerID() (string, error)
+	GetGroupID() (string, error)
 	CalculateMachineID(executor utils.CmdExecutor) (string, error)
 	SaveMachineIDs(machineIDHash string) (initialMachineID string, err error)
 }
@@ -28,25 +28,25 @@ type Identity struct {
 	metricsPath              string
 	machineIDPath            string
 	initialMachineIDFilePath string
-	partnerIDFilePath        string
+	groupIDFilePath          string
 	currentMachineIDFilePath string
 }
 
-func (id *Identity) GetPartnerID() (string, error) {
-	fileStat, err := os.Stat(id.partnerIDFilePath)
+func (id *Identity) GetGroupID() (string, error) {
+	fileStat, err := os.Stat(id.groupIDFilePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to get partner ID file stat: %w", err)
+		return "", fmt.Errorf("failed to get group ID file stat: %w", err)
 	}
 	if fileStat.Size() == 0 {
-		return "", errors.New("partner ID file is empty")
+		return "", errors.New("group ID file is empty")
 	}
 
-	partnerID, err := os.ReadFile(id.partnerIDFilePath)
+	groupID, err := os.ReadFile(id.groupIDFilePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read partner ID file: %w", err)
+		return "", fmt.Errorf("failed to read group ID file: %w", err)
 	}
 
-	return string(partnerID), nil
+	return string(groupID), nil
 }
 
 func (*Identity) CalculateMachineID(executor utils.CmdExecutor) (string, error) {
@@ -116,7 +116,7 @@ func NewIdentity() Provider {
 		metricsPath:              metricsPath,
 		machineIDPath:            machineIDPath,
 		initialMachineIDFilePath: filepath.Join(metricsPath, "machine_id"),
-		partnerIDFilePath:        filepath.Join(metricsPath, "partner_id"),
+		groupIDFilePath:          filepath.Join(metricsPath, "group_id"),
 		currentMachineIDFilePath: filepath.Join(machineIDPath, "metrics"),
 	}
 }
