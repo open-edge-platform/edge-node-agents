@@ -260,13 +260,13 @@ func handleEdgeInfrastructureManagerRequest(wg *sync.WaitGroup,
 				log.Errorf("will try to reconnect because of failure: %v", err)
 				conn_err := maintenanceManager.GrpcConn.Close()
 				if conn_err != nil {
-					return
+					log.Errorf("failed to close connection after retry failure : %v", err)
 				}
 				conn_err = maintenanceManager.Connect(ctx)
 				if conn_err != nil {
-					return
+					log.Errorf("failed to reconnect after retry failure : %v", err)
 				}
-				return
+				continue
 			}
 
 			// Store the last successful response timestamp from orchestrator
