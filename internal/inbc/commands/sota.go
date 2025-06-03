@@ -15,6 +15,8 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/intel/intel-inb-manageability/internal/inbc/utils"
 )
 
 // SOTACmd returns a cobra command for the SOTA command
@@ -31,7 +33,7 @@ func SOTACmd() *cobra.Command {
 		Use:   "sota",
 		Short: "Performs System Software Update",
 		Long:  `Updates the system software on the device.`,
-		RunE:  handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, Dial),
+		RunE:  handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, utils.DetectOS, Dial),
 	}
 
 	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
@@ -54,6 +56,7 @@ func handleSOTA(
 	reboot *bool,
 	packageList *[]string,
 	signature *string,
+	detectOS func() (string, error),
 	dialer func(context.Context, string) (pb.InbServiceClient, grpc.ClientConnInterface, error),
 ) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
@@ -100,7 +103,10 @@ func handleSOTA(
 			Signature:   *signature,
 		}
 
-		client, conn, err := dialer(context.Background(), *socket)
+		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds * time.Second)
+		defer cancel()
+
+		client, conn, err := dialer(ctx, *socket)
 		if err != nil {
 			return fmt.Errorf("error setting up new gRPC client: %v", err)
 		}
@@ -110,7 +116,20 @@ func handleSOTA(
 			}
 		}()
 
-		resp, err := client.UpdateSystemSoftware(context.Background(), request)
+		os, err := detectOS()
+		if err != nil {
+			return fmt.Errorf("error detected OS type: %v", err)
+		}
+
+		var timeout time.Duration = defaultSoftwareUpdateTimerInSeconds
+		if os == "EMT" {
+			timeout = emtSoftwareUpdateTimerInSeconds
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), timeout * time.Second)
+		defer cancel()
+
+		resp, err := client.UpdateSystemSoftware(ctx, request)
 		if err != nil {
 			return fmt.Errorf("error updating system software: %v", err)
 		}

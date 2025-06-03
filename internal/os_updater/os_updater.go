@@ -32,7 +32,7 @@ func NewOSUpdater(req *pb.UpdateSystemSoftwareRequest) *OSUpdater {
 	}
 }
 
-// UpdateOS updates the OS depending on the OS type.
+// UpdateOS updates the OS based on the request.
 func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error) {
 	log.Printf("Request Mode: %v\n", u.req.Mode)
 

@@ -90,6 +90,15 @@ func TestRunServer_Success(t *testing.T) {
 		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
 			return true, nil
 		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
+		},
 	}
 
 	err := RunServer(deps)
@@ -100,7 +109,6 @@ func TestRunServer_Success(t *testing.T) {
 		t.Errorf("Remove should not be called because Stat returned os.ErrNotExist")
 	}
 }
-
 
 func TestRunServer_ConfigValidationFails(t *testing.T) {
 	fl := &fakeListener{}
@@ -137,6 +145,15 @@ func TestRunServer_ConfigValidationFails(t *testing.T) {
 		},
 		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
 			return true, errors.New("invalid JSON")
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
 		},
 	}
 
@@ -181,6 +198,15 @@ func TestRunServer_ConfigValidationInvalid(t *testing.T) {
 		},
 		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
 			return false, nil
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
 		},
 	}
 
@@ -232,9 +258,18 @@ func TestRunServer_NetListenError(t *testing.T) {
 		},
 		RegisterService: func(gs *grpc.Server) {},
 		ServeFunc:       func(gs *grpc.Server, lis net.Listener) error { return nil },
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
+		},
 	}
 	err := RunServer(deps)
-	if err == nil || err.Error() != "error listening on socket: netListen failed" {
+	if err == nil || err.Error() != "error listening on socket dummy.sock: netListen failed" {
 		t.Errorf("Expected netListen error, got %v", err)
 	}
 }
@@ -261,6 +296,15 @@ func TestRunServer_ServeError(t *testing.T) {
 		},
 		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
 			return true, nil
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
 		},
 	}
 	err := RunServer(deps)
@@ -296,6 +340,15 @@ func TestRunServer_RegisterCalled(t *testing.T) {
 		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
 			// Not used in this test.
 			return true, nil
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
 		},
 	}
 
@@ -334,6 +387,15 @@ func TestRunServer_UmaskRestoration(t *testing.T) {
 		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
 			// Not used in this test.
 			return true, nil
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
 		},
 	}
 	err := RunServer(deps)

@@ -31,6 +31,9 @@ type ServerDeps struct {
 	RegisterService func(*grpc.Server)
 	ServeFunc       func(*grpc.Server, net.Listener) error
 	IsValidJSON     func(afero.Afero, string, string) (bool, error)
+	GetInbcGroupID  func() (int, error)
+	Chown           func(string, int, int) error    // os.Chown
+	Chmod           func(string, os.FileMode) error // os.Chmod
 }
 
 // RunServer implements the core logic of the server:
@@ -52,16 +55,20 @@ func RunServer(deps ServerDeps) error {
 	// and then restore the previous value afterward.
 	oldUmask := deps.Umask(0177)
 	lis, err := deps.NetListen("unix", deps.Socket)
+	if err != nil {
+		deps.Umask(oldUmask)
+		return fmt.Errorf("error listening on socket %s: %w", deps.Socket, err)
+	}
 
-	inbcGroupID, err := getInbcGroupID()
+	inbcGroupID, err := deps.GetInbcGroupID()
 	if err != nil {
 		return fmt.Errorf("failed to get inbc group GID: %w", err)
 	}
 
-	if err := os.Chown(deps.Socket, 0, inbcGroupID); err != nil {
+	if err := deps.Chown(deps.Socket, 0, inbcGroupID); err != nil {
 		return fmt.Errorf("could not chown socket: %w", err)
 	}
-	if err := os.Chmod(deps.Socket, 0660); err != nil {
+	if err := deps.Chmod(deps.Socket, 0660); err != nil {
 		return fmt.Errorf("could not chmod socket: %w", err)
 	}
 
@@ -94,14 +101,15 @@ func RunServer(deps ServerDeps) error {
 	return deps.ServeFunc(grpcServer, lis)
 }
 
-func getInbcGroupID() (int, error) {
-    grp, err := user.LookupGroup("inbc")
-    if err != nil {
-        return 0, fmt.Errorf("could not find group 'inbc': %w", err)
-    }
-    gid, err := strconv.Atoi(grp.Gid)
-    if err != nil {
-        return 0, fmt.Errorf("could not parse GID: %w", err)
-    }
-    return gid, nil
+// GetInbcGroupID retrieves the GID of the 'inbc' group.
+func GetInbcGroupID() (int, error) {
+	grp, err := user.LookupGroup("inbc")
+	if err != nil {
+		return 0, fmt.Errorf("could not find group 'inbc': %w", err)
+	}
+	gid, err := strconv.Atoi(grp.Gid)
+	if err != nil {
+		return 0, fmt.Errorf("could not parse GID: %w", err)
+	}
+	return gid, nil
 }

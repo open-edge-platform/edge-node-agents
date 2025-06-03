@@ -9,6 +9,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"time"
 
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/cobra"
@@ -56,7 +57,10 @@ func handleUpdateOSSource(
 			SourceList: *sources,
 		}
 
-		client, conn, err := dialer(context.Background(), *socket)
+		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds * time.Second)
+		defer cancel()
+
+		client, conn, err := dialer(ctx, *socket)
 		if err != nil {
 			return fmt.Errorf("error setting up new gRPC client: %v", err)
 		}
@@ -66,7 +70,10 @@ func handleUpdateOSSource(
 			}
 		}()
 
-		resp, err := client.UpdateOSSource(context.Background(), request)
+		ctx, cancel = context.WithTimeout(context.Background(), sourceTimeoutInSeconds * time.Second)
+		defer cancel()
+
+		resp, err := client.UpdateOSSource(ctx, request)
 		if err != nil {
 			return fmt.Errorf("error updating OS sources: %v", err)
 		}

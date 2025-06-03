@@ -22,6 +22,7 @@ type InbdServer struct {
 
 // UpdateSystemSoftware updates the system software
 func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest) (*pb.UpdateResponse, error) {
+	
 	log.Printf("Received UpdateSystemSoftware request")
 	os, err := osUpdater.DetectOS()
 	if err != nil {

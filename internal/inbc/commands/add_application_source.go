@@ -9,6 +9,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"time"
 
 	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/cobra"
@@ -69,7 +70,10 @@ func handleAddApplicationSource(
 			GpgKeyName: *gpgKeyName,
 		}
 
-		inbdClient, conn, err := dialer(context.Background(), *socket)
+		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds * time.Second)
+		defer cancel()
+
+		inbdClient, conn, err := dialer(ctx, *socket)
 		if err != nil {
 			return fmt.Errorf("error setting up new gRPC client: %v", err)
 		}
@@ -79,7 +83,10 @@ func handleAddApplicationSource(
 			}
 		}()
 
-		resp, err := inbdClient.AddApplicationSource(context.Background(), request)
+		ctx, cancel = context.WithTimeout(context.Background(), sourceTimeoutInSeconds * time.Second)
+		defer cancel()
+
+		resp, err := inbdClient.AddApplicationSource(ctx, request)
 		if err != nil {
 			return fmt.Errorf("error adding application source: %v", err)
 		}

@@ -44,6 +44,15 @@ func main() {
 		IsValidJSON: func(fs afero.Afero, filePath string, schemaPath string) (bool, error) {
 			return utils.IsValidJSON(afero.Afero{Fs: afero.NewOsFs()}, filePath, schemaPath)
 		},
+		GetInbcGroupID: func() (int, error) {
+			return inbd.GetInbcGroupID()
+		},
+		Chown: func(path string, uid, gid int) error {
+			return os.Chown(path, uid, gid)
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return os.Chmod(path, mode)
+		},
 	}
 
 	// Run the server (returning an error instead of calling log.Fatal internally).
