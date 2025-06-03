@@ -77,7 +77,8 @@ func Fuzz_PlatformUpdateStatus_FuzzGrpcCommunication(f *testing.F) {
 
 func prepareClientAndServer(f *testing.F) *comms.Client {
 	const serviceAddr = "127.0.0.1"
-	servicePort := fmt.Sprintf("%v", rand.Int31()%50000)
+	// Use a port in the dynamic/private range (49152–65535)
+	servicePort := fmt.Sprintf("%d", 49152+rand.Intn(65535-49152+1))
 	serviceURL := serviceAddr + ":" + servicePort
 	server, lis := mock_server.NewGrpcServer(serviceURL, "../../mocks", mock_server.UBUNTU)
 	go func() {
