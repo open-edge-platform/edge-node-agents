@@ -133,6 +133,8 @@ build-deb:
     # Copy other files    
     COPY fpm-templates/etc/apparmor.d/usr.bin.inbd etc/apparmor.d/usr.bin.inbd
     COPY fpm-templates/usr/bin/provision-tc usr/bin/provision-tc
+    RUN chown root:root usr/bin/provision-tc
+    RUN chmod 700 usr/bin/provision-tc
     COPY fpm-templates/usr/lib/systemd/system/inbd.service usr/lib/systemd/system/inbd.service
     
     # Create the control file
