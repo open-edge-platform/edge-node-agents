@@ -3,7 +3,7 @@
 
 package model
 
-import "fmt"
+import "strings"
 
 type Root struct {
 	Identity        Identity        `json:"Identity"`
@@ -15,7 +15,7 @@ type Root struct {
 type Identity struct {
 	MachineID        string `json:"MachineId"`
 	InitialMachineID string `json:"InitialMachineId"`
-	PartnerID        string `json:"PartnerId"`
+	GroupID          string `json:"GroupId"`
 }
 
 type OperatingSystem struct {
@@ -111,6 +111,7 @@ type KubernetesApplication struct {
 	AppName    string `json:"app.kubernetes.io/name,omitzero"`
 	AppVersion string `json:"app.kubernetes.io/version,omitzero"`
 	AppPartOf  string `json:"app.kubernetes.io/part-of,omitzero"`
+	HelmChart  string `json:"helm.sh/chart,omitzero"`
 }
 
 func InitializeRoot() Root {
@@ -129,7 +130,7 @@ func InitializeRoot() Root {
 }
 
 func (ka KubernetesApplication) GetKey() string {
-	return fmt.Sprintf("%s|%s|%s|%s|%s", ka.Name, ka.Version, ka.AppName, ka.AppVersion, ka.AppPartOf)
+	return strings.Join([]string{ka.Name, ka.Version, ka.AppName, ka.AppVersion, ka.AppPartOf, ka.HelmChart}, "|")
 }
 
 func (os OperatingSystem) IsZero() bool {
@@ -245,5 +246,6 @@ func (ka KubernetesApplication) IsZero() bool {
 		ka.Version == "" &&
 		ka.AppName == "" &&
 		ka.AppVersion == "" &&
-		ka.AppPartOf == ""
+		ka.AppPartOf == "" &&
+		ka.HelmChart == ""
 }

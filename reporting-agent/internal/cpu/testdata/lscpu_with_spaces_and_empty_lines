@@ -1,0 +1,20 @@
+
+   Architecture:   x86_64
+
+CPU(s):    2
+
+Model name:   Intel(R) Xeon(R) CPU
+
+Some unused line: should be ignored
+
+Vendor ID:   GenuineIntel
+
+CPU family:  6
+
+Model:  42
+
+Stepping:  7
+
+Socket(s):  2
+
+Core(s) per socket:  8
