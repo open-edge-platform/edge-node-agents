@@ -250,6 +250,7 @@ func handleEdgeInfrastructureManagerRequest(wg *sync.WaitGroup,
 				platformUpdateStatusResponse, reqErr := maintenanceManager.PlatformUpdateStatus(auth.GetAuthContext(ctx, puaConfig.JWT.AccessTokenPath), status, puaConfig.GUID)
 				if reqErr != nil {
 					log.Errorf("Failed to send update status: %v", reqErr)
+					return reqErr
 				}
 				resp = platformUpdateStatusResponse
 				return nil
