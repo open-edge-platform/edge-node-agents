@@ -37,6 +37,7 @@ const (
 	AGENT_NAME           = "platform-update-agent"
 	UPDATE_READ_INTERVAL = 10 * time.Second
 	RETRIES              = 5
+	NUM_RETRIES          = 3
 )
 
 var (
@@ -244,21 +245,40 @@ func handleEdgeInfrastructureManagerRequest(wg *sync.WaitGroup,
 				OsImageId:      osProfileUpdateSourceActual.OsImageId,
 			}
 
-			res, reqErr := maintenanceManager.PlatformUpdateStatus(auth.GetAuthContext(ctx, puaConfig.JWT.AccessTokenPath), status, puaConfig.GUID)
-			if reqErr != nil {
-				log.Errorf("Failed to send update status: %v", reqErr)
-			} else {
-				// Store the last successful response timestamp from orchestrator
-				atomic.StoreInt64(&lastUpdateTimestamp, time.Now().Unix())
-
-				switch osType {
-				case "ubuntu":
-					handleUbuntuResponse(res, updateResChan)
-				case "debian":
-					handleUbuntuResponse(res, updateResChan)
-				case "emt":
-					handleEmtResponse(res, updateResChan)
+			var resp *pb.PlatformUpdateStatusResponse
+			op := func() error {
+				platformUpdateStatusResponse, reqErr := maintenanceManager.PlatformUpdateStatus(auth.GetAuthContext(ctx, puaConfig.JWT.AccessTokenPath), status, puaConfig.GUID)
+				if reqErr != nil {
+					log.Errorf("Failed to send update status: %v", reqErr)
+					return reqErr
 				}
+				resp = platformUpdateStatusResponse
+				return nil
+			}
+			err = backoff.Retry(op, backoff.WithMaxRetries(backoff.WithContext(backoff.NewExponentialBackOff(), ctx), NUM_RETRIES))
+			if err != nil {
+				log.Errorf("will try to reconnect because of failure: %v", err)
+				conn_err := maintenanceManager.GrpcConn.Close()
+				if conn_err != nil {
+					log.Errorf("failed to close connection after retry failure : %v", err)
+				}
+				conn_err = maintenanceManager.Connect(ctx)
+				if conn_err != nil {
+					log.Errorf("failed to reconnect after retry failure : %v", err)
+				}
+				continue
+			}
+
+			// Store the last successful response timestamp from orchestrator
+			atomic.StoreInt64(&lastUpdateTimestamp, time.Now().Unix())
+
+			switch osType {
+			case "ubuntu":
+				handleUbuntuResponse(resp, updateResChan)
+			case "debian":
+				handleUbuntuResponse(resp, updateResChan)
+			case "emt":
+				handleEmtResponse(resp, updateResChan)
 			}
 
 			if updateStatusType == pb.UpdateStatus_STATUS_TYPE_UPDATED {
