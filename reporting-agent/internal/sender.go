@@ -14,6 +14,10 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
+
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
@@ -23,6 +27,7 @@ type BackendSender struct {
 	endpointPath string
 	tokenPath    string
 	httpClient   *http.Client
+	auditLog     *zap.SugaredLogger
 }
 
 // NewBackendSender creates a new BackendSender with the given endpoint and token paths.
@@ -31,6 +36,7 @@ func NewBackendSender(endpointPath, tokenPath string) *BackendSender {
 		endpointPath: endpointPath,
 		tokenPath:    tokenPath,
 		httpClient:   &http.Client{},
+		auditLog:     createAuditLogger(),
 	}
 }
 
@@ -136,5 +142,27 @@ func (s *BackendSender) sendRequest(endpoint, username, password string, payload
 		return fmt.Errorf("non-2xx status returned: %s", resp.Status)
 	}
 
+	// Log the payload to audit log on success
+	s.auditLog.Infow("Payload sent", "payload", string(payload))
+
 	return nil
+}
+
+// createLogger initializes a new logger with a lumberjack writer for log rotation.
+func createAuditLogger() *zap.SugaredLogger {
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.StacktraceKey = ""                      // disable stacktrace key
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder // time in ISO8601 format (e.g. "2006-01-02T15:04:05.000Z0700")
+
+	logWriter := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   "/var/log/edge-node/reporting-audit.log",
+		MaxAge:     90, // days
+		MaxBackups: 5,
+		Compress:   false,
+	})
+
+	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), logWriter, zapcore.InfoLevel)
+	logger := zap.New(core)
+
+	return logger.Sugar()
 }
