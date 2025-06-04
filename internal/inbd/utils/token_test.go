@@ -70,6 +70,22 @@ func TestIsTokenExpired_InvalidToken(t *testing.T) {
 
 const jwtTokenPath   = "/etc/intel_edge_node/tokens/release-service/access_token"
 
+func TestReadJWTToken_EmptyToken(t *testing.T) {
+    fs := afero.NewMemMapFs()
+    tokenPath := "/tmp/token"
+    // Create an empty token file
+    err := afero.WriteFile(fs, tokenPath, []byte(""), 0644)
+    assert.NoError(t, err)
+
+    // Call ReadJWTToken with a dummy isTokenExpiredFunc
+    token, err := ReadJWTToken(fs, tokenPath, func(string) (bool, error) {
+        return false, nil
+    })
+
+    assert.NoError(t, err)
+    assert.Equal(t, "", token)
+}
+
 func TestReadJWTToken(t *testing.T) {
 	fs := afero.NewMemMapFs()
 

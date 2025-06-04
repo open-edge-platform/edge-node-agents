@@ -22,6 +22,12 @@ func ReadJWTToken(fs afero.Fs, path string, isTokenExpiredFunc func(string) (boo
 		return "", err
 	}
 
+	if len(token) == 0 {
+		// Allowed to return empty token if the file is empty.
+		// This is useful for cases where the token is not required.
+		return "", nil
+	}
+
 	expired, err := isTokenExpiredFunc(string(token))
 	if err != nil {
 		return "", fmt.Errorf("error checking token expiration: %w", err)
