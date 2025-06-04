@@ -80,8 +80,7 @@ inbc sota --mode download-only --reboot=false
 inbc sota --mode download-only --package-list=less,git --reboot=false
 ```
 
-This will download the latest versions of less and git and any necessary
-dependencies.
+This will download the latest versions of less and git and any necessary dependencies.
 
 ##### Edge Device on Ubuntu in no-download mode
 
@@ -228,7 +227,9 @@ inbc source os update
 
 ##### Creates a new <em>/etc/apt/sources.list</em> file with only the two provided sources
 
+- NOTE: list must be comma separated
+
 ```commandline
 inbc source os update
-    --sources "deb http://archive.ubuntu.com/ubuntu/ jammy-security main restricted" "deb http://archive.ubuntu.com/ubuntu/ jammy-security universe"
+    --sources "deb http://archive.ubuntu.com/ubuntu/ jammy-security main restricted, deb http://archive.ubuntu.com/ubuntu/ jammy-security universe"
 ```
