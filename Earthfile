@@ -152,3 +152,51 @@ package:
     COPY build/intel-inbm.deb dist/inbm/intel-inbm.deb
 
     SAVE ARTIFACT dist/inbm AS LOCAL ./dist/inbm
+	
+coverity:
+    ARG http_proxy=$(echo $http_proxy)
+    ARG https_proxy=$(echo $https_proxy)
+    ARG no_proxy=$(echo $no_proxy)
+    ARG HTTP_PROXY=$(echo $HTTP_PROXY)
+    ARG HTTPS_PROXY=$(echo $HTTPS_PROXY)
+    ARG NO_PROXY=$(echo $NO_PROXY)
+    ARG REGISTRY
+
+    FROM ${REGISTRY}golang:1.24.1-bullseye
+    ENV http_proxy=$http_proxy
+    ENV https_proxy=$https_proxy
+    ENV no_proxy=$no_proxy
+    ENV HTTP_PROXY=$HTTP_PROXY
+    ENV HTTPS_PROXY=$HTTPS_PROXY
+    ENV NO_PROXY=$NO_PROXY
+
+    RUN apt-get update && apt-get install -y curl gcc musl-tools
+
+    WORKDIR /work
+    # Assume Coverity is available at /work/coverity
+    COPY cov-analysis-linux64-2025.3.0 /opt/coverity
+    ENV PATH="/opt/coverity/bin:$PATH"
+    COPY go.mod .
+    COPY go.sum .
+    RUN go mod download
+    COPY cmd/ ./cmd
+    COPY pkg/ ./pkg
+    COPY proto/ ./proto
+    COPY internal/ ./internal
+    RUN cov-configure -c coverity/conf/c.xml --go
+    # Run Coverity analysis
+    RUN export CGO_ENABLED=0
+    RUN export GOARCH=amd64
+    RUN export GOOS=linux
+    RUN cov-build -c coverity/conf/c.xml --dir cov-int \
+        go build -trimpath -o build/inbd \
+            -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
+            ./cmd/inbd
+    RUN cov-build -c coverity/conf/c.xml --dir cov-int \	
+        go build -trimpath -o build/inbc \
+            -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
+            ./cmd/inbc
+    RUN cov-analyze --dir cov-int  --strip-path $(pwd) --rule --security --concurrency --enable-constraint-fpp --enable-virtual --enable-fnptr
+    RUN cov-format-errors --dir cov-int --html-output cov-int/html_cov/
+    # Save Coverity results
+    SAVE ARTIFACT cov-int AS LOCAL ./work/cov-int/
