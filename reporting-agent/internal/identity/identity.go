@@ -41,12 +41,12 @@ func (id *Identity) GetGroupID() (string, error) {
 		return "", errors.New("group ID file is empty")
 	}
 
-	groupID, err := os.ReadFile(id.groupIDFilePath)
+	groupID, err := utils.ReadFileTrimmed(id.groupIDFilePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read group ID file: %w", err)
 	}
 
-	return utils.TrimSpaceInBytes(groupID), nil
+	return groupID, nil
 }
 
 func (*Identity) CalculateMachineID(executor utils.CmdExecutor) (string, error) {
@@ -94,19 +94,19 @@ func (id *Identity) SaveMachineIDs(machineIDHash string) (initialMachineID strin
 		}
 	}
 
-	initialMachineIDBytes, err := os.ReadFile(id.initialMachineIDFilePath)
+	initialMachineID, err = utils.ReadFileTrimmed(id.initialMachineIDFilePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read initial machine ID: %w", err)
 	}
 
 	if err := os.MkdirAll(id.machineIDPath, 0750); err != nil {
-		return string(initialMachineIDBytes), fmt.Errorf("failed to create current machine ID directory: %w", err)
+		return initialMachineID, fmt.Errorf("failed to create current machine ID directory: %w", err)
 	}
 	if err := os.WriteFile(id.currentMachineIDFilePath, []byte(machineIDHash), 0640); err != nil {
-		return string(initialMachineIDBytes), fmt.Errorf("failed to write current machine ID: %w", err)
+		return initialMachineID, fmt.Errorf("failed to write current machine ID: %w", err)
 	}
 
-	return string(initialMachineIDBytes), nil
+	return initialMachineID, nil
 }
 
 func NewIdentity() Provider {
