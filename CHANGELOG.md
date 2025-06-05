@@ -36,6 +36,9 @@
 
 ## Hardware Discovery Agent Changelog
 
+### 1.7.2
+- Update aa armor for GPU on NUCs
+
 ### 1.7.1
 - Add retry/backoff to status call
 
