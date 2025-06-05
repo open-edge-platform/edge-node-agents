@@ -36,3 +36,7 @@ platform-telemetry-agent:
 platform-update-agent:
   - changed-files:
       - any-glob-to-any-file: "platform-update-agent/**"
+
+reporting-agent:
+  - changed-files:
+      - any-glob-to-any-file: "reporting-agent/**"
