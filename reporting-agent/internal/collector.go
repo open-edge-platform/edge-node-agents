@@ -15,7 +15,6 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/system"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/logger"
 )
 
 type Collector struct {
@@ -46,7 +45,7 @@ type (
 	newIdentityFunc       func() identity.Provider
 )
 
-func NewCollector() Collector {
+func NewCollector(logger *zap.SugaredLogger) Collector {
 	return Collector{
 		getTimezone:       system.GetTimezone,
 		getLocaleData:     system.GetLocaleData,
@@ -58,7 +57,7 @@ func NewCollector() Collector {
 		getDiskData:       disk.GetDiskData,
 		getKubernetesData: k8s.GetKubernetesData,
 		newIdentity:       identity.NewIdentity,
-		log:               logger.Get(),
+		log:               logger,
 		execCmd:           utils.ExecCmdExecutor,
 	}
 }

@@ -8,8 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/logger"
+	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -23,8 +22,18 @@ type K8sConfig struct {
 	Rke2KubeConfigPath string `mapstructure:"rke2KubeConfigPath"`
 }
 
-// LoadConfig loads config using viper or returns defaults.
-func LoadConfig(cmd *cobra.Command) Config {
+// ConfigLoader loads configuration and holds logger.
+type ConfigLoader struct {
+	log *zap.SugaredLogger
+}
+
+// NewConfigLoader creates a new ConfigLoader with the given logger.
+func NewConfigLoader(log *zap.SugaredLogger) *ConfigLoader {
+	return &ConfigLoader{log: log}
+}
+
+// Load loads config using viper or returns defaults.
+func (cl *ConfigLoader) Load(cmd *cobra.Command) Config {
 	defCfg := setDefaults()
 	configPath, _ := cmd.Flags().GetString("config") //nolint:errcheck // Ignoring error, potential empty string will be handled below
 
@@ -34,26 +43,25 @@ func LoadConfig(cmd *cobra.Command) Config {
 	v.SetDefault("k8s.rke2KubectlPath", defCfg.K8s.Rke2KubectlPath)
 	v.SetDefault("k8s.rke2KubeConfigPath", defCfg.K8s.Rke2KubeConfigPath)
 
-	log := logger.Get()
 	if configPath == "" {
-		log.Infow("No config file provided, using default configuration", "config", defCfg)
+		cl.log.Infow("No config file provided, using default configuration", "config", defCfg)
 		return defCfg
 	}
 
 	v.SetConfigFile(configPath)
 	if err := v.ReadInConfig(); err != nil {
-		log.Warnw(fmt.Sprintf("Config file %q not found or unreadable, using default configuration", configPath), "err", err, "config", defCfg)
+		cl.log.Warnw(fmt.Sprintf("Config file %q not found or unreadable, using default configuration", configPath), "err", err, "config", defCfg)
 		return defCfg
 	}
-	log.Infof("Loaded configuration from %s", configPath)
+	cl.log.Infof("Loaded configuration from %s", configPath)
 
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
-		log.Warnw("Failed to unmarshal config, using default configuration", "config", defCfg)
+		cl.log.Warnw("Failed to unmarshal config, using default configuration", "config", defCfg)
 		return defCfg
 	}
 
-	log.Infow("Final configuration used", "config", cfg)
+	cl.log.Infow("Final configuration used", "config", cfg)
 	return cfg
 }
 

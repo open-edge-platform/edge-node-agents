@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
 
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 )
@@ -43,7 +44,7 @@ func TestSendSuccess(t *testing.T) {
 		}),
 	}
 
-	sender := newTestBackendSenderWithClient(endpointFile, tokenFile, client)
+	sender := newTestBackendSenderWithClient(t, endpointFile, tokenFile, client)
 
 	data := &model.Root{
 		Identity: model.Identity{GroupID: "gid"},
@@ -127,7 +128,7 @@ func TestSendRequestSuccess(t *testing.T) {
 			}
 		}),
 	}
-	sender := newTestBackendSenderWithClient("endpoint", "token", client)
+	sender := newTestBackendSenderWithClient(t, "endpoint", "token", client)
 	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"))
 	require.NoError(t, err, "SendRequest should succeed on 2xx response")
 }
@@ -146,7 +147,7 @@ func TestSendRequestHTTPError(t *testing.T) {
 			return nil, errors.New("http fail")
 		}),
 	}
-	sender := newTestBackendSenderWithClient("endpoint", "token", client)
+	sender := newTestBackendSenderWithClient(t, "endpoint", "token", client)
 	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"))
 	require.ErrorContains(t, err, "failed to send request to backend", "Should error if HTTP client fails")
 }
@@ -162,19 +163,20 @@ func TestSendRequestNon2xxStatus(t *testing.T) {
 			}
 		}),
 	}
-	sender := newTestBackendSenderWithClient("endpoint", "token", client)
+	sender := newTestBackendSenderWithClient(t, "endpoint", "token", client)
 	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"))
 	require.ErrorContains(t, err, "non-2xx status returned", "Should error if backend returns non-2xx status")
 }
 
 // --- Helpers ---
 
-// newTestBackendSenderWithClient creates a new BackendSender with a custom http.Client (for testing).
-func newTestBackendSenderWithClient(endpointPath, tokenPath string, client *http.Client) *BackendSender {
+// newTestBackendSenderWithClient creates a new BackendSender with a custom http.Client (for testing) and a test audit logger.
+func newTestBackendSenderWithClient(t *testing.T, endpointPath, tokenPath string, client *http.Client) *BackendSender {
 	return &BackendSender{
 		endpointPath: endpointPath,
 		tokenPath:    tokenPath,
 		httpClient:   client,
+		auditLog:     zaptest.NewLogger(t).Sugar(),
 	}
 }
 

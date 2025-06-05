@@ -4,23 +4,19 @@
 package main
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/logger"
 )
 
-var log = logger.Get()
-
 func main() {
-	// flushes buffer, if any
-	defer log.Sync() //nolint:errcheck // Ignoring error as it doesn't make sense to handle it during shutdown
-
 	var rootCmd = &cobra.Command{
 		Use:   "agent",
 		Short: "Reporting Service Agent",
@@ -32,11 +28,18 @@ func main() {
 }
 
 func runAgent(cmd *cobra.Command, _ []string) {
-	cfg := config.LoadConfig(cmd)
-	shortMode, _ := cmd.Flags().GetBool("short") //nolint:errcheck // Ignoring error, if something goes wrong, full data will be collected anyway
-	collector := internal.NewCollector()
-	var dataCollected model.Root
 	start := time.Now()
+
+	log := createLogger()
+	// flushes buffer, if any
+	defer log.Sync() //nolint:errcheck // Ignoring error as it doesn't make sense to handle it during shutdown
+
+	configLoader := config.NewConfigLoader(log)
+	cfg := configLoader.Load(cmd)
+
+	shortMode, _ := cmd.Flags().GetBool("short") //nolint:errcheck // Ignoring error, if something goes wrong, full data will be collected anyway
+	collector := internal.NewCollector(log)
+	var dataCollected model.Root
 	if shortMode {
 		log.Info("Agent started in short mode.")
 		dataCollected = collector.CollectDataShort(cfg)
@@ -47,15 +50,6 @@ func runAgent(cmd *cobra.Command, _ []string) {
 
 	log.Infow("Agent finished collecting data.", "duration", time.Since(start).String())
 
-	jsonDataCollected, err := json.MarshalIndent(dataCollected, "", "  ")
-	if err != nil {
-		log.Errorf("Error occurred while marshalling data: %v", err)
-		return
-	}
-
-	// TODO: for now, to track progress, will be removed later
-	println("Collected data:\n" + string(jsonDataCollected))
-
 	// Send to backend
 	sender := internal.NewBackendSender("/etc/edge-node/metrics/endpoint", "/etc/edge-node/metrics/token")
 	if err := sender.Send(&dataCollected); err != nil {
@@ -63,4 +57,23 @@ func runAgent(cmd *cobra.Command, _ []string) {
 	} else {
 		log.Info("Data successfully sent to backend.")
 	}
+}
+
+// createLogger initializes a new logger with a lumberjack writer for log rotation.
+func createLogger() *zap.SugaredLogger {
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.StacktraceKey = ""                      // disable stacktrace key
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder // time in ISO8601 format (e.g. "2006-01-02T15:04:05.000Z0700")
+
+	logWriter := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   "/var/log/edge-node/reporting.log",
+		MaxAge:     90, // days
+		MaxBackups: 5,
+		Compress:   false,
+	})
+
+	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), logWriter, zapcore.InfoLevel)
+	logger := zap.New(core)
+
+	return logger.Sugar()
 }
