@@ -2,7 +2,4 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-* @Andrea-Campanella @cjnolan @damiankopyto @daniele-moro @ikyrycho @jkossak @ktaube26 @niket-intc @osinstom @Paiadhithi @PalashGoelIntel @pierventre @raphaelvrosa @rranjan3 @soniabha-intc @sunil-parida @tmatenko @zdw @krishnajs
-
-# Require o11y team review for reporting agent
-/reporting-agent/ @p-zak @pperycz @jakubsikorski @Paulina-Kimak
+* @Andrea-Campanella @cjnolan @damiankopyto @daniele-moro @ikyrycho @jkossak @ktaube26 @niket-intc @osinstom @Paiadhithi @PalashGoelIntel @pierventre @raphaelvrosa @rranjan3 @soniabha-intc @sunil-parida @tmatenko @zdw @krishnajs @p-zak @pperycz @jakubsikorski @Paulina-Kimak
