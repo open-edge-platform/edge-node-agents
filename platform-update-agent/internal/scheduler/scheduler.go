@@ -11,12 +11,13 @@ import (
 	"time"
 
 	"github.com/go-co-op/gocron"
-	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/comms"
-	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/downloader"
-	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/metadata"
 	pb "github.com/open-edge-platform/infra-managers/maintenance/pkg/api/maintmgr/v1"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/comms"
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/downloader"
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/metadata"
 )
 
 const repeatedScheduleTag = "RepeatedSchedule"
@@ -207,7 +208,8 @@ func (p *PuaScheduler) HandleSingleSchedule(schedule *pb.SingleSchedule, meta *m
 			p.log.Debugf("scheduler failed to remove cron job by '%v' tag - %v", singleScheduleTag, err)
 		}
 		meta.SingleScheduleFinished = true
-	case schedule != nil && !(proto.Equal(meta.SingleSchedule, schedule) && meta.SingleScheduleFinished):
+	// Proceed if the new schedule differs from the current one or if the previous schedule is not finished.
+	case schedule != nil && (!proto.Equal(meta.SingleSchedule, schedule) || !meta.SingleScheduleFinished):
 		jobs, _ := p.scheduler.FindJobsByTag(singleScheduleTag) // error is ignored intentionally as it only returns ErrJobNotFoundWithTag
 		switch {
 		// Ensure there is only one job (update) running each time.

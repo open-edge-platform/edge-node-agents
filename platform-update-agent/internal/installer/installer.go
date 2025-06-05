@@ -11,10 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/logger"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/metadata"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/utils"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 var log = logger.Logger()
@@ -83,7 +84,7 @@ func NewWithDefaults() *Installer {
 	}
 }
 
-func (i *Installer) ProvisionInbm(ctx context.Context) error {
+func (i *Installer) ProvisionInbm(_ context.Context) error {
 	if fileOrDirExists(inbmConfigSuccessPath) {
 		log.Debugf("INBC is already provisioned")
 		return nil

@@ -18,7 +18,7 @@ import (
 
 const FILESYSTEM_POLL_INTERVAL = 10 * time.Second
 
-func GetAuthConfig(ctx context.Context, optionalCert *x509.Certificate) (*tls.Config, error) {
+func GetAuthConfig(_ context.Context, optionalCert *x509.Certificate) (*tls.Config, error) {
 	caCertPool, err := x509.SystemCertPool()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get system CA certs: %v", err)

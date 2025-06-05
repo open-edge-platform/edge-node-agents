@@ -60,7 +60,7 @@ func RunExec(ctx context.Context, asyncFlg bool, args ...string) (bool, string, 
 	return true, output, nil
 }
 
-func RunStringCommand(ctx context.Context, asyncFlg bool, command string) (string, error) {
+func RunStringCommand(ctx context.Context, _ bool, command string) (string, error) {
 	if command == "" {
 		return "", errors.New("command is empty")
 	}

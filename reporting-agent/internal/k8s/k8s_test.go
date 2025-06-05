@@ -169,7 +169,7 @@ func TestSplitKubectlPath(t *testing.T) {
 	require.Equal(t, []string{"--token", "foo"}, args, "args should be [--token foo]")
 
 	ctl, args = splitKubectlPath("")
-	require.Equal(t, "", ctl, "ctl should be empty string")
+	require.Empty(t, ctl, "ctl should be empty string")
 	require.Nil(t, args, "args should be nil for empty input")
 
 	ctl, args = splitKubectlPath("kubectl")
@@ -184,7 +184,7 @@ func TestParseServerVersionSuccess(t *testing.T) {
 
 func TestParseServerVersionMalformed(t *testing.T) {
 	input := []byte(`not a json`)
-	require.Equal(t, "", parseServerVersion(input), "Should return empty string for malformed JSON")
+	require.Empty(t, parseServerVersion(input), "Should return empty string for malformed JSON")
 }
 
 func TestParseApplicationsSuccess(t *testing.T) {

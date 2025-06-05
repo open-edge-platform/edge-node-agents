@@ -73,6 +73,7 @@ jobs:
       remove_cache_go: true
       cache_go: true
       trivy_config_path: ${{ matrix.project_folder }}/trivy.yaml
+      bootstrap_tools: "all,golangci-lint2"
     secrets:
       NO_AUTH_ECR_PUSH_USERNAME: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}
       NO_AUTH_ECR_PUSH_PASSWD: ${{ secrets.NO_AUTH_ECR_PUSH_PASSWD }}

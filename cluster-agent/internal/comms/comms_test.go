@@ -14,15 +14,15 @@ import (
 	"testing"
 	"time"
 
-	comms "github.com/open-edge-platform/edge-node-agents/cluster-agent/internal/comms"
 	proto "github.com/open-edge-platform/cluster-api-provider-intel/pkg/api/proto"
-
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+
+	"github.com/open-edge-platform/edge-node-agents/cluster-agent/internal/comms"
 )
 
 type mockServer struct {

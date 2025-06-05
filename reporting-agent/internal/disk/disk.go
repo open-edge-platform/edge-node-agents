@@ -24,6 +24,7 @@ type disk struct {
 	Children []disk `json:"children"`
 }
 
+// GetDiskData retrieves disk information from the system using the lsblk command.
 func GetDiskData(executor utils.CmdExecutor) ([]model.Disk, error) {
 	diskList := []model.Disk{}
 	var diskStruct disks

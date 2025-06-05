@@ -11,7 +11,9 @@ import (
 
 // Command interface defines the methods required for executing a command and capturing its output.
 type Command interface {
+	// Output executes the command and returns its standard output as a byte slice.
 	Output() ([]byte, error)
+	// SetStderr sets the standard error output for the command to a provided strings.Builder.
 	SetStderr(stderr *strings.Builder)
 }
 
