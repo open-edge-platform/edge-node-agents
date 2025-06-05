@@ -142,8 +142,8 @@ func (s *server) PlatformUpdateStatus(_ context.Context, req *pb.PlatformUpdateS
 	log.Printf("Received PlatformUpdateStatus request for server type %v: %v\n", s.serverType, req)
 
 	var response *pb.PlatformUpdateStatusResponse
-
-	if s.serverType == UBUNTU || s.serverType == DEBIAN {
+	switch s.serverType {
+	case UBUNTU, DEBIAN:
 		response = &pb.PlatformUpdateStatusResponse{
 			OsType: pb.PlatformUpdateStatusResponse_OS_TYPE_MUTABLE,
 			UpdateSource: &pb.UpdateSource{
@@ -168,7 +168,7 @@ func (s *server) PlatformUpdateStatus(_ context.Context, req *pb.PlatformUpdateS
 			},
 			InstalledPackages: "intel-opencl-icd\nnet-tools",
 		}
-	} else if s.serverType == EMT {
+	case EMT:
 		// setup for emt to check download + update timing; assuming short download / immediate download windows
 		var singleSchedule *pb.SingleSchedule
 		var repeatedSchedules []*pb.RepeatedSchedule
@@ -199,7 +199,7 @@ func (s *server) PlatformUpdateStatus(_ context.Context, req *pb.PlatformUpdateS
 				ProfileVersion: "example-profile-version",
 			},
 		}
-	} else {
+	default:
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Server has unknown type configured: %v", s.serverType))
 	}
 

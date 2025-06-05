@@ -87,9 +87,10 @@ func main() {
 	}
 
 	// only INFO and DEBUG are supported
-	if *logLevel == "INFO" {
+	switch *logLevel {
+	case "INFO":
 		log.SetLevel(logrus.InfoLevel)
-	} else if *logLevel == "DEBUG" {
+	case "DEBUG":
 		log.SetLevel(logrus.DebugLevel)
 	}
 

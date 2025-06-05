@@ -99,7 +99,7 @@ func TestGetCPUDataPartialFields(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "x86_64", cpu.Architecture)
 	require.Equal(t, uint64(4), cpu.ThreadCount)
-	require.Equal(t, "", cpu.ModelName)
+	require.Empty(t, cpu.ModelName)
 	require.Equal(t, uint64(0), cpu.CoreCount)
 }
 

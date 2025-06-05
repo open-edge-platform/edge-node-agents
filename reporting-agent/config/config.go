@@ -11,10 +11,12 @@ import (
 	"go.uber.org/zap"
 )
 
+// Config holds the configuration for the application.
 type Config struct {
 	K8s K8sConfig `mapstructure:"k8s"`
 }
 
+// K8sConfig holds Kubernetes-related configuration paths.
 type K8sConfig struct {
 	K3sKubectlPath     string `mapstructure:"k3sKubectlPath"`
 	K3sKubeConfigPath  string `mapstructure:"k3sKubeConfigPath"`
@@ -22,18 +24,18 @@ type K8sConfig struct {
 	Rke2KubeConfigPath string `mapstructure:"rke2KubeConfigPath"`
 }
 
-// ConfigLoader loads configuration and holds logger.
-type ConfigLoader struct {
+// Loader loads configuration and holds logger.
+type Loader struct {
 	log *zap.SugaredLogger
 }
 
-// NewConfigLoader creates a new ConfigLoader with the given logger.
-func NewConfigLoader(log *zap.SugaredLogger) *ConfigLoader {
-	return &ConfigLoader{log: log}
+// NewConfigLoader creates a new Loader with the given logger.
+func NewConfigLoader(log *zap.SugaredLogger) *Loader {
+	return &Loader{log: log}
 }
 
 // Load loads config using viper or returns defaults.
-func (cl *ConfigLoader) Load(cmd *cobra.Command) Config {
+func (cl *Loader) Load(cmd *cobra.Command) Config {
 	defCfg := setDefaults()
 	configPath, _ := cmd.Flags().GetString("config") //nolint:errcheck // Ignoring error, potential empty string will be handled below
 

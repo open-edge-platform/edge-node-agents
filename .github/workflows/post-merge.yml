@@ -70,6 +70,7 @@ jobs:
       project_folder: ${{ matrix.project_folder }}
       remove_cache_go: true
       cache_go: true
+      bootstrap_tools: "all,golangci-lint2"
     secrets:
       SYS_ORCH_GITHUB: ${{ secrets.SYS_ORCH_GITHUB }}
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
