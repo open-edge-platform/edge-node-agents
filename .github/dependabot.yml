@@ -26,6 +26,14 @@ updates:
       internal-dependencies:
         patterns:
           - "*open-edge-platform*"
+  - package-ecosystem: "gomod"
+    directories:
+      - "/reporting-agent"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "[gomod][reporting-agent] "
   - package-ecosystem: "github-actions"
     directories:
       - "/"  # this enables searching only in /.github/workflows directory
