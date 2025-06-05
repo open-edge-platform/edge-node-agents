@@ -10,17 +10,19 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
 )
 
-// TestLoadConfig_Default_NoConfigFile checks that LoadConfig returns defaults when no config file is provided.
-func TestLoadConfig_Default_NoConfigFile(t *testing.T) {
+// TestLoad_Default_NoConfigFile checks that Load returns defaults when no config file is provided.
+func TestLoad_Default_NoConfigFile(t *testing.T) {
 	cmd := newFakeCobraCmd(t, "")
-	cfg := LoadConfig(cmd)
-	require.Equal(t, setDefaults(), cfg, "LoadConfig should return default config when no config file is provided")
+	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
+	cfg := cl.Load(cmd)
+	require.Equal(t, setDefaults(), cfg, "Load should return default config when no config file is provided")
 }
 
-// TestLoadConfig_FilePresent checks that LoadConfig loads config from a valid file.
-func TestLoadConfig_FilePresent(t *testing.T) {
+// TestLoad_FilePresent checks that Load loads config from a valid file.
+func TestLoad_FilePresent(t *testing.T) {
 	tmpFile := createTempConfigFile(t, `
 k8s:
   k3sKubectlPath: "/custom/k3s"
@@ -31,22 +33,24 @@ k8s:
 	defer os.Remove(tmpFile)
 
 	cmd := newFakeCobraCmd(t, tmpFile)
-	cfg := LoadConfig(cmd)
-	require.Equal(t, "/custom/k3s", cfg.K8s.K3sKubectlPath, "LoadConfig should load k3sKubectlPath from file")
-	require.Equal(t, "/custom/k3s.yaml", cfg.K8s.K3sKubeConfigPath, "LoadConfig should load k3sKubeConfigPath from file")
-	require.Equal(t, "/custom/rke2", cfg.K8s.Rke2KubectlPath, "LoadConfig should load rke2KubectlPath from file")
-	require.Equal(t, "/custom/rke2.yaml", cfg.K8s.Rke2KubeConfigPath, "LoadConfig should load rke2KubeConfigPath from file")
+	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
+	cfg := cl.Load(cmd)
+	require.Equal(t, "/custom/k3s", cfg.K8s.K3sKubectlPath, "Load should load k3sKubectlPath from file")
+	require.Equal(t, "/custom/k3s.yaml", cfg.K8s.K3sKubeConfigPath, "Load should load k3sKubeConfigPath from file")
+	require.Equal(t, "/custom/rke2", cfg.K8s.Rke2KubectlPath, "Load should load rke2KubectlPath from file")
+	require.Equal(t, "/custom/rke2.yaml", cfg.K8s.Rke2KubeConfigPath, "Load should load rke2KubeConfigPath from file")
 }
 
-// TestLoadConfig_FileUnreadable checks that LoadConfig returns defaults if config file is unreadable.
-func TestLoadConfig_FileUnreadable(t *testing.T) {
+// TestLoad_FileUnreadable checks that Load returns defaults if config file is unreadable.
+func TestLoad_FileUnreadable(t *testing.T) {
 	cmd := newFakeCobraCmd(t, "/nonexistent/path/to/config.yaml")
-	cfg := LoadConfig(cmd)
-	require.Equal(t, setDefaults(), cfg, "LoadConfig should return default config if config file is unreadable")
+	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
+	cfg := cl.Load(cmd)
+	require.Equal(t, setDefaults(), cfg, "Load should return default config if config file is unreadable")
 }
 
-// TestLoadConfig_UnmarshalError checks that LoadConfig returns defaults if unmarshal fails.
-func TestLoadConfig_UnmarshalError(t *testing.T) {
+// TestLoad_UnmarshalError checks that Load returns defaults if unmarshal fails.
+func TestLoad_UnmarshalError(t *testing.T) {
 	// This YAML is valid, but the structure is not compatible with Config struct, so unmarshal will fail.
 	tmpFile := createTempConfigFile(t, `
 k8s: "this-should-be-a-map-not-a-string"
@@ -54,8 +58,9 @@ k8s: "this-should-be-a-map-not-a-string"
 	defer os.Remove(tmpFile)
 
 	cmd := newFakeCobraCmd(t, tmpFile)
-	cfg := LoadConfig(cmd)
-	require.Equal(t, setDefaults(), cfg, "LoadConfig should return default config if unmarshal fails")
+	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
+	cfg := cl.Load(cmd)
+	require.Equal(t, setDefaults(), cfg, "Load should return default config if unmarshal fails")
 }
 
 // TestSetDefaults returns the expected default config.

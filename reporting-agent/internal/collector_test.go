@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/identity"
@@ -18,7 +18,7 @@ import (
 
 // TestCollectorCollectDataSuccess checks that CollectData fills the model with correct values on success.
 func TestCollectorCollectDataSuccess(t *testing.T) {
-	c := collectorAllSuccess()
+	c := collectorAllSuccess(t)
 	cfg := config.Config{}
 	root := c.CollectData(cfg)
 	require.Equal(t, "Europe/Warsaw", root.OperatingSystem.Timezone, "Timezone should be set")
@@ -36,7 +36,7 @@ func TestCollectorCollectDataSuccess(t *testing.T) {
 }
 
 func TestCollectorCollectDataShort(t *testing.T) {
-	c := collectorAllSuccess()
+	c := collectorAllSuccess(t)
 	cfg := config.Config{}
 	root := c.CollectDataShort(cfg)
 	require.InDelta(t, 123.0, root.OperatingSystem.UptimeSeconds, 0.0001, "UptimeSeconds should be set")
@@ -56,7 +56,7 @@ func TestCollectorCollectDataShort(t *testing.T) {
 
 // TestCollectorCollectDataAllFailures checks that CollectData returns zero values on all errors.
 func TestCollectorCollectDataAllFailures(t *testing.T) {
-	c := collectorAllFailures()
+	c := collectorAllFailures(t)
 	cfg := config.Config{}
 	root := c.CollectData(cfg)
 	require.Empty(t, root.OperatingSystem.Timezone, "Timezone should be empty on error")
@@ -74,7 +74,7 @@ func TestCollectorCollectDataAllFailures(t *testing.T) {
 }
 
 func TestCollectorCollectDataShortAllFailures(t *testing.T) {
-	c := collectorAllFailures()
+	c := collectorAllFailures(t)
 	cfg := config.Config{}
 	root := c.CollectDataShort(cfg)
 	require.InDelta(t, 0.0, root.OperatingSystem.UptimeSeconds, 0.0001, "UptimeSeconds should be zero on error")
@@ -94,7 +94,7 @@ func TestCollectorCollectDataShortAllFailures(t *testing.T) {
 
 // TestCollectorCollectIdentitySuccess checks that collectIdentity fills the model.Identity fields on success.
 func TestCollectorCollectIdentitySuccess(t *testing.T) {
-	c := collectorAllSuccess()
+	c := collectorAllSuccess(t)
 	root := model.InitializeRoot()
 	c.collectIdentity(&root)
 	require.Equal(t, "gid", root.Identity.GroupID, "GroupID should be set")
@@ -104,7 +104,7 @@ func TestCollectorCollectIdentitySuccess(t *testing.T) {
 
 // TestCollectorCollectIdentityFailures checks that collectIdentity sets empty fields on errors.
 func TestCollectorCollectIdentityFailures(t *testing.T) {
-	c := collectorAllFailures()
+	c := collectorAllFailures(t)
 	root := model.InitializeRoot()
 	c.collectIdentity(&root)
 	require.Empty(t, root.Identity.GroupID, "GroupID should be empty on error")
@@ -141,7 +141,7 @@ func mockIdentityProviderFactory(m identityMock) func() identity.Provider {
 }
 
 // collectorAllSuccess returns a Collector with all dependencies returning success.
-func collectorAllSuccess() *Collector {
+func collectorAllSuccess(t *testing.T) *Collector {
 	return &Collector{
 		getTimezone: func(utils.CmdExecutor) (string, error) { return "Europe/Warsaw", nil },
 		getLocaleData: func(utils.CmdExecutor) (model.Locale, error) {
@@ -169,13 +169,13 @@ func collectorAllSuccess() *Collector {
 			machineID:        "mid",
 			initialMachineID: "imid",
 		}),
-		log:     zap.NewNop().Sugar(),
+		log:     zaptest.NewLogger(t).Sugar(),
 		execCmd: utils.ExecCmdExecutor,
 	}
 }
 
 // collectorAllFailures returns a Collector with all dependencies returning errors.
-func collectorAllFailures() *Collector {
+func collectorAllFailures(t *testing.T) *Collector {
 	return &Collector{
 		getTimezone:    func(utils.CmdExecutor) (string, error) { return "", errors.New("fail") },
 		getLocaleData:  func(utils.CmdExecutor) (model.Locale, error) { return model.Locale{}, errors.New("fail") },
@@ -195,7 +195,7 @@ func collectorAllFailures() *Collector {
 			machineIDErr:        errors.New("fail"),
 			initialMachineIDErr: errors.New("fail"),
 		}),
-		log:     zap.NewNop().Sugar(),
+		log:     zaptest.NewLogger(t).Sugar(),
 		execCmd: utils.ExecCmdExecutor,
 	}
 }
