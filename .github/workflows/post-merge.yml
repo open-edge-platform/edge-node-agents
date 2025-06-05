@@ -374,6 +374,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
           GH_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
             current_date=$(date +%d-%m-%Y-%H%M%S)
@@ -436,6 +438,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
           GH_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
             current_date=$(date +%d-%m-%Y-%H%M%S)
@@ -498,6 +502,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
           GH_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
         run: |
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+
           check_changed_files=$(git status -s)
           if [ "${check_changed_files}" != "" ]; then
             current_date=$(date +%d-%m-%Y-%H%M%S)
