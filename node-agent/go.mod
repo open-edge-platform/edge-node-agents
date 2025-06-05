@@ -66,5 +66,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0
 	golang.org/x/sys v0.33.0 // indirect
-	google.golang.org/grpc v1.72.2
+	google.golang.org/grpc v1.73.0
 )
