@@ -453,7 +453,7 @@ func Test_updateKernel_whenKernelParamsAreEmptyFunctionShouldDoNothing(t *testin
 	err := sut()
 
 	assert.NoError(t, err)
-	assert.Equal(t, hook.LastEntry().Message, "provided kernel is empty - skipping kernel update")
+	assert.Equal(t, hook.LastEntry().Message, "update source or provided kernel is empty - skipping kernel update")
 }
 
 func Test_updateKernel_shouldFailAfterSymlinkIsInputted(t *testing.T) {
@@ -1215,7 +1215,7 @@ func Test_packagesUpdater_update_shouldFailIfReposAreEmpty(t *testing.T) {
 
 	err = pUpdater.update()
 
-	assert.ErrorContains(t, err, "custom apt repositories are empty")
+	assert.ErrorContains(t, err, "update source or custom apt repositories are empty")
 }
 
 func Test_packagesUpdater_update_shouldFailIfMetadataFileDoesntExist(t *testing.T) {
