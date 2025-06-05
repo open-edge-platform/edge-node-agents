@@ -546,12 +546,27 @@ func TestPuaScheduler_HandleRepeatedSchedule_shouldntRescheduleIfJobWithSchedule
 	assert.Equal(t, puaScheduler.scheduler.Len(), 2)
 	assert.Equal(t, len(puaScheduler.scheduler.Jobs()[0].Tags()), 1)
 	puaScheduler.scheduler.Jobs()[0].Tag("test-tag")
-	assert.Equal(t, len(puaScheduler.scheduler.Jobs()[0].Tags()), 2)
+	// The jobs could be reordered on invocation of HandleRepeatedSchedule, hence checking all
+	assert.Condition(t, func() bool {
+		for _, job := range puaScheduler.scheduler.Jobs() {
+			if len(job.Tags()) == 2 {
+				return true
+			}
+		}
+		return false
+	}, "Expected to find a job with 2 tags")
 
 	puaScheduler.HandleRepeatedSchedule(schedule, testMeta, "ubuntu")
 
 	assert.Equal(t, puaScheduler.scheduler.Len(), 2)
-	assert.Equal(t, len(puaScheduler.scheduler.Jobs()[0].Tags()), 2)
+	assert.Condition(t, func() bool {
+		for _, job := range puaScheduler.scheduler.Jobs() {
+			if len(job.Tags()) == 2 {
+				return true
+			}
+		}
+		return false
+	}, "Expected to find a job with 2 tags")
 	assert.Equal(t, testMeta.RepeatedSchedules[0], schedule[0])
 	assert.Equal(t, testMeta.RepeatedSchedules[1], schedule[1])
 
