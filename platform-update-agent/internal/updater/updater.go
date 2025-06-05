@@ -405,8 +405,8 @@ func (k *kernelUpdater) update() error {
 		return err
 	}
 
-	if metadataUpdateSource.KernelCommand == "" {
-		log.Infof("provided kernel is empty - skipping kernel update")
+	if metadataUpdateSource == nil || metadataUpdateSource.KernelCommand == "" {
+		log.Infof("update source or provided kernel is empty - skipping kernel update")
 		return nil
 	}
 
@@ -438,8 +438,8 @@ func (p *packagesUpdater) update() error {
 		return fmt.Errorf("error reading metadata file - %v", err)
 	}
 
-	if len(updateSource.CustomRepos) == 0 {
-		return fmt.Errorf("custom apt repositories are empty")
+	if updateSource == nil || len(updateSource.CustomRepos) == 0 {
+		return fmt.Errorf("update source or custom apt repositories are empty")
 	}
 
 	isDeprecated := p.IsDeprecatedFormat(updateSource.CustomRepos)

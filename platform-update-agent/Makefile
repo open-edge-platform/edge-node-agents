@@ -82,6 +82,8 @@ build: puabuild mmbuild
 # A WA is to add "-parallel=1" to the fuzzing test. Please note that this WA may slow down the test.
 # For further details, you can refer to https://jira.devtools.intel.com/browse/NEXMANAGE-790
 fuzztest:
+	sudo cp mocks/server-cert.pem /usr/local/share/ca-certificates/server-cert.crt
+	sudo update-ca-certificates
 	go test ./cmd/platform-update-agent/ -fuzz=FuzzGrpcCommunication -parallel=1 -fuzztime=${FUZZTIME}
 	go test ./cmd/platform-update-agent/ -fuzz=FuzzLogic -parallel=1 -fuzztime=${FUZZTIME}
 
