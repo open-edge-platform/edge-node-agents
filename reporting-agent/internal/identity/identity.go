@@ -18,12 +18,17 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
+// Provider defines the interface for managing machine identity and group ID.
 type Provider interface {
+	// GetGroupID retrieves the group ID from a file.
 	GetGroupID() (string, error)
+	// CalculateMachineID generates a unique machine ID based on system UUID, serial number, and network serials.
 	CalculateMachineID(executor utils.CmdExecutor) (string, error)
+	// SaveMachineIDs saves the initial and current machine IDs to their respective files.
 	SaveMachineIDs(machineIDHash string) (initialMachineID string, err error)
 }
 
+// Identity implements the Provider interface to manage machine identity and group ID.
 type Identity struct {
 	metricsPath              string
 	machineIDPath            string
@@ -32,6 +37,7 @@ type Identity struct {
 	currentMachineIDFilePath string
 }
 
+// GetGroupID retrieves the group ID from a file.
 func (id *Identity) GetGroupID() (string, error) {
 	fileStat, err := os.Stat(id.groupIDFilePath)
 	if err != nil {
@@ -49,6 +55,7 @@ func (id *Identity) GetGroupID() (string, error) {
 	return groupID, nil
 }
 
+// CalculateMachineID generates a unique machine ID based on system UUID, serial number, and network serials.
 func (*Identity) CalculateMachineID(executor utils.CmdExecutor) (string, error) {
 	systemUUID, err := system.GetSystemUUID(executor)
 	if err != nil {
@@ -79,6 +86,7 @@ func (*Identity) CalculateMachineID(executor utils.CmdExecutor) (string, error) 
 	return encodedHash, nil
 }
 
+// SaveMachineIDs saves the initial and current machine IDs to their respective files.
 func (id *Identity) SaveMachineIDs(machineIDHash string) (initialMachineID string, err error) {
 	if err = os.MkdirAll(id.metricsPath, 0750); err != nil {
 		return "", fmt.Errorf("failed to create metrics ID directory: %w", err)
@@ -109,6 +117,7 @@ func (id *Identity) SaveMachineIDs(machineIDHash string) (initialMachineID strin
 	return initialMachineID, nil
 }
 
+// NewIdentity creates a new Identity instance with default paths for metrics and machine ID.
 func NewIdentity() Provider {
 	const metricsPath = "/etc/edge-node/metrics"
 	const machineIDPath = "/var/lib/edge-node"

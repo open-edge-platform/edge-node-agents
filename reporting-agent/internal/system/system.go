@@ -12,6 +12,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
+// GetTimezone retrieves the system's timezone using the `date` command.
 func GetTimezone(executor utils.CmdExecutor) (string, error) {
 	timezoneBytes, err := utils.ReadFromCommand(executor, "date", "+%Z")
 	if err != nil {
@@ -20,6 +21,7 @@ func GetTimezone(executor utils.CmdExecutor) (string, error) {
 	return utils.TrimSpaceInBytes(timezoneBytes), nil
 }
 
+// GetLocaleData retrieves locale information from the system using the `locale` command.
 func GetLocaleData(executor utils.CmdExecutor) (model.Locale, error) {
 	locale := model.Locale{}
 
@@ -52,6 +54,7 @@ func GetLocaleData(executor utils.CmdExecutor) (model.Locale, error) {
 	return locale, nil
 }
 
+// GetKernelData retrieves kernel information from the system using the `uname` command.
 func GetKernelData(executor utils.CmdExecutor) (model.Kernel, error) {
 	kernel := model.Kernel{}
 
@@ -88,6 +91,7 @@ func GetKernelData(executor utils.CmdExecutor) (model.Kernel, error) {
 	return kernel, nil
 }
 
+// GetReleaseData retrieves release information from the system using the `/etc/os-release` file.
 func GetReleaseData(executor utils.CmdExecutor) (model.Release, error) {
 	release := model.Release{}
 
@@ -128,6 +132,7 @@ func GetReleaseData(executor utils.CmdExecutor) (model.Release, error) {
 	return release, nil
 }
 
+// GetUptimeData retrieves the system uptime from `/proc/uptime`.
 func GetUptimeData(executor utils.CmdExecutor) (float64, error) {
 	uptimeBytes, err := utils.ReadFromCommand(executor, "cat", "/proc/uptime")
 	if err != nil {
@@ -148,6 +153,7 @@ func GetUptimeData(executor utils.CmdExecutor) (float64, error) {
 	return uptime, nil
 }
 
+// GetSerialNumber retrieves the system's serial number using the `dmidecode` command.
 func GetSerialNumber(executor utils.CmdExecutor) (string, error) {
 	serialNumber, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "system-serial-number")
 	if err != nil {
@@ -156,6 +162,7 @@ func GetSerialNumber(executor utils.CmdExecutor) (string, error) {
 	return utils.TrimSpaceInBytes(serialNumber), nil
 }
 
+// GetSystemUUID retrieves the system's UUID using the `dmidecode` command.
 func GetSystemUUID(executor utils.CmdExecutor) (string, error) {
 	uuid, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "system-uuid")
 	if err != nil {

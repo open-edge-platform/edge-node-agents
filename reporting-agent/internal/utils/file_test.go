@@ -31,7 +31,7 @@ func TestReadFileTrimmedEmptyFile(t *testing.T) {
 
 	result, err := ReadFileTrimmed(file)
 	require.NoError(t, err, "ReadFileTrimmed should not return error for empty file")
-	require.Equal(t, "", result, "ReadFileTrimmed should return empty string for whitespace-only file")
+	require.Empty(t, result, "ReadFileTrimmed should return empty string for whitespace-only file")
 }
 
 // TestReadFileTrimmedFileNotExist checks that ReadFileTrimmed returns an error for a non-existent file.

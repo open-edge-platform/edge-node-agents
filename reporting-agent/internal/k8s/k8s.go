@@ -31,6 +31,7 @@ type kube struct {
 	provider       string
 }
 
+// GetKubernetesData retrieves Kubernetes data using the provided executor and configuration.
 func GetKubernetesData(executor utils.CmdExecutor, k8sCfg config.K8sConfig) (model.Kubernetes, error) {
 	k8sData := model.Kubernetes{Applications: []model.KubernetesApplication{}}
 

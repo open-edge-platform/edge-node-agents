@@ -17,6 +17,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
+// Collector is responsible for collecting system and hardware data.
 type Collector struct {
 	getTimezone       getTimezoneFunc
 	getLocaleData     getLocaleDataFunc
@@ -45,6 +46,7 @@ type (
 	newIdentityFunc       func() identity.Provider
 )
 
+// NewCollector creates a new Collector instance with the provided logger.
 func NewCollector(logger *zap.SugaredLogger) Collector {
 	return Collector{
 		getTimezone:       system.GetTimezone,

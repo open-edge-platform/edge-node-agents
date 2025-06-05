@@ -18,10 +18,11 @@ import (
 	"time"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
+	"golang.org/x/oauth2"
+
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/auth"
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/logger"
-	"golang.org/x/oauth2"
 )
 
 const TIMEOUT = 30 * time.Second
@@ -127,7 +128,7 @@ func (cli *Client) ProvisionAccessToken(ctx context.Context, authConf config.Con
 	return oauth2.Token{AccessToken: at, Expiry: exp}, nil
 }
 
-func (cli *Client) ProvisionReleaseServiceToken(ctx context.Context, authConf config.ConfigAuth, accessToken string) (oauth2.Token, error) {
+func (cli *Client) ProvisionReleaseServiceToken(ctx context.Context, _ config.ConfigAuth, accessToken string) (oauth2.Token, error) {
 	var token oauth2.Token
 	endpoint := cli.BaseUrl.JoinPath("/token")
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)

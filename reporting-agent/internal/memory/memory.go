@@ -11,6 +11,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
+// GetMemoryData retrieves memory information from the system using the dmidecode command.
 func GetMemoryData(executor utils.CmdExecutor) (model.Memory, error) {
 	memory := model.Memory{}
 	memory.Devices = []model.MemoryDevice{}
