@@ -170,6 +170,21 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.Equal(t, 1, len(mockExec.commands))
 		assert.Equal(t, []string{"/usr/bin/apt-get", "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
+
+	t.Run("command execution error but valid output", func(t *testing.T) {
+		mockExec := &mockExecutor{
+			stdout: []string{"After this operation, 500 MB of additional disk space will be used."},
+			stderr: []string{""},
+			errors: []error{errors.New("simulated execution error")},
+		}
+
+		isUpdateAvail, size, err := GetEstimatedSize(mockExec)
+		assert.NoError(t, err)
+		assert.True(t, isUpdateAvail)
+		assert.Equal(t, uint64(524288000), size)
+		assert.Equal(t, 1, len(mockExec.commands))
+		assert.Equal(t, []string{"/usr/bin/apt-get", "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+	})
 }
 
 func TestUbuntuUpdater_Update(t *testing.T) {

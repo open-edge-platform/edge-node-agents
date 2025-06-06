@@ -75,7 +75,10 @@ func (u *Updater) Update() (bool, error) {
 
 	for _, cmd := range cmds {
 		log.Printf("Executing command: %s", cmd)
-		_, stderr, _ := u.CommandExecutor.Execute(cmd)
+		_, stderr, err := u.CommandExecutor.Execute(cmd)
+		if err != nil {
+			return false, fmt.Errorf("SOTA Aborted: Command execution error: %v", err)
+		}
 		if len(stderr) > 0 {
 			return false, fmt.Errorf("SOTA Aborted: Command failed: %s", string(stderr))
 		}
@@ -91,7 +94,11 @@ func GetEstimatedSize(cmdExec utils.Executor) (bool, uint64, error) {
 		"Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}
 
 	// Ignore the error as the command will return a non-zero exit code
-	stdout, stderr, _ := cmdExec.Execute(cmd)
+	stdout, stderr, err := cmdExec.Execute(cmd)
+	if err != nil {
+		// Log the error, but continue processing as output may still be useful
+		log.Printf("Warning: command execution returned error: %v", err)
+	}
 	if len(stderr) > 0 {
 		return false, 0, fmt.Errorf("SOTA Aborted: command execution for update size determination failed: %s", string(stderr))
 	}

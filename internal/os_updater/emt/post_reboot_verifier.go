@@ -45,16 +45,10 @@ func VerifyUpdateAfterReboot(fs afero.Fs, state utils.INBDState) error {
 
 		// Write status to the log file.
 		writeUpdateStatus(fs, SUCCESS, "", "")
-		if err != nil {
-			log.Printf("[Warning] Error writing update status: %v", err)
-		}
 
 		log.Println("SUCCESSFUL INSTALL: Overall SOTA update successful.  System has been properly updated.")
 
 		writeGranularLog(fs, SUCCESS, "")
-		if err != nil {
-			log.Printf("[Warning] Error writing granular log: %v", err)
-		}
 	} else {
 		log.Println("Update failed. Reverting to previous image.")
 		// Write the status to the log file.

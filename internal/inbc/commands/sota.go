@@ -112,7 +112,9 @@ func handleSOTA(
 		}
 		defer func() {
 			if c, ok := conn.(*grpc.ClientConn); ok {
-				c.Close()
+				if err := c.Close(); err != nil {
+					fmt.Printf("Warning: failed to close gRPC connection: %v\n", err)
+				}
 			}
 		}()
 

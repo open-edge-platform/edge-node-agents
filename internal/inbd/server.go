@@ -73,9 +73,6 @@ func RunServer(deps ServerDeps) error {
 	}
 
 	deps.Umask(oldUmask)
-	if err != nil {
-		return fmt.Errorf("error listening on socket: %w", err)
-	}
 
 	grpcServer := deps.NewGRPCServer()
 	deps.RegisterService(grpcServer)

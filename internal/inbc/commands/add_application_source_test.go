@@ -105,4 +105,19 @@ func TestHandleAddApplicationSource(t *testing.T) {
 		err := handleAddApplicationSource(&socket, &sources, &filename, &gpgKeyURI, &gpgKeyName, dialer)(cmd, args)
 		assert.Error(t, err, "error adding application source")
 	})
+
+	t.Run("gRPC connection close error is handled", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("AddApplicationSource", mock.Anything, mock.Anything, mock.Anything).Return(&pb.UpdateResponse{
+			StatusCode: 200,
+			Error:      "",
+		}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return mockClient, &mockConnWithCloseError{}, nil
+		}
+
+		err := handleAddApplicationSource(&socket, &sources, &filename, &gpgKeyURI, &gpgKeyName, dialer)(cmd, args)
+		assert.NoError(t, err, "handleAddApplicationSource should not return an error even if Close fails")
+	})
 }

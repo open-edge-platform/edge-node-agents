@@ -85,4 +85,19 @@ func TestHandleRemoveApplicationSource(t *testing.T) {
 		err := handleRemoveApplicationSource(&socket, &filename, &gpgKeyName, dialer)(cmd, args)
 		assert.Error(t, err, "error removing application source")
 	})
+
+	t.Run("gRPC connection close error is handled", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("RemoveApplicationSource", mock.Anything, mock.Anything, mock.Anything).Return(&pb.UpdateResponse{
+			StatusCode: 200,
+			Error:      "",
+		}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return mockClient, &mockConnWithCloseError{}, nil
+		}
+
+		err := handleRemoveApplicationSource(&socket, &filename, &gpgKeyName, dialer)(cmd, args)
+		assert.NoError(t, err, "handleRemoveApplicationSource should not return an error even if Close fails")
+	})
 }

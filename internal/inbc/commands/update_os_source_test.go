@@ -92,4 +92,19 @@ func TestHandleUpdateOSSource(t *testing.T) {
 		err := handleUpdateOSSource(&socket, &sources, dialer)(cmd, args)
 		assert.Error(t, err, "error updating OS sources")
 	})
+
+	t.Run("gRPC connection close error is handled", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("UpdateOSSource", mock.Anything, mock.Anything, mock.Anything).Return(&pb.UpdateResponse{
+			StatusCode: 200,
+			Error:      "",
+		}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return mockClient, &mockConnWithCloseError{}, nil
+		}
+
+		err := handleUpdateOSSource(&socket, &sources, dialer)(cmd, args)
+		assert.NoError(t, err, "handleUpdateOSSource should not return an error even if Close fails")
+	})
 }

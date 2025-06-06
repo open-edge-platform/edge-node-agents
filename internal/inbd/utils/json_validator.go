@@ -41,8 +41,10 @@ func IsValidJSON(fs afero.Afero, schemaFilePath string, jsonFilePath string) (bo
     if !result.Valid() {
         var errorDetails strings.Builder
         for _, desc := range result.Errors() {
-            errorDetails.WriteString(fmt.Sprintf("Field: %s - Issue: %s; ",
-                desc.Field(), desc.Description()))
+            if _, err := errorDetails.WriteString(fmt.Sprintf("Field: %s - Issue: %s; ",
+                desc.Field(), desc.Description())); err != nil {
+                return false, fmt.Errorf("failed to build error details: %w", err)
+            }
         }
         return false, fmt.Errorf("JSON file is invalid: %s", errorDetails.String())
     }

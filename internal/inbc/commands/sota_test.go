@@ -18,6 +18,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Mock connection that returns an error on Close
+type mockConnWithCloseError struct {
+	grpc.ClientConnInterface
+}
+func (m *mockConnWithCloseError) Close() error {
+	return errors.New("mock close error")
+}
+
 func TestSOTACmd(t *testing.T) {
 	cmd := SOTACmd()
 
@@ -152,5 +160,23 @@ func TestHandleSOTA(t *testing.T) {
 
 		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
 		assert.Error(t, err, "error updating system software")
+	})
+
+	t.Run("gRPC connection close error is handled", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("UpdateSystemSoftware", mock.Anything, mock.Anything, mock.Anything).Return(&pb.UpdateResponse{
+			StatusCode: 200,
+			Error:      "",
+		}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return mockClient, &mockConnWithCloseError{}, nil
+		}
+		detectOS := func() (string, error) {
+			return "ubuntu", nil
+		}
+
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+		assert.NoError(t, err, "handleSOTA should not return an error even if Close fails")
 	})
 }
