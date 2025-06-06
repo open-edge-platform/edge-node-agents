@@ -10,6 +10,15 @@ import (
 	"syscall"
 )
 
+// ReadFileTrimmed reads a file and returns its content as a string with whitespace trimmed.
+func ReadFileTrimmed(path string) (string, error) {
+	data, err := ReadFileNoLinks(path)
+	if err != nil {
+		return "", err
+	}
+	return TrimSpaceInBytes(data), nil
+}
+
 // OpenNoLinks opens the file at the given path for reading, failing if the path is a symbolic or hard link.
 func OpenNoLinks(path string) (*os.File, error) {
 	return openFileNoLinks(path, os.O_RDONLY, 0)
