@@ -5,6 +5,7 @@ package utils
 
 import "net/url"
 
+// NoNullByteString checks if the provided string does not contain any null bytes.
 func NoNullByteString(s string) bool {
 	for _, b := range []byte(s) {
 		if b == 0 {
@@ -14,8 +15,8 @@ func NoNullByteString(s string) bool {
 	return true
 }
 
+// NoNullByteURL checks if the provided URL string does not contain any null bytes.
 func NoNullByteURL(u string) bool {
-
 	s, err := url.PathUnescape(u)
 	if err != nil {
 		return false

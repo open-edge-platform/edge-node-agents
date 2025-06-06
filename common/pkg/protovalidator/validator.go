@@ -5,7 +5,6 @@ package protovalidator
 
 import (
 	"fmt"
-	"os"
 
 	protovalidate "github.com/bufbuild/protovalidate-go"
 	"github.com/pkg/errors"
@@ -44,17 +43,17 @@ func startProtovalidate(preWarmMsg ...proto.Message) (*protovalidate.Validator, 
 }
 
 // MustInit initializes protovalidate and pre-warms it with provided preWarmMsgs.
-// Note that this function does fatal in the case of error.
+// Panics in the case of error. Should only be used in initialization code.
 func MustInit(preWarmMsgs []proto.Message) {
 	preWarmMessages = append(preWarmMessages, preWarmMsgs...)
 	_validator, err := startProtovalidate(preWarmMessages...)
 	if err != nil {
-		fmt.Printf("Failed to initialize proto validate: %s", err)
-		os.Exit(1)
+		panic(fmt.Sprintf("Failed to initialize proto validate: %s", err))
 	}
 	protovalidator = _validator
 }
 
+// ValidateMessage validates the provided proto.Message using the initialized protovalidator.
 func ValidateMessage(message proto.Message) error {
 	if err := (*protovalidator).Validate(message); err != nil {
 		fmt.Printf("Error validating input data: %v", message)

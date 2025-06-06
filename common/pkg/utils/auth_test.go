@@ -4,7 +4,6 @@
 package utils_test
 
 import (
-	"context"
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
@@ -12,20 +11,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 )
 
 func newTestServer() *httptest.Server {
-	return httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(200)
+	return httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+		rw.WriteHeader(http.StatusOK)
 	}))
 }
 
 func TestGetAuthConfig(t *testing.T) {
-
 	minVersion := uint16(tls.VersionTLS13)
 	cipher := []uint16{
 		tls.TLS_AES_256_GCM_SHA384,
@@ -35,15 +33,14 @@ func TestGetAuthConfig(t *testing.T) {
 	server.StartTLS()
 	defer server.Close()
 
-	ctx := context.Background()
-	testConfig, err := utils.GetAuthConfig(ctx, server.Certificate())
-	assert.Nil(t, err)
-	assert.NotNil(t, testConfig)
-	assert.NotNil(t, testConfig.RootCAs)
-	assert.Equal(t, tls.RequireAndVerifyClientCert, testConfig.ClientAuth)
-	assert.Equal(t, false, testConfig.InsecureSkipVerify)
-	assert.Equal(t, minVersion, testConfig.MinVersion)
-	assert.Equal(t, cipher, testConfig.CipherSuites)
+	testConfig, err := utils.GetAuthConfig(t.Context(), server.Certificate())
+	require.NoError(t, err)
+	require.NotNil(t, testConfig)
+	require.NotNil(t, testConfig.RootCAs)
+	require.Equal(t, tls.RequireAndVerifyClientCert, testConfig.ClientAuth)
+	require.False(t, testConfig.InsecureSkipVerify)
+	require.Equal(t, minVersion, testConfig.MinVersion)
+	require.Equal(t, cipher, testConfig.CipherSuites)
 
 	tr := &http.Transport{
 		TLSClientConfig: testConfig,
@@ -52,59 +49,49 @@ func TestGetAuthConfig(t *testing.T) {
 	client := &http.Client{Transport: tr, Timeout: 10 * time.Second}
 
 	resp, err := client.Get(server.URL)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	defer resp.Body.Close()
-	assert.Equal(t, 200, resp.StatusCode)
+	require.Equal(t, 200, resp.StatusCode)
 }
 
 func TestGetAuthContext(t *testing.T) {
-	tFile, err := os.CreateTemp("", "access-token")
-	require.Nil(t, err)
+	tFile, err := os.CreateTemp(t.TempDir(), "access-token")
+	require.NoError(t, err)
 
-	_, err = tFile.Write([]byte("token"))
-	require.Nil(t, err)
+	_, err = tFile.WriteString("token")
+	require.NoError(t, err)
 
 	defer tFile.Close()
-	defer os.Remove(tFile.Name())
 
-	ctx := context.Background()
-	newCtx := utils.GetAuthContext(ctx, tFile.Name())
+	newCtx := utils.GetAuthContext(t.Context(), tFile.Name())
 
 	val, _ := metadata.FromOutgoingContext(newCtx)
-	assert.Equal(t, val.Get("authorization"), []string{"Bearer token"})
-
+	require.Equal(t, []string{"Bearer token"}, val.Get("authorization"))
 }
 
 func TestGetAuthContext_noFile(t *testing.T) {
-
-	ctx := context.Background()
-	newCtx := utils.GetAuthContext(ctx, "/tmp/no-file")
+	newCtx := utils.GetAuthContext(t.Context(), "/tmp/no-file")
 
 	val, _ := metadata.FromOutgoingContext(newCtx)
-	assert.Equal(t, val.Get("authorization"), []string{"Bearer"})
-
+	require.Equal(t, []string{"Bearer"}, val.Get("authorization"))
 }
 
 func TestGetPerRPCCreds_noFile(t *testing.T) {
-
 	tSource := utils.GetPerRPCCreds("/tmp/no-file")
 
-	assert.NotNil(t, tSource)
-
+	require.NotNil(t, tSource)
 }
 
 func TestGetPerRPCCreds(t *testing.T) {
-	tFile, err := os.CreateTemp("", "access-token")
-	require.Nil(t, err)
+	tFile, err := os.CreateTemp(t.TempDir(), "access-token")
+	require.NoError(t, err)
 
-	_, err = tFile.Write([]byte("token"))
-	require.Nil(t, err)
+	_, err = tFile.WriteString("token")
+	require.NoError(t, err)
 
 	defer tFile.Close()
-	defer os.Remove(tFile.Name())
 
 	tSource := utils.GetPerRPCCreds(tFile.Name())
 
-	assert.NotNil(t, tSource)
-
+	require.NotNil(t, tSource)
 }

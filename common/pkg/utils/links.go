@@ -10,18 +10,22 @@ import (
 	"syscall"
 )
 
+// OpenNoLinks opens the file at the given path for reading, failing if the path is a symbolic or hard link.
 func OpenNoLinks(path string) (*os.File, error) {
 	return openFileNoLinks(path, os.O_RDONLY, 0)
 }
 
+// CreateNoLinks creates or truncates the file at the given path with the specified permissions, failing if the path is a symbolic or hard link.
 func CreateNoLinks(path string, perm os.FileMode) (*os.File, error) {
 	return openFileNoLinks(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, perm)
 }
 
+// CreateExcl creates a new file at the given path with the specified permissions, failing if the file exists or if the path is a symbolic or hard link.
 func CreateExcl(path string, perm os.FileMode) (*os.File, error) {
 	return openFileNoLinks(path, os.O_RDWR|os.O_CREATE|os.O_EXCL, perm)
 }
 
+// ReadFileNoLinks reads and returns the contents of the file at the given path, failing if the path is a symbolic or hard link.
 func ReadFileNoLinks(path string) ([]byte, error) {
 	f, err := OpenNoLinks(path)
 	if err != nil {

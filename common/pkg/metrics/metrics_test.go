@@ -4,61 +4,59 @@
 package metrics_test
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
+	"github.com/stretchr/testify/require"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
 )
 
 func TestMetricsWithInvalidEndpoint(t *testing.T) {
-	ctx := context.Background()
-	MetricsEndpoint := "unix:///dummy"
-	MetricsInterval := 10 * time.Millisecond
+	ctx := t.Context()
+	metricsEndpoint := "unix:///dummy"
+	metricsInterval := 10 * time.Millisecond
 	infoComponent := "Test Agent"
 	infoVersion := "Test"
 
-	shutdown, err := metrics.Init(ctx, MetricsEndpoint, MetricsInterval, infoComponent, infoVersion)
-	assert.NoError(t, err)
+	shutdown, err := metrics.Init(ctx, metricsEndpoint, metricsInterval, infoComponent, infoVersion)
+	require.NoError(t, err)
 	err = shutdown(ctx)
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestMetricsWithValidEndpoint(t *testing.T) {
 	fmt.Println("TestMetricsWithValidEndpoint()")
-	ctx := context.Background()
+	ctx := t.Context()
 	socketName := "/tmp/otel.sock"
-	MetricsEndpoint := "unix://" + socketName
-	MetricsInterval := 1 * time.Second
+	metricsEndpoint := "unix://" + socketName
+	metricsInterval := 1 * time.Second
 	infoComponent := "Test Agent"
 	infoVersion := "Test"
 
 	_, err := net.Listen("unix", socketName)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer func() {
 		os.Remove(socketName)
 	}()
 
-	shutdown, err := metrics.Init(ctx, MetricsEndpoint, MetricsInterval, infoComponent, infoVersion)
-	assert.NoError(t, err)
+	shutdown, err := metrics.Init(ctx, metricsEndpoint, metricsInterval, infoComponent, infoVersion)
+	require.NoError(t, err)
 	err = shutdown(ctx)
 	// TODO mock otel collector. Change assert to NoError
-	assert.Error(t, err)
+	require.Error(t, err)
 }
 
 func TestMetricsWithNoEndpoint(t *testing.T) {
-	ctx := context.Background()
-	MetricsEndpoint := ""
-	MetricsInterval := 10 * time.Millisecond
+	metricsEndpoint := ""
+	metricsInterval := 10 * time.Millisecond
 	infoComponent := "Test Agent"
 	infoVersion := "Test"
 
-	shutdown, err := metrics.Init(ctx, MetricsEndpoint, MetricsInterval, infoComponent, infoVersion)
-	assert.Error(t, err)
-	assert.Nil(t, shutdown)
+	shutdown, err := metrics.Init(t.Context(), metricsEndpoint, metricsInterval, infoComponent, infoVersion)
+	require.Error(t, err)
+	require.Nil(t, shutdown)
 }

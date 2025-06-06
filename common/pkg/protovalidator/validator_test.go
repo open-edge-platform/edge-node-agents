@@ -15,7 +15,7 @@ func TestMustInit(t *testing.T) {
 	tests := []struct {
 		name        string
 		preWarmMsgs []proto.Message
-		wantErr     bool
+		wantErr     bool // wantErr means: expect panic
 	}{
 		{
 			name:        "Valid initialization",
@@ -32,10 +32,12 @@ func TestMustInit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
-				if r := recover(); r != nil {
-					if !tt.wantErr {
-						t.Errorf("MustInit() panicked: %v", r)
-					}
+				r := recover()
+				if tt.wantErr && r == nil {
+					t.Errorf("MustInit() expected panic but did not panic")
+				}
+				if !tt.wantErr && r != nil {
+					t.Errorf("MustInit() panicked unexpectedly: %v", r)
 				}
 			}()
 
