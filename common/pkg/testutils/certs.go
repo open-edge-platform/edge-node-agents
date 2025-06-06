@@ -9,7 +9,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"fmt"
+	"errors"
 	"math/big"
 	"os"
 	"time"
@@ -67,7 +67,7 @@ func generateCertificateAndKey() (*x509.Certificate, *rsa.PrivateKey, error) {
 	certBlock, _ := pem.Decode(testCertContents)
 	keyBlock, _ := pem.Decode(testKeyContents)
 	if certBlock == nil || keyBlock == nil {
-		return nil, nil, fmt.Errorf("failed to decode PEM block for certificate or key")
+		return nil, nil, errors.New("failed to decode PEM block for certificate or key")
 	}
 
 	cert, err := x509.ParseCertificate(certBlock.Bytes)
