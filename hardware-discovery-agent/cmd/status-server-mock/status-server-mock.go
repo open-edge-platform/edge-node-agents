@@ -4,9 +4,14 @@
 package main
 
 import (
+	"log"
+
 	ssmock "github.com/open-edge-platform/edge-node-agents/common/pkg/status-server-mock"
 )
 
 func main() {
-	ssmock.RunMockStatusServer()
+	err := ssmock.RunMockStatusServer()
+	if err != nil {
+		log.Fatalf("Error running status server mock: %v", err)
+	}
 }
