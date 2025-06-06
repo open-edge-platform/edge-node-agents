@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+
 package testutils
 
 import (
@@ -13,7 +14,8 @@ import (
 	"time"
 )
 
-func CreateCertificateAndKey() ([]byte, []byte, error) {
+// CreateCertificateAndKey generates a self-signed test certificate and private key, and returns them in PEM format.
+func CreateCertificateAndKey() (testCertContents []byte, testKeyContents []byte, err error) {
 	testPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return nil, nil, err
@@ -43,32 +45,52 @@ func CreateCertificateAndKey() ([]byte, []byte, error) {
 		Type:  "CERTIFICATE",
 		Bytes: testCaBytes,
 	}
-	testCertContents := pem.EncodeToMemory(testCert)
+	testCertContents = pem.EncodeToMemory(testCert)
 
 	testKey := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(testPrivKey),
 	}
-	testKeyContents := pem.EncodeToMemory(testKey)
+	testKeyContents = pem.EncodeToMemory(testKey)
 
 	return testCertContents, testKeyContents, nil
 }
 
-func generateCertificateAndKey() (*x509.Certificate, *rsa.PrivateKey) {
-	testCertContents, testKeyContents, _ := CreateCertificateAndKey()
+// generateCertificateAndKey generates a certificate and key for internal use and returns an error if any step fails.
+func generateCertificateAndKey() (*x509.Certificate, *rsa.PrivateKey, error) {
+	testCertContents, testKeyContents, err := CreateCertificateAndKey()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	certBlock, _ := pem.Decode(testCertContents)
 	keyBlock, _ := pem.Decode(testKeyContents)
+	if certBlock == nil || keyBlock == nil {
+		return nil, nil, err
+	}
 
-	cert, _ := x509.ParseCertificate(certBlock.Bytes)
-	key, _ := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+	cert, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return nil, nil, err
+	}
+	key, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	return cert, key
+	return cert, key, nil
 }
 
-func CreateTestCertificate() (string, string, string) {
-	testCaCert, testCaKey := generateCertificateAndKey()
-	testCaBytes, _ := x509.CreateCertificate(rand.Reader, testCaCert, testCaCert, &testCaKey.PublicKey, testCaKey)
+// CreateTestCertificate generates a test certificate, key, and CA certificate, writes them to temporary files, and returns their paths.
+func CreateTestCertificate() (certPath string, keyPath string, caPath string, err error) {
+	testCaCert, testCaKey, err := generateCertificateAndKey()
+	if err != nil {
+		return "", "", "", err
+	}
+	testCaBytes, err := x509.CreateCertificate(rand.Reader, testCaCert, testCaCert, &testCaKey.PublicKey, testCaKey)
+	if err != nil {
+		return "", "", "", err
+	}
 	testCaCertBlock := &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: testCaBytes,
@@ -81,26 +103,49 @@ func CreateTestCertificate() (string, string, string) {
 	}
 	testCaKeyContents := pem.EncodeToMemory(testCaKeyBlock)
 
-	certFile, _ := os.CreateTemp("", "cert.pem")
+	certFile, err := os.CreateTemp("", "cert.pem")
+	if err != nil {
+		return "", "", "", err
+	}
 	defer certFile.Close()
-	_, _ = certFile.Write(testCaCertContents)
-	keyFile, _ := os.CreateTemp("", "key.pem")
+
+	_, err = certFile.Write(testCaCertContents)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	keyFile, err := os.CreateTemp("", "key.pem")
+	if err != nil {
+		return "", "", "", err
+	}
 	defer keyFile.Close()
-	_, _ = keyFile.Write(testCaKeyContents)
+
+	_, err = keyFile.Write(testCaKeyContents)
+	if err != nil {
+		return "", "", "", err
+	}
 
 	caCertBytes := &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: testCaCert.Raw,
 	}
 	pemData := pem.EncodeToMemory(caCertBytes)
-	caFile, _ := os.CreateTemp("", "cacert.pem")
+	caFile, err := os.CreateTemp("", "cacert.pem")
+	if err != nil {
+		return "", "", "", err
+	}
 	defer caFile.Close()
-	_, _ = caFile.Write(pemData)
 
-	return certFile.Name(), keyFile.Name(), caFile.Name()
+	_, err = caFile.Write(pemData)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return certFile.Name(), keyFile.Name(), caFile.Name(), nil
 }
 
-func createCertFiles() (string, string, error) {
+// CreateTestCertificates generates a test certificate and key, writes them to temporary files, and returns their paths.
+func CreateTestCertificates() (certPath string, keyPath string, err error) {
 	testCertContents, testKeyContents, err := CreateCertificateAndKey()
 	if err != nil {
 		return "", "", err
@@ -111,6 +156,7 @@ func createCertFiles() (string, string, error) {
 		return "", "", err
 	}
 	defer certFile.Close()
+
 	_, err = certFile.Write(testCertContents)
 	if err != nil {
 		return "", "", err
@@ -121,6 +167,7 @@ func createCertFiles() (string, string, error) {
 		return "", "", err
 	}
 	defer keyFile.Close()
+
 	_, err = keyFile.Write(testKeyContents)
 	if err != nil {
 		return "", "", err
@@ -129,22 +176,17 @@ func createCertFiles() (string, string, error) {
 	return certFile.Name(), keyFile.Name(), nil
 }
 
-func CreateTestCertificates() (string, string, error) {
-	return createCertFiles()
-}
-
-func CreateTestCerts() (string, string) {
-	testCertContents, testKeyContents, err := createCertFiles()
+// CreateTestCrt generates a test certificate and key, writes them to temporary files, and returns their paths and the certificate contents.
+func CreateTestCrt() (certPath string, keyPath string, certContents []byte, err error) {
+	testCa, testPrivKey, err := generateCertificateAndKey()
 	if err != nil {
-		return "", ""
+		return "", "", nil, err
 	}
-	return testCertContents, testKeyContents
-}
 
-func createTestCrts() (string, string, []byte) {
-	testCa, testPrivKey := generateCertificateAndKey()
-
-	testCaBytes, _ := x509.CreateCertificate(rand.Reader, testCa, testCa, &testPrivKey.PublicKey, testPrivKey)
+	testCaBytes, err := x509.CreateCertificate(rand.Reader, testCa, testCa, &testPrivKey.PublicKey, testPrivKey)
+	if err != nil {
+		return "", "", nil, err
+	}
 
 	testCert := &pem.Block{
 		Type:  "CERTIFICATE",
@@ -160,18 +202,27 @@ func createTestCrts() (string, string, []byte) {
 
 	testKeyContents := pem.EncodeToMemory(testKey)
 
-	certFile, _ := os.CreateTemp("", "cert.pem")
-	_, _ = certFile.Write(testCertContents)
-	_ = certFile.Close()
+	certFile, err := os.CreateTemp("", "cert.pem")
+	if err != nil {
+		return "", "", nil, err
+	}
+	defer certFile.Close()
 
-	keyFile, _ := os.CreateTemp("", "key.pem")
-	_, _ = keyFile.Write(testKeyContents)
-	_ = keyFile.Close()
+	_, err = certFile.Write(testCertContents)
+	if err != nil {
+		return "", "", nil, err
+	}
 
-	return certFile.Name(), keyFile.Name(), testCertContents
-}
+	keyFile, err := os.CreateTemp("", "key.pem")
+	if err != nil {
+		return "", "", nil, err
+	}
+	defer keyFile.Close()
 
-func CreateTestCrt() (string, string, []byte) {
-	certPath, keyPath, certContents := createTestCrts()
-	return certPath, keyPath, certContents
+	_, err = keyFile.Write(testKeyContents)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	return certFile.Name(), keyFile.Name(), testCertContents, nil
 }

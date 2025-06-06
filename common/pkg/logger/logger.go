@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
+
 package logger
 
 import (
@@ -14,6 +15,7 @@ func init() {
 	log.SetLevel(log.InfoLevel)
 }
 
+// New creates a new log entry with the specified component and version.
 func New(component, version string) *log.Entry {
 	return log.WithFields(log.Fields{
 		"component": component,

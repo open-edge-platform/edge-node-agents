@@ -8,11 +8,15 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/open-edge-platform/edge-node-agents/common/pkg/api/status/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	pb "github.com/open-edge-platform/edge-node-agents/common/pkg/api/status/proto"
 )
 
+// StatusClient is a client for communicating with the status service.
+//
+//nolint:revive // not addressing: "type name will be used as status.StatusClient by other packages, and that is repetitive; consider calling this Client"
 type StatusClient struct {
 	ServerAddr string
 	Conn       *grpc.ClientConn
@@ -28,7 +32,6 @@ type StatusClient struct {
 //   - *StatusClient: A pointer to the initialized StatusClient.
 //   - error: An error if the client creation fails, otherwise nil.
 func InitClient(serverAddr string) (*StatusClient, error) {
-
 	// #FIXME : https://github.com/grpc/grpc-go/issues/8207 If https_proxy
 	// is set failure seen in dial to a unix domain socket. Current workaround
 	// is to disable proxy usage as we know this is a unix socket.

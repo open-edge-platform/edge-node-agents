@@ -6,14 +6,13 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 )
 
 func TestNoNullByteString(t *testing.T) {
-
 	assert.True(t, utils.NoNullByteString("/etc/test/go"))
-
 	assert.False(t, utils.NoNullByteString("/etc/test\000/go"))
 	assert.False(t, utils.NoNullByteString("\000"))
 	assert.False(t, utils.NoNullByteString("/etc/test\x00/go"))
@@ -24,7 +23,6 @@ func TestNoNullByteString(t *testing.T) {
 }
 
 func TestNoNullByteURL(t *testing.T) {
-
 	assert.True(t, utils.NoNullByteURL("http://asdf.com"))
 	assert.False(t, utils.NoNullByteURL("asdf.%00.com"))
 	assert.False(t, utils.NoNullByteURL("asdf\x00com"))
@@ -34,5 +32,4 @@ func TestNoNullByteURL(t *testing.T) {
 	assert.True(t, utils.NoNullByteURL("here.com/%26name=xyz"))
 	assert.False(t, utils.NoNullByteURL("here.com/%2/name=xyz"))
 	assert.False(t, utils.NoNullByteURL("here.com/%00name=xyz"))
-
 }

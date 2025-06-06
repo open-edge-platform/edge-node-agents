@@ -13,7 +13,7 @@ include ../common.mk
 all:
 	lint test
 
-lint: golint buf-lint
+lint: lint-go buf-lint
 
 clean:
 	rm -rf build
@@ -62,3 +62,10 @@ buf-gen:
 
 deb-push:
 	@echo "no deb packages to build, skipping"
+
+
+# Help: Runs linters for golang source code files
+lint-go:
+	@echo "---MAKEFILE LINT-GO---"
+	golangci-lint -v run
+	@echo "---END MAKEFILE LINT-GO---"

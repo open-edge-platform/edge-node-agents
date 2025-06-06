@@ -5,8 +5,9 @@ package logger_test
 import (
 	"testing"
 
-	"github.com/open-edge-platform/edge-node-agents/common/pkg/logger"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/logger"
 )
 
 func TestNew(t *testing.T) {

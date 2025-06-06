@@ -24,9 +24,7 @@ func newResource(name, version string) *resource.Resource {
 	return resource.NewWithAttributes(semconv.SchemaURL, attributes...)
 }
 
-func newMeterProvider(ctx context.Context, res *resource.Resource, endpoint string,
-	interval time.Duration) (*metric.MeterProvider, error) {
-
+func newMeterProvider(ctx context.Context, res *resource.Resource, endpoint string, interval time.Duration) (*metric.MeterProvider, error) {
 	// #FIXME : https://github.com/grpc/grpc-go/issues/8207 If https_proxy
 	// is set failure seen in dial to a unix domain socket. Current workaround
 	// is to disable proxy usage as we know this is a unix socket.
@@ -47,6 +45,7 @@ func newMeterProvider(ctx context.Context, res *resource.Resource, endpoint stri
 	return meterProvider, nil
 }
 
+// Init initializes the OpenTelemetry metrics collection for the agent.
 func Init(ctx context.Context, endpoint string, interval time.Duration, name, version string) (func(context.Context) error, error) {
 	if endpoint == "" {
 		return nil, errors.New("no metrics endpoint provided, metrics will not be collected for the agent")
@@ -63,7 +62,7 @@ func Init(ctx context.Context, endpoint string, interval time.Duration, name, ve
 	// collect host metrics - processCPUTime, hostCPUTime, hostMemoryUsage, hostMemoryUtilization, networkIOUsage
 	err = host.Start()
 	if err != nil {
-		_ = meterProvider.Shutdown(ctx)
+		_ = meterProvider.Shutdown(ctx) //nolint:errcheck // Ignoring error as we are returning an error anyway
 		return nil, err
 	}
 
