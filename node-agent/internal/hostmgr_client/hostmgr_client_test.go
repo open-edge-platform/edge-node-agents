@@ -13,10 +13,11 @@ import (
 	"testing"
 
 	test_util "github.com/open-edge-platform/edge-node-agents/common/pkg/testutils"
-	hostmgr_client "github.com/open-edge-platform/edge-node-agents/node-agent/internal/hostmgr_client"
 	proto "github.com/open-edge-platform/infra-managers/host/pkg/api/hostmgr/proto"
+	"github.com/stretchr/testify/require"
 
-	"github.com/stretchr/testify/assert"
+	hostmgr_client "github.com/open-edge-platform/edge-node-agents/node-agent/internal/hostmgr_client"
+
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -82,29 +83,31 @@ func runFailedServer(cFile string, kFile string) *bufconn.Listener {
 // Testing success of UpdateServer function.
 func TestUpdateServer(t *testing.T) {
 	ctx := context.Background()
-	cFile, kFile, cPem := test_util.CreateTestCrt()
-	lis := runMockServer(cFile, kFile)
+	cFile, kFile, cPem, err := test_util.CreateTestCrt()
+	require.NoError(t, err)
 
+	lis := runMockServer(cFile, kFile)
 	hostmgr := getClient(t, cPem, ctx, lis)
 
-	err := hostmgr.UpdateInstanceStatus(ctx, proto.InstanceState_INSTANCE_STATE_RUNNING, proto.InstanceStatus_INSTANCE_STATUS_RUNNING, "edge node running")
-	assert.NoError(t, err)
+	err = hostmgr.UpdateInstanceStatus(ctx, proto.InstanceState_INSTANCE_STATE_RUNNING, proto.InstanceStatus_INSTANCE_STATUS_RUNNING, "edge node running")
+	require.NoError(t, err)
 }
 
 func TestUpdateServerFailed(t *testing.T) {
 	ctx := context.Background()
-	cFile, kFile, cPem := test_util.CreateTestCrt()
-	lis := runFailedServer(cFile, kFile)
+	cFile, kFile, cPem, err := test_util.CreateTestCrt()
+	require.NoError(t, err)
 
+	lis := runFailedServer(cFile, kFile)
 	hostmgr := getClient(t, cPem, ctx, lis)
 
-	err := hostmgr.UpdateInstanceStatus(ctx, proto.InstanceState_INSTANCE_STATE_INSTALLED, proto.InstanceStatus_INSTANCE_STATUS_BOOTING, "edge node booting")
-	assert.Error(t, err)
+	err = hostmgr.UpdateInstanceStatus(ctx, proto.InstanceState_INSTANCE_STATE_INSTALLED, proto.InstanceStatus_INSTANCE_STATUS_BOOTING, "edge node booting")
+	require.Error(t, err)
 }
 
 func getClient(t *testing.T, cPem []byte, ctx context.Context, lis *bufconn.Listener) *hostmgr_client.Client {
 	caCertPool, err := x509.SystemCertPool()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	caCertPool.AppendCertsFromPEM(cPem)
 
@@ -115,6 +118,6 @@ func getClient(t *testing.T, cPem []byte, ctx context.Context, lis *bufconn.List
 	}
 
 	hostmgr := hostmgr_client.NewClient(testGUID, "", tlsConfig, WithBufconnDialer(ctx, lis))
-	assert.NoError(t, hostmgr.Connect(ctx))
+	require.NoError(t, hostmgr.Connect(ctx))
 	return hostmgr
 }
