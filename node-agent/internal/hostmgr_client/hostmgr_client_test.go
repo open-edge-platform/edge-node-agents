@@ -107,7 +107,7 @@ func TestUpdateServerFailed(t *testing.T) {
 
 func getClient(t *testing.T, cPem []byte, ctx context.Context, lis *bufconn.Listener) *hostmgr_client.Client {
 	caCertPool, err := x509.SystemCertPool()
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	caCertPool.AppendCertsFromPEM(cPem)
 

@@ -4,7 +4,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	ssmock "github.com/open-edge-platform/edge-node-agents/common/pkg/status-server-mock"
 )
@@ -12,6 +12,6 @@ import (
 func main() {
 	err := ssmock.RunMockStatusServer()
 	if err != nil {
-		fmt.Printf("Error running status server mock: %v", err)
+		log.Fatalf("Error running status server mock: %v", err)
 	}
 }
