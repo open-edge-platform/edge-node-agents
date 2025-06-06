@@ -29,14 +29,18 @@ func (u *Rebooter) Reboot() error {
 		return nil
 	}
 
+	return rebootSystem(u.CommandExecutor)
+}
+
+func rebootSystem(cmdExecutor utils.Executor) error {
 	fmt.Print("Rebooting ")
 	time.Sleep(2 * time.Second)
 
 	cmd := "/sbin/reboot"
 
-	_, _, err := u.CommandExecutor.Execute([]string{cmd})
+	_, _, err := cmdExecutor.Execute([]string{cmd})
 	if err != nil {
-		return fmt.Errorf("SOTA Aborted: Reboot Failed: %s", err)
+		return fmt.Errorf("reboot failed: %s", err)
 	}
 
 	return nil

@@ -46,7 +46,8 @@ func VerifyUpdateAfterReboot(fs afero.Fs) error {
 				return err
 			}
 		} else if osType == "Ubuntu" {
-			err := ubuntu.VerifyUpdateAfterReboot(fs, state)
+			v := ubuntu.NewVerifier()
+			err := v.VerifyUpdateAfterReboot(state)
 			if err != nil {
 				return err
 			}

@@ -16,7 +16,7 @@ import (
 
 func TestUbuntuRebooter_Reboot(t *testing.T) {
 
-    t.Run("do not reboot", func(t *testing.T) {
+	t.Run("do not reboot", func(t *testing.T) {
 		mockExec := &mockExecutor{
 			stdout: []string{""},
 			errors: []error{nil},
@@ -24,9 +24,9 @@ func TestUbuntuRebooter_Reboot(t *testing.T) {
 
 		rebooter := &Rebooter{
 			CommandExecutor: mockExec,
-            Request: &pb.UpdateSystemSoftwareRequest{
-                DoNotReboot: true,
-            },
+			Request: &pb.UpdateSystemSoftwareRequest{
+				DoNotReboot: true,
+			},
 		}
 
 		err := rebooter.Reboot()
@@ -41,9 +41,9 @@ func TestUbuntuRebooter_Reboot(t *testing.T) {
 
 		rebooter := &Rebooter{
 			CommandExecutor: mockExec,
-            Request: &pb.UpdateSystemSoftwareRequest{
-                DoNotReboot: false,
-            },
+			Request: &pb.UpdateSystemSoftwareRequest{
+				DoNotReboot: false,
+			},
 		}
 
 		err := rebooter.Reboot()
@@ -60,14 +60,14 @@ func TestUbuntuRebooter_Reboot(t *testing.T) {
 
 		rebooter := &Rebooter{
 			CommandExecutor: mockExec,
-            Request: &pb.UpdateSystemSoftwareRequest{
-                DoNotReboot: false,
-            },
+			Request: &pb.UpdateSystemSoftwareRequest{
+				DoNotReboot: false,
+			},
 		}
 
 		err := rebooter.Reboot()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "SOTA Aborted: Reboot Failed")
+		assert.Contains(t, err.Error(), "reboot failed")
 		assert.Equal(t, 1, len(mockExec.commands))
 		assert.Equal(t, []string{"/sbin/reboot"}, mockExec.commands[0])
 	})
