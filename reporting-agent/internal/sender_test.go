@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 )
 
@@ -31,7 +32,7 @@ func TestSendSuccess(t *testing.T) {
 			user, pass, _ := req.BasicAuth()
 			require.Equal(t, "user", user, "Username should match")
 			require.Equal(t, "pass", pass, "Password should match")
-			require.Equal(t, "staging-v3.1", req.Header.Get("X-Scope-OrgID"), "OrgID header should match")
+			require.Equal(t, "reporting-v1", req.Header.Get("X-Scope-OrgID"), "OrgID header should match")
 			require.Equal(t, "application/json", req.Header.Get("Content-Type"), "Content-Type header should match")
 			require.Equal(t, "http://localhost:12345", req.URL.String(), "Endpoint should match")
 			body, err := io.ReadAll(req.Body)
@@ -49,7 +50,14 @@ func TestSendSuccess(t *testing.T) {
 	data := &model.Root{
 		Identity: model.Identity{GroupID: "gid"},
 	}
-	err := sender.Send(data)
+	cfg := config.Config{
+		Backend: config.BackendConfig{
+			Backoff: config.BackendBackoffConfig{
+				MaxTries: 3,
+			},
+		},
+	}
+	err := sender.Send(cfg, data)
 	require.NoError(t, err, "Send should succeed when everything is correct")
 }
 
@@ -61,8 +69,7 @@ func TestSendEndpointFileError(t *testing.T) {
 	require.NoError(t, os.WriteFile(tokenFile, []byte("user:pass"), 0640), "Should write token file")
 
 	sender := NewBackendSender(endpointFile, tokenFile)
-	data := &model.Root{}
-	err := sender.Send(data)
+	err := sender.Send(config.Config{}, &model.Root{})
 	require.ErrorContains(t, err, "failed to read endpoint file", "Should error if endpoint file is missing")
 }
 
@@ -75,8 +82,7 @@ func TestSendEndpointInvalidURL(t *testing.T) {
 	require.NoError(t, os.WriteFile(tokenFile, []byte("user:pass"), 0640), "Should write token file")
 
 	sender := NewBackendSender(endpointFile, tokenFile)
-	data := &model.Root{}
-	err := sender.Send(data)
+	err := sender.Send(config.Config{}, &model.Root{})
 	require.ErrorContains(t, err, "invalid endpoint URL", "Should error if endpoint file is not a valid URL")
 }
 
@@ -88,8 +94,7 @@ func TestSendTokenFileError(t *testing.T) {
 	require.NoError(t, os.WriteFile(endpointFile, []byte("http://localhost:12345"), 0640), "Should write endpoint file")
 
 	sender := NewBackendSender(endpointFile, tokenFile)
-	data := &model.Root{}
-	err := sender.Send(data)
+	err := sender.Send(config.Config{}, &model.Root{})
 	require.ErrorContains(t, err, "failed to read token file", "Should error if token file is missing")
 }
 
@@ -102,8 +107,7 @@ func TestSendTokenInvalidFormat(t *testing.T) {
 	require.NoError(t, os.WriteFile(tokenFile, []byte("notcolon"), 0640), "Should write invalid token file")
 
 	sender := NewBackendSender(endpointFile, tokenFile)
-	data := &model.Root{}
-	err := sender.Send(data)
+	err := sender.Send(config.Config{}, &model.Root{})
 	require.ErrorContains(t, err, "invalid token format", "Should error if token file is not username:password")
 }
 
@@ -129,14 +133,24 @@ func TestSendRequestSuccess(t *testing.T) {
 		}),
 	}
 	sender := newTestBackendSenderWithClient(t, "endpoint", "token", client)
-	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"))
+	backendCfg := config.BackendConfig{
+		Backoff: config.BackendBackoffConfig{
+			MaxTries: 2,
+		},
+	}
+	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"), backendCfg)
 	require.NoError(t, err, "SendRequest should succeed on 2xx response")
 }
 
 // TestSendRequestCreateError checks that sendRequest returns error if request creation fails.
 func TestSendRequestCreateError(t *testing.T) {
 	sender := NewBackendSender("endpoint", "token")
-	err := sender.sendRequest(":", "user", "pass", []byte("{}")) // invalid URL
+	backendCfg := config.BackendConfig{
+		Backoff: config.BackendBackoffConfig{
+			MaxTries: 2,
+		},
+	}
+	err := sender.sendRequest(":", "user", "pass", []byte("{}"), backendCfg) // invalid URL
 	require.ErrorContains(t, err, "failed to create backend request", "Should error if request creation fails")
 }
 
@@ -148,7 +162,12 @@ func TestSendRequestHTTPError(t *testing.T) {
 		}),
 	}
 	sender := newTestBackendSenderWithClient(t, "endpoint", "token", client)
-	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"))
+	backendCfg := config.BackendConfig{
+		Backoff: config.BackendBackoffConfig{
+			MaxTries: 2,
+		},
+	}
+	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"), backendCfg)
 	require.ErrorContains(t, err, "failed to send request to backend", "Should error if HTTP client fails")
 }
 
@@ -164,8 +183,37 @@ func TestSendRequestNon2xxStatus(t *testing.T) {
 		}),
 	}
 	sender := newTestBackendSenderWithClient(t, "endpoint", "token", client)
-	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"))
+	backendCfg := config.BackendConfig{
+		Backoff: config.BackendBackoffConfig{
+			MaxTries: 2,
+		},
+	}
+	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"), backendCfg)
 	require.ErrorContains(t, err, "non-2xx status returned", "Should error if backend returns non-2xx status")
+}
+
+// TestSendRequestBackoffFailure simulates repeated HTTP failures to test backoff.Retry not succeeding.
+func TestSendRequestBackoffFailure(t *testing.T) {
+	failCount := 0
+	client := &http.Client{
+		Transport: roundTripFunc(func(_ *http.Request) *http.Response {
+			failCount++
+			return &http.Response{
+				StatusCode: http.StatusInternalServerError,
+				Status:     "500 Internal Server Error",
+				Body:       io.NopCloser(bytes.NewBufferString("fail")),
+			}
+		}),
+	}
+	sender := newTestBackendSenderWithClient(t, "endpoint", "token", client)
+	backendCfg := config.BackendConfig{
+		Backoff: config.BackendBackoffConfig{
+			MaxTries: 3,
+		},
+	}
+	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"), backendCfg)
+	require.ErrorContains(t, err, "non-2xx status returned", "Should error after maxTries exceeded")
+	require.GreaterOrEqual(t, failCount, 3, "Should attempt at least maxTries times")
 }
 
 // --- Helpers ---

@@ -5,6 +5,7 @@ package internal
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,11 +15,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v5"
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 )
 
@@ -41,7 +44,7 @@ func NewBackendSender(endpointPath, tokenPath string) *BackendSender {
 }
 
 // Send sends the provided model.Root as a log entry to the backend using configured paths.
-func (s *BackendSender) Send(data *model.Root) error {
+func (s *BackendSender) Send(cfg config.Config, data *model.Root) error {
 	endpoint, err := s.readEndpointURL()
 	if err != nil {
 		return err
@@ -57,7 +60,7 @@ func (s *BackendSender) Send(data *model.Root) error {
 		return err
 	}
 
-	return s.sendRequest(endpoint, username, password, payload)
+	return s.sendRequest(endpoint, username, password, payload, cfg.Backend)
 }
 
 // readEndpointURL reads the endpoint URL from the configured file path and validates it.
@@ -122,24 +125,32 @@ func buildPayload(data *model.Root) ([]byte, error) {
 }
 
 // sendRequest sends the HTTP request to the backend.
-func (s *BackendSender) sendRequest(endpoint, username, password string, payload []byte) error {
-	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(payload))
-	if err != nil {
-		return fmt.Errorf("failed to create backend request: %w", err)
+func (s *BackendSender) sendRequest(endpoint, username, password string, payload []byte, backendCfg config.BackendConfig) error {
+	op := func() (int, error) {
+		req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(payload))
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("failed to create backend request: %w", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-Scope-OrgID", "reporting-v1")
+		req.SetBasicAuth(username, password)
+
+		resp, err := s.httpClient.Do(req)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("failed to send request to backend: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return resp.StatusCode, fmt.Errorf("non-2xx status returned: %s", resp.Status)
+		}
+		return resp.StatusCode, nil
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Scope-OrgID", "staging-v3.1") // TODO: change this later
-	req.SetBasicAuth(username, password)
-
-	resp, err := s.httpClient.Do(req)
+	_, err := backoff.Retry(context.Background(), op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(backendCfg.Backoff.MaxTries))
 	if err != nil {
-		return fmt.Errorf("failed to send request to backend: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("non-2xx status returned: %s", resp.Status)
+		return fmt.Errorf("failed to send payload after retries: %w", err)
 	}
 
 	// Log the payload to audit log on success
