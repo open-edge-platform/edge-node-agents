@@ -19,7 +19,7 @@ func TestLoad_Default_NoConfigFile(t *testing.T) {
 	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
 	cfg := cl.Load(cmd)
 	require.Equal(t, setDefaults(), cfg, "Load should return default config when no config file is provided")
-	require.Equal(t, uint(20), cfg.Backend.Backoff.MaxTries, "Default MaxTries should be 10")
+	require.Equal(t, uint(20), cfg.Backend.Backoff.MaxTries, "Default MaxTries should be 20")
 }
 
 // TestLoad_FilePresent checks that Load loads config from a valid file.
@@ -73,8 +73,8 @@ func TestSetDefaults(t *testing.T) {
 	def := setDefaults()
 	require.Equal(t, "/var/lib/rancher/k3s/bin/k3s kubectl", def.K8s.K3sKubectlPath, "SetDefaults should set correct K3sKubectlPath")
 	require.Equal(t, "/etc/rancher/k3s/k3s.yaml", def.K8s.K3sKubeConfigPath, "SetDefaults should set correct K3sKubeConfigPath")
-	require.Equal(t, "/var/lib/rancher/rke2/bin/kubectl", def.K8s.Rke2KubectlPath, "SetDefaults should set correct rke2KubectlPath")
-	require.Equal(t, "/etc/rancher/rke2/rke2.yaml", def.K8s.Rke2KubeConfigPath, "SetDefaults should set correct K3sKubeConfigPath")
+	require.Equal(t, "/var/lib/rancher/rke2/bin/kubectl", def.K8s.Rke2KubectlPath, "SetDefaults should set correct Rke2KubectlPath")
+	require.Equal(t, "/etc/rancher/rke2/rke2.yaml", def.K8s.Rke2KubeConfigPath, "SetDefaults should set correct Rke2KubeConfigPath")
 	require.Equal(t, uint(20), def.Backend.Backoff.MaxTries, "SetDefaults should set correct MaxTries")
 }
 

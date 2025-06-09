@@ -216,6 +216,37 @@ func TestSendRequestBackoffFailure(t *testing.T) {
 	require.GreaterOrEqual(t, failCount, 3, "Should attempt at least maxTries times")
 }
 
+// TestSendRequestBackoffEventuallySuccess simulates initial HTTP failures followed by a success to verify retry stops on 2xx.
+func TestSendRequestBackoffEventuallySuccess(t *testing.T) {
+	failCount := 0
+	client := &http.Client{
+		Transport: roundTripFunc(func(_ *http.Request) *http.Response {
+			failCount++
+			if failCount < 3 {
+				return &http.Response{
+					StatusCode: http.StatusInternalServerError,
+					Status:     "500 Internal Server Error",
+					Body:       io.NopCloser(bytes.NewBufferString("fail")),
+				}
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString("ok")),
+			}
+		}),
+	}
+	sender := newTestBackendSenderWithClient(t, "endpoint", "token", client)
+	backendCfg := config.BackendConfig{
+		Backoff: config.BackendBackoffConfig{
+			MaxTries: 5,
+		},
+	}
+	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"), backendCfg)
+	require.NoError(t, err, "SendRequest should succeed after retries when a 2xx is eventually returned")
+	require.Equal(t, 3, failCount, "Should stop retrying after first 2xx response")
+}
+
 // --- Helpers ---
 
 // newTestBackendSenderWithClient creates a new BackendSender with a custom http.Client (for testing) and a test audit logger.
