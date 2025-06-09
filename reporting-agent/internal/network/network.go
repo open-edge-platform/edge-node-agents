@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 )
 
 // Devices represents a network device with its serial number.

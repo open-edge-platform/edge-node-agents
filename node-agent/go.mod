@@ -5,7 +5,7 @@ go 1.24.1
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/open-edge-platform/edge-node-agents/common v1.7.0
+	github.com/open-edge-platform/edge-node-agents/common v1.7.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/oauth2 v0.30.0

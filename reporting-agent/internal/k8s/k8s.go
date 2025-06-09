@@ -10,9 +10,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
+
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
 const (
