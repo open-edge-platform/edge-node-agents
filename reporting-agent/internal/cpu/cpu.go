@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
+
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
 // GetCPUData collects CPU information from `lscpu` and processes the result to generate structured CPU data.

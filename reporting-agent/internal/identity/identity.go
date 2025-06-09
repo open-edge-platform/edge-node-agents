@@ -13,9 +13,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
+
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/network"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/system"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
 // Provider defines the interface for managing machine identity and group ID.

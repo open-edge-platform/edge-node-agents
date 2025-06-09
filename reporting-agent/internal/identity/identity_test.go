@@ -9,9 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/testutils"
 	"github.com/stretchr/testify/require"
-
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/testutil"
 )
 
 // TestGetGroupIDSuccess checks that GetGroupID returns the correct value when the file exists and is non-empty.
@@ -52,48 +51,48 @@ func TestGetGroupIDReadError(t *testing.T) {
 
 // TestCalculateMachineIDSuccess checks that CalculateMachineID returns a valid hash when all system info is available.
 func TestCalculateMachineIDSuccess(t *testing.T) {
-	// Use testutil to mock command outputs for system and network dependencies
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-uuid"}, []byte("uuid"), nil)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-serial-number"}, []byte("serial"), nil)
-	testutil.SetMockOutput("sudo", []string{"lshw", "-json", "-class", "network"}, []byte(`[{"serial":"n2"},{"serial":"n1"}]`), nil)
+	// Use testutils to mock command outputs for system and network dependencies
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-uuid"}, []byte("uuid"), nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-serial-number"}, []byte("serial"), nil)
+	testutils.SetMockOutput("sudo", []string{"lshw", "-json", "-class", "network"}, []byte(`[{"serial":"n2"},{"serial":"n1"}]`), nil)
 
 	idt := newTestIdentity("")
-	id, err := idt.CalculateMachineID(testutil.TestCmdExecutor)
+	id, err := idt.CalculateMachineID(testutils.TestCmdExecutor)
 	require.NoError(t, err, "CalculateMachineID should not return error for valid system info")
 	require.Len(t, id, 64, "CalculateMachineID should return a 64-character hash")
 }
 
 // TestCalculateMachineIDUUIDError checks that CalculateMachineID returns an error when getting the system UUID fails.
 func TestCalculateMachineIDUUIDError(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-uuid"}, nil, errors.New("fail uuid"))
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-uuid"}, nil, errors.New("fail uuid"))
 
 	idt := newTestIdentity("")
-	_, err := idt.CalculateMachineID(testutil.TestCmdExecutor)
+	_, err := idt.CalculateMachineID(testutils.TestCmdExecutor)
 	require.ErrorContains(t, err, "failed to get system UUID", "CalculateMachineID should error if system UUID fails")
 }
 
 // TestCalculateMachineIDSerialError checks that CalculateMachineID returns an error when getting the serial number fails.
 func TestCalculateMachineIDSerialError(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-uuid"}, []byte("uuid"), nil)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-serial-number"}, nil, errors.New("fail serial"))
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-uuid"}, []byte("uuid"), nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-serial-number"}, nil, errors.New("fail serial"))
 
 	idt := newTestIdentity("")
-	_, err := idt.CalculateMachineID(testutil.TestCmdExecutor)
+	_, err := idt.CalculateMachineID(testutils.TestCmdExecutor)
 	require.ErrorContains(t, err, "failed to get system serial number", "CalculateMachineID should error if serial number fails")
 }
 
 // TestCalculateMachineIDNetworkError checks that CalculateMachineID returns an error when getting network serials fails.
 func TestCalculateMachineIDNetworkError(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-uuid"}, []byte("uuid"), nil)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-serial-number"}, []byte("serial"), nil)
-	testutil.SetMockOutput("sudo", []string{"lshw", "-json", "-class", "network"}, nil, errors.New("fail net"))
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-uuid"}, []byte("uuid"), nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "-s", "system-serial-number"}, []byte("serial"), nil)
+	testutils.SetMockOutput("sudo", []string{"lshw", "-json", "-class", "network"}, nil, errors.New("fail net"))
 
 	idt := newTestIdentity("")
-	_, err := idt.CalculateMachineID(testutil.TestCmdExecutor)
+	_, err := idt.CalculateMachineID(testutils.TestCmdExecutor)
 	require.ErrorContains(t, err, "failed to get network serials", "CalculateMachineID should error if network serials fail")
 }
 

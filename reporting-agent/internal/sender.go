@@ -14,12 +14,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
 // BackendSender holds configuration for backend communication.
