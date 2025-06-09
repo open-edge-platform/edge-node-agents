@@ -147,6 +147,30 @@ profile ca_dash {
   /usr/local/share/ w,
   /usr/local/share/rke2/ rw,
   /usr/local/share/rke2/** rw,
+
+  # k3s support
+  /etc/default/k3s rw,
+  /etc/k3s/ rw,
+  /etc/k3s/** rw,
+  /etc/systemd/system/k3s.service.d/ rw,
+  /etc/systemd/system/k3s.service.d/override.conf rw,
+  /etc/systemd/system/k3s.service w,
+  /usr/local/bin/k3s w,
+  /usr/local/bin/k3s-killall.sh w,
+  /usr/local/bin/k3s-uninstall.sh w,
+  /usr/local/lib/systemd/system/k3s.env w,
+  /usr/local/lib/systemd/system/k3s.service w,
+  /usr/local/share/k3s/ rw,
+  /usr/local/share/k3s/** rw,
+  /var/lib/rancher/k3s/ rw,
+  /var/lib/rancher/k3s/** rw,
+  /var/lib/kubelet/ rw,
+  /var/lib/kubelet/** rw,
+  /etc/systemd/system/k3s-agent.service.d/ rw,
+  /etc/systemd/system/k3s-agent.service.d/override.conf rw,
+  /etc/systemd/system/k3s-agent.service w,
+  /usr/local/bin/k3s-agent-uninstall.sh w,
+
   /var/lib/rancher/ rw,
   /var/lib/rancher/** rw,
   owner /etc/host.conf r,
@@ -289,6 +313,8 @@ profile ca_sudo {
   /usr/libexec/sudo/libsudo_util.so.* mr,
   /usr/local/bin/rancher-system-agent-uninstall.sh rPx -> ca_rancher-system-agent-uninstall,
   /usr/local/bin/rke2-uninstall.sh rPx -> ca_rke2-uninstall,
+  /usr/local/bin/k3s-agent-uninstall.sh rPx -> ca_k3s-agent-uninstall,  
+  /usr/local/bin/k3s-uninstall.sh rPx -> ca_k3s-uninstall,
   /usr/sbin/ipmitool mrix,
   /usr/sbin/lvm ix,
   /usr/sbin/smartctl mrix,
@@ -325,4 +351,69 @@ profile ca_sudo {
   owner /usr/share/smartmontools/drivedb.h r,
   owner /{,var/}run/utmp rwk,
 
+}
+
+profile ca_k3s-uninstall {
+  include <abstractions/base>
+  include <abstractions/gvfs-open>
+  include <abstractions/ubuntu-konsole>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability net_admin,
+
+  ptrace read peer=unconfined,
+
+  /usr/bin/dirname mrix,
+  /usr/bin/find mrix,
+  /usr/bin/id mrix,
+  /usr/bin/rm mrix,
+  /usr/bin/systemctl mrix,
+  /usr/local/bin/k3s w,
+  /usr/local/bin/k3s-killall.sh rw,
+  /usr/local/bin/k3s-uninstall.sh rw,
+  /usr/local/lib/systemd/system/ r,
+  /usr/local/lib/systemd/system/k3s.env w,
+  /usr/local/lib/systemd/system/k3s.service w,
+  /usr/local/share/k3s/ rw,
+  /usr/local/share/k3s/** rw,
+  /var/lib/kubelet/ rw,
+  /var/lib/kubelet/** rw,
+  /var/lib/rancher/ rw,
+  /var/lib/rancher/** rw,
+  /var/lib/rancher/k3s/ rw,
+  /var/lib/rancher/k3s/** rw,
+  owner /etc/ld.so.cache r,
+  owner /etc/systemd/system/ r,
+  owner /etc/systemd/system/** r,
+  owner /proc/filesystems r,
+  owner /run/systemd/private rw,
+}
+
+profile ca_k3s-agent-uninstall {
+  include <abstractions/base>
+  include <abstractions/gvfs-open>
+  include <abstractions/ubuntu-konsole>
+
+  capability dac_override,
+  capability dac_read_search,
+  capability net_admin,
+
+  ptrace read peer=unconfined,
+
+  /usr/bin/rm mrix,
+  /usr/bin/systemctl mrix,
+  /usr/local/bin/k3s-agent-uninstall.sh rw,
+  /etc/systemd/system/k3s-agent.service w,
+  /etc/systemd/system/k3s-agent.service.d/ rw,
+  /etc/systemd/system/k3s-agent.service.d/override.conf rw,
+  /var/lib/rancher/k3s/ rw,
+  /var/lib/rancher/k3s/** rw,
+  /var/lib/kubelet/ rw,
+  /var/lib/kubelet/** rw,
+  owner /etc/ld.so.cache r,
+  owner /etc/systemd/system/ r,
+  owner /etc/systemd/system/** r,
+  owner /proc/filesystems r,
+  owner /run/systemd/private rw,
 }
