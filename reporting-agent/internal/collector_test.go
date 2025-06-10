@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/identity"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 )

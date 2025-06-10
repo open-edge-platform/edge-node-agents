@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+version = 1
+
+[[annotations]]
+path = [
+    "**/testdata/*",
+    "build/*",
+    "config/sudoers.d/reporting-agent",
+    ".tool-versions",
+    "go.mod",
+    "go.sum",
+    "VERSION"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 Intel Corporation"
+SPDX-License-Identifier = "Apache-2.0"
