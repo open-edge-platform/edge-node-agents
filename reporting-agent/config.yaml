@@ -6,3 +6,6 @@ k8s:
   k3sKubeConfigPath: "/etc/rancher/k3s/k3s.yaml"
   rke2KubectlPath: "/var/lib/rancher/rke2/bin/kubectl"
   rke2KubeConfigPath: "/etc/rancher/rke2/rke2.yaml"
+backend:
+  backoff:
+    maxTries: 20

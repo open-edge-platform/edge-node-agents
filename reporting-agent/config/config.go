@@ -13,7 +13,8 @@ import (
 
 // Config holds the configuration for the application.
 type Config struct {
-	K8s K8sConfig `mapstructure:"k8s"`
+	K8s     K8sConfig     `mapstructure:"k8s"`
+	Backend BackendConfig `mapstructure:"backend"`
 }
 
 // K8sConfig holds Kubernetes-related configuration paths.
@@ -22,6 +23,16 @@ type K8sConfig struct {
 	K3sKubeConfigPath  string `mapstructure:"k3sKubeConfigPath"`
 	Rke2KubectlPath    string `mapstructure:"rke2KubectlPath"`
 	Rke2KubeConfigPath string `mapstructure:"rke2KubeConfigPath"`
+}
+
+// BackendConfig holds backend and backoff configuration.
+type BackendConfig struct {
+	Backoff BackendBackoffConfig `mapstructure:"backoff"`
+}
+
+// BackendBackoffConfig holds backoff configuration for backend communication.
+type BackendBackoffConfig struct {
+	MaxTries uint `mapstructure:"maxTries"`
 }
 
 // Loader loads configuration and holds logger.
@@ -44,6 +55,7 @@ func (cl *Loader) Load(cmd *cobra.Command) Config {
 	v.SetDefault("k8s.k3sKubeConfigPath", defCfg.K8s.K3sKubeConfigPath)
 	v.SetDefault("k8s.rke2KubectlPath", defCfg.K8s.Rke2KubectlPath)
 	v.SetDefault("k8s.rke2KubeConfigPath", defCfg.K8s.Rke2KubeConfigPath)
+	v.SetDefault("backend.backoff.maxTries", defCfg.Backend.Backoff.MaxTries)
 
 	if configPath == "" {
 		cl.log.Infow("No config file provided, using default configuration", "config", defCfg)
@@ -74,6 +86,11 @@ func setDefaults() Config {
 			K3sKubeConfigPath:  "/etc/rancher/k3s/k3s.yaml",
 			Rke2KubectlPath:    "/var/lib/rancher/rke2/bin/kubectl",
 			Rke2KubeConfigPath: "/etc/rancher/rke2/rke2.yaml",
+		},
+		Backend: BackendConfig{
+			Backoff: BackendBackoffConfig{
+				MaxTries: 20,
+			},
 		},
 	}
 }

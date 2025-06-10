@@ -19,6 +19,7 @@ func TestLoad_Default_NoConfigFile(t *testing.T) {
 	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
 	cfg := cl.Load(cmd)
 	require.Equal(t, setDefaults(), cfg, "Load should return default config when no config file is provided")
+	require.Equal(t, uint(20), cfg.Backend.Backoff.MaxTries, "Default MaxTries should be 20")
 }
 
 // TestLoad_FilePresent checks that Load loads config from a valid file.
@@ -29,6 +30,9 @@ k8s:
   k3sKubeConfigPath: "/custom/k3s.yaml"
   rke2KubectlPath: "/custom/rke2"
   rke2KubeConfigPath: "/custom/rke2.yaml"
+backend:
+  backoff:
+    maxTries: 5
 `)
 	defer os.Remove(tmpFile)
 
@@ -39,6 +43,7 @@ k8s:
 	require.Equal(t, "/custom/k3s.yaml", cfg.K8s.K3sKubeConfigPath, "Load should load k3sKubeConfigPath from file")
 	require.Equal(t, "/custom/rke2", cfg.K8s.Rke2KubectlPath, "Load should load rke2KubectlPath from file")
 	require.Equal(t, "/custom/rke2.yaml", cfg.K8s.Rke2KubeConfigPath, "Load should load rke2KubeConfigPath from file")
+	require.Equal(t, uint(5), cfg.Backend.Backoff.MaxTries, "Should load MaxTries from file")
 }
 
 // TestLoad_FileUnreadable checks that Load returns defaults if config file is unreadable.
@@ -68,8 +73,9 @@ func TestSetDefaults(t *testing.T) {
 	def := setDefaults()
 	require.Equal(t, "/var/lib/rancher/k3s/bin/k3s kubectl", def.K8s.K3sKubectlPath, "SetDefaults should set correct K3sKubectlPath")
 	require.Equal(t, "/etc/rancher/k3s/k3s.yaml", def.K8s.K3sKubeConfigPath, "SetDefaults should set correct K3sKubeConfigPath")
-	require.Equal(t, "/var/lib/rancher/rke2/bin/kubectl", def.K8s.Rke2KubectlPath, "SetDefaults should set correct rke2KubectlPath")
-	require.Equal(t, "/etc/rancher/rke2/rke2.yaml", def.K8s.Rke2KubeConfigPath, "SetDefaults should set correct rke2KubeConfigPath")
+	require.Equal(t, "/var/lib/rancher/rke2/bin/kubectl", def.K8s.Rke2KubectlPath, "SetDefaults should set correct Rke2KubectlPath")
+	require.Equal(t, "/etc/rancher/rke2/rke2.yaml", def.K8s.Rke2KubeConfigPath, "SetDefaults should set correct Rke2KubeConfigPath")
+	require.Equal(t, uint(20), def.Backend.Backoff.MaxTries, "SetDefaults should set correct MaxTries")
 }
 
 // newFakeCobraCmd creates a cobra.Command with a --config flag set to the given value.
