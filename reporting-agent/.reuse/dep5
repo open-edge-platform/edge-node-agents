@@ -3,6 +3,7 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Files:
   */testdata/*
   build/*
+  config/sudoers.d/reporting-agent
   .tool-versions
   go.mod
   go.sum

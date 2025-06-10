@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 )
 
