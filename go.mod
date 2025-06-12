@@ -1,4 +1,4 @@
-module github.com/intel/intel-inb-manageability
+module github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm
 
 go 1.24.1
 
