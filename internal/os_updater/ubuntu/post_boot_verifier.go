@@ -10,7 +10,7 @@ import (
 	"log"
 	"os/exec"
 
-	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	utils "github.com/intel/intel-inb-manageability/internal/inbd/utils"
 	"github.com/spf13/afero"
 )
 

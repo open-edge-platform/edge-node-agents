@@ -9,10 +9,10 @@ import (
 	"context"
 	"log"
 
-	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
-	appSource "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu/app_source"
-	osSource "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu/os_source"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	osUpdater "github.com/intel/intel-inb-manageability/internal/os_updater"
+	appSource "github.com/intel/intel-inb-manageability/internal/os_updater/ubuntu/app_source"
+	osSource "github.com/intel/intel-inb-manageability/internal/os_updater/ubuntu/os_source"
+	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 )
 
 // InbdServer implements the InbServiceServer interface

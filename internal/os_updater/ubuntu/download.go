@@ -9,7 +9,7 @@ package ubuntu
 import (
 	"fmt"
 
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 )
 
 // Downloader is the concrete implementation of the IDownloader interface

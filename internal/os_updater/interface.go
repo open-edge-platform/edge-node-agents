@@ -9,10 +9,10 @@ package osupdater
 import (
 	"fmt"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	emt "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/emt"
-	ubuntu "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
+	emt "github.com/intel/intel-inb-manageability/internal/os_updater/emt"
+	ubuntu "github.com/intel/intel-inb-manageability/internal/os_updater/ubuntu"
+	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
 )
 
