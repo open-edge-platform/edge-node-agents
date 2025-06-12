@@ -34,7 +34,6 @@ backend:
   backoff:
     maxTries: 5
 `)
-	defer os.Remove(tmpFile)
 
 	cmd := newFakeCobraCmd(t, tmpFile)
 	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
@@ -60,7 +59,6 @@ func TestLoad_UnmarshalError(t *testing.T) {
 	tmpFile := createTempConfigFile(t, `
 k8s: "this-should-be-a-map-not-a-string"
 `)
-	defer os.Remove(tmpFile)
 
 	cmd := newFakeCobraCmd(t, tmpFile)
 	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
@@ -99,7 +97,6 @@ backend:
 
 	f.Fuzz(func(t *testing.T, configContent []byte) {
 		tmpFile := createTempConfigFile(t, string(configContent))
-		defer os.Remove(tmpFile)
 
 		cmd := newFakeCobraCmd(t, tmpFile)
 		cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
