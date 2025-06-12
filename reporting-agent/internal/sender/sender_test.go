@@ -272,7 +272,7 @@ func FuzzReadAuthCredentials(f *testing.F) {
 		// Should never panic, and if error is nil, username and password must be non-empty and separated by the first colon
 		if err == nil {
 			require.NotEmpty(t, username, "Username should not be empty if no error")
-			require.NotNil(t, password, "Password should not be nil if no error")
+			require.NotEmpty(t, password, "Password should not be empty if no error")
 			// The original creds must contain at least one colon
 			require.Contains(t, string(creds), ":", "Input must contain a colon if no error")
 		}
