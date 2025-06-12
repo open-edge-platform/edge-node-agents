@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-package internal
+package sender
 
 import (
 	"bytes"
@@ -89,6 +89,10 @@ func (s *BackendSender) readAuthCredentials() (username, password string, err er
 	parts := strings.SplitN(creds, ":", 2)
 	if len(parts) != 2 {
 		return "", "", errors.New("invalid token format, expected username:password")
+	}
+
+	if parts[0] == "" || parts[1] == "" {
+		return "", "", errors.New("username or password cannot be empty")
 	}
 
 	return parts[0], parts[1], nil

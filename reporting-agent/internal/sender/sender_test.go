@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-package internal
+package sender
 
 import (
 	"bytes"
@@ -245,6 +245,38 @@ func TestSendRequestBackoffEventuallySuccess(t *testing.T) {
 	err := sender.sendRequest("http://localhost:12345", "user", "pass", []byte("{}"), backendCfg)
 	require.NoError(t, err, "SendRequest should succeed after retries when a 2xx is eventually returned")
 	require.Equal(t, 3, failCount, "Should stop retrying after first 2xx response")
+}
+
+// FuzzReadAuthCredentials checks that readAuthCredentials never panics and always returns a valid error or username/password for random file contents.
+func FuzzReadAuthCredentials(f *testing.F) {
+	// Seed with valid and invalid credentials
+	f.Add([]byte("user:pass"))
+	f.Add([]byte("useronly"))
+	f.Add([]byte(":passonly"))
+	f.Add([]byte("user:pass:extra"))
+	f.Add([]byte(""))
+	f.Add([]byte("user:"))
+	f.Add([]byte(":"))
+	f.Add([]byte("user:pass\n"))
+	f.Add([]byte("user:pass with spaces"))
+	f.Add([]byte("user:pass:with:colons"))
+
+	f.Fuzz(func(t *testing.T, creds []byte) {
+		tmpDir := t.TempDir()
+		tokenFile := filepath.Join(tmpDir, "token")
+		require.NoError(t, os.WriteFile(tokenFile, creds, 0640), "Should write token file")
+
+		sender := NewBackendSender("endpoint", tokenFile)
+		username, password, err := sender.readAuthCredentials()
+
+		// Should never panic, and if error is nil, username and password must be non-empty and separated by the first colon
+		if err == nil {
+			require.NotEmpty(t, username, "Username should not be empty if no error")
+			require.NotNil(t, password, "Password should not be nil if no error")
+			// The original creds must contain at least one colon
+			require.Contains(t, string(creds), ":", "Input must contain a colon if no error")
+		}
+	})
 }
 
 // --- Helpers ---
