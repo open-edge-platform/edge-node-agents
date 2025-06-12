@@ -148,32 +148,67 @@ profile ca_dash {
   /usr/local/share/rke2/ rw,
   /usr/local/share/rke2/** rw,
 
-  # k3s support
+# --- k3s support ca_dash section ---
+  ## configuration files
   /etc/default/k3s rw,
   /etc/k3s/ rw,
   /etc/k3s/** rw,
+
+  ## k3s binaries and scripts
   /usr/local/bin/k3s rwk,
-  /usr/bin/sudo ix,
-  /proc/*/fd/* rwk,
-  /usr/lib/x86_64-linux-gnu/libsudo_util.so.* mr,
-  /lib/x86_64-linux-gnu/libsudo_util.so.* mr,
-  /usr/libexec/sudo/libsudo_util.so.* mr,
-  /etc/sudo.conf r,
-  /usr/libexec/sudo/sudoers.so mr,
-  /etc/sudoers r,
-  /etc/sudoers.d/ r,
-  /etc/sudoers.d/* r,
-  /etc/systemd/system/ rw,
-  /etc/systemd/system/k3s.service.d/ rw,
   /usr/local/bin/k3s-ro-test rwk,
   /usr/local/bin/ rwlk,
   /usr/local/bin/** rwlk,
+  /usr/local/bin/k3s-killall.sh w,
+  /usr/local/bin/k3s-uninstall.sh w,
+  /usr/local/bin/k3s-agent-uninstall.sh w,
+
+  ## systemd service files
   /etc/systemd/system/ rw,
   /etc/systemd/system/** rw,
   /etc/systemd/system/*.env rw,
   /etc/systemd/system/*.service rw,
   /etc/systemd/system/*.service.d/ rw,
   /etc/systemd/system/*.service.d/** rw,
+  /etc/systemd/system/k3s.service.d/ rw,
+  /etc/systemd/system/k3s-server.service.d/ rw,
+  /etc/systemd/system/k3s-server.service.d/override.conf rw,
+  /etc/systemd/system/k3s.service.d/override.conf rw,
+  /etc/systemd/system/k3s.service w,
+  /etc/systemd/system/k3s-agent.service.d/ rw,
+  /etc/systemd/system/k3s-agent.service.d/override.conf rw,
+  /etc/systemd/system/k3s-agent.service w,
+  /usr/local/lib/systemd/system/k3s.env w,
+  /usr/local/lib/systemd/system/k3s.service w,
+
+  ## rancher and k3s data directories
+  /var/lib/rancher/k3s/data/ rwk,
+  /var/lib/rancher/k3s/data/** rwk,
+  /var/lib/rancher/k3s/data/.lock rwk,
+  /var/lib/rancher/k3s/data/*/bin/kubectl ix,
+  /var/lib/rancher/k3s/data/*/bin/* ix,
+  /var/lib/rancher/k3s/ rw,
+  /var/lib/rancher/k3s/** rw,
+  /var/lib/rancher/ rw,
+  /var/lib/rancher/** rw,
+  /var/lib/kubelet/ rw,
+  /var/lib/kubelet/** rw,
+  /usr/local/share/k3s/ rw,
+  /usr/local/share/k3s/** rw,
+
+  ## sudo and privilege escalation
+  /usr/bin/sudo ix,
+  /usr/bin/sudo mr,
+  /usr/lib/x86_64-linux-gnu/libsudo_util.so.* mr,
+  /lib/x86_64-linux-gnu/libsudo_util.so.* mr,
+  /usr/libexec/sudo/libsudo_util.so.* mr,
+  /usr/libexec/sudo/sudoers.so mr,
+  /etc/sudo.conf r,
+  /etc/sudoers r,
+  /etc/sudoers.d/ r,
+  /etc/sudoers.d/* r,
+
+  ## system utilities
   /usr/bin/mv ix,
   /bin/mv ix,
   /usr/bin/ln ix,
@@ -182,7 +217,12 @@ profile ca_dash {
   /bin/sh ix,
   /usr/bin/env ix,
   /bin/env ix,
-  /usr/bin/sudo mr,
+  /usr/bin/expr ix,
+  /usr/bin/cp ix,
+  /bin/cp ix,
+  /usr/local/bin/* ix,
+
+  ## capabilities required
   capability setuid,
   capability setgid,
   capability sys_admin,
@@ -192,41 +232,14 @@ profile ca_dash {
   capability mknod,
   capability audit_write,
   capability net_admin,
+
+  ## PAM and security configuration
   /etc/pam.d/ r,
   /etc/pam.d/* r,
   /etc/security/ r,
   /etc/security/* r,
-  /usr/bin/expr ix,
-  /usr/bin/cp ix,
-  /bin/cp ix,
-  /usr/local/bin/* ix,
-  /var/lib/rancher/k3s/data/ rwk,
-  /var/lib/rancher/k3s/data/** rwk,
-  /var/lib/rancher/k3s/data/.lock rwk,
-  /var/lib/rancher/k3s/data/*/bin/kubectl ix,
-  /var/lib/rancher/k3s/data/*/bin/* ix,
-  /etc/systemd/system/k3s-server.service.d/ rw,
-  /etc/systemd/system/k3s-server.service.d/override.conf rw,
-  /etc/systemd/system/k3s.service.d/override.conf rw,
-  /etc/systemd/system/k3s.service w,
-  /usr/local/bin/k3s w,
-  /usr/local/bin/k3s-killall.sh w,
-  /usr/local/bin/k3s-uninstall.sh w,
-  /usr/local/lib/systemd/system/k3s.env w,
-  /usr/local/lib/systemd/system/k3s.service w,
-  /usr/local/share/k3s/ rw,
-  /usr/local/share/k3s/** rw,
-  /var/lib/rancher/k3s/ rw,
-  /var/lib/rancher/k3s/** rw,
-  /var/lib/kubelet/ rw,
-  /var/lib/kubelet/** rw,
-  /etc/systemd/system/k3s-agent.service.d/ rw,
-  /etc/systemd/system/k3s-agent.service.d/override.conf rw,
-  /etc/systemd/system/k3s-agent.service w,
-  /usr/local/bin/k3s-agent-uninstall.sh w,
 
-  /var/lib/rancher/ rw,
-  /var/lib/rancher/** rw,
+  ## other needed files
   owner /etc/host.conf r,
   owner /etc/hosts r,
   owner /etc/ld.so.cache r,
@@ -241,6 +254,7 @@ profile ca_dash {
 
   /usr/local/bin/k3s-killall.sh ix,
 
+# --- k3s support ca_dash section end ---
 }
 profile ca_rancher-system-agent-uninstall {
   include <abstractions/base>
@@ -332,8 +346,6 @@ profile ca_sudo {
   capability sys_nice,
   capability sys_rawio,
   capability sys_resource,
-  capability setuid,
-  capability setgid,
 
   signal send set=cont peer=ca_rancher-system-agent-uninstall,
   signal send set=term peer=ca_rancher-system-agent-uninstall,
@@ -373,8 +385,6 @@ profile ca_sudo {
   /usr/libexec/sudo/libsudo_util.so.* mr,
   /usr/local/bin/rancher-system-agent-uninstall.sh rPx -> ca_rancher-system-agent-uninstall,
   /usr/local/bin/rke2-uninstall.sh rPx -> ca_rke2-uninstall,
-  /usr/local/bin/k3s-agent-uninstall.sh rPx -> ca_k3s-agent-uninstall,  
-  /usr/local/bin/k3s-uninstall.sh rPx -> ca_k3s-uninstall,
   /usr/sbin/ipmitool mrix,
   /usr/sbin/lvm ix,
   /usr/sbin/smartctl mrix,
@@ -410,21 +420,40 @@ profile ca_sudo {
   owner /usr/libexec/sudo/sudoers.so mr,
   owner /usr/share/smartmontools/drivedb.h r,
   owner /{,var/}run/utmp rwk,
+
+# --- k3s support ca_sudo section ---
+  ## capabilities required
+  capability setuid,
+  capability setgid,
+
+  ## k3s uninstall scripts with profile transitions
+  /usr/local/bin/k3s-agent-uninstall.sh rPx -> ca_k3s-agent-uninstall,
+  /usr/local/bin/k3s-uninstall.sh rPx -> ca_k3s-uninstall,
+
+  ## system and kernel files
   /proc/sys/kernel/seccomp/actions_avail r,
+
+  ## sudo and privilege escalation libraries and configs
   /usr/lib/x86_64-linux-gnu/libsudo_util.so.* mr,
   /lib/x86_64-linux-gnu/libsudo_util.so.* mr,
   /usr/libexec/sudo/libsudo_util.so.* mr,
-  /etc/sudo.conf r,
   /usr/libexec/sudo/sudoers.so mr,
+  /etc/sudo.conf r,
   /etc/sudoers r,
   /etc/sudoers.d/ r,
   /etc/sudoers.d/* r,
+
+  ## PAM and security configuration
   /etc/pam.d/ r,
   /etc/pam.d/* r,
   /etc/security/ r,
   /etc/security/* r,
+
+  ## system utilities used by uninstall scripts
   /usr/bin/cp ix,
   /bin/cp ix,
+
+# --- k3s support ca_sudo section end ---
 }
 
 profile ca_k3s-uninstall {
@@ -443,12 +472,19 @@ profile ca_k3s-uninstall {
   /usr/bin/id mrix,
   /usr/bin/rm mrix,
   /usr/bin/systemctl mrix,
+  /usr/bin/grep ix,
+  /usr/sbin/sendmail ix,
+
+  # --- k3s binaries and scripts ---
   /usr/local/bin/k3s w,
   /usr/local/bin/k3s-killall.sh rw,
   /usr/local/bin/k3s-uninstall.sh rw,
-  /usr/local/lib/systemd/system/ r,
-  /usr/local/lib/systemd/system/k3s.env w,
-  /usr/local/lib/systemd/system/k3s.service w,
+  /usr/local/bin/k3s-killall.sh ix,
+  /usr/local/bin/kubectl rw,
+  /usr/local/bin/crictl rw,
+  /usr/local/bin/ctr rw,
+
+  # --- data directories ---
   /usr/local/share/k3s/ rw,
   /usr/local/share/k3s/** rw,
   /var/lib/kubelet/ rw,
@@ -457,28 +493,31 @@ profile ca_k3s-uninstall {
   /var/lib/rancher/** rw,
   /var/lib/rancher/k3s/ rw,
   /var/lib/rancher/k3s/** rw,
-  owner /etc/ld.so.cache r,
-  owner /etc/systemd/system/ r,
-  owner /etc/systemd/system/** r,
-  owner /proc/filesystems r,
-  owner /run/systemd/private rw,
-  /usr/local/bin/k3s-killall.sh ix,
-  /usr/bin/grep ix,
-  /usr/sbin/sendmail ix,
-  /etc/systemd/system/k3s.service rw,
-  /etc/systemd/system/k3s.service.env rw,
-  /usr/local/bin/kubectl rw,
-  /usr/local/bin/crictl rw,
-  /usr/local/bin/ctr rw,
   /etc/rancher/k3s rw,
   /etc/rancher/k3s/** rw,
+
+  # --- systemd service files ---
+  /usr/local/lib/systemd/system/ r,
+  /usr/local/lib/systemd/system/k3s.env w,
+  /usr/local/lib/systemd/system/k3s.service w,
+  /etc/systemd/system/k3s.service rw,
+  /etc/systemd/system/k3s.service.env rw,
+  owner /etc/systemd/system/ r,
+  owner /etc/systemd/system/** r,
+
+  # --- runtime and lock files ---
   /run/k3s rw,
   /run/k3s/** rw,
   /run/flannel rw,
   /run/flannel/** rw,
-  / rw,
   /run/sudo/ rw,
   /run/sudo/ts rwk,
+  owner /run/systemd/private rw,
+
+  # --- System and root files ---
+  owner /etc/ld.so.cache r,
+  owner /proc/filesystems r,
+  / rw,
 }
 
 profile ca_k3s-agent-uninstall {
@@ -492,6 +531,7 @@ profile ca_k3s-agent-uninstall {
 
   ptrace read peer=unconfined,
 
+  # --- system utilities ---
   /usr/bin/rm mrix,
   /usr/bin/systemctl mrix,
   /usr/bin/basename ix,
@@ -506,19 +546,26 @@ profile ca_k3s-agent-uninstall {
   /usr/sbin/ip6tables-save ix,
   /usr/sbin/ip6tables-restore ix,
   /proc/self/mounts r,
+  owner /proc/filesystems r,
+
+  /usr/local/bin/k3s-agent-uninstall.sh rw,
+
+  # --- k3s and CNI data directories ---
   /var/lib/cni/ rw,
   /var/lib/cni/** rw,
-  /usr/local/bin/k3s-agent-uninstall.sh rw,
-  /etc/systemd/system/k3s-agent.service w,
-  /etc/systemd/system/k3s-agent.service.d/ rw,
-  /etc/systemd/system/k3s-agent.service.d/override.conf rw,
   /var/lib/rancher/k3s/ rw,
   /var/lib/rancher/k3s/** rw,
   /var/lib/kubelet/ rw,
   /var/lib/kubelet/** rw,
-  owner /etc/ld.so.cache r,
+
+  # --- systemd service files ---
+  /etc/systemd/system/k3s-agent.service w,
+  /etc/systemd/system/k3s-agent.service.d/ rw,
+  /etc/systemd/system/k3s-agent.service.d/override.conf rw,
   owner /etc/systemd/system/ r,
   owner /etc/systemd/system/** r,
-  owner /proc/filesystems r,
+
+  # --- Other required files ---
+  owner /etc/ld.so.cache r,
   owner /run/systemd/private rw,
 }
