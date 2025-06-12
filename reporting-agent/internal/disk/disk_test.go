@@ -7,19 +7,19 @@ import (
 	"os"
 	"testing"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/testutils"
 	"github.com/stretchr/testify/require"
 
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/testutil"
 )
 
 func TestGetDiskDataSuccess(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/mock_disks.json")
 	require.NoError(t, err)
-	testutil.SetMockOutput("lsblk", []string{"-o", "KNAME,VENDOR,MODEL,SIZE,TYPE", "-J", "-b", "--tree"}, testData, nil)
+	testutils.SetMockOutput("lsblk", []string{"-o", "KNAME,VENDOR,MODEL,SIZE,TYPE", "-J", "-b", "--tree"}, testData, nil)
 
-	out, err := GetDiskData(testutil.TestCmdExecutor)
+	out, err := GetDiskData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 
 	expected := []model.Disk{}
@@ -47,17 +47,17 @@ func TestGetDiskDataSuccess(t *testing.T) {
 }
 
 func TestGetDiskDataLsblkCommandFailure(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("lsblk", []string{"-o", "KNAME,VENDOR,MODEL,SIZE,TYPE", "-J", "-b", "--tree"}, nil, os.ErrPermission)
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("lsblk", []string{"-o", "KNAME,VENDOR,MODEL,SIZE,TYPE", "-J", "-b", "--tree"}, nil, os.ErrPermission)
 
-	_, err := GetDiskData(testutil.TestCmdExecutor)
+	_, err := GetDiskData(testutils.TestCmdExecutor)
 	require.ErrorContains(t, err, "failed to read data from lsblk command")
 }
 
 func TestGetDiskDataUnmarshalFailed(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("lsblk", []string{"-o", "KNAME,VENDOR,MODEL,SIZE,TYPE", "-J", "-b", "--tree"}, []byte("not a json"), nil)
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("lsblk", []string{"-o", "KNAME,VENDOR,MODEL,SIZE,TYPE", "-J", "-b", "--tree"}, []byte("not a json"), nil)
 
-	_, err := GetDiskData(testutil.TestCmdExecutor)
+	_, err := GetDiskData(testutils.TestCmdExecutor)
 	require.ErrorContains(t, err, "failed to unmarshal data")
 }

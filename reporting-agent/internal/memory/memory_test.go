@@ -7,19 +7,19 @@ import (
 	"os"
 	"testing"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/testutils"
 	"github.com/stretchr/testify/require"
 
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/testutil"
 )
 
 func TestGetMemoryDataSuccess(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/dmidecode_real")
 	require.NoError(t, err)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
 
-	mem, err := GetMemoryData(testutil.TestCmdExecutor)
+	mem, err := GetMemoryData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, uint64(32768), mem.Summary.TotalSizeMB)
 	require.Equal(t, "DIMM", mem.Summary.CommonFormFactor)
@@ -35,20 +35,20 @@ func TestGetMemoryDataSuccess(t *testing.T) {
 }
 
 func TestGetMemoryDataCommandFailure(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, nil, os.ErrPermission)
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, nil, os.ErrPermission)
 
-	_, err := GetMemoryData(testutil.TestCmdExecutor)
+	_, err := GetMemoryData(testutils.TestCmdExecutor)
 	require.ErrorContains(t, err, "failed to read data from dmidecode command")
 }
 
 func TestGetMemoryDataIgnoresUnrelatedLines(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/dmidecode_dummy_lines")
 	require.NoError(t, err)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
 
-	mem, err := GetMemoryData(testutil.TestCmdExecutor)
+	mem, err := GetMemoryData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, uint64(4*1024), mem.Summary.TotalSizeMB)
 	require.Equal(t, "DDR3", mem.Summary.CommonType)
@@ -63,12 +63,12 @@ func TestGetMemoryDataIgnoresUnrelatedLines(t *testing.T) {
 }
 
 func TestGetMemoryDataHandlesNoModuleInstalled(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/dmidecode_no_modules_installed")
 	require.NoError(t, err)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
 
-	mem, err := GetMemoryData(testutil.TestCmdExecutor)
+	mem, err := GetMemoryData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), mem.Summary.TotalSizeMB)
 	require.Empty(t, mem.Summary.CommonType)
@@ -77,12 +77,12 @@ func TestGetMemoryDataHandlesNoModuleInstalled(t *testing.T) {
 }
 
 func TestGetMemoryDataHandlesUnknownSize(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/dmidecode_unknown_size")
 	require.NoError(t, err)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
 
-	mem, err := GetMemoryData(testutil.TestCmdExecutor)
+	mem, err := GetMemoryData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), mem.Summary.TotalSizeMB)
 	require.Empty(t, mem.Summary.CommonType)
@@ -91,12 +91,12 @@ func TestGetMemoryDataHandlesUnknownSize(t *testing.T) {
 }
 
 func TestGetMemoryDataDifferentTypes(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/dmidecode_memory_different_types")
 	require.NoError(t, err)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
 
-	mem, err := GetMemoryData(testutil.TestCmdExecutor)
+	mem, err := GetMemoryData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, uint64(16*1024), mem.Summary.TotalSizeMB)
 	require.Empty(t, mem.Summary.CommonType)
@@ -105,12 +105,12 @@ func TestGetMemoryDataDifferentTypes(t *testing.T) {
 }
 
 func TestGetMemoryDataDifferentFormFactors(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/dmidecode_different_form_factors")
 	require.NoError(t, err)
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, testData, nil)
 
-	mem, err := GetMemoryData(testutil.TestCmdExecutor)
+	mem, err := GetMemoryData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, uint64(16*1024), mem.Summary.TotalSizeMB)
 	require.Equal(t, "DDR4", mem.Summary.CommonType)
@@ -119,10 +119,10 @@ func TestGetMemoryDataDifferentFormFactors(t *testing.T) {
 }
 
 func TestGetMemoryDataEmptyOutput(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, []byte(""), nil)
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("sudo", []string{"dmidecode", "--type", "memory"}, []byte(""), nil)
 
-	mem, err := GetMemoryData(testutil.TestCmdExecutor)
+	mem, err := GetMemoryData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, model.Memory{Devices: []model.MemoryDevice{}}, mem)
 }

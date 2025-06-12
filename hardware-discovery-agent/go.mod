@@ -6,7 +6,7 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
-	github.com/open-edge-platform/edge-node-agents/common v1.7.0
+	github.com/open-edge-platform/edge-node-agents/common v1.7.1
 	github.com/open-edge-platform/infra-managers/host v1.22.1
 	github.com/safchain/ethtool v0.6.1
 	github.com/sirupsen/logrus v1.9.3

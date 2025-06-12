@@ -10,7 +10,7 @@ require (
 	github.com/go-co-op/gocron v1.37.0
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/open-edge-platform/edge-node-agents/common v1.7.0
+	github.com/open-edge-platform/edge-node-agents/common v1.7.1
 	github.com/open-edge-platform/infra-managers/maintenance v1.22.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.14.0

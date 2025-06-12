@@ -9,15 +9,15 @@ import (
 	"os"
 	"testing"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/testutils"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/testutil"
 )
 
 func TestGetKubernetesDataSuccess(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	// Prepare fake files
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
@@ -28,15 +28,15 @@ func TestGetKubernetesDataSuccess(t *testing.T) {
 
 	// Mock kubectl version
 	versionJSON := []byte(`{"serverVersion":{"gitVersion":"v1.29.3"}}`)
-	testutil.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
+	testutils.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
 
 	// Mock kubectl get
 	appsJSON := []byte(`{"items":[{"metadata":{"namespace":"foo","labels":{"app.kubernetes.io/name":"app1"}}}]}`)
-	testutil.SetMockOutput(tmpK3Kubectl.Name(),
+	testutils.SetMockOutput(tmpK3Kubectl.Name(),
 		[]string{"--kubeconfig", tmpK3KubeConfig.Name(), "get", "deployments,statefulsets,daemonsets", "-A", "-o", "json"}, appsJSON, nil)
 
 	cfg := createK8sConfig(tmpK3Kubectl.Name(), tmpK3KubeConfig.Name(), "/rke2/kubectl/not/exist", "/rke2/kubeconfig/not/exist")
-	out, err := GetKubernetesData(testutil.TestCmdExecutor, cfg)
+	out, err := GetKubernetesData(testutils.TestCmdExecutor, cfg)
 	require.NoError(t, err, "GetKubernetesData should not return error")
 	require.Equal(t, "k3s", out.Provider, "Provider should be k3s")
 	require.Equal(t, "v1.29.3", out.ServerVersion, "ServerVersion should be v1.29.3")
@@ -52,13 +52,13 @@ func TestGetKubernetesDataSuccess(t *testing.T) {
 
 func TestGetKubernetesDataGetKubeError(t *testing.T) {
 	cfg := createK8sConfig("/k3s/kubectl/not/exist", "/k3s/kubeconfig/not/exist", "/rke2/kubectl/not/exist", "/rke2/kubeconfig/not/exist")
-	out, err := GetKubernetesData(testutil.TestCmdExecutor, cfg)
+	out, err := GetKubernetesData(testutils.TestCmdExecutor, cfg)
 	require.ErrorContains(t, err, "failed to get Kubernetes config", "Should error on invalid kube config")
 	require.Empty(t, out.Applications, "Applications should be empty on error")
 }
 
 func TestGetKubernetesDataVersionCommandError(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
 	defer os.Remove(tmpK3Kubectl.Name())
@@ -66,15 +66,15 @@ func TestGetKubernetesDataVersionCommandError(t *testing.T) {
 	require.NoError(t, err, "os.CreateTemp should not error for kubeconfig")
 	defer os.Remove(tmpK3KubeConfig.Name())
 
-	testutil.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, nil, errors.New("fail"))
+	testutils.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, nil, errors.New("fail"))
 	cfg := createK8sConfig(tmpK3Kubectl.Name(), tmpK3KubeConfig.Name(), "/rke2/kubectl/not/exist", "/rke2/kubeconfig/not/exist")
-	out, err := GetKubernetesData(testutil.TestCmdExecutor, cfg)
+	out, err := GetKubernetesData(testutils.TestCmdExecutor, cfg)
 	require.ErrorContains(t, err, "failed to get Kubernetes server version", "Should error on kubectl version failure")
 	require.Empty(t, out.Applications, "Applications should be empty on error")
 }
 
 func TestGetKubernetesDataGetCommandError(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
 	defer os.Remove(tmpK3Kubectl.Name())
@@ -83,17 +83,17 @@ func TestGetKubernetesDataGetCommandError(t *testing.T) {
 	defer os.Remove(tmpK3KubeConfig.Name())
 
 	versionJSON := []byte(`{"serverVersion":{"gitVersion":"v1.29.3"}}`)
-	testutil.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
-	testutil.SetMockOutput(tmpK3Kubectl.Name(),
+	testutils.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
+	testutils.SetMockOutput(tmpK3Kubectl.Name(),
 		[]string{"--kubeconfig", tmpK3KubeConfig.Name(), "get", "deployments,statefulsets,daemonsets", "-A", "-o", "json"}, nil, errors.New("fail"))
 	cfg := createK8sConfig(tmpK3Kubectl.Name(), tmpK3KubeConfig.Name(), "/rke2/kubectl/not/exist", "/rke2/kubeconfig/not/exist")
-	out, err := GetKubernetesData(testutil.TestCmdExecutor, cfg)
+	out, err := GetKubernetesData(testutils.TestCmdExecutor, cfg)
 	require.ErrorContains(t, err, "failed to get Kubernetes resources", "Should error on kubectl get failure")
 	require.Empty(t, out.Applications, "Applications should be empty on error")
 }
 
 func TestGetKubernetesDataParseApplicationsError(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
 	defer os.Remove(tmpK3Kubectl.Name())
@@ -102,17 +102,17 @@ func TestGetKubernetesDataParseApplicationsError(t *testing.T) {
 	defer os.Remove(tmpK3KubeConfig.Name())
 
 	versionJSON := []byte(`{"serverVersion":{"gitVersion":"v1.29.3"}}`)
-	testutil.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
-	testutil.SetMockOutput(tmpK3Kubectl.Name(),
+	testutils.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
+	testutils.SetMockOutput(tmpK3Kubectl.Name(),
 		[]string{"--kubeconfig", tmpK3KubeConfig.Name(), "get", "deployments,statefulsets,daemonsets", "-A", "-o", "json"}, []byte("not a json"), nil)
 	cfg := createK8sConfig(tmpK3Kubectl.Name(), tmpK3KubeConfig.Name(), "/rke2/kubectl/not/exist", "/rke2/kubeconfig/not/exist")
-	out, err := GetKubernetesData(testutil.TestCmdExecutor, cfg)
+	out, err := GetKubernetesData(testutils.TestCmdExecutor, cfg)
 	require.ErrorContains(t, err, "failed to parse Kubernetes applications", "Should error on invalid JSON")
 	require.Empty(t, out.Applications, "Applications should be empty on error")
 }
 
 func TestGetKubernetesDataRke2Success(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	// Prepare fake files for rke2
 	tmpRke2Kubectl, err := os.CreateTemp(t.TempDir(), "rke2_kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for rke2 kubectl")
@@ -123,16 +123,16 @@ func TestGetKubernetesDataRke2Success(t *testing.T) {
 
 	// Mock kubectl version
 	versionJSON := []byte(`{"serverVersion":{"gitVersion":"v1.30.0"}}`)
-	testutil.SetMockOutput(tmpRke2Kubectl.Name(), []string{"--kubeconfig", tmpRke2KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
+	testutils.SetMockOutput(tmpRke2Kubectl.Name(), []string{"--kubeconfig", tmpRke2KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
 
 	// Mock kubectl get
 	appsJSON := []byte(`{"items":[{"metadata":{"namespace":"foo","labels":{"app.kubernetes.io/name":"rke2-app"}}}]}`)
-	testutil.SetMockOutput(tmpRke2Kubectl.Name(),
+	testutils.SetMockOutput(tmpRke2Kubectl.Name(),
 		[]string{"--kubeconfig", tmpRke2KubeConfig.Name(), "get", "deployments,statefulsets,daemonsets", "-A", "-o", "json"}, appsJSON, nil)
 
 	// k3s paths are invalid, rke2 paths are valid
 	cfg := createK8sConfig("/k3s/kubectl/not/exist", "/k3s/kubeconfig/not/exist", tmpRke2Kubectl.Name(), tmpRke2KubeConfig.Name())
-	out, err := GetKubernetesData(testutil.TestCmdExecutor, cfg)
+	out, err := GetKubernetesData(testutils.TestCmdExecutor, cfg)
 	require.NoError(t, err, "GetKubernetesData should not return error for rke2 paths")
 	require.Equal(t, "rke2", out.Provider, "Provider should be rke2")
 	require.Equal(t, "v1.30.0", out.ServerVersion, "ServerVersion should be v1.30.0")

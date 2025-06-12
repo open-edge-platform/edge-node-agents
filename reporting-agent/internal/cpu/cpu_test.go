@@ -7,19 +7,19 @@ import (
 	"os"
 	"testing"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/testutils"
 	"github.com/stretchr/testify/require"
 
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/testutil"
 )
 
 func TestGetCPUDataSuccess(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/lscpu_real")
 	require.NoError(t, err)
-	testutil.SetMockOutput("lscpu", nil, testData, nil)
+	testutils.SetMockOutput("lscpu", nil, testData, nil)
 
-	cpu, err := GetCPUData(testutil.TestCmdExecutor)
+	cpu, err := GetCPUData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, "x86_64", cpu.Architecture)
 	require.Equal(t, "GenuineIntel", cpu.Vendor)
@@ -35,20 +35,20 @@ func TestGetCPUDataSuccess(t *testing.T) {
 }
 
 func TestGetCPUDataCommandFailure(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("lscpu", nil, nil, os.ErrPermission)
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("lscpu", nil, nil, os.ErrPermission)
 
-	_, err := GetCPUData(testutil.TestCmdExecutor)
+	_, err := GetCPUData(testutils.TestCmdExecutor)
 	require.ErrorContains(t, err, "failed to read data from lscpu command")
 }
 
 func TestGetCPUDataWithSpacesAndEmptyLines(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/lscpu_with_spaces_and_empty_lines")
 	require.NoError(t, err)
-	testutil.SetMockOutput("lscpu", nil, testData, nil)
+	testutils.SetMockOutput("lscpu", nil, testData, nil)
 
-	cpu, err := GetCPUData(testutil.TestCmdExecutor)
+	cpu, err := GetCPUData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, "x86_64", cpu.Architecture)
 	require.Equal(t, "GenuineIntel", cpu.Vendor)
@@ -62,12 +62,12 @@ func TestGetCPUDataWithSpacesAndEmptyLines(t *testing.T) {
 }
 
 func TestGetCPUDataIgnoresUnrelatedLines(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/lscpu_with_unrelated_lines")
 	require.NoError(t, err)
-	testutil.SetMockOutput("lscpu", nil, testData, nil)
+	testutils.SetMockOutput("lscpu", nil, testData, nil)
 
-	cpu, err := GetCPUData(testutil.TestCmdExecutor)
+	cpu, err := GetCPUData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, "x86_64", cpu.Architecture)
 	require.Equal(t, uint64(16), cpu.ThreadCount)
@@ -75,12 +75,12 @@ func TestGetCPUDataIgnoresUnrelatedLines(t *testing.T) {
 }
 
 func TestGetCPUDataHandlesParseUintError(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/lscpu_with_not_a_numbers")
 	require.NoError(t, err)
-	testutil.SetMockOutput("lscpu", nil, testData, nil)
+	testutils.SetMockOutput("lscpu", nil, testData, nil)
 
-	cpu, err := GetCPUData(testutil.TestCmdExecutor)
+	cpu, err := GetCPUData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, "x86_64", cpu.Architecture)
 	require.Equal(t, uint64(0), cpu.ThreadCount)
@@ -90,12 +90,12 @@ func TestGetCPUDataHandlesParseUintError(t *testing.T) {
 }
 
 func TestGetCPUDataPartialFields(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/lscpu_with_partial_data")
 	require.NoError(t, err)
-	testutil.SetMockOutput("lscpu", nil, testData, nil)
+	testutils.SetMockOutput("lscpu", nil, testData, nil)
 
-	cpu, err := GetCPUData(testutil.TestCmdExecutor)
+	cpu, err := GetCPUData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, "x86_64", cpu.Architecture)
 	require.Equal(t, uint64(4), cpu.ThreadCount)
@@ -104,34 +104,34 @@ func TestGetCPUDataPartialFields(t *testing.T) {
 }
 
 func TestGetCPUDataZeroSocketsOrCores(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/lscpu_with_zero_sockets_or_cores")
 	require.NoError(t, err)
-	testutil.SetMockOutput("lscpu", nil, testData, nil)
+	testutils.SetMockOutput("lscpu", nil, testData, nil)
 
-	cpu, err := GetCPUData(testutil.TestCmdExecutor)
+	cpu, err := GetCPUData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, uint64(0), cpu.SocketCount)
 	require.Equal(t, uint64(0), cpu.CoreCount) // 0 * 8 = 0
 }
 
 func TestGetCPUDataZeroCoresPerSocket(t *testing.T) {
-	testutil.ClearMockOutputs()
+	testutils.ClearMockOutputs()
 	testData, err := os.ReadFile("./testdata/lscpu_with_zero_cores_per_socket")
 	require.NoError(t, err)
-	testutil.SetMockOutput("lscpu", nil, testData, nil)
+	testutils.SetMockOutput("lscpu", nil, testData, nil)
 
-	cpu, err := GetCPUData(testutil.TestCmdExecutor)
+	cpu, err := GetCPUData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), cpu.SocketCount)
 	require.Equal(t, uint64(0), cpu.CoreCount)
 }
 
 func TestGetCPUDataEmptyOutput(t *testing.T) {
-	testutil.ClearMockOutputs()
-	testutil.SetMockOutput("lscpu", nil, []byte(""), nil)
+	testutils.ClearMockOutputs()
+	testutils.SetMockOutput("lscpu", nil, []byte(""), nil)
 
-	cpu, err := GetCPUData(testutil.TestCmdExecutor)
+	cpu, err := GetCPUData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 	require.Equal(t, model.CPU{}, cpu)
 }

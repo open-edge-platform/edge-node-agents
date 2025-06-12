@@ -4,9 +4,10 @@
 package internal
 
 import (
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"go.uber.org/zap"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/cpu"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/disk"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/identity"
@@ -14,7 +15,6 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/memory"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/system"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
 // Collector is responsible for collecting system and hardware data.

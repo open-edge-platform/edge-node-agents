@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
 )
 
@@ -52,7 +52,7 @@ func runAgent(cmd *cobra.Command, _ []string) {
 
 	// Send to backend
 	sender := internal.NewBackendSender("/etc/edge-node/metrics/endpoint", "/etc/edge-node/metrics/token")
-	if err := sender.Send(&dataCollected); err != nil {
+	if err := sender.Send(cfg, &dataCollected); err != nil {
 		log.Errorf("Failed to send data to backend: %v", err)
 	} else {
 		log.Info("Data successfully sent to backend.")

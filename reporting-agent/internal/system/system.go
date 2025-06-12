@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
+
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
 // GetTimezone retrieves the system's timezone using the `date` command.

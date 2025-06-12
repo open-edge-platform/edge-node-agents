@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-package testutil
+package testutils
 
 import (
 	"fmt"
 	"strings"
 	"sync"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 )
 
 var (

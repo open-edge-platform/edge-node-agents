@@ -7,13 +7,13 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/config"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/identity"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/utils"
 )
 
 // TestCollectorCollectDataSuccess checks that CollectData fills the model with correct values on success.
