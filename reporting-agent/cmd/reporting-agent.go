@@ -11,9 +11,10 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/collector"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/model"
+	"github.com/open-edge-platform/edge-node-agents/reporting-agent/internal/sender"
 )
 
 func main() {
@@ -38,21 +39,21 @@ func runAgent(cmd *cobra.Command, _ []string) {
 	cfg := configLoader.Load(cmd)
 
 	shortMode, _ := cmd.Flags().GetBool("short") //nolint:errcheck // Ignoring error, if something goes wrong, full data will be collected anyway
-	collector := internal.NewCollector(log)
+	coll := collector.NewCollector(log)
 	var dataCollected model.Root
 	if shortMode {
 		log.Info("Agent started in short mode.")
-		dataCollected = collector.CollectDataShort(cfg)
+		dataCollected = coll.CollectDataShort(cfg)
 	} else {
 		log.Info("Agent started in full mode.")
-		dataCollected = collector.CollectData(cfg)
+		dataCollected = coll.CollectData(cfg)
 	}
 
 	log.Infow("Agent finished collecting data.", "duration", time.Since(start).String())
 
 	// Send to backend
-	sender := internal.NewBackendSender("/etc/edge-node/metrics/endpoint", "/etc/edge-node/metrics/token")
-	if err := sender.Send(cfg, &dataCollected); err != nil {
+	sndr := sender.NewBackendSender("/etc/edge-node/metrics/endpoint", "/etc/edge-node/metrics/token")
+	if err := sndr.Send(cfg, &dataCollected); err != nil {
 		log.Errorf("Failed to send data to backend: %v", err)
 	} else {
 		log.Info("Data successfully sent to backend.")

@@ -34,7 +34,6 @@ backend:
   backoff:
     maxTries: 5
 `)
-	defer os.Remove(tmpFile)
 
 	cmd := newFakeCobraCmd(t, tmpFile)
 	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
@@ -60,7 +59,6 @@ func TestLoad_UnmarshalError(t *testing.T) {
 	tmpFile := createTempConfigFile(t, `
 k8s: "this-should-be-a-map-not-a-string"
 `)
-	defer os.Remove(tmpFile)
 
 	cmd := newFakeCobraCmd(t, tmpFile)
 	cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
@@ -78,6 +76,41 @@ func TestSetDefaults(t *testing.T) {
 	require.Equal(t, uint(20), def.Backend.Backoff.MaxTries, "SetDefaults should set correct MaxTries")
 }
 
+// FuzzLoad checks that Loader.Load never panics and always returns a Config for random config files.
+func FuzzLoad(f *testing.F) {
+	// Seed with a valid config
+	f.Add([]byte(`
+k8s:
+  k3sKubectlPath: "/fuzz/k3s"
+  k3sKubeConfigPath: "/fuzz/k3s.yaml"
+  rke2KubectlPath: "/fuzz/rke2"
+  rke2KubeConfigPath: "/fuzz/rke2.yaml"
+backend:
+  backoff:
+    maxTries: 7
+`))
+	// Seed with some invalid configs
+	f.Add([]byte(`not yaml at all`))
+	f.Add([]byte(`k8s: "string-instead-of-map"`))
+	f.Add([]byte(`backend: { backoff: { maxTries: "not-a-number" } }`))
+	f.Add([]byte(``))
+
+	f.Fuzz(func(t *testing.T, configContent []byte) {
+		tmpFile := createTempConfigFile(t, string(configContent))
+
+		cmd := newFakeCobraCmd(t, tmpFile)
+		cl := NewConfigLoader(zaptest.NewLogger(t).Sugar())
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("Loader.Load panicked with input: %q, panic: %v", string(configContent), r)
+			}
+		}()
+		cfg := cl.Load(cmd)
+		// Always returns a Config struct
+		require.NotNil(t, cfg, "Loader.Load should always return a Config")
+	})
+}
+
 // newFakeCobraCmd creates a cobra.Command with a --config flag set to the given value.
 func newFakeCobraCmd(t *testing.T, configPath string) *cobra.Command {
 	cmd := &cobra.Command{}
@@ -92,6 +125,6 @@ func createTempConfigFile(t *testing.T, content string) string {
 	t.Helper()
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "config.yaml")
-	require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0640), "Should write temp config file") // Gosec: use 0640
+	require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0640), "Should write temp config file")
 	return tmpFile
 }
