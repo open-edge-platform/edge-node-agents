@@ -30,6 +30,7 @@ path = [
     "**/test/**",
     "**/.github/workflows/**",
     "**/.tool-versions",
+    "**/copyright",
     "ci/**",
     "ci/scripts/**"
 ]
