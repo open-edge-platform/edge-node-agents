@@ -157,19 +157,25 @@ profile ca_dash {
   ## k3s binaries and scripts
   /usr/local/bin/k3s rwk,
   /usr/local/bin/k3s-ro-test rwk,
-  /usr/local/bin/ rwlk,
-  /usr/local/bin/** rwlk,
   /usr/local/bin/k3s-killall.sh w,
   /usr/local/bin/k3s-uninstall.sh w,
   /usr/local/bin/k3s-agent-uninstall.sh w,
 
-  ## systemd service files
-  /etc/systemd/system/ rw,
-  /etc/systemd/system/** rw,
-  /etc/systemd/system/*.env rw,
-  /etc/systemd/system/*.service rw,
-  /etc/systemd/system/*.service.d/ rw,
-  /etc/systemd/system/*.service.d/** rw,
+  ## systemd service files (narrowed to k3s only)
+  /etc/systemd/system/k3s.service w,
+  /etc/systemd/system/k3s.service.env w,
+  /etc/systemd/system/k3s-agent.service w,
+  /etc/systemd/system/k3s-agent.service.d/ rw,
+  /etc/systemd/system/k3s-agent.service.d/override.conf rw,
+  /etc/systemd/system/k3s.service.d/ rw,
+  /etc/systemd/system/k3s.service.d/override.conf rw,
+  /etc/systemd/system/k3s-server.service.d/ rw,
+  /etc/systemd/system/k3s-server.service.d/override.conf rw,
+
+  ## systemd environment and drop-in files for k3s
+  /etc/systemd/system/k3s*.env,
+  /etc/systemd/system/k3s.service.d/** rw,
+  /etc/systemd/system/k3s-server.service.d/** rw,
   /etc/systemd/system/k3s.service.d/ rw,
   /etc/systemd/system/k3s-server.service.d/ rw,
   /etc/systemd/system/k3s-server.service.d/override.conf rw,
@@ -485,7 +491,7 @@ profile ca_k3s-uninstall {
   /usr/local/bin/ctr rw,
 
   # --- data directories ---
-  /usr/local/share/k3s/ rw,
+
   /usr/local/share/k3s/** rw,
   /var/lib/kubelet/ rw,
   /var/lib/kubelet/** rw,
@@ -517,7 +523,6 @@ profile ca_k3s-uninstall {
   # --- System and root files ---
   owner /etc/ld.so.cache r,
   owner /proc/filesystems r,
-  / rw,
 }
 
 profile ca_k3s-agent-uninstall {
