@@ -3,7 +3,7 @@ module github.com/open-edge-platform/edge-node-agents/common
 go 1.24.1
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250603165357-b52ab10f4468.1
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250613055000-fd99550722dc.1
 	github.com/bufbuild/protovalidate-go v0.10.0
 	github.com/golang/mock v1.6.0
 	github.com/pkg/errors v0.9.1
