@@ -6,6 +6,9 @@
 
 ## Cluster Agent Changelog
 
+### 1.7.4
+- Update AppArmor profile for K3s applications
+
 ### 1.7.3
 - Add retry/backoff to status call
 
