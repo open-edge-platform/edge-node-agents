@@ -21,10 +21,8 @@ func TestGetKubernetesDataSuccess(t *testing.T) {
 	// Prepare fake files
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
-	defer os.Remove(tmpK3Kubectl.Name())
 	tmpK3KubeConfig, err := os.CreateTemp(t.TempDir(), "kubeconfig")
 	require.NoError(t, err, "os.CreateTemp should not error for kubeconfig")
-	defer os.Remove(tmpK3KubeConfig.Name())
 
 	// Mock kubectl version
 	versionJSON := []byte(`{"serverVersion":{"gitVersion":"v1.29.3"}}`)
@@ -61,10 +59,8 @@ func TestGetKubernetesDataVersionCommandError(t *testing.T) {
 	testutils.ClearMockOutputs()
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
-	defer os.Remove(tmpK3Kubectl.Name())
 	tmpK3KubeConfig, err := os.CreateTemp(t.TempDir(), "kubeconfig")
 	require.NoError(t, err, "os.CreateTemp should not error for kubeconfig")
-	defer os.Remove(tmpK3KubeConfig.Name())
 
 	testutils.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, nil, errors.New("fail"))
 	cfg := createK8sConfig(tmpK3Kubectl.Name(), tmpK3KubeConfig.Name(), "/rke2/kubectl/not/exist", "/rke2/kubeconfig/not/exist")
@@ -77,10 +73,8 @@ func TestGetKubernetesDataGetCommandError(t *testing.T) {
 	testutils.ClearMockOutputs()
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
-	defer os.Remove(tmpK3Kubectl.Name())
 	tmpK3KubeConfig, err := os.CreateTemp(t.TempDir(), "kubeconfig")
 	require.NoError(t, err, "os.CreateTemp should not error for kubeconfig")
-	defer os.Remove(tmpK3KubeConfig.Name())
 
 	versionJSON := []byte(`{"serverVersion":{"gitVersion":"v1.29.3"}}`)
 	testutils.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
@@ -96,10 +90,8 @@ func TestGetKubernetesDataParseApplicationsError(t *testing.T) {
 	testutils.ClearMockOutputs()
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
-	defer os.Remove(tmpK3Kubectl.Name())
 	tmpK3KubeConfig, err := os.CreateTemp(t.TempDir(), "kubeconfig")
 	require.NoError(t, err, "os.CreateTemp should not error for kubeconfig")
-	defer os.Remove(tmpK3KubeConfig.Name())
 
 	versionJSON := []byte(`{"serverVersion":{"gitVersion":"v1.29.3"}}`)
 	testutils.SetMockOutput(tmpK3Kubectl.Name(), []string{"--kubeconfig", tmpK3KubeConfig.Name(), "version", "-o", "json"}, versionJSON, nil)
@@ -116,10 +108,8 @@ func TestGetKubernetesDataRke2Success(t *testing.T) {
 	// Prepare fake files for rke2
 	tmpRke2Kubectl, err := os.CreateTemp(t.TempDir(), "rke2_kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for rke2 kubectl")
-	defer os.Remove(tmpRke2Kubectl.Name())
 	tmpRke2KubeConfig, err := os.CreateTemp(t.TempDir(), "rke2_kubeconfig")
 	require.NoError(t, err, "os.CreateTemp should not error for rke2 kubeconfig")
-	defer os.Remove(tmpRke2KubeConfig.Name())
 
 	// Mock kubectl version
 	versionJSON := []byte(`{"serverVersion":{"gitVersion":"v1.30.0"}}`)
@@ -144,10 +134,8 @@ func TestGetKubernetesDataRke2Success(t *testing.T) {
 func TestGetKubeSuccess(t *testing.T) {
 	tmpK3Kubectl, err := os.CreateTemp(t.TempDir(), "kubectl")
 	require.NoError(t, err, "os.CreateTemp should not error for kubectl")
-	defer os.Remove(tmpK3Kubectl.Name())
 	tmpK3KubeConfig, err := os.CreateTemp(t.TempDir(), "kubeconfig")
 	require.NoError(t, err, "os.CreateTemp should not error for kubeconfig")
-	defer os.Remove(tmpK3KubeConfig.Name())
 
 	cfg := createK8sConfig(tmpK3Kubectl.Name(), tmpK3KubeConfig.Name(), "/rke2/kubectl/not/exist", "/rke2/kubeconfig/not/exist")
 	k, err := getKube(cfg)
@@ -337,7 +325,6 @@ func TestParseApplicationsMissingItemsField(t *testing.T) {
 func TestFileExists(t *testing.T) {
 	tmp, err := os.CreateTemp(t.TempDir(), "k8s_test")
 	require.NoError(t, err, "os.CreateTemp should not error")
-	defer os.Remove(tmp.Name())
 
 	require.True(t, fileExists(tmp.Name()), "fileExists should return true for existing file")
 	require.False(t, fileExists("/not/existing/file/xyz"), "fileExists should return false for non-existing file")
