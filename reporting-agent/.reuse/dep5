@@ -1,10 +1,11 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 
 Files:
+  .tool-versions
   */testdata/*
   build/*
   config/sudoers.d/reporting-agent
-  .tool-versions
+  copyright
   go.mod
   go.sum
   VERSION
