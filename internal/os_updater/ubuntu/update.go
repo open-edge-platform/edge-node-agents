@@ -14,8 +14,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/intel/intel-inb-manageability/internal/inbd/utils"
-	pb "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1"
+	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"golang.org/x/sys/unix"
 )
 

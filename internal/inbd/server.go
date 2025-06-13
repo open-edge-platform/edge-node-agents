@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/afero"
 	"google.golang.org/grpc"
 
-	osUpdater "github.com/intel/intel-inb-manageability/internal/os_updater"
+	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
 )
 
 const configFilePath = "/etc/intel_manageability.conf"

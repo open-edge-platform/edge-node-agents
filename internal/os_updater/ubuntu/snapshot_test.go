@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	utils "github.com/intel/intel-inb-manageability/internal/inbd/utils"
+	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

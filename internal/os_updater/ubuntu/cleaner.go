@@ -6,7 +6,7 @@
 // Package ubuntu updates the Ubuntu OS.
 package ubuntu
 
-import utils "github.com/intel/intel-inb-manageability/internal/inbd/utils"
+import utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 
 // Cleaner is the concrete implementation of the Cleaner interface
 // for the Ubuntu OS.
