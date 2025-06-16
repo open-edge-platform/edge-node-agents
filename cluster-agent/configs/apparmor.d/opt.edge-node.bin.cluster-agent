@@ -173,7 +173,7 @@ profile ca_dash {
   /etc/systemd/system/k3s-server.service.d/override.conf rw,
 
   ## systemd environment and drop-in files for k3s
-  /etc/systemd/system/k3s*.env,
+  /etc/systemd/system/k3s*.env rw,
   /etc/systemd/system/k3s.service.d/** rw,
   /etc/systemd/system/k3s-server.service.d/** rw,
   /etc/systemd/system/k3s.service.d/ rw,
