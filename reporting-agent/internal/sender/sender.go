@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-package internal
+package sender
 
 import (
 	"bytes"
@@ -79,7 +79,7 @@ func (s *BackendSender) readEndpointURL() (endpoint string, err error) {
 }
 
 // readAuthCredentials reads the username and password from the configured file path.
-// The file must contain "username:password".
+// The file must contain "username:password". Both username and password must not exceed 256 characters.
 func (s *BackendSender) readAuthCredentials() (username, password string, err error) {
 	creds, err := utils.ReadFileTrimmed(s.tokenPath)
 	if err != nil {
@@ -89,6 +89,17 @@ func (s *BackendSender) readAuthCredentials() (username, password string, err er
 	parts := strings.SplitN(creds, ":", 2)
 	if len(parts) != 2 {
 		return "", "", errors.New("invalid token format, expected username:password")
+	}
+
+	if len(parts[0]) == 0 || len(parts[1]) == 0 {
+		return "", "", errors.New("username or password cannot be empty")
+	}
+
+	if len(parts[0]) > 256 {
+		return "", "", errors.New("username too long (max 256 characters)")
+	}
+	if len(parts[1]) > 256 {
+		return "", "", errors.New("password too long (max 256 characters)")
 	}
 
 	return parts[0], parts[1], nil

@@ -79,13 +79,13 @@ helm-push: ## Unsupported target
 tarball:
 	@echo "---MAKEFILE TARBALL---"
 	mkdir -p $(TARBALL_DIR)
-	cp -r cmd/ config/ internal/ go.mod go.sum Makefile VERSION ../common.mk $(TARBALL_DIR)
+	cp -r cmd/ config/ internal/ copyright go.mod go.sum Makefile VERSION ../common.mk $(TARBALL_DIR)
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile
 	cd $(TARBALL_DIR) && go mod tidy && go mod vendor
 	tar -zcf $(BUILD_DIR)/$(PROJECT_NAME)-$(PKG_VERSION).tar.gz --directory=$(BUILD_DIR) $(PROJECT_NAME)-$(PKG_VERSION)
 	@echo "---END MAKEFILE TARBALL---"
 
-fuzztest: # common-fuzztest #TODO: enable later
+fuzztest: common-fuzztest
 
 integration_test:
 	echo "Running integration tests..."
