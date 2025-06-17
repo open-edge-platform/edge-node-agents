@@ -162,7 +162,7 @@ profile ca_dash {
   /usr/local/bin/k3s-agent-uninstall.sh w,
 
   ## systemd service files (narrowed to k3s only)
-  /etc/systemd/system/k3s.service w,
+  /etc/systemd/system/k3s.service rw,
   /etc/systemd/system/k3s.service.env w,
   /etc/systemd/system/k3s-agent.service w,
   /etc/systemd/system/k3s-agent.service.d/ rw,
@@ -180,7 +180,6 @@ profile ca_dash {
   /etc/systemd/system/k3s-server.service.d/ rw,
   /etc/systemd/system/k3s-server.service.d/override.conf rw,
   /etc/systemd/system/k3s.service.d/override.conf rw,
-  /etc/systemd/system/k3s.service w,
   /etc/systemd/system/k3s-agent.service.d/ rw,
   /etc/systemd/system/k3s-agent.service.d/override.conf rw,
   /etc/systemd/system/k3s-agent.service w,
@@ -199,6 +198,9 @@ profile ca_dash {
   /var/lib/rancher/** rw,
   /var/lib/kubelet/ rw,
   /var/lib/kubelet/** rw,
+  /usr/local/bin/kubectl rw,
+  /usr/local/bin/crictl wl,
+  /usr/local/bin/ctr wl,
   /usr/local/share/k3s/ rw,
   /usr/local/share/k3s/** rw,
 
@@ -257,6 +259,12 @@ profile ca_dash {
   owner /run/systemd/private rw,
   /proc/*/limits r,
   /proc/*/cgroup r,
+  /usr/sbin/iptables-save ix,
+  /usr/sbin/iptables-restore ix,
+  /usr/sbin/ip6tables-save ix,
+  /usr/sbin/ip6tables-restore ix,
+  /usr/sbin/xtables-nft-multi ix,
+  # ends here
 
   /usr/local/bin/k3s-killall.sh ix,
 
@@ -483,9 +491,9 @@ profile ca_k3s-uninstall {
 
   # --- k3s binaries and scripts ---
   /usr/local/bin/k3s w,
-  /usr/local/bin/k3s-killall.sh rw,
+  /usr/local/bin/k3s-killall.sh Ux,
   /usr/local/bin/k3s-uninstall.sh rw,
-  /usr/local/bin/k3s-killall.sh ix,
+  /usr/local/bin/k3s-killall.sh rw,
   /usr/local/bin/kubectl rw,
   /usr/local/bin/crictl rw,
   /usr/local/bin/ctr rw,
