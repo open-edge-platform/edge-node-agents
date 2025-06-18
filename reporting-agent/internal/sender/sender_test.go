@@ -25,7 +25,7 @@ func TestSendSuccess(t *testing.T) {
 	tmpDir := t.TempDir()
 	endpointFile := filepath.Join(tmpDir, "endpoint")
 	tokenFile := filepath.Join(tmpDir, "token")
-	require.NoError(t, os.WriteFile(endpointFile, []byte("http://localhost:12345"), 0640), "Should write endpoint file")
+	require.NoError(t, os.WriteFile(endpointFile, []byte("https://localhost:12345"), 0640), "Should write endpoint file")
 	require.NoError(t, os.WriteFile(tokenFile, []byte("user:pass"), 0640), "Should write token file")
 
 	client := &http.Client{
@@ -35,7 +35,7 @@ func TestSendSuccess(t *testing.T) {
 			require.Equal(t, "pass", pass, "Password should match")
 			require.Equal(t, "reporting-v1", req.Header.Get("X-Scope-OrgID"), "OrgID header should match")
 			require.Equal(t, "application/json", req.Header.Get("Content-Type"), "Content-Type header should match")
-			require.Equal(t, "http://localhost:12345", req.URL.String(), "Endpoint should match")
+			require.Equal(t, "https://localhost:12345", req.URL.String(), "Endpoint should match")
 			body, err := io.ReadAll(req.Body)
 			require.NoError(t, err, "Should read request body without error")
 			require.Contains(t, string(body), `"streams"`, "Payload should contain streams")
@@ -84,7 +84,32 @@ func TestSendEndpointInvalidURL(t *testing.T) {
 
 	sender := NewBackendSender(endpointFile, tokenFile)
 	err := sender.Send(config.Config{}, &model.Root{})
-	require.ErrorContains(t, err, "invalid endpoint URL", "Should error if endpoint file is not a valid URL")
+	require.Error(t, err, "Should error if endpoint file is not a valid URL")
+	require.Contains(t, err.Error(), "invalid URI", "Should return parse error for invalid URL")
+}
+
+func TestSendEndpointInvalidScheme(t *testing.T) {
+	tmpDir := t.TempDir()
+	endpointFile := filepath.Join(tmpDir, "endpoint")
+	tokenFile := filepath.Join(tmpDir, "token")
+	require.NoError(t, os.WriteFile(endpointFile, []byte("http://example.com"), 0640), "Should write endpoint file with http scheme")
+	require.NoError(t, os.WriteFile(tokenFile, []byte("user:pass"), 0640), "Should write token file")
+
+	sender := NewBackendSender(endpointFile, tokenFile)
+	err := sender.Send(config.Config{}, &model.Root{})
+	require.ErrorContains(t, err, "invalid endpoint scheme", "Should error if endpoint scheme is not https")
+}
+
+func TestSendEndpointMissingHost(t *testing.T) {
+	tmpDir := t.TempDir()
+	endpointFile := filepath.Join(tmpDir, "endpoint")
+	tokenFile := filepath.Join(tmpDir, "token")
+	require.NoError(t, os.WriteFile(endpointFile, []byte("https:///"), 0640), "Should write endpoint file with missing host")
+	require.NoError(t, os.WriteFile(tokenFile, []byte("user:pass"), 0640), "Should write token file")
+
+	sender := NewBackendSender(endpointFile, tokenFile)
+	err := sender.Send(config.Config{}, &model.Root{})
+	require.ErrorContains(t, err, "invalid endpoint URL, missing host", "Should error if endpoint host is missing")
 }
 
 // TestSendTokenFileError checks that Send returns error if token file is missing.
@@ -92,7 +117,7 @@ func TestSendTokenFileError(t *testing.T) {
 	tmpDir := t.TempDir()
 	endpointFile := filepath.Join(tmpDir, "endpoint")
 	tokenFile := filepath.Join(tmpDir, "not-exist-token")
-	require.NoError(t, os.WriteFile(endpointFile, []byte("http://localhost:12345"), 0640), "Should write endpoint file")
+	require.NoError(t, os.WriteFile(endpointFile, []byte("https://localhost:12345"), 0640), "Should write endpoint file")
 
 	sender := NewBackendSender(endpointFile, tokenFile)
 	err := sender.Send(config.Config{}, &model.Root{})
@@ -104,7 +129,7 @@ func TestSendTokenInvalidFormat(t *testing.T) {
 	tmpDir := t.TempDir()
 	endpointFile := filepath.Join(tmpDir, "endpoint")
 	tokenFile := filepath.Join(tmpDir, "token")
-	require.NoError(t, os.WriteFile(endpointFile, []byte("http://localhost:12345"), 0640), "Should write endpoint file")
+	require.NoError(t, os.WriteFile(endpointFile, []byte("https://localhost:12345"), 0640), "Should write endpoint file")
 	require.NoError(t, os.WriteFile(tokenFile, []byte("notcolon"), 0640), "Should write invalid token file")
 
 	sender := NewBackendSender(endpointFile, tokenFile)
@@ -116,7 +141,7 @@ func TestSendTokenInvalidFormat(t *testing.T) {
 func TestSendTokenTooLongUsernameOrPassword(t *testing.T) {
 	tmpDir := t.TempDir()
 	endpointFile := filepath.Join(tmpDir, "endpoint")
-	require.NoError(t, os.WriteFile(endpointFile, []byte("http://localhost:12345"), 0640), "Should write endpoint file")
+	require.NoError(t, os.WriteFile(endpointFile, []byte("https://localhost:12345"), 0640), "Should write endpoint file")
 
 	// Username too long
 	tokenFile1 := filepath.Join(tmpDir, "token1")
