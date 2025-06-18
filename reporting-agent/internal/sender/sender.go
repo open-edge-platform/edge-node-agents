@@ -123,8 +123,8 @@ func buildPayload(data *model.Root) ([]byte, error) {
 		"streams": []interface{}{
 			map[string]interface{}{
 				"stream": map[string]string{
-					"Language": "Go",
-					"source":   "Code",
+					"service_name": "reporting-service",
+					"group_id":     data.Identity.GroupID,
 				},
 				"values": [][]string{
 					{nowNano, string(logJSON)},

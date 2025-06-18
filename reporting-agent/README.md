@@ -12,8 +12,8 @@ It gathers data from a variety of sources to provide a detailed snapshot of the 
 Collected data sources include:
 
 - **lscpu**: Provides detailed information about the CPU architecture and capabilities.
-- **lsblk**: Lists information about all available or the specified block devices.
-- **kubectl**: Collects Kubernetes cluster and node information, including node status and resource usage.
+- **lsblk**: Lists information about available block devices.
+- **kubectl**: Collects Kubernetes cluster information and versions of deployed applications.
 - **dmidecode**: Extracts hardware information from the system's DMI (SMBIOS) tables, such as BIOS, system, and memory details.
 - **lshw**: Delivers comprehensive hardware configuration details, including memory, CPU, disks, and network interfaces.
 - **date**: Captures the current system date and time.
