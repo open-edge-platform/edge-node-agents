@@ -71,8 +71,14 @@ func (s *BackendSender) readEndpointURL() (endpoint string, err error) {
 	}
 
 	parsed, err := url.ParseRequestURI(endpoint)
-	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-		return "", fmt.Errorf("invalid endpoint URL: %s", endpoint)
+	if err != nil {
+		return "", fmt.Errorf("invalid endpoint URL: %w", err)
+	}
+	if parsed.Scheme != "https" {
+		return "", fmt.Errorf("invalid endpoint scheme: %s (only https is allowed)", parsed.Scheme)
+	}
+	if parsed.Host == "" {
+		return "", fmt.Errorf("invalid endpoint URL, missing host: %s", endpoint)
 	}
 
 	return endpoint, nil
