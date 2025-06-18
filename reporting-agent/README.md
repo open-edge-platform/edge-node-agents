@@ -6,9 +6,21 @@
 
 ## Overview
 
-Gathering statistics from Open Edge Platform installations
+The Reporting Agent is responsible for collecting a comprehensive set of metrics and system information from Open Edge Platform installations.
+It gathers data from a variety of sources to provide a detailed snapshot of the system's hardware, software, and runtime environment.
 
-TBD
+Collected data sources include:
+
+- **lscpu**: Provides detailed information about the CPU architecture and capabilities.
+- **lsblk**: Lists information about all available or the specified block devices.
+- **kubectl**: Collects Kubernetes cluster and node information, including node status and resource usage.
+- **dmidecode**: Extracts hardware information from the system's DMI (SMBIOS) tables, such as BIOS, system, and memory details.
+- **lshw**: Delivers comprehensive hardware configuration details, including memory, CPU, disks, and network interfaces.
+- **date**: Captures the current system date and time.
+- **locale**: Reports the system's locale and language settings.
+- **uname**: Provides kernel name, version, and other system identifiers.
+- **/etc/os-release**: Reads operating system identification data.
+- **/proc/uptime**: Retrieves the system uptime in seconds.
 
 ## Develop
 
@@ -80,6 +92,18 @@ To run the Reporting agent binary after compiling:
     ```shell
     make cover
     ```
+
+## Security
+
+The endpoint specified in the `/etc/edge-node/metrics/endpoint` file must use the `https` protocol.
+
+To authenticate with the backend, the application requires a user and password, which must be provided in the `/etc/edge-node/metrics/token` file in the format `username:password`.
+
+TLS version 1.3 is used for backend communication if supported by the server; otherwise, TLS 1.2 is used.
+
+The user running the application should be added to the sudoers file ([see config/sudoers.d/reporting-agent](config/sudoers.d/reporting-agent)), as the `dmidecode` and `lshw` applications require such privileges.
+
+The same user must also have execute access to the `kubectl` binary and read access to the `kubeconfig` file. The paths to these files are specified in the [`reporting-agent.yaml`](config/reporting-agent.yaml) configuration file ([see config/reporting-agent.yaml](config/reporting-agent.yaml)).
 
 ## License
 
