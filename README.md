@@ -31,6 +31,8 @@ The repository comprises the following agents:
   by the Telemetry Manager.
 - [**Platform Update Agent**](platform-update-agent/): handles OS and system updates on the
   Edge Node as requested by the Maintenance Manager.
+- [**Reporting Agent**](reporting-agent/): CLI application that gathers and exports Edge Node
+  installation data like HW info, OS details and kubernetes applications versions.
 
 ## Develop
 
