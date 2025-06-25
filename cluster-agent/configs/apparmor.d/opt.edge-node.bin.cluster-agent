@@ -488,7 +488,7 @@ profile ca_k3s-uninstall {
   /usr/local/bin/ctr rw,
 
   # --- data directories ---
-
+  /usr/local/share/k3s/ rw,
   /usr/local/share/k3s/** rw,
   /var/lib/kubelet/ rw,
   /var/lib/kubelet/** rw,
