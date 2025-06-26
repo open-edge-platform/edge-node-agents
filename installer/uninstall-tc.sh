@@ -36,6 +36,18 @@ if ! dpkg --purge intel-inbm; then
   echo "Failed to purge intel-inbm. It might not be installed."
 fi
 
+# Remove the user if it exists
+if id "inbc" &>/dev/null; then
+    userdel inbc
+fi
+
+# Remove the group if it exists and has no members
+if getent group inbc > /dev/null; then
+    if ! getent group inbc | grep -q ':'"$inbc"'$'; then
+        groupdel inbc
+    fi
+fi
+
 echo Done.
 
 exit 0

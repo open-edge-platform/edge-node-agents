@@ -2,16 +2,20 @@
 set -e
 
 if ! id "inbc" &>/dev/null; then
-    useradd --system --no-create-home --shell /usr/sbin/nologin inbc
+    if getent group inbc > /dev/null; then
+        useradd --system --no-create-home --shell /usr/sbin/nologin -g inbc inbc
+    else
+        useradd --system --no-create-home --shell /usr/sbin/nologin inbc
+    fi
 fi
 
 # Create the directories and set permissions
 mkdir -p /var/intel-manageability
 chown root:root /var/intel-manageability
-chmod 640 /var/intel-manageability
+chmod 750 /var/intel-manageability
 
 mkdir -p /var/cache/manageability/repository-tool/sota
-chmod 640 /var/cache/manageability/repository-tool/sota
+chmod 750 /var/cache/manageability/repository-tool/sota
 mkdir -p /var/cache/manageability/repository-tool/sota/metadata
 
 exit 0
