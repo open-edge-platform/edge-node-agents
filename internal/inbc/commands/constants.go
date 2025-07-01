@@ -11,3 +11,4 @@ const clientDialTimeoutInSeconds = 5
 const sourceTimeoutInSeconds = 15
 const emtSoftwareUpdateTimerInSeconds = 360
 const defaultSoftwareUpdateTimerInSeconds = 90
+const firmwareUpdateTimerInSeconds = 90

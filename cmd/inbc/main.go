@@ -27,7 +27,7 @@ func main() {
 	verbose := rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
 
 	// Add subcommands
-	rootCmd.AddCommand(commands.SOTACmd(), commands.SourceCmd())
+	rootCmd.AddCommand(commands.SOTACmd(), commands.SourceCmd(), commands.FOTACmd())
 
 	// Execute CLI
 	if err := rootCmd.Execute(); err != nil {

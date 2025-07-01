@@ -17,8 +17,9 @@ import (
 type ClientInterface interface {
 	AddApplicationSource(context.Context, *pb.AddApplicationSourceRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
 	RemoveApplicationSource(context.Context, pb.RemoveApplicationSourceRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
-	UpdateOSSource(context.Context, pb.UpdateOSSourceRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
-	UpdateSystemSoftware(context.Context, pb.UpdateSystemSoftwareRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
+	UpdateOSSource(context.Context, *pb.UpdateOSSourceRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
+	UpdateSystemSoftware(context.Context, *pb.UpdateSystemSoftwareRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
+	UpdateFirmware(context.Context, *pb.UpdateFirmwareRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
 }
 
 // RealClient wraps the client package calls.
@@ -44,4 +45,9 @@ func (c *RealClient) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceR
 // UpdateSystemSoftware is a mock implementation of the UpdateSystemSoftware function.
 func (c *RealClient) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest, opts ...grpc.CallOption) (*pb.UpdateResponse, error) {
 	return c.client.UpdateSystemSoftware(ctx, req, opts...)
+}
+
+// UpdateFirmware is a mock implementation of the UpdateFirmware function.
+func (c *RealClient) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareRequest, opts ...grpc.CallOption) (*pb.UpdateResponse, error) {
+	return c.client.UpdateFirmware(ctx, req, opts...)
 }

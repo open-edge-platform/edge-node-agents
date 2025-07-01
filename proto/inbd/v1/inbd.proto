@@ -12,6 +12,21 @@ service InbService {
   rpc UpdateOSSource(UpdateOSSourceRequest) returns (UpdateResponse);
   rpc AddApplicationSource(AddApplicationSourceRequest) returns (UpdateResponse);
   rpc RemoveApplicationSource(RemoveApplicationSourceRequest) returns (UpdateResponse);
+  rpc UpdateFirmware(UpdateFirmwareRequest) returns (UpdateResponse);
+}
+
+message UpdateFirmwareRequest {
+  string url = 1 [(buf.validate.field).cel = {
+    id: "valid_uri"
+    message: "url must be a valid URL."
+    expression: "this == '' || this.isUri()"
+  },
+  (buf.validate.field).required = false]; // URL from which to remotely retrieve the package
+  google.protobuf.Timestamp release_date = 2 [(buf.validate.field).required = false]; // Release date of the new firmware update.
+  string tool_options = 3 [(buf.validate.field).required = false]; // Options for the firmware update tool
+  bool do_not_reboot = 4;  // Whether to reboot the node after the firmware update attempt
+  string username = 5 [(buf.validate.field).required = false]; // Username if authentication is required for the package source
+  string signature = 6 [(buf.validate.field).required = false]; // Signature of the package
 }
 
 message UpdateSystemSoftwareRequest {
@@ -33,7 +48,7 @@ message UpdateSystemSoftwareRequest {
           defined_only: true
       },
   (buf.validate.field).required = true]; // Mode for installing the software update regarding download and install steps.
-  bool do_not_reboot = 4;  // Whether to reboot the node after the firmware update attempt
+  bool do_not_reboot = 4;  // Whether to reboot the node after the software update attempt
   repeated string package_list = 5 [(buf.validate.field).repeated = {
       unique: true,
       items: {

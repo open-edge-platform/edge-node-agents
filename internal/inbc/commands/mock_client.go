@@ -44,6 +44,12 @@ func (m *MockInbServiceClient) UpdateSystemSoftware(ctx context.Context, req *pb
 	return args.Get(0).(*pb.UpdateResponse), args.Error(1)
 }
 
+// UpdateFirmware is a mock implementation of the UpdateFirmware function.
+func (m *MockInbServiceClient) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareRequest, opts ...grpc.CallOption) (*pb.UpdateResponse, error) {
+	args := m.Called(ctx, req, opts)
+	return args.Get(0).(*pb.UpdateResponse), args.Error(1)
+}
+
 // MockClientConn is a mock implementation of the grpc.ClientConnInterface interface.
 type MockClientConn struct {
 	grpc.ClientConnInterface

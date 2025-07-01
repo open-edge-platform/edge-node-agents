@@ -20,6 +20,12 @@ type InbdServer struct {
 	pb.UnimplementedInbServiceServer
 }
 
+func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareRequest) (*pb.UpdateResponse, error) {
+	log.Printf("Received UpdateFirmware request")
+
+	return &pb.UpdateResponse{StatusCode: 501, Error: "Not Implemented"}, nil
+}
+
 // UpdateSystemSoftware updates the system software
 func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest) (*pb.UpdateResponse, error) {
 	

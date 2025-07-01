@@ -26,6 +26,7 @@ type InbServiceClient interface {
 	UpdateOSSource(ctx context.Context, in *UpdateOSSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	AddApplicationSource(ctx context.Context, in *AddApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	RemoveApplicationSource(ctx context.Context, in *RemoveApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
+	UpdateFirmware(ctx context.Context, in *UpdateFirmwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 }
 
 type inbServiceClient struct {
@@ -72,6 +73,15 @@ func (c *inbServiceClient) RemoveApplicationSource(ctx context.Context, in *Remo
 	return out, nil
 }
 
+func (c *inbServiceClient) UpdateFirmware(ctx context.Context, in *UpdateFirmwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
+	out := new(UpdateResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/UpdateFirmware", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InbServiceServer is the server API for InbService service.
 // All implementations must embed UnimplementedInbServiceServer
 // for forward compatibility
@@ -80,6 +90,7 @@ type InbServiceServer interface {
 	UpdateOSSource(context.Context, *UpdateOSSourceRequest) (*UpdateResponse, error)
 	AddApplicationSource(context.Context, *AddApplicationSourceRequest) (*UpdateResponse, error)
 	RemoveApplicationSource(context.Context, *RemoveApplicationSourceRequest) (*UpdateResponse, error)
+	UpdateFirmware(context.Context, *UpdateFirmwareRequest) (*UpdateResponse, error)
 	mustEmbedUnimplementedInbServiceServer()
 }
 
@@ -98,6 +109,9 @@ func (UnimplementedInbServiceServer) AddApplicationSource(context.Context, *AddA
 }
 func (UnimplementedInbServiceServer) RemoveApplicationSource(context.Context, *RemoveApplicationSourceRequest) (*UpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveApplicationSource not implemented")
+}
+func (UnimplementedInbServiceServer) UpdateFirmware(context.Context, *UpdateFirmwareRequest) (*UpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFirmware not implemented")
 }
 func (UnimplementedInbServiceServer) mustEmbedUnimplementedInbServiceServer() {}
 
@@ -184,6 +198,24 @@ func _InbService_RemoveApplicationSource_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InbService_UpdateFirmware_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateFirmwareRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).UpdateFirmware(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/UpdateFirmware",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).UpdateFirmware(ctx, req.(*UpdateFirmwareRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InbService_ServiceDesc is the grpc.ServiceDesc for InbService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,6 +238,10 @@ var InbService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveApplicationSource",
 			Handler:    _InbService_RemoveApplicationSource_Handler,
+		},
+		{
+			MethodName: "UpdateFirmware",
+			Handler:    _InbService_UpdateFirmware_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

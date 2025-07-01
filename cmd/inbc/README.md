@@ -5,10 +5,11 @@
 
 1. [Introduction](#introduction)
 2. [Commands](#commands)
-   1. [SOTA](#sota)
-   2. [Source Application Add](#source-application-add)
-   3. [Source Application Remove](#source-application-remove)
-   4. [Source OS Update](#source-os-update)
+   1. [FOTA](#fota)
+   2. [SOTA](#sota)
+   3. [Source Application Add](#source-application-add)
+   4. [Source Application Remove](#source-application-remove)
+   5. [Source OS Update](#source-os-update)
 
 </details>
 
@@ -17,6 +18,33 @@
 Intel® In-Band Manageability command-line utility, INBC, is a software utility running on a host managing an Edge IoT Device.  It allows the user to perform Device Management operations like system update from the command-line. This may be used in lieu of using the cloud update mechanism.
 
 ## Commands
+
+### FOTA
+
+#### Description
+
+Performs a Firmware Over The Air (FOTA) update.
+
+#### Usage
+
+```commandline
+inbc fota {--uri URI} 
+   {--releasedate RELEASE_DATE; default="2026-12-31"} 
+   [--tooloptions TOOL_OPTIONS; default=""]
+   [--reboot; default=true]
+   [--username USERNAME; default=""]
+   [--signature SIGNATURE; default=""]
+```
+
+#### Examples
+
+```commandline
+inbc fota 
+   --uri <URI to TAR package>/BIOSUPDATE.tar
+   --releasedate 2026-06-01
+   --reboot=false
+   --signature <hash string of signature>
+```
 
 ### SOTA
 
