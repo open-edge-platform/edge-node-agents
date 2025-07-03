@@ -1,13 +1,14 @@
 package emt
 
 import (
-    "errors"
-    "testing"
+	"errors"
+	"testing"
 
-    "github.com/spf13/afero"
-    "github.com/stretchr/testify/assert"
-    pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 )
+
 type mockExecutor struct {
 	commands [][]string
 	stdout   []string
@@ -30,25 +31,25 @@ func (m *mockExecutor) Execute(command []string) ([]byte, []byte, error) {
 }
 
 func TestReboot_Success(t *testing.T) {
-    mockExec := &mockExecutor{
+	mockExec := &mockExecutor{
 		stdout: []string{""},
 		errors: []error{nil},
 	}
-    mockFs := afero.NewMemMapFs()
-    mockWriteUpdateStatus := func(fs afero.Fs, status, request, errorMsg string) {}
-    mockWriteGranularLog := func(fs afero.Fs, status, reason string) {}
+	mockFs := afero.NewMemMapFs()
+	mockWriteUpdateStatus := func(fs afero.Fs, status, request, errorMsg string) {}
+	mockWriteGranularLog := func(fs afero.Fs, status, reason string) {}
 
-    rebooter := &Rebooter{
-        commandExecutor:   mockExec,
-        request:           &pb.UpdateSystemSoftwareRequest{DoNotReboot: false},
-        writeUpdateStatus: mockWriteUpdateStatus,
-        writeGranularLog:  mockWriteGranularLog,
-        fs:                mockFs,
-    }
+	rebooter := &Rebooter{
+		commandExecutor:   mockExec,
+		request:           &pb.UpdateSystemSoftwareRequest{DoNotReboot: false},
+		writeUpdateStatus: mockWriteUpdateStatus,
+		writeGranularLog:  mockWriteGranularLog,
+		fs:                mockFs,
+	}
 
-    err := rebooter.Reboot()
-    assert.NoError(t, err)
-    assert.Equal(t, [][]string{{"/usr/sbin/reboot"}}, mockExec.commands, "Reboot command should be executed")
+	err := rebooter.Reboot()
+	assert.NoError(t, err)
+	assert.Equal(t, [][]string{{"/usr/sbin/reboot"}}, mockExec.commands, "Reboot command should be executed")
 }
 
 func TestReboot_CommandExecutionFailure(t *testing.T) {
@@ -56,31 +57,31 @@ func TestReboot_CommandExecutionFailure(t *testing.T) {
 		stdout: []string{""},
 		errors: []error{errors.New("mock command execution error")},
 	}
-    mockFs := afero.NewMemMapFs()
-    mockWriteUpdateStatusCalled := false
-    mockWriteUpdateStatus := func(fs afero.Fs, status, request, errorMsg string) {
-        mockWriteUpdateStatusCalled = true
-        assert.Equal(t, FAIL, status)
-        assert.Contains(t, errorMsg, "mock command execution error")
-    }
-    mockWriteGranularLogCalled := false
-    mockWriteGranularLog := func(fs afero.Fs, status, reason string) {
-        mockWriteGranularLogCalled = true
-        assert.Equal(t, FAIL, status)
-        assert.Equal(t, FAILURE_REASON_UNSPECIFIED, reason)
-    }
+	mockFs := afero.NewMemMapFs()
+	mockWriteUpdateStatusCalled := false
+	mockWriteUpdateStatus := func(fs afero.Fs, status, request, errorMsg string) {
+		mockWriteUpdateStatusCalled = true
+		assert.Equal(t, FAIL, status)
+		assert.Contains(t, errorMsg, "mock command execution error")
+	}
+	mockWriteGranularLogCalled := false
+	mockWriteGranularLog := func(fs afero.Fs, status, reason string) {
+		mockWriteGranularLogCalled = true
+		assert.Equal(t, FAIL, status)
+		assert.Equal(t, FAILURE_REASON_UNSPECIFIED, reason)
+	}
 
-    rebooter := &Rebooter{
-        commandExecutor:   mockExec,
-        request:           &pb.UpdateSystemSoftwareRequest{},
-        writeUpdateStatus: mockWriteUpdateStatus,
-        writeGranularLog:  mockWriteGranularLog,
-        fs:                mockFs,
-    }
+	rebooter := &Rebooter{
+		commandExecutor:   mockExec,
+		request:           &pb.UpdateSystemSoftwareRequest{},
+		writeUpdateStatus: mockWriteUpdateStatus,
+		writeGranularLog:  mockWriteGranularLog,
+		fs:                mockFs,
+	}
 
-    err := rebooter.Reboot()
-    assert.Error(t, err)
-    assert.Contains(t, err.Error(), "mock command execution error")
-    assert.True(t, mockWriteUpdateStatusCalled, "writeUpdateStatus should be called on failure")
-    assert.True(t, mockWriteGranularLogCalled, "writeGranularLog should be called on failure")
+	err := rebooter.Reboot()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "mock command execution error")
+	assert.True(t, mockWriteUpdateStatusCalled, "writeUpdateStatus should be called on failure")
+	assert.True(t, mockWriteGranularLogCalled, "writeGranularLog should be called on failure")
 }

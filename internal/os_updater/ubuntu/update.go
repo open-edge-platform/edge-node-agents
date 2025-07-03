@@ -105,7 +105,7 @@ func GetEstimatedSize(cmdExec utils.Executor) (bool, uint64, error) {
 	if len(stdout) == 0 {
 		return false, 0, fmt.Errorf("SOTA Aborted: no output from command to determine update size")
 	}
-	
+
 	return getEstimatedSizeInBytesFromAptGetUpgrade(string(stdout))
 }
 

@@ -57,7 +57,7 @@ func handleUpdateOSSource(
 			SourceList: *sources,
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)
 		defer cancel()
 
 		client, conn, err := dialer(ctx, *socket)
@@ -72,7 +72,7 @@ func handleUpdateOSSource(
 			}
 		}()
 
-		ctx, cancel = context.WithTimeout(context.Background(), sourceTimeoutInSeconds * time.Second)
+		ctx, cancel = context.WithTimeout(context.Background(), sourceTimeoutInSeconds*time.Second)
 		defer cancel()
 
 		resp, err := client.UpdateOSSource(ctx, request)

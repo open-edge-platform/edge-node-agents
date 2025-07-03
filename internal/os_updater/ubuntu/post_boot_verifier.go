@@ -70,7 +70,7 @@ func (v *Verifier) VerifyUpdateAfterReboot(state utils.INBDState) error {
 	err := v.RemoveFileFunc(v.fs, utils.StateFilePath)
 	if err != nil {
 		log.Printf("[Warning] Error removing state file: %v", err)
-	}	
+	}
 
 	return nil
 }

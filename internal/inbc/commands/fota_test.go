@@ -152,7 +152,7 @@ func TestHandleFOTA(t *testing.T) {
 		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
 			return mockClient, &mockConnWithCloseError{}, nil
 		}
-		
+
 		err := handleFOTA(&socket, &url, &releaseDate, &toolOptions, &reboot, &userName, &signature, dialer)(cmd, args)
 		assert.NoError(t, err, "handleFOTA should not return an error even if Close fails")
 	})

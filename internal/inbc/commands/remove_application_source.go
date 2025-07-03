@@ -52,7 +52,7 @@ func handleRemoveApplicationSource(
 			GpgKeyName: *gpgKeyName,
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)
 		defer cancel()
 
 		client, conn, err := dialer(ctx, *socket)
@@ -67,7 +67,7 @@ func handleRemoveApplicationSource(
 			}
 		}()
 
-		ctx, cancel = context.WithTimeout(context.Background(), sourceTimeoutInSeconds * time.Second)
+		ctx, cancel = context.WithTimeout(context.Background(), sourceTimeoutInSeconds*time.Second)
 		defer cancel()
 
 		resp, err := client.RemoveApplicationSource(ctx, request)

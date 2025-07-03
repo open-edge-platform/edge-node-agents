@@ -84,7 +84,7 @@ func TestDownloadOnly(t *testing.T) {
 	t.Run("no packages", func(t *testing.T) {
 		expectedCmds := [][]string{
 			{"dpkg", "--configure", "-a", "--force-confdef", "--force-confold"},
-			{"apt-get", "update"},			
+			{"apt-get", "update"},
 			{"apt-get", "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--with-new-pkgs", "--download-only", "--fix-missing",
@@ -188,18 +188,18 @@ func TestGetEstimatedSize(t *testing.T) {
 }
 
 func TestUbuntuUpdater_Update(t *testing.T) {
-    t.Run("set environment variables successfully", func(t *testing.T) {
-        mockExec := &mockExecutor{
+	t.Run("set environment variables successfully", func(t *testing.T) {
+		mockExec := &mockExecutor{
 			stdout: []string{""},
 			stderr: []string{""},
 			errors: []error{nil},
 		}
-        updater := &Updater{
-            CommandExecutor: mockExec,
-            Request:         &pb.UpdateSystemSoftwareRequest{
+		updater := &Updater{
+			CommandExecutor: mockExec,
+			Request: &pb.UpdateSystemSoftwareRequest{
 				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD,
 			},
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
+			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
@@ -207,60 +207,60 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			},
 		}
 
-        proceedWithReboot, err := updater.Update()
-        assert.NoError(t, err)
+		proceedWithReboot, err := updater.Update()
+		assert.NoError(t, err)
 		assert.True(t, proceedWithReboot)
-    })
+	})
 
-    // t.Run("fail to set environment variables", func(t *testing.T) {
+	// t.Run("fail to set environment variables", func(t *testing.T) {
 	// 	originalSetenv := os.Setenv
-    //     defer func() { os.Setenv = originalSetenv }()
+	//     defer func() { os.Setenv = originalSetenv }()
 
-    //     os.Setenv = func(key, value string) error {
-    //         return errors.New("failed to set environment variable")
-    //     }
+	//     os.Setenv = func(key, value string) error {
+	//         return errors.New("failed to set environment variable")
+	//     }
 
-    //     mockExec := &mockExecutor{}
-    //     updater := &UbuntuUpdater{
-    //         commandExecutor: mockExec,
-    //         request:         &pb.UpdateSystemSoftwareRequest{},
-    //     }
+	//     mockExec := &mockExecutor{}
+	//     updater := &UbuntuUpdater{
+	//         commandExecutor: mockExec,
+	//         request:         &pb.UpdateSystemSoftwareRequest{},
+	//     }
 
-    //     err := updater.Update()
-    //     assert.Error(t, err)
-    //     assert.Contains(t, err.Error(), "Failed to set environment variable")
-    // })
+	//     err := updater.Update()
+	//     assert.Error(t, err)
+	//     assert.Contains(t, err.Error(), "Failed to set environment variable")
+	// })
 
-    t.Run("no updates available", func(t *testing.T) {
-        mockExec := &mockExecutor{
-            stdout: []string{"0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."},
-            errors: []error{nil},
-        }
+	t.Run("no updates available", func(t *testing.T) {
+		mockExec := &mockExecutor{
+			stdout: []string{"0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."},
+			errors: []error{nil},
+		}
 
-        updater := &Updater{
-            CommandExecutor: mockExec,
-            Request:         &pb.UpdateSystemSoftwareRequest{},
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
+		updater := &Updater{
+			CommandExecutor: mockExec,
+			Request:         &pb.UpdateSystemSoftwareRequest{},
+			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error) {
 				return false, 0, nil
 			},
 		}
 
-        proceedWithReboot, err := updater.Update()
-        assert.NoError(t, err)
+		proceedWithReboot, err := updater.Update()
+		assert.NoError(t, err)
 		assert.False(t, proceedWithReboot)
-        assert.Equal(t, 0, len(mockExec.commands))       
-    })
+		assert.Equal(t, 0, len(mockExec.commands))
+	})
 
-    t.Run("insufficient disk space", func(t *testing.T) {
-        mockExec := &mockExecutor{
-            stdout: []string{"After this operation, 500 MB of additional disk space will be used."},
-            errors: []error{nil},
-        }
+	t.Run("insufficient disk space", func(t *testing.T) {
+		mockExec := &mockExecutor{
+			stdout: []string{"After this operation, 500 MB of additional disk space will be used."},
+			errors: []error{nil},
+		}
 
-        updater := &Updater{
-            CommandExecutor: mockExec,
-            Request:         &pb.UpdateSystemSoftwareRequest{},
-			GetEstimatedSize: func( utils.Executor) (bool, uint64, error){
+		updater := &Updater{
+			CommandExecutor: mockExec,
+			Request:         &pb.UpdateSystemSoftwareRequest{},
+			GetEstimatedSize: func(utils.Executor) (bool, uint64, error) {
 				return true, 500 * 1024 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
@@ -268,107 +268,107 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			},
 		}
 
-        proceedWithReboot, err := updater.Update()
-        assert.Error(t, err)
-        assert.Contains(t, err.Error(), "Not enough free disk space")
+		proceedWithReboot, err := updater.Update()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Not enough free disk space")
 		assert.False(t, proceedWithReboot)
 	})
 
-    t.Run("execute fullInstall mode", func(t *testing.T) {
-        mockExec := &mockExecutor{
+	t.Run("execute fullInstall mode", func(t *testing.T) {
+		mockExec := &mockExecutor{
 			stdout: []string{"0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."},
-            stderr: []string{""},
+			stderr: []string{""},
 			errors: []error{nil},
 		}
-        updater := &Updater{
-            CommandExecutor: mockExec,
-            Request: &pb.UpdateSystemSoftwareRequest{
-                Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL,
-            },
-			GetEstimatedSize: func(utils.Executor) (bool, uint64, error){
+		updater := &Updater{
+			CommandExecutor: mockExec,
+			Request: &pb.UpdateSystemSoftwareRequest{
+				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL,
+			},
+			GetEstimatedSize: func(utils.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
-        }
+		}
 
-        proceedWithReboot, err := updater.Update()
-        assert.NoError(t, err)
+		proceedWithReboot, err := updater.Update()
+		assert.NoError(t, err)
 		assert.True(t, proceedWithReboot)
-        assert.Greater(t, len(mockExec.commands), 0)
-    })
+		assert.Greater(t, len(mockExec.commands), 0)
+	})
 
-    t.Run("execute noDownload mode", func(t *testing.T) {
-        mockExec := &mockExecutor{
+	t.Run("execute noDownload mode", func(t *testing.T) {
+		mockExec := &mockExecutor{
 			stderr: []string{""},
 			stdout: []string{""},
 			errors: []error{nil},
 		}
-        updater := &Updater{
-            CommandExecutor: mockExec,
-            Request: &pb.UpdateSystemSoftwareRequest{
-                Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD,
-            },
-			GetEstimatedSize: func(utils.Executor) (bool, uint64, error){
+		updater := &Updater{
+			CommandExecutor: mockExec,
+			Request: &pb.UpdateSystemSoftwareRequest{
+				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD,
+			},
+			GetEstimatedSize: func(utils.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
-        }
+		}
 
-        proceedWithReboot, err := updater.Update()
-        assert.NoError(t, err)
+		proceedWithReboot, err := updater.Update()
+		assert.NoError(t, err)
 		assert.True(t, proceedWithReboot)
-        assert.Greater(t, len(mockExec.commands), 0)
-    })
+		assert.Greater(t, len(mockExec.commands), 0)
+	})
 
-    t.Run("execute downloadOnly mode", func(t *testing.T) {
-        mockExec := &mockExecutor{
+	t.Run("execute downloadOnly mode", func(t *testing.T) {
+		mockExec := &mockExecutor{
 			stderr: []string{""},
 			stdout: []string{""},
 			errors: []error{nil},
 		}
-        updater := &Updater{
-            CommandExecutor: mockExec,
-            Request: &pb.UpdateSystemSoftwareRequest{
-                Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_DOWNLOAD_ONLY,
-            },
-			GetEstimatedSize: func(utils.Executor) (bool, uint64, error){
+		updater := &Updater{
+			CommandExecutor: mockExec,
+			Request: &pb.UpdateSystemSoftwareRequest{
+				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_DOWNLOAD_ONLY,
+			},
+			GetEstimatedSize: func(utils.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
-        }
+		}
 
-        proceedWithReboot, err := updater.Update()
-        assert.NoError(t, err)
+		proceedWithReboot, err := updater.Update()
+		assert.NoError(t, err)
 		assert.True(t, proceedWithReboot)
-        assert.Greater(t, len(mockExec.commands), 0)
-    })
+		assert.Greater(t, len(mockExec.commands), 0)
+	})
 
-    t.Run("invalid mode", func(t *testing.T) {
-        mockExec := &mockExecutor{}
-        updater := &Updater{
-            CommandExecutor: mockExec,
-            Request: &pb.UpdateSystemSoftwareRequest{
-                Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_UNSPECIFIED, // Invalid mode
-            },
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error){
+	t.Run("invalid mode", func(t *testing.T) {
+		mockExec := &mockExecutor{}
+		updater := &Updater{
+			CommandExecutor: mockExec,
+			Request: &pb.UpdateSystemSoftwareRequest{
+				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_UNSPECIFIED, // Invalid mode
+			},
+			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
-        }
+		}
 
-        proceedWithReboot, err := updater.Update()
-        assert.Error(t, err)
+		proceedWithReboot, err := updater.Update()
+		assert.Error(t, err)
 		assert.False(t, proceedWithReboot)
-        assert.Contains(t, err.Error(), "Invalid mode")
-    })
+		assert.Contains(t, err.Error(), "Invalid mode")
+	})
 }
 
 func TestSizeToBytes(t *testing.T) {
@@ -482,4 +482,3 @@ func TestGetEstimatedSizeFromAptGetUpgrade(t *testing.T) {
 		assert.Equal(t, expectedSize, size)
 	})
 }
-

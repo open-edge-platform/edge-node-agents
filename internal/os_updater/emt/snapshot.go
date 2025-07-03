@@ -19,21 +19,21 @@ import (
 )
 
 var (
-	imageIDPath      = "/etc/image-id"
+	imageIDPath = "/etc/image-id"
 )
 
 // Snapshotter is the concrete implementation of the IUpdater interface
 // for the EMT OS.
 type Snapshotter struct {
-	commandExecutor   utils.Executor
-	fs                afero.Fs
+	commandExecutor utils.Executor
+	fs              afero.Fs
 }
 
 // NewSnapshotter creates a new EMTSnapshotter.
 func NewSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) *Snapshotter {
 	return &Snapshotter{
-		commandExecutor:   commandExecutor,
-		fs:                afero.NewOsFs(),
+		commandExecutor: commandExecutor,
+		fs:              afero.NewOsFs(),
 	}
 }
 
@@ -65,7 +65,7 @@ func (t *Snapshotter) Snapshot() error {
 	if err := utils.WriteToStateFile(t.fs, utils.StateFilePath, string(jsonData)); err != nil {
 		return fmt.Errorf("failed to write to state file: %w", err)
 	}
-	
+
 	log.Println("Snapshot created successfully.")
 	return nil
 }

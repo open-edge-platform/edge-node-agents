@@ -9,4 +9,3 @@ package appsource
 const ubuntuAptSourcesListDir = "/etc/apt/sources.list.d"
 
 const linuxGPGKeyPath = "/usr/share/keyrings"
-

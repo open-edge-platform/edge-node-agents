@@ -22,7 +22,7 @@ func NewExecutor[C any](createCmdFn func(name string, args ...string) *C, execCm
 
 // Executor is an interface that contains the method to execute a command.
 type Executor interface {
-	Execute([]string) ( stdout []byte, stderr []byte, err error)
+	Execute([]string) (stdout []byte, stderr []byte, err error)
 }
 
 type executor[C any] struct {

@@ -12,7 +12,7 @@ import utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestr
 // for the Ubuntu OS.
 type Cleaner struct {
 	CommandExecutor utils.Executor
-	Path			string
+	Path            string
 }
 
 // Clean method for Ubuntu

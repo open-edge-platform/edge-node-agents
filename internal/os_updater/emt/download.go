@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	jwtTokenPath   = "/etc/intel_edge_node/tokens/release-service/access_token"
+	jwtTokenPath = "/etc/intel_edge_node/tokens/release-service/access_token"
 )
 
 // Downloader is the concrete implementation of the IDownloader interface

@@ -22,6 +22,7 @@ import (
 type mockConnWithCloseError struct {
 	grpc.ClientConnInterface
 }
+
 func (m *mockConnWithCloseError) Close() error {
 	return errors.New("mock close error")
 }
@@ -101,8 +102,8 @@ func TestHandleSOTA(t *testing.T) {
 			return "ubuntu", nil
 		}
 
-		err := handleSOTA(&socket, &url, &invalidReleaseDate, 
-            &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+		err := handleSOTA(&socket, &url, &invalidReleaseDate,
+			&mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
 		assert.Error(t, err, "error parsing release date: parsing time")
 	})
 

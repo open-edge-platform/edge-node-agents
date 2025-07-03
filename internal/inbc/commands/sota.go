@@ -103,7 +103,7 @@ func handleSOTA(
 			Signature:   *signature,
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)
 		defer cancel()
 
 		client, conn, err := dialer(ctx, *socket)
@@ -128,7 +128,7 @@ func handleSOTA(
 			timeout = emtSoftwareUpdateTimerInSeconds
 		}
 
-		ctx, cancel = context.WithTimeout(context.Background(), timeout * time.Second)
+		ctx, cancel = context.WithTimeout(context.Background(), timeout*time.Second)
 		defer cancel()
 
 		resp, err := client.UpdateSystemSoftware(ctx, request)

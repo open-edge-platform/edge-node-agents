@@ -70,7 +70,7 @@ func handleAddApplicationSource(
 			GpgKeyName: *gpgKeyName,
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds * time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)
 		defer cancel()
 
 		inbdClient, conn, err := dialer(ctx, *socket)
@@ -85,7 +85,7 @@ func handleAddApplicationSource(
 			}
 		}()
 
-		ctx, cancel = context.WithTimeout(context.Background(), sourceTimeoutInSeconds * time.Second)
+		ctx, cancel = context.WithTimeout(context.Background(), sourceTimeoutInSeconds*time.Second)
 		defer cancel()
 
 		resp, err := inbdClient.AddApplicationSource(ctx, request)

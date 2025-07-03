@@ -85,10 +85,10 @@ func TestIsValidJSON(t *testing.T) {
 
 			// Write the schema file to the mock filesystem
 			schemaFilePath := "/schema.json"
-            if tt.schemaContent != "" {
-                err := afero.WriteFile(fs, schemaFilePath, []byte(tt.schemaContent), 0644)
-                assert.NoError(t, err)
-            }
+			if tt.schemaContent != "" {
+				err := afero.WriteFile(fs, schemaFilePath, []byte(tt.schemaContent), 0644)
+				assert.NoError(t, err)
+			}
 			// Write the JSON file to the mock filesystem (if content is provided)
 			jsonFilePath := "/jsonFile.json"
 			if tt.jsonContent != "" {

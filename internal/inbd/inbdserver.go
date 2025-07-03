@@ -28,7 +28,7 @@ func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareR
 
 // UpdateSystemSoftware updates the system software
 func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest) (*pb.UpdateResponse, error) {
-	
+
 	log.Printf("Received UpdateSystemSoftware request")
 	os, err := osUpdater.DetectOS()
 	if err != nil {
@@ -44,14 +44,14 @@ func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSys
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
 	}
-	
+
 	return &pb.UpdateResponse{StatusCode: resp.StatusCode, Error: resp.Error}, nil
 }
 
 // UpdateOSSource creates a new /etc/apt/sources.list file with only the sources provided
 func (s *InbdServer) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceRequest) (*pb.UpdateResponse, error) {
 	log.Printf("Received UpdateOSSource request")
-	
+
 	os, err := osUpdater.DetectOS()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
@@ -92,7 +92,7 @@ func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplic
 	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
 }
 
-// RemoveApplicationSource removes the source file from under /etc/apt/sources.list.d/.  
+// RemoveApplicationSource removes the source file from under /etc/apt/sources.list.d/.
 // It optionally removes the GPG key under /usr/share/keyrings/ if the GPG key name is provided.
 func (s *InbdServer) RemoveApplicationSource(ctx context.Context, req *pb.RemoveApplicationSourceRequest) (*pb.UpdateResponse, error) {
 	os, err := osUpdater.DetectOS()

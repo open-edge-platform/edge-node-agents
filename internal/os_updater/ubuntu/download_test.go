@@ -1,21 +1,21 @@
 package ubuntu
 
 import (
-    "testing"
+	"testing"
 
-    "github.com/stretchr/testify/assert"
-    pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDownloader_Download(t *testing.T) {
-    // Create a Downloader instance
-    downloader := Downloader{
-        Request: &pb.UpdateSystemSoftwareRequest{},
-    }
+	// Create a Downloader instance
+	downloader := Downloader{
+		Request: &pb.UpdateSystemSoftwareRequest{},
+	}
 
-    // Call the Download method
-    err := downloader.Download()
+	// Call the Download method
+	err := downloader.Download()
 
-    // Assertions
-    assert.NoError(t, err, "Download should not return an error")
+	// Assertions
+	assert.NoError(t, err, "Download should not return an error")
 }

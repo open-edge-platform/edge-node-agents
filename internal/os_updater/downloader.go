@@ -12,7 +12,7 @@ type Downloader interface {
 }
 
 // OSDownloader is the struct to hold parameters to download the OS update
-type OSDownloader struct {}
+type OSDownloader struct{}
 
 // Download is an abstract downloader method
 func (d *OSDownloader) Download() error {

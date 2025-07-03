@@ -6,7 +6,7 @@
 // Package osupdater updates the OS.
 package osupdater
 
-// Cleaner is an interface that contains the method to 
+// Cleaner is an interface that contains the method to
 // clean the files after an OS update.
 type Cleaner interface {
 	Clean() error
