@@ -10,6 +10,11 @@
    3. [Source Application Add](#source-application-add)
    4. [Source Application Remove](#source-application-remove)
    5. [Source OS Update](#source-os-update)
+   6. [Configuration Load](#load)
+   7. [Configuration Get](#get)
+   8. [Configuration Set](#set)
+   9. [Configuration Remove](#remove)
+   10. [Configuration Append](#append)
 
 </details>
 
@@ -224,4 +229,90 @@ inbc source os update
 ```commandline
 inbc source os update
     --sources "deb http://archive.ubuntu.com/ubuntu/ jammy-security main restricted, deb http://archive.ubuntu.com/ubuntu/ jammy-security universe"
+```
+
+## LOAD
+### Description
+Load a new configuration file.   This will replace the existing configuration file with the new file.
+
+📝 The configuration file you provide needs to be named *intel_manageability.conf*.
+
+
+### Usage
+``` 
+inbc load
+   [--uri, -u URI]
+   {--signature, -s SIGNATURE}
+```
+
+### Examples
+#### Load new Configuration File
+```
+inbc load --uri  <URI to config file>/config.file
+```
+
+
+## GET
+### Description
+Get key/value pairs from configuration file
+
+### Usage
+```
+inbc get
+   {--path, -p KEY_PATH;...} 
+```   
+### Examples
+#### Get Configuration Value
+```
+inbc get --path  os_updater.proceedWithoutRollback
+```
+
+
+## SET
+### Description
+Set key/value pairs in configuration file
+
+### Usage
+```
+inbc set
+   {--path, -p KEY_PATH;...} 
+```
+### Examples
+#### Set Configuration Value
+```
+inbc set --path  os_updater.proceedWithoutRollback:true
+```
+
+
+## Append
+### Description
+Append is only applicable to config tags, which is trustedRepositories
+
+### Usage
+```
+inbc append
+   {--path, -p KEY_PATH;...} 
+```
+### Examples
+#### Append a key/value pair
+```
+inbc append --path  os_updater.trustedRepositories:https://abc.com/
+```
+
+
+## Remove
+### Description
+Remove is only applicable to config tags, which is trustedRepositories
+
+### Usage
+```
+inbc remove 
+   {--path, -p KEY_PATH;...} 
+```
+
+
+### Examples
+#### Remove a key/value pair
+```
+inbc remove --path  os_updater.trustedRepositories:https://abc.com/
 ```

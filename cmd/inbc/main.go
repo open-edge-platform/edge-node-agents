@@ -29,6 +29,12 @@ func main() {
 	// Add subcommands
 	rootCmd.AddCommand(commands.SOTACmd(), commands.SourceCmd(), commands.FOTACmd())
 
+	rootCmd.AddCommand(commands.ConfigLoadCmd())
+	rootCmd.AddCommand(commands.ConfigGetCmd())
+	rootCmd.AddCommand(commands.ConfigSetCmd())
+	rootCmd.AddCommand(commands.ConfigAppendCmd())
+	rootCmd.AddCommand(commands.ConfigRemoveCmd())
+
 	// Execute CLI
 	if err := rootCmd.Execute(); err != nil {
 		if *verbose {

@@ -20,6 +20,11 @@ type ClientInterface interface {
 	UpdateOSSource(context.Context, *pb.UpdateOSSourceRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
 	UpdateSystemSoftware(context.Context, *pb.UpdateSystemSoftwareRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
 	UpdateFirmware(context.Context, *pb.UpdateFirmwareRequest, ...grpc.CallOption) (*pb.UpdateResponse, error)
+	LoadConfig(context.Context, *pb.LoadConfigRequest, ...grpc.CallOption) (*pb.ConfigResponse, error)
+	GetConfig(context.Context, *pb.GetConfigRequest, ...grpc.CallOption) (*pb.GetConfigResponse, error)
+	SetConfig(context.Context, *pb.SetConfigRequest, ...grpc.CallOption) (*pb.ConfigResponse, error)
+	AppendConfig(context.Context, *pb.AppendConfigRequest, ...grpc.CallOption) (*pb.ConfigResponse, error)
+	RemoveConfig(context.Context, *pb.RemoveConfigRequest, ...grpc.CallOption) (*pb.ConfigResponse, error)
 }
 
 // RealClient wraps the client package calls.
@@ -45,6 +50,31 @@ func (c *RealClient) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceR
 // UpdateSystemSoftware is a mock implementation of the UpdateSystemSoftware function.
 func (c *RealClient) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest, opts ...grpc.CallOption) (*pb.UpdateResponse, error) {
 	return c.client.UpdateSystemSoftware(ctx, req, opts...)
+}
+
+// LoadConfig is a real implementation of the LoadConfig function.
+func (c *RealClient) LoadConfig(ctx context.Context, req *pb.LoadConfigRequest, opts ...grpc.CallOption) (*pb.ConfigResponse, error) {
+	return c.client.LoadConfig(ctx, req, opts...)
+}
+
+// GetConfig is a real implementation of the GetConfig function.
+func (c *RealClient) GetConfig(ctx context.Context, req *pb.GetConfigRequest, opts ...grpc.CallOption) (*pb.GetConfigResponse, error) {
+	return c.client.GetConfig(ctx, req, opts...)
+}
+
+// SetConfig is a real implementation of the SetConfig function.
+func (c *RealClient) SetConfig(ctx context.Context, req *pb.SetConfigRequest, opts ...grpc.CallOption) (*pb.ConfigResponse, error) {
+	return c.client.SetConfig(ctx, req, opts...)
+}
+
+// AppendConfig is a real implementation of the AppendConfig function.
+func (c *RealClient) AppendConfig(ctx context.Context, req *pb.AppendConfigRequest, opts ...grpc.CallOption) (*pb.ConfigResponse, error) {
+	return c.client.AppendConfig(ctx, req, opts...)
+}
+
+// RemoveConfig is a real implementation of the RemoveConfig function.
+func (c *RealClient) RemoveConfig(ctx context.Context, req *pb.RemoveConfigRequest, opts ...grpc.CallOption) (*pb.ConfigResponse, error) {
+	return c.client.RemoveConfig(ctx, req, opts...)
 }
 
 // UpdateFirmware is a mock implementation of the UpdateFirmware function.

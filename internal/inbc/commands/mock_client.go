@@ -44,6 +44,36 @@ func (m *MockInbServiceClient) UpdateSystemSoftware(ctx context.Context, req *pb
 	return args.Get(0).(*pb.UpdateResponse), args.Error(1)
 }
 
+// LoadConfig is a mock implementation of the LoadConfig function.
+func (m *MockInbServiceClient) LoadConfig(ctx context.Context, req *pb.LoadConfigRequest, opts ...grpc.CallOption) (*pb.ConfigResponse, error) {
+	args := m.Called(ctx, req, opts)
+	return args.Get(0).(*pb.ConfigResponse), args.Error(1)
+}
+
+// GetConfig is a mock implementation of the GetConfig function.
+func (m *MockInbServiceClient) GetConfig(ctx context.Context, req *pb.GetConfigRequest, opts ...grpc.CallOption) (*pb.GetConfigResponse, error) {
+	args := m.Called(ctx, req, opts)
+	return args.Get(0).(*pb.GetConfigResponse), args.Error(1)
+}
+
+// SetConfig is a mock implementation of the SetConfig function.
+func (m *MockInbServiceClient) SetConfig(ctx context.Context, req *pb.SetConfigRequest, opts ...grpc.CallOption) (*pb.ConfigResponse, error) {
+	args := m.Called(ctx, req, opts)
+	return args.Get(0).(*pb.ConfigResponse), args.Error(1)
+}
+
+// AppendConfig is a mock implementation of the AppendConfig function.
+func (m *MockInbServiceClient) AppendConfig(ctx context.Context, req *pb.AppendConfigRequest, opts ...grpc.CallOption) (*pb.ConfigResponse, error) {
+	args := m.Called(ctx, req, opts)
+	return args.Get(0).(*pb.ConfigResponse), args.Error(1)
+}
+
+// RemoveConfig is a mock implementation of the RemoveConfig function.
+func (m *MockInbServiceClient) RemoveConfig(ctx context.Context, req *pb.RemoveConfigRequest, opts ...grpc.CallOption) (*pb.ConfigResponse, error) {
+	args := m.Called(ctx, req, opts)
+	return args.Get(0).(*pb.ConfigResponse), args.Error(1)
+}
+
 // UpdateFirmware is a mock implementation of the UpdateFirmware function.
 func (m *MockInbServiceClient) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareRequest, opts ...grpc.CallOption) (*pb.UpdateResponse, error) {
 	args := m.Called(ctx, req, opts)

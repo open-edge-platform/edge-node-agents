@@ -12,6 +12,11 @@ service InbService {
   rpc UpdateOSSource(UpdateOSSourceRequest) returns (UpdateResponse);
   rpc AddApplicationSource(AddApplicationSourceRequest) returns (UpdateResponse);
   rpc RemoveApplicationSource(RemoveApplicationSourceRequest) returns (UpdateResponse);
+  rpc LoadConfig(LoadConfigRequest) returns (ConfigResponse);
+  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+  rpc SetConfig(SetConfigRequest) returns (ConfigResponse);
+  rpc AppendConfig(AppendConfigRequest) returns (ConfigResponse);
+  rpc RemoveConfig(RemoveConfigRequest) returns (ConfigResponse);
   rpc UpdateFirmware(UpdateFirmwareRequest) returns (UpdateResponse);
 }
 
@@ -103,4 +108,74 @@ message UpdateResponse {
   int32 status_code = 1; // Status code of the operation
   string error = 2; // set if there is an error
 }
-  
+
+message LoadConfigRequest {
+  string uri = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "valid_uri"
+      message: "uri must be a valid URL."
+      expression: "this != '' && this.isUri()"
+    }
+  ];
+  string signature = 2 [(buf.validate.field).required = false];
+}
+
+message GetConfigRequest {
+  string path = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "valid_path"
+      message: "path must not be empty."
+      expression: "this != ''"
+    }
+  ];
+}
+
+message SetConfigRequest {
+  string path = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "valid_path"
+      message: "path must not be empty."
+      expression: "this != ''"
+    }
+  ];
+}
+
+message AppendConfigRequest {
+  string path = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "valid_path"
+      message: "path must not be empty."
+      expression: "this != ''"
+    }
+  ];
+}
+
+message RemoveConfigRequest {
+  string path = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "valid_path"
+      message: "path must not be empty."
+      expression: "this != ''"
+    }
+  ];
+}
+
+message ConfigResponse {
+  int32 status_code = 1; // Status code of the operation
+  string error = 2;      // set if there is an error
+  bool success = 3;
+  string message = 4;
+}
+
+message GetConfigResponse {
+  int32 status_code = 1;
+  string error = 2;
+  bool success = 3;
+  string value = 4;
+  string message = 5;
+}

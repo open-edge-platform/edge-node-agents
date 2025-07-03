@@ -35,7 +35,9 @@ build:
     BUILD +build-inbd
 
 golang-base:
+    # Force fresh installation without cache
     RUN apk add --no-cache protoc protobuf-dev libprotobuf curl gcc musl-dev && \
+        go clean -cache && go clean -modcache && \
         go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28 && \
         go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2 && \
         go install github.com/bufbuild/buf/cmd/buf@v1.50.1 && \
@@ -43,17 +45,23 @@ golang-base:
     WORKDIR /work
     COPY go.mod .
     COPY go.sum .
-    RUN go mod download # for caching
+    # Clean all caches before downloading modules
+    RUN go clean -cache && go clean -modcache && go mod download
     COPY cmd/ ./cmd
     COPY pkg/ ./pkg
     COPY proto/ ./proto
     COPY internal/ ./internal
+    # Final cache cleaning to prevent object header corruption
+    RUN go clean -cache && go clean -modcache
 
 lint:
     FROM +golang-base
     WORKDIR /work
+    # Light cache cleaning before linting (keep module cache for performance)
+    RUN go clean -cache && go clean -testcache
+    # Run with extended timeout and some cache mounting for performance
     RUN --mount=type=cache,target=/root/.cache \
-        golangci-lint run ./...
+        golangci-lint run --timeout=5m ./...
     
 test:
     BUILD +run-golang-unit-tests
@@ -62,13 +70,15 @@ test:
 run-golang-unit-tests:
     FROM +golang-base
     
-    # Run tests for all packages, generating coverage for internal/ only
-    RUN --mount=type=cache,target=/root/.cache/go-build \
-        CGO_ENABLED=1 go test -race -shuffle on -short ./... \
+    # Aggressive cache cleaning to prevent object header corruption
+    RUN go clean -cache && go clean -modcache && go clean -testcache
+    
+    # Run tests without cache mounting to prevent corruption
+    RUN CGO_ENABLED=1 go test -race -shuffle on -short ./... \
         -coverpkg=./internal/... -coverprofile=cover.out
    
     # Enforce minimum coverage threshold for internal/ directory
-    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=66.1 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
+    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=66.8 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
     
     SAVE ARTIFACT cover.out AS LOCAL build/cover.out
     
@@ -84,7 +94,10 @@ generate-proto:
 build-inbc:
     FROM +golang-base
     ARG version='0.0.0-unknown'
-    RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
+    # Aggressive cache cleaning before build
+    RUN go clean -cache && go clean -modcache && go clean -testcache
+    # Use no-cache mount to prevent cached corruption
+    RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
         go build -trimpath -o build/inbc \
             -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
             ./cmd/inbc
@@ -93,7 +106,10 @@ build-inbc:
 build-inbd:
     FROM +golang-base
     ARG version='0.0.0-unknown'
-    RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
+    # Aggressive cache cleaning before build
+    RUN go clean -cache && go clean -modcache && go clean -testcache
+    # Use no-cache mount to prevent cached corruption
+    RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
         go build -trimpath -o build/inbd \
             -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
             ./cmd/inbd
@@ -108,16 +124,25 @@ build-deb:
     # Copy the binaries to the package directory
     COPY build/inbc usr/bin/inbc
     COPY build/inbd usr/bin/inbd
+    
+    # Create the JWT token directory structure and empty access_token file in the package
+    RUN mkdir -p etc/intel_edge_node/tokens/release-service && touch etc/intel_edge_node/tokens/release-service/access_token
 
     # Copy the configuration file to the package directory
     COPY fpm-templates/etc/intel_manageability.conf etc/intel_manageability.conf
 
     # Create the DEBIAN/conffiles file
     RUN echo "/etc/intel_manageability.conf" >> DEBIAN/conffiles
+    RUN echo "/etc/intel_edge_node/tokens/release-service/access_token" >> DEBIAN/conffiles
         
     # Set ownership and permissions for the configuration file
     RUN chown root:root etc/intel_manageability.conf
     RUN chmod 640 etc/intel_manageability.conf
+    
+    # Set ownership and permissions for the JWT token file and directory
+    RUN chown -R root:root etc/intel_edge_node
+    RUN chmod 750 etc/intel_edge_node etc/intel_edge_node/tokens etc/intel_edge_node/tokens/release-service
+    RUN chmod 640 etc/intel_edge_node/tokens/release-service/access_token
 
     # Copy the schema file to the package directory
     COPY fpm-templates/usr/share/inbd_schema.json usr/share/inbd_schema.json

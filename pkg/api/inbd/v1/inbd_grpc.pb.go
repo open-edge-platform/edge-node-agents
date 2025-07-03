@@ -26,6 +26,11 @@ type InbServiceClient interface {
 	UpdateOSSource(ctx context.Context, in *UpdateOSSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	AddApplicationSource(ctx context.Context, in *AddApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	RemoveApplicationSource(ctx context.Context, in *RemoveApplicationSourceRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
+	LoadConfig(ctx context.Context, in *LoadConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error)
+	GetConfig(ctx context.Context, in *GetConfigRequest, opts ...grpc.CallOption) (*GetConfigResponse, error)
+	SetConfig(ctx context.Context, in *SetConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error)
+	AppendConfig(ctx context.Context, in *AppendConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error)
+	RemoveConfig(ctx context.Context, in *RemoveConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error)
 	UpdateFirmware(ctx context.Context, in *UpdateFirmwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 }
 
@@ -73,6 +78,51 @@ func (c *inbServiceClient) RemoveApplicationSource(ctx context.Context, in *Remo
 	return out, nil
 }
 
+func (c *inbServiceClient) LoadConfig(ctx context.Context, in *LoadConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error) {
+	out := new(ConfigResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/LoadConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inbServiceClient) GetConfig(ctx context.Context, in *GetConfigRequest, opts ...grpc.CallOption) (*GetConfigResponse, error) {
+	out := new(GetConfigResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/GetConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inbServiceClient) SetConfig(ctx context.Context, in *SetConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error) {
+	out := new(ConfigResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/SetConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inbServiceClient) AppendConfig(ctx context.Context, in *AppendConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error) {
+	out := new(ConfigResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/AppendConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inbServiceClient) RemoveConfig(ctx context.Context, in *RemoveConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error) {
+	out := new(ConfigResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/RemoveConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *inbServiceClient) UpdateFirmware(ctx context.Context, in *UpdateFirmwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
 	out := new(UpdateResponse)
 	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/UpdateFirmware", in, out, opts...)
@@ -90,6 +140,11 @@ type InbServiceServer interface {
 	UpdateOSSource(context.Context, *UpdateOSSourceRequest) (*UpdateResponse, error)
 	AddApplicationSource(context.Context, *AddApplicationSourceRequest) (*UpdateResponse, error)
 	RemoveApplicationSource(context.Context, *RemoveApplicationSourceRequest) (*UpdateResponse, error)
+	LoadConfig(context.Context, *LoadConfigRequest) (*ConfigResponse, error)
+	GetConfig(context.Context, *GetConfigRequest) (*GetConfigResponse, error)
+	SetConfig(context.Context, *SetConfigRequest) (*ConfigResponse, error)
+	AppendConfig(context.Context, *AppendConfigRequest) (*ConfigResponse, error)
+	RemoveConfig(context.Context, *RemoveConfigRequest) (*ConfigResponse, error)
 	UpdateFirmware(context.Context, *UpdateFirmwareRequest) (*UpdateResponse, error)
 	mustEmbedUnimplementedInbServiceServer()
 }
@@ -109,6 +164,21 @@ func (UnimplementedInbServiceServer) AddApplicationSource(context.Context, *AddA
 }
 func (UnimplementedInbServiceServer) RemoveApplicationSource(context.Context, *RemoveApplicationSourceRequest) (*UpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveApplicationSource not implemented")
+}
+func (UnimplementedInbServiceServer) LoadConfig(context.Context, *LoadConfigRequest) (*ConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LoadConfig not implemented")
+}
+func (UnimplementedInbServiceServer) GetConfig(context.Context, *GetConfigRequest) (*GetConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConfig not implemented")
+}
+func (UnimplementedInbServiceServer) SetConfig(context.Context, *SetConfigRequest) (*ConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetConfig not implemented")
+}
+func (UnimplementedInbServiceServer) AppendConfig(context.Context, *AppendConfigRequest) (*ConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AppendConfig not implemented")
+}
+func (UnimplementedInbServiceServer) RemoveConfig(context.Context, *RemoveConfigRequest) (*ConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveConfig not implemented")
 }
 func (UnimplementedInbServiceServer) UpdateFirmware(context.Context, *UpdateFirmwareRequest) (*UpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateFirmware not implemented")
@@ -198,6 +268,96 @@ func _InbService_RemoveApplicationSource_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InbService_LoadConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoadConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).LoadConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/LoadConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).LoadConfig(ctx, req.(*LoadConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InbService_GetConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).GetConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/GetConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).GetConfig(ctx, req.(*GetConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InbService_SetConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).SetConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/SetConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).SetConfig(ctx, req.(*SetConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InbService_AppendConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AppendConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).AppendConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/AppendConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).AppendConfig(ctx, req.(*AppendConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InbService_RemoveConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).RemoveConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/RemoveConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).RemoveConfig(ctx, req.(*RemoveConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _InbService_UpdateFirmware_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateFirmwareRequest)
 	if err := dec(in); err != nil {
@@ -238,6 +398,26 @@ var InbService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveApplicationSource",
 			Handler:    _InbService_RemoveApplicationSource_Handler,
+		},
+		{
+			MethodName: "LoadConfig",
+			Handler:    _InbService_LoadConfig_Handler,
+		},
+		{
+			MethodName: "GetConfig",
+			Handler:    _InbService_GetConfig_Handler,
+		},
+		{
+			MethodName: "SetConfig",
+			Handler:    _InbService_SetConfig_Handler,
+		},
+		{
+			MethodName: "AppendConfig",
+			Handler:    _InbService_AppendConfig_Handler,
+		},
+		{
+			MethodName: "RemoveConfig",
+			Handler:    _InbService_RemoveConfig_Handler,
 		},
 		{
 			MethodName: "UpdateFirmware",

@@ -8,7 +8,9 @@ package inbd
 import (
 	"context"
 	"log"
+	"strings"
 
+	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
 	appSource "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu/app_source"
 	osSource "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu/os_source"
@@ -111,4 +113,76 @@ func (s *InbdServer) RemoveApplicationSource(ctx context.Context, req *pb.Remove
 	}
 	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
 
+}
+
+func (s *InbdServer) LoadConfig(ctx context.Context, req *pb.LoadConfigRequest) (*pb.ConfigResponse, error) {
+	log.Printf("Received LoadConfig request")
+	if req.Uri == "" {
+		return &pb.ConfigResponse{StatusCode: 400, Error: "uri is required", Success: false}, nil
+	}
+	op := &utils.ConfigOperation{}
+	err := op.LoadConfigCommand(req.Uri, req.Signature)
+	if err != nil {
+		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
+	}
+	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
+}
+
+func (s *InbdServer) GetConfig(ctx context.Context, req *pb.GetConfigRequest) (*pb.GetConfigResponse, error) {
+	log.Printf("Received GetConfig request")
+	if strings.TrimSpace(req.Path) == "" {
+		return &pb.GetConfigResponse{StatusCode: 400, Error: "path is required", Success: false, Value: ""}, nil
+	}
+	op := &utils.ConfigOperation{}
+	val, errStr, err := op.GetConfigCommand(req.Path)
+	if err != nil && val == "" {
+		return &pb.GetConfigResponse{
+			StatusCode: 500,
+			Error:      errStr,
+			Success:    false,
+			Value:      "",
+		}, nil
+	}
+	return &pb.GetConfigResponse{
+		StatusCode: 200,
+		Error:      errStr,
+		Success:    errStr == "",
+		Value:      val,
+	}, nil
+}
+
+func (s *InbdServer) SetConfig(ctx context.Context, req *pb.SetConfigRequest) (*pb.ConfigResponse, error) {
+	log.Printf("Received SetConfig request")
+	if strings.TrimSpace(req.Path) == "" {
+		return &pb.ConfigResponse{StatusCode: 400, Error: "path is required", Success: false}, nil
+	}
+	op := &utils.ConfigOperation{}
+	if err := op.SetConfigCommand(req.Path); err != nil {
+		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
+	}
+	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
+}
+
+func (s *InbdServer) AppendConfig(ctx context.Context, req *pb.AppendConfigRequest) (*pb.ConfigResponse, error) {
+	log.Printf("Received AppendConfig request")
+	if strings.TrimSpace(req.Path) == "" {
+		return &pb.ConfigResponse{StatusCode: 400, Error: "path is required", Success: false}, nil
+	}
+	op := &utils.ConfigOperation{}
+	if err := op.AppendConfigCommand(req.Path); err != nil {
+		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
+	}
+	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
+}
+
+func (s *InbdServer) RemoveConfig(ctx context.Context, req *pb.RemoveConfigRequest) (*pb.ConfigResponse, error) {
+	log.Printf("Received RemoveConfig request")
+	if strings.TrimSpace(req.Path) == "" {
+		return &pb.ConfigResponse{StatusCode: 400, Error: "path is required", Success: false}, nil
+	}
+	op := &utils.ConfigOperation{}
+	if err := op.RemoveConfigCommand(req.Path); err != nil {
+		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
+	}
+	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
 }

@@ -150,7 +150,7 @@ func MkdirAll(fs afero.Fs, dirPath string, perm os.FileMode) error {
 	if err := isDirPathAbsolute(dirPath); err != nil {
 		return fmt.Errorf("%w", err)
 	}
-	if err := isDirPathSymLink(dirPath); err != nil {
+	if err := isFilePathSymLink(dirPath); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 	if err := fs.MkdirAll(dirPath, perm); err != nil {
@@ -159,14 +159,14 @@ func MkdirAll(fs afero.Fs, dirPath string, perm os.FileMode) error {
 	return nil
 }
 
-func isFilePathAbsolute(filePath string) error {
-	// Resolve the absolute path of the file
-	absPath, err := filepath.Abs(filePath)
+func isFilePathAbsolute(path string) error {
+	// Resolve the absolute path (works for both files and directories)
+	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return fmt.Errorf("error resolving absolute path: %w", err)
 	}
 
-	// Ensure the file is within one of the allowed base directories
+	// Ensure the path is within one of the allowed base directories
 	isAllowed := false
 	for _, baseDir := range allowedBaseDirs {
 		relPath, err := filepath.Rel(baseDir, absPath)
@@ -180,33 +180,13 @@ func isFilePathAbsolute(filePath string) error {
 		}
 	}
 	if !isAllowed {
-		return fmt.Errorf("access to the file is outside the allowed directories: %s", absPath)
+		return fmt.Errorf("access to the path is outside the allowed directories: %s", absPath)
 	}
-	return nil
-}
-
-func isFilePathSymLink(filePath string) error {
-	// Issues with Afero not supporting symlink like os package
-	// so we need to use os package to check if the file is a symlink
-	// and for the unit tests.
-	fileInfo, err := os.Lstat(filePath)
-	if err != nil {
-		// If the file does not exist yet, skip symlink check
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return fmt.Errorf("error checking file info: %w", err)
-	}
-
-	// Check if the file is a symlink
-	if fileInfo.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("file is a symlink, refusing to open: %s", filePath)
-	}
-
 	return nil
 }
 
 // isDirPathAbsolute checks if the directory path is absolute and within allowed base directories.
+// Unlike isFilePathAbsolute, this allows the base directory itself to be used.
 func isDirPathAbsolute(dirPath string) error {
 	absPath, err := filepath.Abs(dirPath)
 	if err != nil {
@@ -230,18 +210,95 @@ func isDirPathAbsolute(dirPath string) error {
 	return nil
 }
 
-// isDirPathSymLink checks if the directory is a symlink.
-func isDirPathSymLink(dirPath string) error {
-	fileInfo, err := os.Lstat(dirPath)
+// isFilePathSymLink checks for symlinks and canonical paths (works for both files and directories).
+func isFilePathSymLink(path string) error {
+	absPath, err := filepath.Abs(path)
 	if err != nil {
-		// If the directory does not exist yet, skip symlink check
-		if os.IsNotExist(err) {
-			return nil
+		return fmt.Errorf("error resolving absolute path: %w", err)
+	}
+
+	// Check if path exists first
+	if _, err := os.Lstat(path); os.IsNotExist(err) {
+		// For non-existent paths, check if any parent directories contain symlinks
+		dir := filepath.Dir(absPath)
+		for dir != "/" && dir != "." {
+			if _, err := os.Lstat(dir); err == nil {
+				// Directory exists, check if it's canonical
+				canonDir, err := filepath.EvalSymlinks(dir)
+				if err != nil {
+					return fmt.Errorf("failed to evaluate symlinks in path: %w", err)
+				}
+				if dir != canonDir {
+					return fmt.Errorf("path contains symlinks: %s", path)
+				}
+			}
+			dir = filepath.Dir(dir)
 		}
-		return fmt.Errorf("error checking directory info: %w", err)
+		return nil // No symlinks found in existing parent directories
 	}
-	if fileInfo.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("directory is a symlink, refusing to use: %s", dirPath)
+
+	// Path exists, do full canonical path checking
+	canonPath, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		return fmt.Errorf("failed to evaluate symlinks: %w", err)
 	}
+
+	if absPath != canonPath {
+		return fmt.Errorf("path contains symlinks: %s", path)
+	}
+
 	return nil
+}
+
+// ReadFile reads a file at the given path using afero and checks for symlinks and canonical paths.
+func ReadFile(fs afero.Fs, filePath string) ([]byte, error) {
+	if err := isFilePathAbsolute(filePath); err != nil {
+		return nil, err
+	}
+	if err := isFilePathSymLink(filePath); err != nil {
+		return nil, err
+	}
+	return afero.ReadFile(fs, filePath)
+}
+
+// WriteFile writes data to a file at the given path using afero and checks for symlinks and canonical paths.
+func WriteFile(fs afero.Fs, filePath string, data []byte, perm os.FileMode) error {
+	if err := isFilePathAbsolute(filePath); err != nil {
+		return err
+	}
+	if err := isFilePathSymLink(filePath); err != nil {
+		return err
+	}
+	return afero.WriteFile(fs, filePath, data, perm)
+}
+
+// CreateTempFile creates a temp file, checks for canonical path and symlinks, and returns the file handle.
+func CreateTempFile(fs afero.Fs, dir, pattern string) (*os.File, error) {
+	tmpFile, err := os.CreateTemp(dir, pattern)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp file: %w", err)
+	}
+
+	// Set up cleanup - will only execute if we return an error
+	var cleanupNeeded = true
+	defer func() {
+		if cleanupNeeded {
+			tmpFile.Close()
+			if rmErr := fs.Remove(tmpFile.Name()); rmErr != nil {
+				log.Printf("Warning: failed to remove temp file %s: %v", tmpFile.Name(), rmErr)
+			}
+		}
+	}()
+
+	if err := isFilePathAbsolute(tmpFile.Name()); err != nil {
+		return nil, fmt.Errorf("temp file path not allowed: %w", err)
+	}
+
+	if err := isFilePathSymLink(tmpFile.Name()); err != nil {
+		return nil, fmt.Errorf("temp file is a symlink: %w", err)
+	}
+
+	// Success - disable cleanup since we're returning the file
+	cleanupNeeded = false
+	return tmpFile, nil
 }
