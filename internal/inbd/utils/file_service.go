@@ -30,19 +30,19 @@ var allowedBaseDirs = []string{
 
 // IsBTRFSFileSystem checks if the filesystem type of the given path is BTRFS.
 func IsBTRFSFileSystem(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
-    var stat unix.Statfs_t
+	var stat unix.Statfs_t
 
-    // Get filesystem statistics for the given path
-    err := statfsFunc(path, &stat)
-    if err != nil {
-        return false, fmt.Errorf("failed to get filesystem stats: %w", err)
-    }
+	// Get filesystem statistics for the given path
+	err := statfsFunc(path, &stat)
+	if err != nil {
+		return false, fmt.Errorf("failed to get filesystem stats: %w", err)
+	}
 
-    // BTRFS filesystem type constant
-    const BTRFSFileSystemType = 0x9123683E
+	// BTRFS filesystem type constant
+	const BTRFSFileSystemType = 0x9123683E
 
-    // Check if the filesystem type matches BTRFS
-    return stat.Type == BTRFSFileSystemType, nil
+	// Check if the filesystem type matches BTRFS
+	return stat.Type == BTRFSFileSystemType, nil
 }
 
 // RemoveFile removes a file at the given path using the provided filesystem.
@@ -144,6 +144,21 @@ func CopyFile(fs afero.Fs, srcPath string, destPath string) error {
 	return nil
 }
 
+// MkdirAll creates a directory and all necessary parents securely.
+// It checks that the directory path is absolute, within allowed directories, and not a symlink.
+func MkdirAll(fs afero.Fs, dirPath string, perm os.FileMode) error {
+	if err := isDirPathAbsolute(dirPath); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	if err := isDirPathSymLink(dirPath); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+	if err := fs.MkdirAll(dirPath, perm); err != nil {
+		return fmt.Errorf("error creating directory: %w", err)
+	}
+	return nil
+}
+
 func isFilePathAbsolute(filePath string) error {
 	// Resolve the absolute path of the file
 	absPath, err := filepath.Abs(filePath)
@@ -176,6 +191,10 @@ func isFilePathSymLink(filePath string) error {
 	// and for the unit tests.
 	fileInfo, err := os.Lstat(filePath)
 	if err != nil {
+		// If the file does not exist yet, skip symlink check
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return fmt.Errorf("error checking file info: %w", err)
 	}
 
@@ -184,5 +203,45 @@ func isFilePathSymLink(filePath string) error {
 		return fmt.Errorf("file is a symlink, refusing to open: %s", filePath)
 	}
 
+	return nil
+}
+
+// isDirPathAbsolute checks if the directory path is absolute and within allowed base directories.
+func isDirPathAbsolute(dirPath string) error {
+	absPath, err := filepath.Abs(dirPath)
+	if err != nil {
+		return fmt.Errorf("error resolving absolute path: %w", err)
+	}
+	isAllowed := false
+	for _, baseDir := range allowedBaseDirs {
+		relPath, err := filepath.Rel(baseDir, absPath)
+		if err != nil {
+			return fmt.Errorf("error checking relative path: %w", err)
+		}
+		// Allow both the base directory itself and its subdirectories
+		if !strings.HasPrefix(relPath, "..") {
+			isAllowed = true
+			break
+		}
+	}
+	if !isAllowed {
+		return fmt.Errorf("access to the directory is outside the allowed directories: %s", absPath)
+	}
+	return nil
+}
+
+// isDirPathSymLink checks if the directory is a symlink.
+func isDirPathSymLink(dirPath string) error {
+	fileInfo, err := os.Lstat(dirPath)
+	if err != nil {
+		// If the directory does not exist yet, skip symlink check
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("error checking directory info: %w", err)
+	}
+	if fileInfo.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("directory is a symlink, refusing to use: %s", dirPath)
+	}
 	return nil
 }

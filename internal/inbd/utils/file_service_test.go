@@ -11,42 +11,42 @@ import (
 )
 
 func TestIsBTRFSFileSystem_Success(t *testing.T) {
-    // Define a statfsFunc that simulates a BTRFS filesystem
-    statfsFunc := func(path string, stat *unix.Statfs_t) error {
-        stat.Type = 0x9123683E // BTRFS magic number
-        return nil
-    }
+	// Define a statfsFunc that simulates a BTRFS filesystem
+	statfsFunc := func(path string, stat *unix.Statfs_t) error {
+		stat.Type = 0x9123683E // BTRFS magic number
+		return nil
+	}
 
-    // Call IsBTRFS with the injected statfsFunc
-    isBtrfs, err := IsBTRFSFileSystem("/valid/path", statfsFunc)
-    assert.NoError(t, err)
-    assert.True(t, isBtrfs, "The filesystem should be identified as BTRFS")
+	// Call IsBTRFS with the injected statfsFunc
+	isBtrfs, err := IsBTRFSFileSystem("/valid/path", statfsFunc)
+	assert.NoError(t, err)
+	assert.True(t, isBtrfs, "The filesystem should be identified as BTRFS")
 }
 
 func TestIsBTRFSFileSystem_NotBTRFS(t *testing.T) {
-    // Define a statfsFunc that simulates a non-BTRFS filesystem
-    statfsFunc := func(path string, stat *unix.Statfs_t) error {
-        stat.Type = 0xEF53 // EXT4 magic number
-        return nil
-    }
+	// Define a statfsFunc that simulates a non-BTRFS filesystem
+	statfsFunc := func(path string, stat *unix.Statfs_t) error {
+		stat.Type = 0xEF53 // EXT4 magic number
+		return nil
+	}
 
-    // Call IsBTRFS with the injected statfsFunc
-    isBtrfs, err := IsBTRFSFileSystem("/valid/path", statfsFunc)
-    assert.NoError(t, err)
-    assert.False(t, isBtrfs, "The filesystem should not be identified as BTRFS")
+	// Call IsBTRFS with the injected statfsFunc
+	isBtrfs, err := IsBTRFSFileSystem("/valid/path", statfsFunc)
+	assert.NoError(t, err)
+	assert.False(t, isBtrfs, "The filesystem should not be identified as BTRFS")
 }
 
 func TestIsBTRFSFileSystem_StatfsError(t *testing.T) {
-    // Define a statfsFunc that simulates an error
-    statfsFunc := func(path string, stat *unix.Statfs_t) error {
-        return errors.New("mock error")
-    }
+	// Define a statfsFunc that simulates an error
+	statfsFunc := func(path string, stat *unix.Statfs_t) error {
+		return errors.New("mock error")
+	}
 
-    // Call IsBTRFS with the injected statfsFunc
-    isBtrfs, err := IsBTRFSFileSystem("/invalid/path", statfsFunc)
-    assert.Error(t, err)
-    assert.Contains(t, err.Error(), "mock error")
-    assert.False(t, isBtrfs, "The filesystem should not be identified as BTRFS due to an error")
+	// Call IsBTRFS with the injected statfsFunc
+	isBtrfs, err := IsBTRFSFileSystem("/invalid/path", statfsFunc)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "mock error")
+	assert.False(t, isBtrfs, "The filesystem should not be identified as BTRFS due to an error")
 }
 
 func TestRemoveFile_Success(t *testing.T) {
@@ -143,7 +143,7 @@ func TestCopyFile_ValidFile(t *testing.T) {
 	// Create a source file
 	err := afero.WriteFile(fs, srcPath, []byte("test content"), 0644)
 	assert.NoError(t, err)
-		defer func() {
+	defer func() {
 		if err := fs.Remove(srcPath); err != nil {
 			t.Errorf("failed to remove file: %v", err)
 		}
@@ -192,7 +192,7 @@ func TestCopyFile_DestinationPathInvalid(t *testing.T) {
 	// Call the CopyFile function
 	err = CopyFile(fs, srcPath, destPath)
 	// Can't remove destination file, since it doesn't get created due to the simulated error
-	
+
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "access to the file is outside the allowed directories")
 }
@@ -246,7 +246,7 @@ func TestCopyFile_SourceFileOutsideAllowedDirs(t *testing.T) {
 	// Call the CopyFile function
 	err = CopyFile(fs, srcPath, destPath)
 	// Can't remove destination file, since it doesn't get created due to the simulated error
-	
+
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "outside the allowed directories")
 }
@@ -258,10 +258,10 @@ func TestOpenFile_ValidFile(t *testing.T) {
 	// Create a valid file in the allowed directory
 	err := afero.WriteFile(fs, filePath, []byte("test content"), 0644)
 	// Can't remove file, since it doesn't get created due to the simulated error
-	
+
 	assert.NoError(t, err)
 
-	// Call the Open function	
+	// Call the Open function
 	file, err := OpenFile(fs, filePath, os.O_RDWR|os.O_CREATE, 0644)
 	defer func() {
 		if err := file.Close(); err != nil {
@@ -292,7 +292,7 @@ func TestOpenFile_FileOutsideAllowedDirs(t *testing.T) {
 	// Call the Open function
 	file, err := OpenFile(fs, filePath, os.O_RDWR|os.O_CREATE, 0644)
 	// Can't close file, since it doesn't get opened due to the simulated error
-	
+
 	assert.Error(t, err)
 	assert.Nil(t, file)
 	assert.Contains(t, err.Error(), "outside the allowed directories")
@@ -368,7 +368,7 @@ func TestOpen_FileOutsideAllowedDirs(t *testing.T) {
 	// Call the Open function
 	file, err := Open(fs, filePath)
 	// Can't close file, since it doesn't get opened due to the simulated error
-	
+
 	assert.Error(t, err)
 	assert.Nil(t, file)
 	assert.Contains(t, err.Error(), "outside the allowed directories")
@@ -471,4 +471,65 @@ func TestIsFilePathSymLink_IsSymlinkFile(t *testing.T) {
 	err = isFilePathSymLink(symlinkPath)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "file is a symlink")
+}
+
+func TestMkdirAll_ValidDir(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	dirPath := "/tmp/testdir"
+	err := MkdirAll(fs, dirPath, 0755)
+	assert.NoError(t, err)
+	exists, err := afero.DirExists(fs, dirPath)
+	assert.NoError(t, err)
+	assert.True(t, exists)
+}
+
+func TestMkdirAll_InvalidDir(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	dirPath := "/unauthorized/testdir"
+	err := MkdirAll(fs, dirPath, 0755)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "outside the allowed directories")
+}
+
+func TestMkdirAll_SymlinkDir(t *testing.T) {
+	fs := afero.NewOsFs()
+	targetDir := "/tmp/realtestdir"
+	symlinkDir := "/tmp/symlinkdir"
+	_ = fs.MkdirAll(targetDir, 0755)
+	defer func() { _ = fs.RemoveAll(targetDir) }()
+	_ = os.Symlink(targetDir, symlinkDir)
+	defer func() { _ = fs.Remove(symlinkDir) }()
+	err := MkdirAll(fs, symlinkDir, 0755)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "directory is a symlink")
+}
+
+func TestIsDirPathAbsolute_Valid(t *testing.T) {
+	err := isDirPathAbsolute("/tmp/testdir")
+	assert.NoError(t, err)
+}
+
+func TestIsDirPathAbsolute_Invalid(t *testing.T) {
+	err := isDirPathAbsolute("/unauthorized/testdir")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "outside the allowed directories")
+}
+
+func TestIsDirPathSymLink_NonExistent(t *testing.T) {
+	// Should not error if dir does not exist
+	err := isDirPathSymLink("/tmp/doesnotexist")
+	assert.NoError(t, err)
+}
+
+func TestIsDirPathSymLink_IsSymlink(t *testing.T) {
+	fs := afero.NewOsFs()
+	targetDir := "/tmp/realtestdir2"
+	symlinkDir := "/tmp/symlinkdir2"
+	_ = fs.MkdirAll(targetDir, 0755)
+	defer func() { _ = fs.RemoveAll(targetDir) }()
+	_ = os.Symlink(targetDir, symlinkDir)
+	defer func() { _ = fs.Remove(symlinkDir) }()
+	err := isDirPathSymLink(symlinkDir)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "directory is a symlink")
 }

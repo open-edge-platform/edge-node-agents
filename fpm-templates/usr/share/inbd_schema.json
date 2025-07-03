@@ -20,8 +20,59 @@
       },
       "required": ["trustedRepositories", "proceedWithoutRollback"],
       "additionalProperties": false
+    },
+    "luks": {
+      "type": "object",
+      "properties": {
+        "volumePath": {
+          "type": "string",
+          "description": "Path to the LUKS volume."
+        },
+        "mapperName": {
+          "type": "string",
+          "description": "Name of the LUKS mapper."
+        },
+        "mountPoint": {
+          "type": "string",
+          "description": "Mount point for the LUKS volume."
+        },
+        "passwordLength": {
+          "type": "integer",
+          "description": "Length of the password for LUKS."
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size of the LUKS volume in MB."
+        },
+        "useTPM": {
+          "type": "boolean",
+          "description": "Whether to use TPM for LUKS."
+        },
+        "user": {
+          "type": "string",
+          "description": "User that owns the LUKS volume."
+        },
+        "group": {
+          "type": "string",
+          "description": "Group that owns the LUKS volume."
+        }
+      },
+      "required": [
+        "volumePath",
+        "mapperName",
+        "mountPoint",
+        "passwordLength",
+        "size",
+        "useTPM",
+        "user",
+        "group"
+      ],
+      "additionalProperties": false
     }
   },
-  "required": ["os_updater"],
+  "required": [
+    "os_updater",
+    "luks"
+  ],
   "additionalProperties": false
 }
