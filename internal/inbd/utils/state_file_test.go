@@ -139,4 +139,20 @@ func TestReadStateFile_JSONParseError(t *testing.T) {
 	assert.Contains(t, err.Error(), "error parsing JSON")
 }
 
-// TODO:  Add tests for WriteToStateFile
+func TestWriteToStateFile_Success(t *testing.T) {
+	// Create an in-memory filesystem
+	fs := afero.NewMemMapFs()
+	filePath := "/tmp/testfile.txt"
+	content := "test content"
+
+	// Call WriteToStateFile
+	err := WriteToStateFile(fs, filePath, content)
+
+	// Assertions
+	assert.NoError(t, err)
+
+	// Verify file content
+	actualContent, err := afero.ReadFile(fs, filePath)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(actualContent))
+}

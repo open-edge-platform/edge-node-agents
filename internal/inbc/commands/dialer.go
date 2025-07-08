@@ -8,19 +8,50 @@ package commands
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 
+	"github.com/spf13/afero"
+
+	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 )
 
 // Dialer is a type for dialing a gRPC client
 type Dialer func(ctx context.Context, addr string) (pb.InbServiceClient, *grpc.ClientConn, error)
 
-// Dial returns a new gRPC client
+// Dial returns a new gRPC client with mTLS
 func Dial(ctx context.Context, addr string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+	// Load client cert and key from secret directory
+	cert, err := tls.LoadX509KeyPair(utils.TLSDirSecret+"/inbc.crt", utils.TLSDirSecret+"/inbc.key")
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load client certificate: %w", err)
+	}
+	// Load CA cert from secret directory
+	caCert, err := utils.ReadFile(afero.NewOsFs(), utils.TLSDirSecret+"/ca.crt")
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read CA certificate: %w", err)
+	}
+	caPool := x509.NewCertPool()
+	if !caPool.AppendCertsFromPEM(caCert) {
+		return nil, nil, fmt.Errorf("failed to append CA certificate")
+	}
+	creds := credentials.NewTLS(&tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		RootCAs:            caPool,
+		InsecureSkipVerify: false,
+		MinVersion:         tls.VersionTLS12,
+		MaxVersion:         tls.VersionTLS13,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, // TLS 1.2
+			// TLS 1.3 cipher suites are not configurable in Go, but TLS_AES_256_GCM_SHA384 is always enabled for TLS 1.3
+		},
+	})
+
 	dialer := func(ctx context.Context, addr string) (net.Conn, error) {
 		// cut off the unix:// part
 		addr = addr[7:]
@@ -28,7 +59,7 @@ func Dial(ctx context.Context, addr string) (pb.InbServiceClient, grpc.ClientCon
 	}
 
 	conn, err := grpc.NewClient("unix://"+addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(creds),
 		grpc.WithContextDialer(dialer))
 	if err != nil {
 		return nil, nil, fmt.Errorf("%w", err)

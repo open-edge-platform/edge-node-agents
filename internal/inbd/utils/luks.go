@@ -332,6 +332,7 @@ func luksFormat(filePath string, password []byte) error {
 		"--pbkdf-memory=2097152",
 		"--pbkdf-parallel=8",
 		"--cipher=aes-xts-plain64",
+		"--key-size=512", // AES-256-XTS uses a 512-bit key
 		"--key-file", tmpFile.Name(),
 		filePath,
 	)
