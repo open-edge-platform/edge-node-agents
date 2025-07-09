@@ -15,6 +15,7 @@
    8. [Configuration Set](#set)
    9. [Configuration Remove](#remove)
    10. [Configuration Append](#append)
+   11. [Query](#query)
 
 </details>
 
@@ -316,3 +317,72 @@ inbc remove
 ```
 inbc remove --path  os_updater.trustedRepositories:https://abc.com/
 ```
+
+## QUERY
+### Description
+Query device(s) for attributes
+
+### Usage
+```
+inbc query
+   [--option, -o=[all | hw | fw |  os | swbom | version ]; default='all']
+```
+
+### Examples
+#### Return all attributes
+```
+inbc query
+```
+#### Return only 'hw' attributes
+```
+inbc query --option hw
+```
+#### Return only 'swbom' attributes
+```
+inbc query --option swbom
+```
+
+### Option Results
+# Query Command
+
+## Description
+The Query command can be called by either the cloud or INBC.  It will provide attribute information on the Host.
+
+## Options
+
+#### 'hw' - Hardware
+
+| Attribute     | Description                                         |
+|:--------------|:----------------------------------------------------|
+| manufacturer  | Hardware manufacturer                               |
+| product       | Product type                                        |
+| stepping      | Stepping                                            |
+| sku           | SKU                                                 |
+| model         | Model number                                        |
+| serial_sum    | Serial number                                       |
+
+#### 'fw' - Firmware
+
+| Attribute       | Description      |
+|:----------------|:-----------------|
+| boot_fw_date    | Firmware date    |
+| boot_fw_vendor  | Firmware vendor  |
+| boot_fw_version | Firmware version |
+
+#### 'os' - Operating System
+
+| Attribute       | Description                   |
+|:----------------|:------------------------------|
+| os_type         | Operating System type         |
+| os_version      | Operating System version      |
+| os_release_date | Operating System release date |
+
+ #### 'swbom' - Software BOM
+
+SWBOM dynamic telemetry data
+
+#### 'version' - Version
+
+| Attribute | Description    |
+|:----------|:---------------|
+| version   | Version number |

@@ -13,3 +13,4 @@ const emtSoftwareUpdateTimerInSeconds = 360
 const defaultSoftwareUpdateTimerInSeconds = 90
 const configTimeoutInSeconds = 15
 const firmwareUpdateTimerInSeconds = 90
+const queryTimeoutInSeconds = 15

@@ -35,6 +35,8 @@ func main() {
 	rootCmd.AddCommand(commands.ConfigAppendCmd())
 	rootCmd.AddCommand(commands.ConfigRemoveCmd())
 
+	rootCmd.AddCommand(commands.QueryCmd())
+
 	// Execute CLI
 	if err := rootCmd.Execute(); err != nil {
 		if *verbose {

@@ -186,3 +186,15 @@ func (s *InbdServer) RemoveConfig(ctx context.Context, req *pb.RemoveConfigReque
 	}
 	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
 }
+
+// Query returns system information based on the query option
+func (s *InbdServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.QueryResponse, error) {
+	log.Printf("Received Query request for option: %s", req.Option)
+
+	return &pb.QueryResponse{
+		StatusCode: 501,
+		Error:      "Not Implemented",
+		Success:    false,
+		Data:       nil,
+	}, nil
+}

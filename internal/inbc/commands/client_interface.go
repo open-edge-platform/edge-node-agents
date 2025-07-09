@@ -25,6 +25,7 @@ type ClientInterface interface {
 	SetConfig(context.Context, *pb.SetConfigRequest, ...grpc.CallOption) (*pb.ConfigResponse, error)
 	AppendConfig(context.Context, *pb.AppendConfigRequest, ...grpc.CallOption) (*pb.ConfigResponse, error)
 	RemoveConfig(context.Context, *pb.RemoveConfigRequest, ...grpc.CallOption) (*pb.ConfigResponse, error)
+	Query(context.Context, *pb.QueryRequest, ...grpc.CallOption) (*pb.QueryResponse, error)
 }
 
 // RealClient wraps the client package calls.
@@ -80,4 +81,9 @@ func (c *RealClient) RemoveConfig(ctx context.Context, req *pb.RemoveConfigReque
 // UpdateFirmware is a mock implementation of the UpdateFirmware function.
 func (c *RealClient) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareRequest, opts ...grpc.CallOption) (*pb.UpdateResponse, error) {
 	return c.client.UpdateFirmware(ctx, req, opts...)
+}
+
+// Query is a real implementation of the Query function.
+func (c *RealClient) Query(ctx context.Context, req *pb.QueryRequest, opts ...grpc.CallOption) (*pb.QueryResponse, error) {
+	return c.client.Query(ctx, req, opts...)
 }

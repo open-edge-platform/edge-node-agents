@@ -32,6 +32,7 @@ type InbServiceClient interface {
 	AppendConfig(ctx context.Context, in *AppendConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error)
 	RemoveConfig(ctx context.Context, in *RemoveConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error)
 	UpdateFirmware(ctx context.Context, in *UpdateFirmwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
+	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
 }
 
 type inbServiceClient struct {
@@ -132,6 +133,15 @@ func (c *inbServiceClient) UpdateFirmware(ctx context.Context, in *UpdateFirmwar
 	return out, nil
 }
 
+func (c *inbServiceClient) Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
+	out := new(QueryResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/Query", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InbServiceServer is the server API for InbService service.
 // All implementations must embed UnimplementedInbServiceServer
 // for forward compatibility
@@ -146,6 +156,7 @@ type InbServiceServer interface {
 	AppendConfig(context.Context, *AppendConfigRequest) (*ConfigResponse, error)
 	RemoveConfig(context.Context, *RemoveConfigRequest) (*ConfigResponse, error)
 	UpdateFirmware(context.Context, *UpdateFirmwareRequest) (*UpdateResponse, error)
+	Query(context.Context, *QueryRequest) (*QueryResponse, error)
 	mustEmbedUnimplementedInbServiceServer()
 }
 
@@ -182,6 +193,9 @@ func (UnimplementedInbServiceServer) RemoveConfig(context.Context, *RemoveConfig
 }
 func (UnimplementedInbServiceServer) UpdateFirmware(context.Context, *UpdateFirmwareRequest) (*UpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateFirmware not implemented")
+}
+func (UnimplementedInbServiceServer) Query(context.Context, *QueryRequest) (*QueryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
 }
 func (UnimplementedInbServiceServer) mustEmbedUnimplementedInbServiceServer() {}
 
@@ -376,6 +390,24 @@ func _InbService_UpdateFirmware_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InbService_Query_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).Query(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/Query",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).Query(ctx, req.(*QueryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InbService_ServiceDesc is the grpc.ServiceDesc for InbService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -422,6 +454,10 @@ var InbService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateFirmware",
 			Handler:    _InbService_UpdateFirmware_Handler,
+		},
+		{
+			MethodName: "Query",
+			Handler:    _InbService_Query_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

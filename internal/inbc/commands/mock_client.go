@@ -80,6 +80,12 @@ func (m *MockInbServiceClient) UpdateFirmware(ctx context.Context, req *pb.Updat
 	return args.Get(0).(*pb.UpdateResponse), args.Error(1)
 }
 
+// Query is a mock implementation of the Query function.
+func (m *MockInbServiceClient) Query(ctx context.Context, req *pb.QueryRequest, opts ...grpc.CallOption) (*pb.QueryResponse, error) {
+	args := m.Called(ctx, req, opts)
+	return args.Get(0).(*pb.QueryResponse), args.Error(1)
+}
+
 // MockClientConn is a mock implementation of the grpc.ClientConnInterface interface.
 type MockClientConn struct {
 	grpc.ClientConnInterface
