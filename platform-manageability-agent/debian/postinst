@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+# Create system group if it doesn't exist
+groupadd -f bm-agents --system
+
+# Create system user if it doesn't exist
+id -u platform-manageability-agent >/dev/null 2>&1 || useradd platform-manageability-agent --system -g bm-agents -s /sbin/nologin
+
+# Create necessary directories
+mkdir -p /var/log/edge-node/pma
+chown platform-manageability-agent:bm-agents /var/log/edge-node/pma
+
+mkdir -p /run/platform-manageability-agent
+chown platform-manageability-agent:bm-agents /run/platform-manageability-agent
+
+mkdir -p /etc/edge-node/platform-manageability
+chown platform-manageability-agent:bm-agents /etc/edge-node/platform-manageability
+
+mkdir -p /etc/intel_edge_node/tokens/platform-manageability-agent
+chown platform-manageability-agent:bm-agents /etc/intel_edge_node/tokens/platform-manageability-agent
+
+# Set appropriate permissions
+chmod 750 /etc/edge-node/platform-manageability
+chmod 750 /var/log/edge-node/pma
+chmod 755 /run/platform-manageability-agent
+
+#DEBHELPER#
