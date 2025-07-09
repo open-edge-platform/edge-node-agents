@@ -47,11 +47,11 @@ func TestDownloader_downloadFile(t *testing.T) {
 		err := downloader.downloadFile()
 		assert.NoError(t, err)
 
-		exists, err := afero.Exists(fs, utils.DownloadDir+"/file.txt")
+		exists, err := afero.Exists(fs, utils.SOTADownloadDir+"/file.txt")
 		assert.NoError(t, err)
 		assert.True(t, exists)
 
-		content, err := afero.ReadFile(fs, utils.DownloadDir+"/file.txt")
+		content, err := afero.ReadFile(fs, utils.SOTADownloadDir+"/file.txt")
 		assert.NoError(t, err)
 		assert.Equal(t, "file content", string(content))
 	})
@@ -126,7 +126,8 @@ func TestDownloader_downloadFile(t *testing.T) {
 		}
 
 		err := downloader.downloadFile()
-		assert.EqualError(t, err, "Status code: 500. Expected 200/Success.")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "status 500")
 	})
 
 	// TODO:  This one runs in IDE, but not in Earthly
@@ -193,7 +194,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 		expectedResult          bool
 		expectedError           error
 		getFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
-		getFileSizeInBytes      func(string, string) (int64, error)
+		getFileSizeInBytes      func(afero.Fs, string, string) (int64, error)
 	}{
 		{
 			name: "successful check with enough disk space",
@@ -203,7 +204,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
-			getFileSizeInBytes: func(string, string) (int64, error) {
+			getFileSizeInBytes: func(afero.Fs, string, string) (int64, error) {
 				return 1000 * 2048, nil
 			},
 			expectedResult: true,
@@ -251,7 +252,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			writeGranularLog: func(afero.Fs, string, string) {
 				// No-op implementation for testing
 			},
-			getFileSizeInBytes: func(string, string) (int64, error) {
+			getFileSizeInBytes: func(afero.Fs, string, string) (int64, error) {
 				return 0, errors.New("error getting file size")
 			},
 			expectedResult: false,
@@ -265,7 +266,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
-			getFileSizeInBytes: func(string, string) (int64, error) {
+			getFileSizeInBytes: func(afero.Fs, string, string) (int64, error) {
 				return 1000 * 6130, nil
 			},
 			expectedResult: false,
@@ -300,4 +301,150 @@ type roundTripperFunc func(req *http.Request) *http.Response
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req), nil
+}
+
+// Tests for the new authentication helper functions
+
+func TestDownloader_getAuthMethods(t *testing.T) {
+	downloader := &Downloader{}
+	
+	t.Run("with valid token", func(t *testing.T) {
+		token := "valid-token"
+		methods := downloader.getAuthMethods(token)
+		
+		assert.Len(t, methods, 2)
+		assert.Equal(t, "Bearer Token", methods[0].name)
+		assert.Equal(t, "No Authentication", methods[1].name)
+	})
+	
+	t.Run("with empty token", func(t *testing.T) {
+		token := ""
+		methods := downloader.getAuthMethods(token)
+		
+		assert.Len(t, methods, 2)
+		assert.Equal(t, "Bearer Token", methods[0].name)
+		assert.Equal(t, "No Authentication", methods[1].name)
+	})
+}
+
+func TestDownloader_setupBearerTokenAuth(t *testing.T) {
+	downloader := &Downloader{}
+	
+	t.Run("with valid token", func(t *testing.T) {
+		token := "valid-token"
+		setupAuth := downloader.setupBearerTokenAuth(token)
+		
+		req, _ := http.NewRequest("GET", "http://example.com", nil)
+		setupAuth(req)
+		
+		assert.Equal(t, "Bearer valid-token", req.Header.Get("Authorization"))
+	})
+	
+	t.Run("with empty token", func(t *testing.T) {
+		token := ""
+		setupAuth := downloader.setupBearerTokenAuth(token)
+		
+		req, _ := http.NewRequest("GET", "http://example.com", nil)
+		setupAuth(req)
+		
+		assert.Empty(t, req.Header.Get("Authorization"))
+	})
+}
+
+func TestDownloader_setupNoAuth(t *testing.T) {
+	downloader := &Downloader{}
+	
+	setupAuth := downloader.setupNoAuth()
+	
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	setupAuth(req)
+	
+	assert.Empty(t, req.Header.Get("Authorization"))
+}
+
+func TestDownloader_handleAuthError(t *testing.T) {
+	downloader := &Downloader{}
+	
+	t.Run("unauthorized error", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusUnauthorized,
+			Body:       io.NopCloser(strings.NewReader("Unauthorized")),
+		}
+		
+		err := downloader.handleAuthError(resp, "Bearer Token")
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "authentication failed with Bearer Token: status 401")
+	})
+	
+	t.Run("forbidden error", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusForbidden,
+			Body:       io.NopCloser(strings.NewReader("Forbidden")),
+		}
+		
+		err := downloader.handleAuthError(resp, "Bearer Token")
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "authentication failed with Bearer Token: status 403")
+	})
+	
+	t.Run("server error", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader("Internal Server Error")),
+		}
+		
+		err := downloader.handleAuthError(resp, "Bearer Token")
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "HTTP error with Bearer Token: status 500")
+	})
+}
+
+func TestDownloader_downloadFileFromResponse(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	downloader := &Downloader{
+		fs: fs,
+		request: &pb.UpdateSystemSoftwareRequest{
+			Url: "http://example.com/testfile.txt",
+		},
+	}
+	
+	t.Run("successful download", func(t *testing.T) {
+		resp := &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(strings.NewReader("test file content")),
+		}
+		
+		err := downloader.downloadFileFromResponse(resp, "Bearer Token")
+		
+		assert.NoError(t, err)
+		
+		// Verify file was created
+		exists, err := afero.Exists(fs, utils.SOTADownloadDir+"/testfile.txt")
+		assert.NoError(t, err)
+		assert.True(t, exists)
+		
+		// Verify file content
+		content, err := afero.ReadFile(fs, utils.SOTADownloadDir+"/testfile.txt")
+		assert.NoError(t, err)
+		assert.Equal(t, "test file content", string(content))
+	})
+	
+	t.Run("file creation error", func(t *testing.T) {
+		// Use a read-only filesystem to simulate file creation error
+		roFs := afero.NewReadOnlyFs(afero.NewMemMapFs())
+		downloader.fs = roFs
+		
+		resp := &http.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(strings.NewReader("test content")),
+		}
+		
+		err := downloader.downloadFileFromResponse(resp, "Bearer Token")
+		
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "error creating file")
+	})
 }

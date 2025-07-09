@@ -78,8 +78,7 @@ run-golang-unit-tests:
         -coverpkg=./internal/... -coverprofile=cover.out
    
     # Enforce minimum coverage threshold for internal/ directory
-    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=67.0 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
-    
+    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=67.1 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
     SAVE ARTIFACT cover.out AS LOCAL build/cover.out
     
 generate-proto:
@@ -195,12 +194,14 @@ coverity:
     ENV HTTPS_PROXY=$HTTPS_PROXY
     ENV NO_PROXY=$NO_PROXY
 
-    RUN apt-get update && apt-get install -y curl gcc musl-tools
+    # Install required packages including 'file' utility for Coverity
+    RUN apt-get update && apt-get install -y curl gcc musl-tools file
 
     WORKDIR /work
-    # Assume Coverity is available at /work/coverity
-    COPY cov-analysis-linux64-2025.3.0 /opt/coverity
-    ENV PATH="/opt/coverity/bin:$PATH"
+    
+    # Clean caches to prevent corruption like other targets
+    RUN go clean -cache && go clean -modcache && go clean -testcache
+    
     COPY go.mod .
     COPY go.sum .
     RUN go mod download
@@ -208,20 +209,46 @@ coverity:
     COPY pkg/ ./pkg
     COPY proto/ ./proto
     COPY internal/ ./internal
-    RUN cov-configure -c coverity/conf/c.xml --go
-    # Run Coverity analysis
-    RUN export CGO_ENABLED=0
-    RUN export GOARCH=amd64
-    RUN export GOOS=linux
-    RUN cov-build -c coverity/conf/c.xml --dir cov-int \
+    
+    # Copy Coverity tools (Jenkins environment should have this)
+    # This will fail in local dev environment but that's expected
+    COPY cov-analysis-linux64-2025.3.0 /opt/coverity
+    ENV PATH="/opt/coverity/bin:$PATH"
+    
+    # Clean caches again before analysis
+    RUN go clean -cache && go clean -modcache && go clean -testcache
+    
+    # Set build environment variables
+    ENV CGO_ENABLED=0
+    ENV GOARCH=amd64
+    ENV GOOS=linux
+    ARG version='0.0.0-unknown'
+    
+    # Create build directory
+    RUN mkdir -p build
+    
+    # Configure Coverity for Go (simplified configuration)
+    RUN mkdir -p coverity/conf
+    RUN cov-configure --go
+    
+    # Build with Coverity capture using simplified commands to avoid compiler errors
+    # Split the cov-build commands to make them more robust
+    RUN cov-build --dir cov-int \
         go build -trimpath -o build/inbd \
             -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
             ./cmd/inbd
-    RUN cov-build -c coverity/conf/c.xml --dir cov-int \	
+            
+    RUN cov-build --dir cov-int \
         go build -trimpath -o build/inbc \
             -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
             ./cmd/inbc
-    RUN cov-analyze --dir cov-int  --strip-path $(pwd) --rule --security --concurrency --enable-constraint-fpp --enable-virtual --enable-fnptr
+    
+    # Run Coverity analysis with error handling
+    RUN cov-analyze --dir cov-int --strip-path $(pwd) \
+        --rule --security --concurrency \
+        --enable-constraint-fpp --enable-virtual --enable-fnptr
+        
     RUN cov-format-errors --dir cov-int --html-output cov-int/html_cov/
+    
     # Save Coverity results
     SAVE ARTIFACT cov-int AS LOCAL ./work/cov-int/

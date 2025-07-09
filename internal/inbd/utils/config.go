@@ -54,9 +54,8 @@ func LoadConfig(fs afero.Fs, filePath string) (*Configurations, error) {
 
 // IsTrustedRepository checks if the given URL is in the list of trusted repositories
 func IsTrustedRepository(url string, config *Configurations) bool {
-	log.Printf("Checking if URL %s is in trusted repositories", url)
+	log.Printf("Checking if URL '%s' is in trusted repositories", url)
 	for _, repo := range config.OSUpdater.TrustedRepositories {
-		log.Printf("Comparing with trusted repository: %s", repo)
 		if strings.HasPrefix(url, repo) {
 			return true
 		}

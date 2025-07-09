@@ -10,3 +10,5 @@ build/
 **/__debug_bin*
 
 dist
+
+cert.conf

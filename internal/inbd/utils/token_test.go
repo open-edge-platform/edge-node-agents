@@ -68,8 +68,6 @@ func TestIsTokenExpired_InvalidToken(t *testing.T) {
 	assert.False(t, isExpired)
 }
 
-const jwtTokenPath = "/etc/intel_edge_node/tokens/release-service/access_token"
-
 func TestReadJWTToken_EmptyToken(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	tokenPath := "/tmp/token"
@@ -100,34 +98,34 @@ func TestReadJWTToken(t *testing.T) {
 	}
 
 	t.Run("successful read with valid token", func(t *testing.T) {
-		err := afero.WriteFile(fs, jwtTokenPath, []byte("valid-token"), 0644)
-		if err != nil {
-			t.Fatalf("failed to write file: %v", err)
-		}
-		token, err := ReadJWTToken(fs, jwtTokenPath, mockIsTokenExpired)
-		assert.NoError(t, err)
-		assert.Equal(t, "valid-token", token)
-	})
+        err := afero.WriteFile(fs, JWTTokenPath, []byte("valid-token"), 0644)
+        if err != nil {
+            t.Fatalf("failed to write file: %v", err)
+        }
+        token, err := ReadJWTToken(fs, JWTTokenPath, mockIsTokenExpired)
+        assert.NoError(t, err)
+        assert.Equal(t, "valid-token", token)
+    })
 
 	t.Run("read expired token", func(t *testing.T) {
-		err := afero.WriteFile(fs, jwtTokenPath, []byte("expired-token"), 0644)
-		if err != nil {
-			t.Fatalf("failed to write file: %v", err)
-		}
-		token, err := ReadJWTToken(fs, jwtTokenPath, mockIsTokenExpired)
-		assert.Error(t, err)
-		assert.Equal(t, "", token)
-		assert.Contains(t, err.Error(), "token is expired")
-	})
+        err := afero.WriteFile(fs, JWTTokenPath, []byte("expired-token"), 0644)
+        if err != nil {
+            t.Fatalf("failed to write file: %v", err)
+        }
+        token, err := ReadJWTToken(fs, JWTTokenPath, mockIsTokenExpired)
+        assert.Error(t, err)
+        assert.Equal(t, "", token)
+        assert.Contains(t, err.Error(), "token is expired")
+    })
 
 	t.Run("file not found", func(t *testing.T) {
-		err := fs.Remove(jwtTokenPath)
-		if err != nil {
-			t.Logf("Warning: failed to remove file: %v", err)
-		}
-		token, err := ReadJWTToken(fs, jwtTokenPath, mockIsTokenExpired)
-		assert.Error(t, err)
-		assert.Equal(t, "", token)
-		assert.True(t, os.IsNotExist(err))
-	})
+        err := fs.Remove(JWTTokenPath)
+        if err != nil {
+            t.Logf("Warning: failed to remove file: %v", err)
+        }
+        token, err := ReadJWTToken(fs, JWTTokenPath, mockIsTokenExpired)
+        assert.Error(t, err)
+        assert.Equal(t, "", token)
+        assert.True(t, os.IsNotExist(err))
+    })
 }

@@ -45,7 +45,7 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 		}
 	}
 	execCmd := utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput)
-	cleaner := factory.CreateCleaner(execCmd, utils.DownloadDir+"/")
+	cleaner := factory.CreateCleaner(execCmd, utils.SOTADownloadDir+"/")
 
 	snapshot := factory.CreateSnapshotter(execCmd, u.req)
 	// Create a snapshot of the current system

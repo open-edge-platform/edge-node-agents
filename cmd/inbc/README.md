@@ -35,7 +35,7 @@ Performs a Firmware Over The Air (FOTA) update.
 
 ```commandline
 inbc fota {--uri URI} 
-   {--releasedate RELEASE_DATE; default="2026-12-31"} 
+   {--releasedate RELEASE_DATE}
    [--tooloptions TOOL_OPTIONS; default=""]
    [--reboot; default=true]
    [--username USERNAME; default=""]

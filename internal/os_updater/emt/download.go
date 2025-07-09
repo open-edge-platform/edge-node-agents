@@ -14,20 +14,14 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	util "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
 	"golang.org/x/sys/unix"
-)
-
-var (
-	jwtTokenPath = "/etc/intel_edge_node/tokens/release-service/access_token"
 )
 
 // Downloader is the concrete implementation of the IDownloader interface
@@ -43,23 +37,23 @@ type Downloader struct {
 	requestCreator          func(string, string, io.Reader) (*http.Request, error)
 	fs                      afero.Fs
 	getFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
-	getFileSizeInBytesFunc  func(string, string) (int64, error)
+	getFileSizeInBytesFunc  func(afero.Fs, string, string) (int64, error)
 }
 
 // NewDownloader creates a new Downloader.
 func NewDownloader(request *pb.UpdateSystemSoftwareRequest) *Downloader {
 	return &Downloader{
 		request:                 request,
-		readJWTTokenFunc:        util.ReadJWTToken,
-		isTokenExpiredFunc:      util.IsTokenExpired,
+		readJWTTokenFunc:        utils.ReadJWTToken,
+		isTokenExpiredFunc:      utils.IsTokenExpired,
 		writeUpdateStatus:       writeUpdateStatus,
 		writeGranularLog:        writeGranularLog,
 		statfs:                  unix.Statfs,
 		httpClient:              &http.Client{},
 		requestCreator:          http.NewRequest,
 		fs:                      afero.NewOsFs(),
-		getFreeDiskSpaceInBytes: util.GetFreeDiskSpaceInBytes,
-		getFileSizeInBytesFunc:  getFileSizeInBytes,
+		getFreeDiskSpaceInBytes: utils.GetFreeDiskSpaceInBytes,
+		getFileSizeInBytesFunc:  utils.GetFileSizeInBytes,
 	}
 }
 
@@ -121,7 +115,7 @@ func (t *Updater) VerifyHash() error {
 	// Extract the file name from the URL
 	urlParts := strings.Split(t.request.Url, "/")
 	fileName := urlParts[len(urlParts)-1]
-	filePath := utils.DownloadDir + "/" + fileName
+	filePath := utils.SOTADownloadDir + "/" + fileName
 
 	file, err := utils.Open(t.fs, filePath)
 	if err != nil {
@@ -152,57 +146,131 @@ func (t *Updater) VerifyHash() error {
 
 // downloadFile downloads the file from the url.
 func (t *Downloader) downloadFile() error {
+	// Read JWT token
+	token, err := t.readJWTTokenFunc(t.fs, utils.JWTTokenPath, t.isTokenExpiredFunc)
+	if err != nil {
+		return fmt.Errorf("error reading JWT token: %w", err)
+	}
+
+	if token == "" {
+		log.Println("JWT token is empty. Proceeding without Authorization.")
+	}
+
+	// Try different authentication methods
+	authMethods := t.getAuthMethods(token)
+	
+	var lastErr error
+	for _, method := range authMethods {
+		if err := t.tryAuthMethod(method); err != nil {
+			lastErr = err
+			continue
+		}
+		// Success - file was downloaded
+		return nil
+	}
+
+	// If we reach here, all methods failed
+	if lastErr == nil {
+		lastErr = fmt.Errorf("all authentication methods failed")
+	}
+	return lastErr
+}
+
+// authMethod represents an authentication method configuration
+type authMethod struct {
+	name      string
+	setupAuth func(*http.Request)
+}
+
+// getAuthMethods returns a slice of authentication methods to try
+func (t *Downloader) getAuthMethods(token string) []authMethod {
+	return []authMethod{
+		{
+			name:      "Bearer Token",
+			setupAuth: t.setupBearerTokenAuth(token),
+		},
+		{
+			name:      "No Authentication",
+			setupAuth: t.setupNoAuth(),
+		},
+	}
+}
+
+// setupBearerTokenAuth returns a function that sets up Bearer token authentication
+func (t *Downloader) setupBearerTokenAuth(token string) func(*http.Request) {
+	return func(req *http.Request) {
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+	}
+}
+
+// setupNoAuth returns a function that sets up no authentication
+func (t *Downloader) setupNoAuth() func(*http.Request) {
+	return func(req *http.Request) {
+		// No authentication headers added
+	}
+}
+
+// tryAuthMethod attempts to download the file using a specific authentication method
+func (t *Downloader) tryAuthMethod(method authMethod) error {
 	// Create a new HTTP request
 	req, err := t.requestCreator("GET", t.request.Url, nil)
 	if err != nil {
 		return fmt.Errorf("error creating request: %w", err)
 	}
 
-	// Add the JWT token to the request header
-	token, err := t.readJWTTokenFunc(t.fs, jwtTokenPath, t.isTokenExpiredFunc)
-	if err != nil {
-		return fmt.Errorf("error reading JWT token: %w", err)
-	}
-
-	// Check if the token exists
-	if token == "" {
-		log.Println("JWT token is empty. Proceeding without Authorization.")
-	} else {
-		// Add the JWT token to the request header
-		req.Header.Add("Authorization", "Bearer "+token)
-	}
+	// Setup authentication for this method
+	method.setupAuth(req)
 
 	// Perform the request
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("error performing request: %w", err)
+		return fmt.Errorf("error performing request with %s: %w", method.name, err)
 	}
 	defer resp.Body.Close()
 
-	// Check if the status code is 200/Success. If not, return the error.
-	if resp.StatusCode != http.StatusOK {
-		errMsg := fmt.Sprintf("Status code: %d. Expected 200/Success.", resp.StatusCode)
-		return errors.New(errMsg)
+	if resp.StatusCode == http.StatusOK {
+		return t.downloadFileFromResponse(resp, method.name)
 	}
 
+	return t.handleAuthError(resp, method.name)
+}
+
+// downloadFileFromResponse handles the actual file download from a successful HTTP response
+func (t *Downloader) downloadFileFromResponse(resp *http.Response, methodName string) error {
 	// Extract the file name from the URL
 	urlParts := strings.Split(t.request.Url, "/")
 	fileName := urlParts[len(urlParts)-1]
 
 	// Create the file
-	file, err := t.fs.Create(utils.DownloadDir + "/" + fileName)
+	file, err := t.fs.Create(utils.SOTADownloadDir + "/" + fileName)
 	if err != nil {
 		return fmt.Errorf("error creating file: %v", err)
 	}
 	defer file.Close()
 
 	// Copy the response body to the file
-	_, err = io.Copy(file, resp.Body)
+	bytesWritten, err := io.Copy(file, resp.Body)
 	if err != nil {
 		return fmt.Errorf("error downloading file: %w", err)
 	}
 
+	log.Printf("Successfully downloaded %d bytes using %s", bytesWritten, methodName)
 	return nil
+}
+
+// handleAuthError processes authentication-related HTTP errors
+func (t *Downloader) handleAuthError(resp *http.Response, methodName string) error {
+	// Read response body for error details
+	bodyBytes, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return fmt.Errorf("authentication failed with %s: status %d", methodName, resp.StatusCode)
+	}
+
+	// For other errors, fail immediately as they're likely not auth-related
+	return fmt.Errorf("HTTP error with %s: status %d, response: %s", methodName, resp.StatusCode, string(bodyBytes)[:min(len(bodyBytes), 200)])
 }
 
 // isDiskSpaceAvailable checks if there is enough disk space to download the artifacts.
@@ -220,20 +288,10 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 		jsonString = []byte("{}")
 	}
 
-	// Read JWT token
-	token, err := t.readJWTTokenFunc(t.fs, jwtTokenPath, t.isTokenExpiredFunc)
+	// Get required space for the file
+	requiredSpace, err := t.getRequiredFileSize(string(jsonString))
 	if err != nil {
-		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
-		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INBM)
-		return false, fmt.Errorf("error reading JWT token: %w", err)
-	}
-	log.Println("JWT token read successfully.")
-
-	requiredSpace, err := t.getFileSizeInBytesFunc(t.request.Url, token)
-	if err != nil {
-		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
-		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_DOWNLOAD)
-		return false, fmt.Errorf("error getting file size: %w", err)
+		return false, err
 	}
 
 	// Check if there is enough space
@@ -245,46 +303,35 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 	return true, nil
 }
 
-func getFileSizeInBytes(url string, token string) (int64, error) {
-	// Create a new HTTP GET request
-	req, err := http.NewRequest("GET", url, nil)
+// getRequiredFileSize gets the file size needed for the download with proper error handling
+func (t *Downloader) getRequiredFileSize(jsonString string) (int64, error) {
+	// Read JWT token
+	token, err := t.readJWTTokenFunc(t.fs, utils.JWTTokenPath, t.isTokenExpiredFunc)
 	if err != nil {
-		return 0, fmt.Errorf("error creating GET request: %w", err)
-	}
-	log.Println("Created GET request for URL:", url)
-
-	// Add the JWT token to the request header if it exists
-	if token != "" {
-		req.Header.Add("Authorization", "Bearer "+token)
-		log.Println("Added JWT token to GET request header.")
-	} else {
-		log.Println("JWT token is empty. Proceeding without Authorization.")
+		t.writeUpdateStatus(t.fs, FAIL, jsonString, err.Error())
+		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INBM)
+		return 0, fmt.Errorf("error reading JWT token: %w", err)
 	}
 
-	// Perform the GET request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	requiredSpace, err := t.getFileSizeInBytesFunc(t.fs, t.request.Url, token)
 	if err != nil {
-		return 0, fmt.Errorf("error performing GET request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Check if the status code is 200/Success
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("GET request failed with status code: %d", resp.StatusCode)
-	}
-
-	// Get the Content-Length header
-	contentLength := resp.Header.Get("Content-Length")
-	if contentLength == "" {
-		return 0, fmt.Errorf("Content-Length header is missing in GET response")
+		// If we get a 401 error, run diagnostics to help debug the issue
+		if strings.Contains(err.Error(), "401") {
+			log.Printf("Authentication failed (401), running JWT token diagnostics")
+			utils.DiagnoseJWTToken(t.fs, utils.JWTTokenPath)
+		}
+		t.writeUpdateStatus(t.fs, FAIL, jsonString, err.Error())
+		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_DOWNLOAD)
+		return 0, fmt.Errorf("error getting file size: %w", err)
 	}
 
-	// Parse the Content-Length to an integer
-	size, err := strconv.ParseInt(contentLength, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("error parsing Content-Length: %w", err)
-	}
+	return requiredSpace, nil
+}
 
-	return size, nil
+// Helper function for min
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

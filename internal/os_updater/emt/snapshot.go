@@ -27,6 +27,7 @@ var (
 type Snapshotter struct {
 	commandExecutor utils.Executor
 	fs              afero.Fs
+	stateFilePath   string
 }
 
 // NewSnapshotter creates a new EMTSnapshotter.
@@ -34,6 +35,17 @@ func NewSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftware
 	return &Snapshotter{
 		commandExecutor: commandExecutor,
 		fs:              afero.NewOsFs(),
+		stateFilePath:   utils.StateFilePath,
+	}
+}
+
+// NewSnapshotterWithConfig creates a new EMTSnapshotter with custom configuration.
+// This is primarily for testing purposes.
+func NewSnapshotterWithConfig(commandExecutor utils.Executor, fs afero.Fs, stateFilePath string) *Snapshotter {
+	return &Snapshotter{
+		commandExecutor: commandExecutor,
+		fs:              fs,
+		stateFilePath:   stateFilePath,
 	}
 }
 
@@ -41,7 +53,7 @@ func NewSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftware
 func (t *Snapshotter) Snapshot() error {
 	log.Println("Take a snapshot.")
 
-	err := utils.ClearStateFile(t.commandExecutor, utils.StateFilePath)
+	err := utils.ClearStateFile(t.commandExecutor, t.stateFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to clear dispatcher state file: %w", err)
 	}
@@ -62,7 +74,7 @@ func (t *Snapshotter) Snapshot() error {
 	}
 
 	// Write the JSON to the state file
-	if err := utils.WriteToStateFile(t.fs, utils.StateFilePath, string(jsonData)); err != nil {
+	if err := utils.WriteToStateFile(t.fs, t.stateFilePath, string(jsonData)); err != nil {
 		return fmt.Errorf("failed to write to state file: %w", err)
 	}
 
@@ -89,8 +101,8 @@ func GetImageBuildDate(fs afero.Fs) (string, error) {
 
 		// Check if the line contains IMAGE_BUILD_DATE
 		if strings.HasPrefix(line, "IMAGE_BUILD_DATE=") {
-			// Extract the value after the '=' sign
-			imageBuildDate := strings.Split(line, "=")[1]
+			// Extract the value after the first '=' sign
+			imageBuildDate := strings.SplitN(line, "=", 2)[1]
 			log.Println("IMAGE_BUILD_DATE:", imageBuildDate)
 			return imageBuildDate, nil
 		}

@@ -8,8 +8,11 @@ package inbd
 import (
 	"context"
 	"log"
-	"strings"
+	"net/url"
+	"errors"
+  "strings"
 
+	fwUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/fw_updater"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
 	appSource "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu/app_source"
@@ -22,10 +25,40 @@ type InbdServer struct {
 	pb.UnimplementedInbServiceServer
 }
 
+// validateURL checks if the given URL is non-empty, well-formed, and uses http or https scheme.
+func validateURL(rawURL string) error {
+	if rawURL == "" {
+		return errors.New("URL is empty")
+	}
+	parsed, err := url.ParseRequestURI(rawURL)
+	if err != nil {
+		return errors.New("URL is not valid: " + err.Error())
+	}
+	if parsed.Scheme != "https" {
+		return errors.New("URL must use https scheme")
+	}
+	if parsed.Host == "" {
+		return errors.New("URL must have a host")
+	}
+	return nil
+}
+// UpdateFirmware updates the firmware
 func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareRequest) (*pb.UpdateResponse, error) {
 	log.Printf("Received UpdateFirmware request")
 
-	return &pb.UpdateResponse{StatusCode: 501, Error: "Not Implemented"}, nil
+	if req.Url == "" {
+		return &pb.UpdateResponse{StatusCode: 400, Error: "URL is required"}, nil
+	}
+	if err := validateURL(req.Url); err != nil {
+		return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil
+	}
+
+	resp, err := fwUpdater.NewFWUpdater(req).UpdateFirmware()
+	if err != nil {
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+	}	
+
+	return &pb.UpdateResponse{StatusCode: resp.StatusCode, Error: resp.Error}, nil
 }
 
 // UpdateSystemSoftware updates the system software
@@ -35,6 +68,11 @@ func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSys
 	os, err := osUpdater.DetectOS()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
+	}
+	if req.Url != "" {
+		if err := validateURL(req.Url); err != nil {
+			return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil
+		}
 	}
 
 	sotaFactory, err := osUpdater.GetOSUpdaterFactory(os)
@@ -80,6 +118,11 @@ func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplic
 	}
 	if os != "Ubuntu" {
 		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Add Application Source is only for Ubuntu."}, nil
+	}
+	if req.GpgKeyUri != "" {
+		if err := validateURL(req.GpgKeyUri); err != nil {
+			return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil
+		}
 	}
 	if req.Filename == "" {
 		return &pb.UpdateResponse{StatusCode: 400, Error: "Filename is empty"}, nil
