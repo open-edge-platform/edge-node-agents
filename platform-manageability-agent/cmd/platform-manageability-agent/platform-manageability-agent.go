@@ -17,11 +17,8 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
-	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
 	"github.com/sirupsen/logrus"
 )
-
-var log = logger.Logger
 
 const AGENT_NAME = "platform-manageability-agent"
 
@@ -30,29 +27,71 @@ func main() {
 		fmt.Printf("%v v%v\n", info.Component, info.Version)
 		os.Exit(0)
 	}
-	log.Infof("Starting Platform Manageability Agent. Args: %v\n", os.Args[1:])
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		sig := <-sigs
-		log.Infof("Received signal: %v; shutting down...", sig)
-		cancel()
-	}()
 
 	// Initialize configuration
 	configPath := flag.String("config", "", "Config file path")
 	flag.Parse()
 
-	confs, err := config.New(*configPath)
-	if err != nil {
-		log.Errorf("unable to initialize configuration. Platform Manageability Agent will terminate %v", err)
+	if configPath == nil || *configPath == "" {
+		fmt.Fprintf(os.Stderr, "Error: --config flag is required and must not be empty\n")
 		flag.Usage()
 		os.Exit(1)
 	}
 
+	confs, err := config.New(*configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to initialize configuration. Platform Manageability Agent will terminate %v\n", err)
+		os.Exit(1)
+	}
+
+	// Create logger locally
+	log := logrus.New()
+	log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+	})
+	log.SetLevel(logrus.InfoLevel)
+
+	// Create context with cancellation
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Set up signal handling before starting the agent
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start signal handler goroutine with proper cleanup
+	go func() {
+		defer signal.Stop(sigs) // Cleanup signal notifications
+		defer close(sigs)       // Close the signal channel
+
+		select {
+		case sig := <-sigs:
+			log.Infof("Received signal: %v; shutting down...", sig)
+			cancel()
+		case <-ctx.Done():
+			// Context was cancelled, exit goroutine
+			return
+		}
+	}()
+
+	// Run the agent with dependency injection
+	if err := runAgentWithDependencies(ctx, log, confs); err != nil {
+		fmt.Fprintf(os.Stderr, "Agent failed: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+// runAgentWithDependencies initializes the agent with proper dependency injection
+func runAgentWithDependencies(ctx context.Context, log *logrus.Logger, confs *config.Config) error {
+	log.Info("Starting Platform Manageability Agent")
+	log.Debugf("Platform Manageability Agent arguments: %v", os.Args[1:])
+
+	// Run the agent with injected dependencies
+	return runAgent(ctx, log, confs)
+}
+
+// runAgent runs the main agent logic with injected dependencies
+func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) error {
 	// metrics
 	shutdown, err := metrics.Init(ctx, confs.MetricsEndpoint, confs.MetricsInterval, info.Component, info.Version)
 	if err != nil {
@@ -68,6 +107,7 @@ func main() {
 	}
 
 	// Set log level as per configuration
+	// Supported log levels: "debug", "info", "error"
 	logLevel := confs.LogLevel
 
 	switch logLevel {
@@ -75,20 +115,27 @@ func main() {
 		log.SetLevel(logrus.DebugLevel)
 	case "error":
 		log.SetLevel(logrus.ErrorLevel)
+	case "info":
+		log.SetLevel(logrus.InfoLevel)
 	default:
+		log.Warnf("Unknown log level '%s', defaulting to 'info'. Supported values: debug, info, error", logLevel)
 		log.SetLevel(logrus.InfoLevel)
 	}
 
 	log.Info("Platform Manageability Agent started successfully")
 
-	// Main agent loop
+	// Main agent loop using context-aware ticker
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			log.Info("Platform Manageability Agent shutting down")
-			return
-		case <-time.After(30 * time.Second):
+			return nil
+		case <-ticker.C:
 			log.Debug("Platform Manageability Agent heartbeat")
+			// TODO: Add main agent functionality here (e.g., health checks, work scheduling, etc.)
 		}
 	}
 }

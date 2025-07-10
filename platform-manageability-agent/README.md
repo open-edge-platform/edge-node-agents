@@ -70,7 +70,7 @@ platform-manageability-agent-<VERSION>.tar.gz
 ## Configuration
 
 The Platform Manageability Agent is configured using a YAML configuration file located at:
-`/etc/edge-node/platform-manageability/confs/platform-manageability-agent.yaml`
+`/etc/edge-node/node/confs/platform-manageability-agent.yaml`
 
 Key configuration sections include:
 
@@ -84,7 +84,7 @@ Key configuration sections include:
 The agent can be installed using the Debian package:
 
 ```bash
-sudo dpkg -i platform-manageability-agent_<VERSION>_amd64.deb
+sudo apt install -y ./build/package/platform-manageability-agent_<VERSION>_amd64.deb
 ```
 
 This will:
@@ -114,3 +114,58 @@ View logs:
 ```bash
 sudo journalctl -u platform-manageability-agent -f
 ```
+
+## Running the Agent Manually
+
+You can run the Platform Manageability Agent directly from the command line for development or troubleshooting. The `--config` flag is required to specify the configuration file location.
+
+Example:
+
+```bash
+./build/artifacts/platform-manageability-agent --config /etc/edge-node/node/confs/platform-manageability-agent.yaml
+```
+
+- The agent will log to stdout/stderr by default.
+- Use the `--config` flag to point to your YAML configuration file.
+- You can also use `platform-manageability-agent version` to print the agent version and exit.
+
+## Security
+
+- The agent is designed to run as a dedicated system user (`platform-manageability-agent`) with least privilege.
+- Configuration files (such as `/etc/edge-node/platform-manageability/confs/platform-manageability-agent.yaml`) should be readable only by the agent user and root.
+- Secrets (tokens, credentials) should never be stored in logs or world-readable files.
+- Always review configuration and permissions after installation.
+
+## Logging
+
+- The agent uses structured logging via [logrus](https://github.com/sirupsen/logrus).
+- Log level is controlled by the `logLevel` field in the configuration file. Supported values: `debug`, `info`, `error`.
+- By default, logs are written to stdout/stderr and captured by systemd/journal.
+- To increase log verbosity for troubleshooting, set `logLevel: debug` in the config and restart the agent.
+
+## Troubleshooting
+
+- To check agent status: `sudo systemctl status platform-manageability-agent`
+- To view logs: `sudo journalctl -u platform-manageability-agent -f`
+- If the agent fails to start:
+  - Check the configuration file path and permissions.
+  - Review logs for errors related to configuration, permissions, or dependencies.
+  - Enable debug logging for more detailed output.
+- For metrics issues: If metrics initialization fails, the agent logs an error but continues running (metrics are optional).
+- For further help, consult the project documentation or open an issue on the project repository.
+
+## Uninstall
+
+To remove the Platform Manageability Agent from your system, use one of the following commands:
+
+```bash
+sudo apt remove platform-manageability-agent
+```
+
+- This will remove the agent binary, systemd service, and most installed files.
+- Configuration files in `/etc/edge-node/node/confs/` may remain for manual review or backup.
+- The system user `platform-manageability-agent` may also remain; you can remove it manually if desired.
+
+## License
+
+This project is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).

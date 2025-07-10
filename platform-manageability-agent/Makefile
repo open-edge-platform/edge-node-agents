@@ -4,7 +4,7 @@
 NAME ?= platform-manageability-agent
 GO_MOD ?= readonly
 BUILD_DIR ?= build/artifacts
-PMA_PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
+PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
 PREFIX ?= /usr/local
 VERSION := $(shell cat VERSION)
 COMMIT := $(shell git rev-parse --short HEAD)
@@ -16,12 +16,29 @@ endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
 REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
-# Include shared makefile, if it exists
-ifneq ("$(wildcard ./common.mk)","")
-	include ./common.mk
+SHELL := /bin/bash
+.SHELLFLAGS := -e -c
+
+ifeq ("$(wildcard ./common.mk)","")
+	ifeq ("$(wildcard ../common.mk)","")
+		$(error Neither ./common.mk nor ../common.mk found. Please provide a common.mk file.)
+	else
+		include ../common.mk
+	endif
 else
-	include ../common.mk
+	include ./common.mk
 endif
+
+# Documented targets:
+#   all:        Build, lint, and test the agent
+#   pmabuild:   Build the agent binary
+#   pmabuild_with_race: Build with Go race detector
+#   pmainstall: Install the agent binary to $(PREFIX)/bin
+#   package:    Build a Debian package (requires dh_make, dpkg-buildpackage)
+#   tarball:    Create a tarball using common-tarball
+#   clean:      Remove build artifacts
+#   test:       Run unit tests (from common.mk)
+#   fuzztest:   Run fuzz tests (from common.mk)
 
 .PHONY: all build clean help lint package test fuzztest tarball
 
@@ -65,8 +82,13 @@ fuzztest: common-fuzztest
 
 package:
 	@echo "---MAKEFILE PACKAGE---"
-	dh_make -n --single --packagename $(NAME) || true
-	dpkg-buildpackage -us -uc -b
+	mkdir -p $(PACKAGE_BUILD_DIR)
+	cp -r $(shell ls . | grep -v build*) $(PACKAGE_BUILD_DIR)
+	cp -r ../LICENSES $(PACKAGE_BUILD_DIR)
+	cp ../common.mk $(PACKAGE_BUILD_DIR)
+	sed -i "s#VERSION#$(PKG_VERSION)#" $(PACKAGE_BUILD_DIR)/debian/changelog
+	sed -i "s#../common.mk#common.mk#" $(PACKAGE_BUILD_DIR)/Makefile
+	cd $(PACKAGE_BUILD_DIR); debuild --preserve-env --preserve-envvar PATH -us -uc -b
 	@echo "---END MAKEFILE PACKAGE---"
 
 tarball: common-tarball

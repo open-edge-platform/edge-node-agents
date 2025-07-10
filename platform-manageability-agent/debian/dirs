@@ -1,5 +1,0 @@
-etc/edge-node/platform-manageability
-etc/edge-node/platform-manageability/confs
-etc/intel_edge_node/tokens/platform-manageability-agent
-run/platform-manageability-agent
-var/log/edge-node/pma
