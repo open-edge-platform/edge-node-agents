@@ -16,6 +16,8 @@
    9. [Configuration Remove](#remove)
    10. [Configuration Append](#append)
    11. [Query](#query)
+   12. [Restart](#restart)
+   13. [Shutdown](#shutdown)
 
 </details>
 
@@ -233,112 +235,141 @@ inbc source os update
 ```
 
 ## LOAD
+
 ### Description
+
 Load a new configuration file.   This will replace the existing configuration file with the new file.
 
 📝 The configuration file you provide needs to be named *intel_manageability.conf*.
 
-
 ### Usage
-``` 
+
+```commandline
 inbc load
    [--uri, -u URI]
    {--signature, -s SIGNATURE}
 ```
 
 ### Examples
+
 #### Load new Configuration File
-```
+
+```commandline
 inbc load --uri  <URI to config file>/config.file
 ```
 
-
 ## GET
+
 ### Description
+
 Get key/value pairs from configuration file
 
 ### Usage
-```
+
+```commandline
 inbc get
    {--path, -p KEY_PATH;...} 
-```   
-### Examples
-#### Get Configuration Value
 ```
+
+### Examples
+
+#### Get Configuration Value
+
+```commandline
 inbc get --path  os_updater.proceedWithoutRollback
 ```
 
-
 ## SET
+
 ### Description
+
 Set key/value pairs in configuration file
 
 ### Usage
-```
+
+```commandline
 inbc set
    {--path, -p KEY_PATH;...} 
 ```
+
 ### Examples
+
 #### Set Configuration Value
-```
+
+```commandline
 inbc set --path  os_updater.proceedWithoutRollback:true
 ```
 
-
 ## Append
+
 ### Description
+
 Append is only applicable to config tags, which is trustedRepositories
 
 ### Usage
-```
+
+```commandline
 inbc append
    {--path, -p KEY_PATH;...} 
 ```
+
 ### Examples
+
 #### Append a key/value pair
-```
+
+```commandline
 inbc append --path  os_updater.trustedRepositories:https://abc.com/
 ```
 
-
 ## Remove
+
 ### Description
+
 Remove is only applicable to config tags, which is trustedRepositories
 
 ### Usage
-```
+
+```commandline
 inbc remove 
    {--path, -p KEY_PATH;...} 
 ```
 
-
 ### Examples
+
 #### Remove a key/value pair
-```
-inbc remove --path  os_updater.trustedRepositories:https://abc.com/
+
+```commandline
+inbc remove --path  os_updater.trustedRepositories:<https://abc.com/>
 ```
 
 ## QUERY
+
 ### Description
 Query device(s) for attributes
 
 ### Usage
-```
+```commandline
 inbc query
    [--option, -o=[all | hw | fw |  os | swbom | version ]; default='all']
 ```
 
 ### Examples
+
 #### Return all attributes
-```
+
+```commandline
 inbc query
 ```
+
 #### Return only 'hw' attributes
-```
+
+```commandline
 inbc query --option hw
 ```
+
 #### Return only 'swbom' attributes
-```
+
+```commandline
 inbc query --option swbom
 ```
 
@@ -377,7 +408,7 @@ The Query command can be called by either the cloud or INBC.  It will provide at
 | os_version      | Operating System version      |
 | os_release_date | Operating System release date |
 
- #### 'swbom' - Software BOM
+#### 'swbom' - Software BOM
 
 SWBOM dynamic telemetry data
 
@@ -386,3 +417,26 @@ SWBOM dynamic telemetry data
 | Attribute | Description    |
 |:----------|:---------------|
 | version   | Version number |
+
+## RESTART
+
+### Description
+
+Restart
+
+### Usage
+
+```commandline
+inbc restart
+```
+
+## SHUTDOWN
+
+### Description
+Shutdown
+
+### Usage
+
+```commandline
+inbc shutdown
+```

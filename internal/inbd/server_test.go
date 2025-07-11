@@ -5,6 +5,7 @@
 package inbd
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -13,9 +14,28 @@ import (
 	"testing"
 	"time"
 
+	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
 	"google.golang.org/grpc"
 )
+
+// MockPowerManager implements PowerManager for fast testing without delays
+type MockPowerManager struct {
+	RebootError    error
+	ShutdownError  error
+	RebootCalled   bool
+	ShutdownCalled bool
+}
+
+func (m *MockPowerManager) Reboot() error {
+	m.RebootCalled = true
+	return m.RebootError
+}
+
+func (m *MockPowerManager) Shutdown() error {
+	m.ShutdownCalled = true
+	return m.ShutdownError
+}
 
 // dummyFileInfo implements os.FileInfo for testing.
 type dummyFileInfo struct{}
@@ -337,4 +357,281 @@ func TestRunServer_ReadFileError(t *testing.T) {
 	if err == nil || err.Error() != "failed to read CA certificate: failed to read CA certificate" {
 		t.Errorf("Expected CA certificate read error, got %v", err)
 	}
+}
+
+// TestSetPowerState_UnspecifiedAction tests SetPowerState with unspecified power action
+func TestSetPowerState_UnspecifiedAction(t *testing.T) {
+	mockPowerManager := &MockPowerManager{}
+	server := NewInbdServerWithPowerManager(mockPowerManager)
+	ctx := context.Background()
+
+	req := &pb.SetPowerStateRequest{
+		Action: pb.SetPowerStateRequest_POWER_ACTION_UNSPECIFIED,
+	}
+
+	resp, err := server.SetPowerState(ctx, req)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if resp.StatusCode != 400 {
+		t.Errorf("Expected status code 400, got %d", resp.StatusCode)
+	}
+	if resp.Error != "Power action is required" {
+		t.Errorf("Expected error 'Power action is required', got %s", resp.Error)
+	}
+
+	// Verify no power operations were called
+	if mockPowerManager.RebootCalled || mockPowerManager.ShutdownCalled {
+		t.Errorf("Expected no power operations to be called for unspecified action")
+	}
+}
+
+// TestSetPowerState_CycleAction tests SetPowerState with cycle power action
+func TestSetPowerState_CycleAction(t *testing.T) {
+	mockPowerManager := &MockPowerManager{}
+	server := NewInbdServerWithPowerManager(mockPowerManager)
+	ctx := context.Background()
+
+	req := &pb.SetPowerStateRequest{
+		Action: pb.SetPowerStateRequest_POWER_ACTION_CYCLE,
+	}
+
+	resp, err := server.SetPowerState(ctx, req)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %d", resp.StatusCode)
+	}
+	if resp.Error != "SUCCESS" {
+		t.Errorf("Expected error 'SUCCESS', got %s", resp.Error)
+	}
+
+	// Verify reboot was called
+	if !mockPowerManager.RebootCalled {
+		t.Errorf("Expected Reboot to be called")
+	}
+	if mockPowerManager.ShutdownCalled {
+		t.Errorf("Expected Shutdown not to be called")
+	}
+}
+
+// TestSetPowerState_OffAction tests SetPowerState with power off action
+func TestSetPowerState_OffAction(t *testing.T) {
+	mockPowerManager := &MockPowerManager{}
+	server := NewInbdServerWithPowerManager(mockPowerManager)
+	ctx := context.Background()
+
+	req := &pb.SetPowerStateRequest{
+		Action: pb.SetPowerStateRequest_POWER_ACTION_OFF,
+	}
+
+	resp, err := server.SetPowerState(ctx, req)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %d", resp.StatusCode)
+	}
+	if resp.Error != "SUCCESS" {
+		t.Errorf("Expected error 'SUCCESS', got %s", resp.Error)
+	}
+
+	// Verify shutdown was called
+	if !mockPowerManager.ShutdownCalled {
+		t.Errorf("Expected Shutdown to be called")
+	}
+	if mockPowerManager.RebootCalled {
+		t.Errorf("Expected Reboot not to be called")
+	}
+}
+
+// TestSetPowerState_CycleActionError tests SetPowerState with cycle power action that fails
+func TestSetPowerState_CycleActionError(t *testing.T) {
+	mockPowerManager := &MockPowerManager{
+		RebootError: errors.New("reboot failed"),
+	}
+	server := NewInbdServerWithPowerManager(mockPowerManager)
+	ctx := context.Background()
+
+	req := &pb.SetPowerStateRequest{
+		Action: pb.SetPowerStateRequest_POWER_ACTION_CYCLE,
+	}
+
+	resp, err := server.SetPowerState(ctx, req)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if resp.StatusCode != 500 {
+		t.Errorf("Expected status code 500, got %d", resp.StatusCode)
+	}
+	if resp.Error != "reboot failed" {
+		t.Errorf("Expected error 'reboot failed', got %s", resp.Error)
+	}
+
+	// Verify reboot was called
+	if !mockPowerManager.RebootCalled {
+		t.Errorf("Expected Reboot to be called")
+	}
+	if mockPowerManager.ShutdownCalled {
+		t.Errorf("Expected Shutdown not to be called")
+	}
+}
+
+// TestSetPowerState_OffActionError tests SetPowerState with power off action that fails
+func TestSetPowerState_OffActionError(t *testing.T) {
+	mockPowerManager := &MockPowerManager{
+		ShutdownError: errors.New("shutdown failed"),
+	}
+	server := NewInbdServerWithPowerManager(mockPowerManager)
+	ctx := context.Background()
+
+	req := &pb.SetPowerStateRequest{
+		Action: pb.SetPowerStateRequest_POWER_ACTION_OFF,
+	}
+
+	resp, err := server.SetPowerState(ctx, req)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if resp.StatusCode != 500 {
+		t.Errorf("Expected status code 500, got %d", resp.StatusCode)
+	}
+	if resp.Error != "shutdown failed: shutdown failed" {
+		t.Errorf("Expected error 'shutdown failed: shutdown failed', got %s", resp.Error)
+	}
+
+	// Verify shutdown was called
+	if !mockPowerManager.ShutdownCalled {
+		t.Errorf("Expected Shutdown to be called")
+	}
+	if mockPowerManager.RebootCalled {
+		t.Errorf("Expected Reboot not to be called")
+	}
+}
+
+// TestUpdateFirmware_EmptyURL tests UpdateFirmware with empty URL
+func TestUpdateFirmware_EmptyURL(t *testing.T) {
+	server := &InbdServer{}
+	ctx := context.Background()
+
+	req := &pb.UpdateFirmwareRequest{
+		Url: "",
+	}
+
+	resp, err := server.UpdateFirmware(ctx, req)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if resp.StatusCode != 400 {
+		t.Errorf("Expected status code 400, got %d", resp.StatusCode)
+	}
+	if resp.Error != "URL is required" {
+		t.Errorf("Expected error 'URL is required', got %s", resp.Error)
+	}
+}
+
+// TestUpdateFirmware_InvalidURL tests UpdateFirmware with invalid URL
+func TestUpdateFirmware_InvalidURL(t *testing.T) {
+	server := &InbdServer{}
+	ctx := context.Background()
+
+	testCases := []struct {
+		name        string
+		url         string
+		expectedErr string
+	}{
+		{
+			name:        "Invalid URL format",
+			url:         "not-a-url",
+			expectedErr: "URL is not valid:",
+		},
+		{
+			name:        "HTTP instead of HTTPS",
+			url:         "http://example.com/firmware.bin",
+			expectedErr: "URL must use https scheme",
+		},
+		{
+			name:        "HTTPS URL without host",
+			url:         "https://",
+			expectedErr: "URL must have a host",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := &pb.UpdateFirmwareRequest{
+				Url: tc.url,
+			}
+
+			resp, err := server.UpdateFirmware(ctx, req)
+			if err != nil {
+				t.Fatalf("Expected no error, got %v", err)
+			}
+
+			if resp.StatusCode != 400 {
+				t.Errorf("Expected status code 400, got %d", resp.StatusCode)
+			}
+			if !contains(resp.Error, tc.expectedErr) {
+				t.Errorf("Expected error to contain '%s', got '%s'", tc.expectedErr, resp.Error)
+			}
+		})
+	}
+}
+
+// TestUpdateFirmware_ValidURL tests UpdateFirmware with valid URL
+func TestUpdateFirmware_ValidURL(t *testing.T) {
+	server := &InbdServer{}
+	ctx := context.Background()
+
+	req := &pb.UpdateFirmwareRequest{
+		Url:         "https://example.com/firmware.bin",
+		ToolOptions: "test-options",
+		DoNotReboot: true,
+		Username:    "testuser",
+		Signature:   "test-signature",
+	}
+
+	resp, err := server.UpdateFirmware(ctx, req)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	// The firmware update will likely fail due to network/download issues in test environment
+	// but we test that the initial validation passes
+	if resp.StatusCode != 200 && resp.StatusCode != 500 {
+		t.Errorf("Expected status code 200 or 500, got %d", resp.StatusCode)
+	}
+
+	// If it's a download error (500), that's expected in test environment
+	if resp.StatusCode == 500 {
+		// This is expected as the download will likely fail
+		if resp.Error == "" {
+			t.Errorf("Expected error message for status code 500")
+		}
+	}
+}
+
+// contains is a helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr ||
+		(len(s) > len(substr) && (s[:len(substr)] == substr ||
+			s[len(s)-len(substr):] == substr ||
+			findSubstring(s, substr))))
+}
+
+// findSubstring is a helper to find substring in string
+func findSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

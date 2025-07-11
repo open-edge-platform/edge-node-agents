@@ -34,6 +34,8 @@ func main() {
 	rootCmd.AddCommand(commands.ConfigSetCmd())
 	rootCmd.AddCommand(commands.ConfigAppendCmd())
 	rootCmd.AddCommand(commands.ConfigRemoveCmd())
+	rootCmd.AddCommand(commands.RestartCmd())
+	rootCmd.AddCommand(commands.ShutdownCmd())
 
 	rootCmd.AddCommand(commands.QueryCmd())
 

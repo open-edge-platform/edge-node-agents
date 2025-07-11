@@ -86,6 +86,12 @@ func (m *MockInbServiceClient) Query(ctx context.Context, req *pb.QueryRequest, 
 	return args.Get(0).(*pb.QueryResponse), args.Error(1)
 }
 
+// SetPowerState is a mock implementation of the SetPowerState function.
+func (m *MockInbServiceClient) SetPowerState(ctx context.Context, req *pb.SetPowerStateRequest, opts ...grpc.CallOption) (*pb.SetPowerStateResponse, error) {
+	args := m.Called(ctx, req, opts)
+	return args.Get(0).(*pb.SetPowerStateResponse), args.Error(1)
+}
+
 // MockClientConn is a mock implementation of the grpc.ClientConnInterface interface.
 type MockClientConn struct {
 	grpc.ClientConnInterface

@@ -3,14 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Package inbd provides the implementation of the InbServiceServer interface
+// for the INBD service.
 package inbd
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"net/url"
-	"errors"
-  "strings"
+	"os/exec"
+	"strings"
 
 	fwUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/fw_updater"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
@@ -20,9 +24,41 @@ import (
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 )
 
+// PowerManager interface for power management operations
+type PowerManager interface {
+	Reboot() error
+	Shutdown() error
+}
+
+// DefaultPowerManager implements PowerManager using real system commands
+type DefaultPowerManager struct{}
+
+func (dpm *DefaultPowerManager) Reboot() error {
+	return utils.RebootSystem(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput))
+}
+
+func (dpm *DefaultPowerManager) Shutdown() error {
+	return utils.ShutdownSystem(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput))
+}
+
 // InbdServer implements the InbServiceServer interface
 type InbdServer struct {
 	pb.UnimplementedInbServiceServer
+	powerManager PowerManager
+}
+
+// NewInbdServer creates a new InbdServer with default power manager
+func NewInbdServer() *InbdServer {
+	return &InbdServer{
+		powerManager: &DefaultPowerManager{},
+	}
+}
+
+// NewInbdServerWithPowerManager creates a new InbdServer with custom power manager (for testing)
+func NewInbdServerWithPowerManager(pm PowerManager) *InbdServer {
+	return &InbdServer{
+		powerManager: pm,
+	}
 }
 
 // validateURL checks if the given URL is non-empty, well-formed, and uses http or https scheme.
@@ -42,6 +78,28 @@ func validateURL(rawURL string) error {
 	}
 	return nil
 }
+
+// SetPowerState sets the power state of the device
+func (s *InbdServer) SetPowerState(ctx context.Context, req *pb.SetPowerStateRequest) (*pb.SetPowerStateResponse, error) {
+	log.Printf("Received SetPowerState request")
+	if req.Action == pb.SetPowerStateRequest_POWER_ACTION_UNSPECIFIED {
+		return &pb.SetPowerStateResponse{StatusCode: 400, Error: "Power action is required"}, nil
+	}
+
+	switch req.Action {
+	case pb.SetPowerStateRequest_POWER_ACTION_CYCLE:
+		if err := s.powerManager.Reboot(); err != nil {
+			return &pb.SetPowerStateResponse{StatusCode: 500, Error: err.Error()}, nil
+		}
+	case pb.SetPowerStateRequest_POWER_ACTION_OFF:
+		if err := s.powerManager.Shutdown(); err != nil {
+			return &pb.SetPowerStateResponse{StatusCode: 500, Error: fmt.Sprintf("shutdown failed: %s", err)}, nil
+		}
+	}
+
+	return &pb.SetPowerStateResponse{StatusCode: 200, Error: "SUCCESS"}, nil
+}
+
 // UpdateFirmware updates the firmware
 func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareRequest) (*pb.UpdateResponse, error) {
 	log.Printf("Received UpdateFirmware request")
@@ -56,7 +114,7 @@ func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareR
 	resp, err := fwUpdater.NewFWUpdater(req).UpdateFirmware()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
-	}	
+	}
 
 	return &pb.UpdateResponse{StatusCode: resp.StatusCode, Error: resp.Error}, nil
 }

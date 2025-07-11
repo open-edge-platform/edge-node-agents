@@ -47,7 +47,7 @@ func TestNewSnapshotter(t *testing.T) {
 func TestSnapshotter_Snapshot_Success(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file with valid content
 	imageIDContent := `IMAGE_BUILD_DATE=2025-01-15
 OTHER_FIELD=some_value
@@ -117,7 +117,7 @@ func TestSnapshotter_Snapshot_GetImageBuildDateError(t *testing.T) {
 func TestSnapshotter_Snapshot_EmptyBuildDate(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file without IMAGE_BUILD_DATE
 	imageIDContent := `OTHER_FIELD=some_value
 ANOTHER_FIELD=another_value`
@@ -140,7 +140,7 @@ ANOTHER_FIELD=another_value`
 func TestGetImageBuildDate_Success(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file with valid content
 	imageIDContent := `# This is a comment
 IMAGE_BUILD_DATE=2025-01-15T10:30:00Z
@@ -168,7 +168,7 @@ func TestGetImageBuildDate_FileNotFound(t *testing.T) {
 func TestGetImageBuildDate_NoImageBuildDate(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file without IMAGE_BUILD_DATE
 	imageIDContent := `# This is a comment
 OTHER_FIELD=some_value
@@ -185,7 +185,7 @@ ANOTHER_FIELD=another_value`
 func TestGetImageBuildDate_ImageBuildDateAtBeginning(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file with IMAGE_BUILD_DATE at the beginning
 	imageIDContent := `IMAGE_BUILD_DATE=2025-01-15
 OTHER_FIELD=some_value
@@ -202,7 +202,7 @@ ANOTHER_FIELD=another_value`
 func TestGetImageBuildDate_ImageBuildDateAtEnd(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file with IMAGE_BUILD_DATE at the end
 	imageIDContent := `OTHER_FIELD=some_value
 ANOTHER_FIELD=another_value
@@ -219,7 +219,7 @@ IMAGE_BUILD_DATE=2025-12-31`
 func TestGetImageBuildDate_MultipleImageBuildDates(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file with multiple IMAGE_BUILD_DATE entries (should return first one)
 	imageIDContent := `IMAGE_BUILD_DATE=2025-01-15
 OTHER_FIELD=some_value
@@ -236,7 +236,7 @@ IMAGE_BUILD_DATE=2025-12-31`
 func TestGetImageBuildDate_EmptyFile(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create an empty image-id file
 	err := afero.WriteFile(fs, "/etc/image-id", []byte(""), 0644)
 	assert.NoError(t, err)
@@ -250,7 +250,7 @@ func TestGetImageBuildDate_EmptyFile(t *testing.T) {
 func TestGetImageBuildDate_OnlyWhitespace(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file with only whitespace
 	imageIDContent := `   
 	
@@ -268,7 +268,7 @@ func TestGetImageBuildDate_OnlyWhitespace(t *testing.T) {
 func TestGetImageBuildDate_ImageBuildDateWithEquals(t *testing.T) {
 	// Create a memory filesystem
 	fs := afero.NewMemMapFs()
-	
+
 	// Create the image-id file with IMAGE_BUILD_DATE containing equals signs in the value
 	imageIDContent := `IMAGE_BUILD_DATE=version=2025-01-15=final
 OTHER_FIELD=some_value`

@@ -33,7 +33,7 @@ func NewVerifier() *Verifier {
 		CheckNetworkConnectionFunc: CheckNetworkConnection,
 		UndoChangeFunc:             UndoChange,
 		DeleteSnapshotFunc:         DeleteSnapshot,
-		rebootSystemFunc:           rebootSystem,
+		rebootSystemFunc:           utils.RebootSystem,
 		RemoveFileFunc:             utils.RemoveFile,
 	}
 }

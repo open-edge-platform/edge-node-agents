@@ -49,7 +49,7 @@ func TestUbuntuRebooter_Reboot(t *testing.T) {
 		err := rebooter.Reboot()
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{"/sbin/reboot"}, mockExec.commands[0])
+		assert.Equal(t, []string{"/usr/sbin/reboot"}, mockExec.commands[0])
 	})
 
 	t.Run("failed reboot", func(t *testing.T) {
@@ -69,6 +69,6 @@ func TestUbuntuRebooter_Reboot(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "reboot failed")
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{"/sbin/reboot"}, mockExec.commands[0])
+		assert.Equal(t, []string{"/usr/sbin/reboot"}, mockExec.commands[0])
 	})
 }

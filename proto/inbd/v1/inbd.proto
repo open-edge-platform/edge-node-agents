@@ -19,6 +19,22 @@ service InbService {
   rpc RemoveConfig(RemoveConfigRequest) returns (ConfigResponse);
   rpc UpdateFirmware(UpdateFirmwareRequest) returns (UpdateResponse);
   rpc Query(QueryRequest) returns (QueryResponse);
+  rpc SetPowerState(SetPowerStateRequest) returns (SetPowerStateResponse);
+}
+
+message SetPowerStateRequest {
+  enum PowerAction {
+    POWER_ACTION_UNSPECIFIED = 0;
+    POWER_ACTION_OFF = 1;   // Power off the node
+    POWER_ACTION_CYCLE = 2; // Cycle power to the node
+  }
+  
+  PowerAction action = 1 [
+      (buf.validate.field).enum = {
+          defined_only: true
+      },
+      (buf.validate.field).required = true
+  ]; // Action to perform on the node's power state
 }
 
 message UpdateFirmwareRequest {
@@ -106,6 +122,11 @@ message RemoveApplicationSourceRequest {
 }
 
 message UpdateResponse {
+  int32 status_code = 1; // Status code of the operation
+  string error = 2; // set if there is an error
+}
+
+message SetPowerStateResponse {
   int32 status_code = 1; // Status code of the operation
   string error = 2; // set if there is an error
 }

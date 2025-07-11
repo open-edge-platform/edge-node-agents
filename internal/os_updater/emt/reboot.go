@@ -48,14 +48,10 @@ func (t *Rebooter) Reboot() error {
 		jsonString = []byte("{}")
 	}
 
-	rebootCommand := []string{
-		"/usr/sbin/reboot",
-	}
-
-	if _, _, err := t.commandExecutor.Execute(rebootCommand); err != nil {
+	if err = utils.RebootSystem(t.commandExecutor); err != nil {
 		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_UNSPECIFIED)
-		return fmt.Errorf("failed to execute shell command(%v)- %v", rebootCommand, err)
+		return fmt.Errorf("failed to execute shell command(%v)- %v", utils.RebootCmd, err)
 	}
 	return nil
 }

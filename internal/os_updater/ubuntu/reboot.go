@@ -7,9 +7,7 @@
 package ubuntu
 
 import (
-	"fmt"
 	"log"
-	"time"
 
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
@@ -29,19 +27,5 @@ func (u *Rebooter) Reboot() error {
 		return nil
 	}
 
-	return rebootSystem(u.CommandExecutor)
-}
-
-func rebootSystem(cmdExecutor utils.Executor) error {
-	fmt.Print("Rebooting ")
-	time.Sleep(2 * time.Second)
-
-	cmd := "/sbin/reboot"
-
-	_, _, err := cmdExecutor.Execute([]string{cmd})
-	if err != nil {
-		return fmt.Errorf("reboot failed: %s", err)
-	}
-
-	return nil
+	return utils.RebootSystem(u.CommandExecutor)
 }

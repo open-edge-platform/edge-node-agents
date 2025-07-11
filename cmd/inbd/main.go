@@ -38,7 +38,7 @@ func main() {
 		NewGRPCServer: grpc.NewServer,
 		RegisterService: func(gs *grpc.Server) {
 			// Register our inbdServer implementation.
-			pb.RegisterInbServiceServer(gs, &inbd.InbdServer{})
+			pb.RegisterInbServiceServer(gs, inbd.NewInbdServer())
 		},
 		ServeFunc: func(gs *grpc.Server, lis net.Listener) error {
 			log.Printf("Server listening on %s", *socket)

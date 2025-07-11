@@ -33,6 +33,7 @@ type InbServiceClient interface {
 	RemoveConfig(ctx context.Context, in *RemoveConfigRequest, opts ...grpc.CallOption) (*ConfigResponse, error)
 	UpdateFirmware(ctx context.Context, in *UpdateFirmwareRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
+	SetPowerState(ctx context.Context, in *SetPowerStateRequest, opts ...grpc.CallOption) (*SetPowerStateResponse, error)
 }
 
 type inbServiceClient struct {
@@ -142,6 +143,15 @@ func (c *inbServiceClient) Query(ctx context.Context, in *QueryRequest, opts ...
 	return out, nil
 }
 
+func (c *inbServiceClient) SetPowerState(ctx context.Context, in *SetPowerStateRequest, opts ...grpc.CallOption) (*SetPowerStateResponse, error) {
+	out := new(SetPowerStateResponse)
+	err := c.cc.Invoke(ctx, "/inbd.v1.InbService/SetPowerState", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InbServiceServer is the server API for InbService service.
 // All implementations must embed UnimplementedInbServiceServer
 // for forward compatibility
@@ -157,6 +167,7 @@ type InbServiceServer interface {
 	RemoveConfig(context.Context, *RemoveConfigRequest) (*ConfigResponse, error)
 	UpdateFirmware(context.Context, *UpdateFirmwareRequest) (*UpdateResponse, error)
 	Query(context.Context, *QueryRequest) (*QueryResponse, error)
+	SetPowerState(context.Context, *SetPowerStateRequest) (*SetPowerStateResponse, error)
 	mustEmbedUnimplementedInbServiceServer()
 }
 
@@ -196,6 +207,9 @@ func (UnimplementedInbServiceServer) UpdateFirmware(context.Context, *UpdateFirm
 }
 func (UnimplementedInbServiceServer) Query(context.Context, *QueryRequest) (*QueryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
+}
+func (UnimplementedInbServiceServer) SetPowerState(context.Context, *SetPowerStateRequest) (*SetPowerStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetPowerState not implemented")
 }
 func (UnimplementedInbServiceServer) mustEmbedUnimplementedInbServiceServer() {}
 
@@ -408,6 +422,24 @@ func _InbService_Query_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InbService_SetPowerState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPowerStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InbServiceServer).SetPowerState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inbd.v1.InbService/SetPowerState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InbServiceServer).SetPowerState(ctx, req.(*SetPowerStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InbService_ServiceDesc is the grpc.ServiceDesc for InbService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -458,6 +490,10 @@ var InbService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Query",
 			Handler:    _InbService_Query_Handler,
+		},
+		{
+			MethodName: "SetPowerState",
+			Handler:    _InbService_SetPowerState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
