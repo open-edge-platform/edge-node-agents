@@ -158,6 +158,7 @@ jobs:
       cluster_agent_version: ${{ steps.agent-versions.outputs.cluster_agent }}
       hardware_discovery_agent_version: ${{ steps.agent-versions.outputs.hardware_discovery_agent }}
       node_agent_version: ${{ steps.agent-versions.outputs.node_agent }}
+      platform_manageability_agent_version: ${{ steps.agent-versions.outputs.platform_manageability_agent }}
       platform_observability_agent_version: ${{ steps.agent-versions.outputs.platform_observability_agent }}
       platform_telemetry_agent_version: ${{ steps.agent-versions.outputs.platform_telemetry_agent }}
       platform_update_agent_version: ${{ steps.agent-versions.outputs.platform_update_agent }}
@@ -192,6 +193,7 @@ jobs:
           echo "cluster_agent=$(head -n1 cluster-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "hardware_discovery_agent=$(head -n1 hardware-discovery-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "node_agent=$(head -n1 node-agent/VERSION)" >> ${GITHUB_OUTPUT}
+          echo "platform_manageability_agent=$(head -n1 platform-manageability-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "platform_observability_agent=$(head -n1 platform-observability-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "platform_telemetry_agent=$(head -n1 platform-telemetry-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "platform_update_agent=$(head -n1 platform-update-agent/VERSION)" >> ${GITHUB_OUTPUT}
@@ -289,6 +291,19 @@ jobs:
           else
             sed -i "s#node_agent_version: .*#node_agent_version: ${node_agent_version}#" edge-node-container/chart/bma_values.yaml
             sed -i "s#  node_agent_version: .*#  node_agent_version: ${node_agent_version}#" edge-node-container/chart/values.yaml
+          fi
+
+      - name: Update platform-manageability-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        env:
+          platform_manageability_agent_version: ${{ needs.collect-versions.outputs.platform_manageability_agent_version }}
+        run: |
+          if [[ $(echo "${platform_manageability_agent}" | grep 'dev') ]]; then
+            echo "Skipping platform manageability version update as no new version created"
+          else
+            sed -i "s#platform_manageability_agent_version: .*#platform_manageability_agent_version: ${platform_manageability_agent_version}#" edge-node-container/chart/bma_values.yaml
+            sed -i "s#  platform_manageability_agent_version: .*#  platform_manageability_agent_version: ${platform_manageability_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update platform-observability-agent versions in chart

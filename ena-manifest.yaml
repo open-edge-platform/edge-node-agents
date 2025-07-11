@@ -18,6 +18,9 @@ packages:
   - name: node-agent
     version: 1.7.2
     ociArtifact: edge-orch/en/deb/node-agent
+  - name: platform-manageability-agent
+    version: 0.1.0
+    ociArtifact: edge-orch/en/deb/platform-manageability-agent
   - name: platform-observability-agent
     version: 1.8.0
     ociArtifact: edge-orch/en/deb/platform-observability-agent
