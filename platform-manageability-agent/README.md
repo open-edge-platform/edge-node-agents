@@ -63,7 +63,7 @@ Example
 ```bash
 $ cd platform-manageability-agent/
 $ make tarball
-$ ls build/artifacts/
+$ ls build/artifacts/package
 platform-manageability-agent-<VERSION>.tar.gz
 ```
 
