@@ -11,10 +11,14 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/status"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	"github.com/sirupsen/logrus"
@@ -75,23 +79,23 @@ func main() {
 	}()
 
 	// Run the agent with dependency injection
-	if err := runAgentWithDependencies(ctx, log, confs); err != nil {
+	if err := runAgentWithDependencies(ctx, cancel, log, confs); err != nil {
 		fmt.Fprintf(os.Stderr, "Agent failed: %v\n", err)
 		os.Exit(1)
 	}
 }
 
 // runAgentWithDependencies initializes the agent with proper dependency injection
-func runAgentWithDependencies(ctx context.Context, log *logrus.Logger, confs *config.Config) error {
+func runAgentWithDependencies(ctx context.Context, cancel context.CancelFunc, log *logrus.Logger, confs *config.Config) error {
 	log.Info("Starting Platform Manageability Agent")
 	log.Debugf("Platform Manageability Agent arguments: %v", os.Args[1:])
 
 	// Run the agent with injected dependencies
-	return runAgent(ctx, log, confs)
+	return runAgent(ctx, cancel, log, confs)
 }
 
 // runAgent runs the main agent logic with injected dependencies
-func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) error {
+func runAgent(ctx context.Context, cancel context.CancelFunc, log *logrus.Logger, confs *config.Config) error {
 	// metrics
 	shutdown, err := metrics.Init(ctx, confs.MetricsEndpoint, confs.MetricsInterval, info.Component, info.Version)
 	if err != nil {
@@ -125,17 +129,88 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 	log.Info("Platform Manageability Agent started successfully")
 
 	// Main agent loop using context-aware ticker
+	var wg sync.WaitGroup
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("Platform Manageability Agent shutting down")
-			return nil
-		case <-ticker.C:
-			log.Debug("Platform Manageability Agent heartbeat")
-			// TODO: Add main agent functionality here (e.g., health checks, work scheduling, etc.)
+	wg.Add(1)
+	var lastUpdateTimestamp int64
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				log.Info("Platform Manageability Agent shutting down")
+				return
+			case <-ticker.C:
+				log.Debug("Platform Manageability Agent heartbeat")
+				atomic.StoreInt64(&lastUpdateTimestamp, time.Now().Unix())
+				// TODO: Add main agent functionality here (e.g., health checks, work scheduling, etc.)
+			}
 		}
+	}()
+
+	// Add agent status reporting
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		statusClient, statusInterval := initStatusClientAndTicker(ctx, cancel, log, confs.Status.Endpoint)
+		compareInterval := max(int64(statusInterval.Seconds()), int64(confs.Manageability.HeartbeatInterval.Seconds()))
+		statusTicker := time.NewTicker(1 * time.Nanosecond)
+		defer statusTicker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-statusTicker.C:
+				statusTicker.Stop()
+
+				lastCheck := atomic.LoadInt64(&lastUpdateTimestamp)
+				now := time.Now().Unix()
+				// To ensure the agent is not marked as not ready due to a functional delay, a
+				// check of 2x of interval is considered. This should prevent false negatives.
+				if now-lastCheck <= 2*compareInterval {
+					if err := statusClient.SendStatusReady(ctx, AGENT_NAME); err != nil {
+						log.Errorf("Failed to send status ready: %v", err)
+					}
+					log.Infoln("Status Ready")
+				} else {
+					if err := statusClient.SendStatusNotReady(ctx, AGENT_NAME); err != nil {
+						log.Errorf("Failed to send status not ready: %v", err)
+					}
+					log.Infoln("Status Not Ready")
+				}
+			}
+			statusTicker.Reset(statusInterval)
+		}
+	}()
+
+	return nil
+}
+
+func initStatusClientAndTicker(ctx context.Context, cancel context.CancelFunc, log *logrus.Logger, statusServer string) (*status.StatusClient, time.Duration) {
+	statusClient, err := status.InitClient(statusServer)
+	if err != nil {
+		log.Errorf("Failed to initialize status client: %v", err)
+		cancel()
 	}
+
+	var interval time.Duration
+	op := func() error {
+		interval, err = statusClient.GetStatusInterval(ctx, AGENT_NAME)
+		if err != nil {
+			log.Errorf("Failed to get status interval: %v", err)
+		}
+		return err
+	}
+
+	// High number of retries as retries would mostly indicate a problem with the status server
+	err = backoff.Retry(op, backoff.WithMaxRetries(backoff.WithContext(backoff.NewExponentialBackOff(), ctx), 30))
+	if err != nil {
+		log.Warnf("Defaulting to 10 seconds")
+		interval = 10 * time.Second
+	}
+
+	return statusClient, interval
 }

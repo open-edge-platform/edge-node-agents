@@ -74,7 +74,7 @@ pmabuild_with_race:
 	-o $(BUILD_DIR)/$(NAME) cmd/platform-manageability-agent/platform-manageability-agent.go
 	@echo "---END MAKEFILE BUILD WITH RACE---"
 
-build: pmabuild
+build: pmabuild ssmbuild
 
 test: common-unit-test
 
