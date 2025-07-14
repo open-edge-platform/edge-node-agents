@@ -40,7 +40,7 @@ endif
 #   test:       Run unit tests (from common.mk)
 #   fuzztest:   Run fuzz tests (from common.mk)
 
-.PHONY: all build clean help lint package test fuzztest tarball
+.PHONY: all build clean help lint package test fuzztest tarball deb-push
 
 all: build lint test
 
@@ -92,3 +92,5 @@ package:
 	@echo "---END MAKEFILE PACKAGE---"
 
 tarball: common-tarball
+
+deb-push: common-deb-push
