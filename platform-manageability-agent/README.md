@@ -30,7 +30,7 @@ The required Go version for the agents is outlined in the [go.mod file](https://
 
 ### Binary Build
 
-Run the `make pmabuild` command to build the platform manageability agent binary. The compiled binary can be found in the `build/artifacts` directory.
+Run the `make pmabuild` command to build the platform manageability agent binary. The compiled binary can be found in the `build/artifacts/package` directory.
 
 Example:
 
@@ -43,15 +43,15 @@ platform-manageability-agent
 
 ### Debian Package Build
 
-Run the `make package` command to build the platform manageability agent Debian package. The package can be found in the `build/artifacts` directory.
+Run the `make package` command to build the platform manageability agent Debian package. The package can be found in the `build/artifacts/package` directory.
 
 Example
 
 ```bash
 $ cd platform-manageability-agent/
 $ make package
-$ ls build/artifacts/
-platform-manageability-agent_<VERSION>_amd64.build  platform-manageability-agent_<VERSION>_amd64.buildinfo  platform-manageability-agent_<VERSION>_amd64.changes  platform-manageability-agent_<VERSION>_amd64.deb  package
+$ ls build/artifacts/package
+platform-manageability-agent_<VERSION>_amd64.build  platform-manageability-agent_<VERSION>_amd64.buildinfo  platform-manageability-agent_<VERSION>_amd64.changes  platform-manageability-agent_<VERSION>_amd64.deb
 ```
 
 ### Tarball Build
