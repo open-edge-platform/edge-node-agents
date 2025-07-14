@@ -10,7 +10,7 @@ manageability:
   serviceURL: infra.test.edgeorch.intel.com:443
   heartbeatInterval: 10s
 status:
-  endpoint: '/run/platform-manageability-agent/platform-manageability-agent.sock'
+  endpoint: 'unix:///run/node-agent/node-agent.sock'
   serviceClients: []
   outboundClients: []
   networkEndpoints: []

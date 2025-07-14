@@ -30,28 +30,28 @@ The required Go version for the agents is outlined in the [go.mod file](https://
 
 ### Binary Build
 
-Run the `make pmabuild` command to build the platform manageability agent binary. The compiled binary can be found in the `build/artifacts` directory.
+Run the `make pmabuild` command to build the platform manageability agent binary. The compiled binary can be found in the `build/artifacts/package` directory.
 
 Example:
 
 ```bash
 $ cd platform-manageability-agent/
 $ make pmabuild
-$ ls build/artifacts/
+$ ls build/artifacts/package
 platform-manageability-agent
 ```
 
 ### Debian Package Build
 
-Run the `make package` command to build the platform manageability agent Debian package. The package can be found in the `build/artifacts` directory.
+Run the `make package` command to build the platform manageability agent Debian package. The package can be found in the `build/artifacts/package` directory.
 
 Example
 
 ```bash
 $ cd platform-manageability-agent/
 $ make package
-$ ls build/artifacts/
-platform-manageability-agent_<VERSION>_amd64.build  platform-manageability-agent_<VERSION>_amd64.buildinfo  platform-manageability-agent_<VERSION>_amd64.changes  platform-manageability-agent_<VERSION>_amd64.deb  package
+$ ls build/artifacts/package
+platform-manageability-agent_<VERSION>_amd64.build  platform-manageability-agent_<VERSION>_amd64.buildinfo  platform-manageability-agent_<VERSION>_amd64.changes  platform-manageability-agent_<VERSION>_amd64.deb
 ```
 
 ### Tarball Build
@@ -63,7 +63,7 @@ Example
 ```bash
 $ cd platform-manageability-agent/
 $ make tarball
-$ ls build/artifacts/
+$ ls build/artifacts/package
 platform-manageability-agent-<VERSION>.tar.gz
 ```
 
@@ -156,14 +156,13 @@ Example:
 
 ## Uninstall
 
-To remove the Platform Manageability Agent from your system, use one of the following commands:
+To completely remove the Platform Manageability Agent from your system, use the following command:
 
 ```bash
-sudo apt remove platform-manageability-agent
+sudo apt purge -y platform-manageability-agent
 ```
 
-- This will remove the agent binary, systemd service, and most installed files.
-- Configuration files in `/etc/edge-node/node/confs/` may remain for manual review or backup.
+- This will remove the agent binary, systemd service, all installed files, and configuration files.
 - The system user `platform-manageability-agent` may also remain; you can remove it manually if desired.
 
 ## License
