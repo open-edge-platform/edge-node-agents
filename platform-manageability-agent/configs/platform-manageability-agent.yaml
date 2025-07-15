@@ -7,15 +7,16 @@ logLevel: info
 GUID: 'aaaaaaaa-0000-1111-2222-bbbbbbbbcccc'
 manageability:
   enabled: true
-  serviceURL: infra.test.edgeorch.intel.com:443
+  serviceURL: localhost:443 # TODO: Update this URL to the actual service endpoint.
   heartbeatInterval: 10s
 status:
   endpoint: 'unix:///run/node-agent/node-agent.sock'
-  serviceClients: []
-  outboundClients: []
-  networkEndpoints: []
+  serviceClients: [] # TODO: Remove this line if not needed.
+  outboundClients: [] # TODO: Remove this line if not needed.
+  networkEndpoints: [] # TODO: Remove this line if not needed.
 metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
 metricsInterval: 10s
+# TODO: Remove the below lines if not needed.
 auth:
   accessTokenURL: keycloak.edgeorch.intel.com
   rsTokenURL: token-provider.edgeorch.intel.com

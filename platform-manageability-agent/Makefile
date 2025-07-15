@@ -43,6 +43,7 @@ endif
 .PHONY: all build clean help lint package test fuzztest tarball deb-push integration_test
 
 all: build test
+lint: golint
 
 clean:
 	@echo "---MAKEFILE CLEAN---"

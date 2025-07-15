@@ -110,3 +110,8 @@
 ### 1.4.0
 - Initial platform update agent release
 - Dependency import updates
+
+## Platform Manageability Agent Changelog
+
+### 0.1.0
+- Initial platform manageability agent
