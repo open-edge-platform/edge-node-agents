@@ -283,13 +283,19 @@ func CreateTempFile(fs afero.Fs, dir, pattern string) (*os.File, error) {
 	var cleanupNeeded = true
 	defer func() {
 		if cleanupNeeded {
-			tmpFile.Close()
+			// Close the file first
+			if closeErr := tmpFile.Close(); closeErr != nil {
+				log.Printf("Warning: failed to close temp file %s: %v", tmpFile.Name(), closeErr)
+			}
+
+			// Then remove it
 			if rmErr := fs.Remove(tmpFile.Name()); rmErr != nil {
 				log.Printf("Warning: failed to remove temp file %s: %v", tmpFile.Name(), rmErr)
 			}
 		}
 	}()
 
+	// Validate the temp file path
 	if err := isFilePathAbsolute(tmpFile.Name()); err != nil {
 		return nil, fmt.Errorf("temp file path not allowed: %w", err)
 	}

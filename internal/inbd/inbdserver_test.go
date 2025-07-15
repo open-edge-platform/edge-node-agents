@@ -564,3 +564,146 @@ func TestUpdateSystemSoftware_OSDetectionFailure(t *testing.T) {
 		}
 	}
 }
+
+// TestInbdServer_InputValidation tests basic input validation at the server layer
+func TestInbdServer_InputValidation(t *testing.T) {
+	server := &InbdServer{}
+	ctx := context.Background()
+
+	t.Run("Query nil request", func(t *testing.T) {
+		resp, err := server.Query(ctx, nil)
+		if err != nil {
+			t.Errorf("Query() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("Query() returned nil response")
+		}
+		if resp.StatusCode != 400 {
+			t.Errorf("Query() StatusCode = %v, want 400", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Error, "request is required") {
+			t.Errorf("Query() Error = %v, want containing 'request is required'", resp.Error)
+		}
+	})
+
+	t.Run("Query unspecified option", func(t *testing.T) {
+		req := &pb.QueryRequest{Option: pb.QueryOption_QUERY_OPTION_UNSPECIFIED}
+		resp, err := server.Query(ctx, req)
+		if err != nil {
+			t.Errorf("Query() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("Query() returned nil response")
+		}
+		if resp.StatusCode != 400 {
+			t.Errorf("Query() StatusCode = %v, want 400", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Error, "invalid query option") {
+			t.Errorf("Query() Error = %v, want containing 'invalid query option'", resp.Error)
+		}
+	})
+
+	t.Run("UpdateFirmware empty URL", func(t *testing.T) {
+		req := &pb.UpdateFirmwareRequest{Url: ""}
+		resp, err := server.UpdateFirmware(ctx, req)
+		if err != nil {
+			t.Errorf("UpdateFirmware() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("UpdateFirmware() returned nil response")
+		}
+		if resp.StatusCode != 400 {
+			t.Errorf("UpdateFirmware() StatusCode = %v, want 400", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Error, "URL is required") {
+			t.Errorf("UpdateFirmware() Error = %v, want containing 'URL is required'", resp.Error)
+		}
+	})
+
+	t.Run("Config operations require validation", func(t *testing.T) {
+		// Test GetConfig with empty path
+		req := &pb.GetConfigRequest{Path: ""}
+		resp, err := server.GetConfig(ctx, req)
+		if err != nil {
+			t.Errorf("GetConfig() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("GetConfig() returned nil response")
+		}
+		if resp.StatusCode != 400 {
+			t.Errorf("GetConfig() StatusCode = %v, want 400", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Error, "path is required") {
+			t.Errorf("GetConfig() Error = %v, want containing 'path is required'", resp.Error)
+		}
+	})
+
+	t.Run("LoadConfig empty URI", func(t *testing.T) {
+		req := &pb.LoadConfigRequest{Uri: ""}
+		resp, err := server.LoadConfig(ctx, req)
+		if err != nil {
+			t.Errorf("LoadConfig() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("LoadConfig() returned nil response")
+		}
+		if resp.StatusCode != 400 {
+			t.Errorf("LoadConfig() StatusCode = %v, want 400", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Error, "uri is required") {
+			t.Errorf("LoadConfig() Error = %v, want containing 'uri is required'", resp.Error)
+		}
+	})
+}
+
+// TestInbdServer_ResponseFormat tests that all methods return proper response format
+func TestInbdServer_ResponseFormat(t *testing.T) {
+	server := &InbdServer{}
+	ctx := context.Background()
+
+	t.Run("All methods return non-nil responses", func(t *testing.T) {
+		// Test that methods don't panic and return responses
+		methods := []func() (interface{}, error){
+			func() (interface{}, error) { return server.Query(ctx, nil) },
+			func() (interface{}, error) { return server.UpdateFirmware(ctx, &pb.UpdateFirmwareRequest{}) },
+			func() (interface{}, error) { return server.LoadConfig(ctx, &pb.LoadConfigRequest{}) },
+			func() (interface{}, error) { return server.GetConfig(ctx, &pb.GetConfigRequest{}) },
+			func() (interface{}, error) { return server.SetConfig(ctx, &pb.SetConfigRequest{}) },
+			func() (interface{}, error) { return server.AppendConfig(ctx, &pb.AppendConfigRequest{}) },
+			func() (interface{}, error) { return server.RemoveConfig(ctx, &pb.RemoveConfigRequest{}) },
+		}
+
+		for i, method := range methods {
+			resp, err := method()
+			if err != nil {
+				t.Errorf("Method %d returned unexpected error: %v", i, err)
+			}
+			if resp == nil {
+				t.Errorf("Method %d returned nil response", i)
+			}
+		}
+	})
+}
+
+// TestConvertQueryOptionToString tests the convertQueryOptionToString function
+func TestConvertQueryOptionToString(t *testing.T) {
+	tests := []struct {
+		option   pb.QueryOption
+		expected string
+	}{
+		{pb.QueryOption_QUERY_OPTION_HARDWARE, "hw"},
+		{pb.QueryOption_QUERY_OPTION_FIRMWARE, "fw"},
+		{pb.QueryOption_QUERY_OPTION_OS, "os"},
+		{pb.QueryOption_QUERY_OPTION_SWBOM, "swbom"},
+		{pb.QueryOption_QUERY_OPTION_VERSION, "version"},
+		{pb.QueryOption_QUERY_OPTION_ALL, "all"},
+		{pb.QueryOption_QUERY_OPTION_UNSPECIFIED, "all"},
+	}
+
+	for _, tt := range tests {
+		result := convertQueryOptionToString(tt.option)
+		if result != tt.expected {
+			t.Errorf("convertQueryOptionToString(%v) = %v, want %v", tt.option, result, tt.expected)
+		}
+	}
+}

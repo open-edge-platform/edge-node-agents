@@ -92,25 +92,41 @@ generate-proto:
 
 build-inbc:
     FROM +golang-base
-    ARG version='0.0.0-unknown'
+    # Get git commit and build date
+    ARG version=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev-$(git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d)")
+    ARG git_commit=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+    ARG build_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
     # Aggressive cache cleaning before build
     RUN go clean -cache && go clean -modcache && go clean -testcache
+
     # Use no-cache mount to prevent cached corruption
     RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
         go build -trimpath -o build/inbc \
-            -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
+            -ldflags "-s -w -extldflags '-static' \
+                -X main.Version=$version \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.Version=$version \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.GitCommit=$git_commit \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.BuildDate=$build_date" \
             ./cmd/inbc
     SAVE ARTIFACT build/inbc AS LOCAL ./build/inbc
 
 build-inbd:
     FROM +golang-base
-    ARG version='0.0.0-unknown'
+    # Get git commit and build date
+    ARG version=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev-$(git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d)")
+    ARG git_commit=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+    ARG build_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
     # Aggressive cache cleaning before build
     RUN go clean -cache && go clean -modcache && go clean -testcache
     # Use no-cache mount to prevent cached corruption
     RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
         go build -trimpath -o build/inbd \
-            -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
+            -ldflags "-s -w -extldflags '-static' \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.Version=$version \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.GitCommit=$git_commit \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.BuildDate=$build_date" \
             ./cmd/inbd
     SAVE ARTIFACT build/inbd AS LOCAL ./build/inbd
 
@@ -186,6 +202,11 @@ coverity:
     ARG NO_PROXY=$(echo $NO_PROXY)
     ARG REGISTRY
 
+    # Get git commit and build date
+    ARG version=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev-$(git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d)")
+    ARG git_commit=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+    ARG build_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
     FROM ${REGISTRY}golang:1.24.1-bullseye
     ENV http_proxy=$http_proxy
     ENV https_proxy=$https_proxy
@@ -222,7 +243,6 @@ coverity:
     ENV CGO_ENABLED=0
     ENV GOARCH=amd64
     ENV GOOS=linux
-    ARG version='0.0.0-unknown'
     
     # Create build directory
     RUN mkdir -p build
@@ -235,12 +255,19 @@ coverity:
     # Split the cov-build commands to make them more robust
     RUN cov-build --dir cov-int \
         go build -trimpath -o build/inbd \
-            -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
+            -ldflags "-s -w -extldflags '-static' \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.Version=$version \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.GitCommit=$git_commit \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.BuildDate=$build_date" \
             ./cmd/inbd
             
     RUN cov-build --dir cov-int \
         go build -trimpath -o build/inbc \
-            -ldflags "-s -w -extldflags '-static' -X main.Version=$version" \
+            -ldflags "-s -w -extldflags '-static' \
+                -X main.Version=$version \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.Version=$version \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.GitCommit=$git_commit \
+                -X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.BuildDate=$build_date" \
             ./cmd/inbc
     
     # Run Coverity analysis with error handling

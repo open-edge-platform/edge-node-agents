@@ -46,12 +46,7 @@ func TestQueryCmd(t *testing.T) {
 	optionFlag := cmd.Flag("option")
 	require.NotNil(t, optionFlag)
 	assert.Equal(t, "o", optionFlag.Shorthand)
-	assert.Equal(t, "all", optionFlag.DefValue) // Default should be "all"
-
-	// Test that command works without option flag (should use default "all")
-	cmd.SetArgs([]string{})
-	// This should not error now since we have a default value
-	// We'll test the actual execution in integration tests
+	assert.Equal(t, "all", optionFlag.DefValue)
 }
 
 func TestParseQueryOption(t *testing.T) {
@@ -61,6 +56,7 @@ func TestParseQueryOption(t *testing.T) {
 		expected pb.QueryOption
 		wantErr  bool
 	}{
+		// Valid options
 		{
 			name:     "hardware option",
 			input:    "hw",
@@ -127,11 +123,25 @@ func TestParseQueryOption(t *testing.T) {
 			expected: pb.QueryOption_QUERY_OPTION_ALL,
 			wantErr:  false,
 		},
+		// Case insensitive tests
 		{
-			name:     "case insensitive",
+			name:     "case insensitive uppercase",
 			input:    "HW",
 			expected: pb.QueryOption_QUERY_OPTION_HARDWARE,
 			wantErr:  false,
+		},
+		{
+			name:     "case insensitive mixed case",
+			input:    "FirMware",
+			expected: pb.QueryOption_QUERY_OPTION_FIRMWARE,
+			wantErr:  false,
+		},
+		// Negative cases
+		{
+			name:     "empty string",
+			input:    "",
+			expected: pb.QueryOption_QUERY_OPTION_UNSPECIFIED,
+			wantErr:  true,
 		},
 		{
 			name:     "invalid option",
@@ -140,8 +150,14 @@ func TestParseQueryOption(t *testing.T) {
 			wantErr:  true,
 		},
 		{
-			name:     "empty option",
-			input:    "",
+			name:     "partial match",
+			input:    "h",
+			expected: pb.QueryOption_QUERY_OPTION_UNSPECIFIED,
+			wantErr:  true,
+		},
+		{
+			name:     "typo in option",
+			input:    "hardwar",
 			expected: pb.QueryOption_QUERY_OPTION_UNSPECIFIED,
 			wantErr:  true,
 		},
@@ -152,6 +168,7 @@ func TestParseQueryOption(t *testing.T) {
 			result, err := parseQueryOption(tt.input)
 			if tt.wantErr {
 				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "query option")
 			} else {
 				assert.NoError(t, err)
 			}
@@ -164,7 +181,6 @@ func TestHandleQueryCmd_Success(t *testing.T) {
 	socket := "/test/socket"
 	option := "hw"
 
-	// Create mock response
 	mockResponse := &pb.QueryResponse{
 		StatusCode: 200,
 		Success:    true,
@@ -174,19 +190,19 @@ func TestHandleQueryCmd_Success(t *testing.T) {
 			Type:      "static_telemetry",
 			Values: &pb.QueryData_Hardware{
 				Hardware: &pb.HardwareInfo{
-					Manufacturer: "Intel Corporation",
-					Product:      "Test Product",
-					CpuId:        "GenuineIntel",
+					SystemManufacturer:  "Intel Corporation",
+					SystemProductName:   "Test Product",
+					CpuId:               "GenuineIntel",
+					TotalPhysicalMemory: "8GB",
+					DiskInformation:     "500GB SSD",
 				},
 			},
 		},
 	}
 
-	// Setup mock client
 	mockClient := &MockInbServiceClient{}
 	mockClient.On("Query", mock.Anything, mock.Anything, mock.Anything).Return(mockResponse, nil)
 
-	// Test successful query
 	handler := handleQueryCmd(&socket, &option, mockDialerForQuery(mockClient, nil))
 
 	cmd := QueryCmd()
@@ -200,7 +216,6 @@ func TestHandleQueryCmd_DefaultOption(t *testing.T) {
 	socket := "/test/socket"
 	option := "" // Empty option should default to "all"
 
-	// Create mock response for "all" option
 	mockResponse := &pb.QueryResponse{
 		StatusCode: 200,
 		Success:    true,
@@ -211,20 +226,54 @@ func TestHandleQueryCmd_DefaultOption(t *testing.T) {
 			Values: &pb.QueryData_AllInfo{
 				AllInfo: &pb.AllInfo{
 					Hardware: &pb.HardwareInfo{
-						Manufacturer: "Intel Corporation",
+						SystemManufacturer:  "Intel Corporation",
+						SystemProductName:   "Test Product",
+						CpuId:               "GenuineIntel",
+						TotalPhysicalMemory: "8GB",
+						DiskInformation:     "500GB SSD",
 					},
 				},
 			},
 		},
 	}
 
-	// Setup mock client - it should be called with QUERY_OPTION_ALL
 	mockClient := &MockInbServiceClient{}
 	mockClient.On("Query", mock.Anything, mock.MatchedBy(func(req *pb.QueryRequest) bool {
 		return req.Option == pb.QueryOption_QUERY_OPTION_ALL
 	}), mock.Anything).Return(mockResponse, nil)
 
 	handler := handleQueryCmd(&socket, &option, mockDialerForQuery(mockClient, nil))
+
+	cmd := QueryCmd()
+	err := handler(cmd, []string{})
+
+	assert.NoError(t, err)
+	mockClient.AssertExpectations(t)
+}
+
+func TestHandleQueryCmd_NilOption(t *testing.T) {
+	socket := "/test/socket"
+	var option *string // Explicitly nil
+
+	mockResponse := &pb.QueryResponse{
+		StatusCode: 200,
+		Success:    true,
+		Error:      "",
+		Data: &pb.QueryData{
+			Timestamp: timestamppb.New(time.Now()),
+			Type:      "static_telemetry",
+			Values: &pb.QueryData_AllInfo{
+				AllInfo: &pb.AllInfo{},
+			},
+		},
+	}
+
+	mockClient := &MockInbServiceClient{}
+	mockClient.On("Query", mock.Anything, mock.MatchedBy(func(req *pb.QueryRequest) bool {
+		return req.Option == pb.QueryOption_QUERY_OPTION_ALL
+	}), mock.Anything).Return(mockResponse, nil)
+
+	handler := handleQueryCmd(&socket, option, mockDialerForQuery(mockClient, nil))
 
 	cmd := QueryCmd()
 	err := handler(cmd, []string{})
@@ -245,6 +294,24 @@ func TestHandleQueryCmd_InvalidOption(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid query option")
+	assert.Contains(t, err.Error(), "invalid")
+}
+
+func TestHandleQueryCmd_NilResponse(t *testing.T) {
+	socket := "/test/socket"
+	option := "hw"
+
+	mockClient := &MockInbServiceClient{}
+	mockClient.On("Query", mock.Anything, mock.Anything, mock.Anything).Return((*pb.QueryResponse)(nil), nil)
+
+	handler := handleQueryCmd(&socket, &option, mockDialerForQuery(mockClient, nil))
+
+	cmd := QueryCmd()
+	err := handler(cmd, []string{})
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "received nil response")
+	mockClient.AssertExpectations(t)
 }
 
 func TestHandleQueryCmd_DialError(t *testing.T) {
@@ -265,7 +332,6 @@ func TestHandleQueryCmd_QueryError(t *testing.T) {
 	socket := "/test/socket"
 	option := "hw"
 
-	// Setup mock client with error
 	mockClient := &MockInbServiceClient{}
 	queryError := errors.New("query failed")
 	mockClient.On("Query", mock.Anything, mock.Anything, mock.Anything).Return((*pb.QueryResponse)(nil), queryError)
@@ -280,11 +346,33 @@ func TestHandleQueryCmd_QueryError(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
+func TestHandleQueryCmd_UnsuccessfulResponse(t *testing.T) {
+	socket := "/test/socket"
+	option := "hw"
+
+	mockResponse := &pb.QueryResponse{
+		StatusCode: 500,
+		Success:    false,
+		Error:      "Internal server error",
+		Data:       nil,
+	}
+
+	mockClient := &MockInbServiceClient{}
+	mockClient.On("Query", mock.Anything, mock.Anything, mock.Anything).Return(mockResponse, nil)
+
+	handler := handleQueryCmd(&socket, &option, mockDialerForQuery(mockClient, nil))
+
+	cmd := QueryCmd()
+	err := handler(cmd, []string{})
+
+	assert.NoError(t, err) // Should not error, just display the response
+	mockClient.AssertExpectations(t)
+}
+
 func TestHandleQueryCmd_NotImplementedResponse(t *testing.T) {
 	socket := "/test/socket"
 	option := "hw"
 
-	// Mock 501 Not Implemented response
 	mockResponse := &pb.QueryResponse{
 		StatusCode: 501,
 		Success:    false,
@@ -300,14 +388,12 @@ func TestHandleQueryCmd_NotImplementedResponse(t *testing.T) {
 	cmd := QueryCmd()
 	err := handler(cmd, []string{})
 
-	assert.NoError(t, err) // Should not error, just display the 501 response
+	assert.NoError(t, err)
 	mockClient.AssertExpectations(t)
 }
 
-// Test all query options
 func TestHandleQueryCmd_AllOptions(t *testing.T) {
 	socket := "/test/socket"
-
 	options := []string{"hw", "fw", "os", "swbom", "version", "all"}
 
 	for _, opt := range options {
@@ -355,11 +441,24 @@ func TestDisplayQueryResponse(t *testing.T) {
 					Type:      "static_telemetry",
 					Values: &pb.QueryData_Hardware{
 						Hardware: &pb.HardwareInfo{
-							Manufacturer: "Intel Corporation",
-							Product:      "Test Product",
+							SystemManufacturer:  "Intel Corporation",
+							SystemProductName:   "Test Product",
+							CpuId:               "GenuineIntel",
+							TotalPhysicalMemory: "8GB",
+							DiskInformation:     "500GB SSD",
 						},
 					},
 				},
+			},
+			option: "hw",
+		},
+		{
+			name: "successful response with nil data",
+			response: &pb.QueryResponse{
+				StatusCode: 200,
+				Success:    true,
+				Error:      "",
+				Data:       nil,
 			},
 			option: "hw",
 		},
@@ -374,12 +473,16 @@ func TestDisplayQueryResponse(t *testing.T) {
 			option: "hw",
 		},
 		{
-			name: "not implemented response",
+			name: "response with unknown data type",
 			response: &pb.QueryResponse{
-				StatusCode: 501,
-				Success:    false,
-				Error:      "Query method not implemented yet",
-				Data:       nil,
+				StatusCode: 200,
+				Success:    true,
+				Error:      "",
+				Data: &pb.QueryData{
+					Timestamp: timestamppb.New(time.Now()),
+					Type:      "unknown_type",
+					Values:    nil, // No specific values
+				},
 			},
 			option: "hw",
 		},
@@ -387,20 +490,20 @@ func TestDisplayQueryResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// This test mainly checks that the function doesn't panic
-			// In a real scenario, you might want to capture stdout to verify output
+			// Test that displayQueryResponse doesn't panic
 			displayQueryResponse(tt.response, tt.option)
 		})
 	}
 }
 
 func TestDisplayFunctions(t *testing.T) {
-	// Test display functions with sample data
 	t.Run("displayHardwareInfo", func(t *testing.T) {
 		hw := &pb.HardwareInfo{
-			Manufacturer: "Intel Corporation",
-			Product:      "Test Product",
-			CpuId:        "GenuineIntel",
+			SystemManufacturer:  "Intel Corporation",
+			SystemProductName:   "Test Product",
+			CpuId:               "GenuineIntel",
+			TotalPhysicalMemory: "8GB",
+			DiskInformation:     "500GB SSD",
 		}
 		displayHardwareInfo(hw)
 		displayHardwareInfo(nil) // Test nil case
@@ -408,8 +511,9 @@ func TestDisplayFunctions(t *testing.T) {
 
 	t.Run("displayFirmwareInfo", func(t *testing.T) {
 		fw := &pb.FirmwareInfo{
-			BiosVendor:  "Intel",
-			BiosVersion: "2.0.0",
+			BiosVendor:      "Intel",
+			BiosVersion:     "2.0.0",
+			BiosReleaseDate: timestamppb.New(time.Now()),
 		}
 		displayFirmwareInfo(fw)
 		displayFirmwareInfo(nil) // Test nil case
@@ -417,8 +521,7 @@ func TestDisplayFunctions(t *testing.T) {
 
 	t.Run("displayOSInfo", func(t *testing.T) {
 		os := &pb.OSInfo{
-			OsType:    "Linux",
-			OsVersion: "Ubuntu 20.04",
+			OsInformation: "Linux Ubuntu 20.04",
 		}
 		displayOSInfo(os)
 		displayOSInfo(nil) // Test nil case
@@ -426,12 +529,18 @@ func TestDisplayFunctions(t *testing.T) {
 
 	t.Run("displaySWBOMInfo", func(t *testing.T) {
 		swbom := &pb.SWBOMInfo{
-			CollectionMethod: "dpkg",
+			CollectionMethod:    "dpkg",
+			CollectionTimestamp: timestamppb.New(time.Now()),
 			Packages: []*pb.SoftwarePackage{
 				{
-					Name:    "package1",
-					Version: "1.0.0",
-					Vendor:  "vendor1",
+					Name:         "package1",
+					Version:      "1.0.0",
+					Vendor:       "vendor1",
+					Type:         "deb",
+					Architecture: "amd64",
+					Description:  "Test package",
+					License:      "MIT",
+					InstallDate:  timestamppb.New(time.Now()),
 				},
 			},
 		}
@@ -439,10 +548,28 @@ func TestDisplayFunctions(t *testing.T) {
 		displaySWBOMInfo(nil) // Test nil case
 	})
 
+	t.Run("displaySWBOMInfo with many packages", func(t *testing.T) {
+		packages := make([]*pb.SoftwarePackage, 15)
+		for i := 0; i < 15; i++ {
+			packages[i] = &pb.SoftwarePackage{
+				Name:    "package" + string(rune(48+i)), // Convert int to string
+				Version: "1.0.0",
+			}
+		}
+		swbom := &pb.SWBOMInfo{
+			CollectionMethod:    "dpkg",
+			CollectionTimestamp: timestamppb.New(time.Now()),
+			Packages:            packages,
+		}
+		displaySWBOMInfo(swbom) // Should limit to 10 packages
+	})
+
 	t.Run("displayVersionInfo", func(t *testing.T) {
 		version := &pb.VersionInfo{
-			Version:   "1.0.0",
-			GitCommit: "1234567890abcdef",
+			Version:           "1.0.0",
+			GitCommit:         "1234567890abcdef",
+			InbmVersionCommit: "1234567890abcdef",
+			BuildDate:         timestamppb.New(time.Now()),
 		}
 		displayVersionInfo(version)
 		displayVersionInfo(nil) // Test nil case
@@ -451,9 +578,43 @@ func TestDisplayFunctions(t *testing.T) {
 	t.Run("displayAllInfo", func(t *testing.T) {
 		all := &pb.AllInfo{
 			Hardware: &pb.HardwareInfo{
-				Manufacturer: "Intel Corporation",
+				SystemManufacturer:  "Intel Corporation",
+				SystemProductName:   "Test Product",
+				CpuId:               "GenuineIntel",
+				TotalPhysicalMemory: "8GB",
+				DiskInformation:     "500GB SSD",
 			},
-			PowerCapabilities: "S0, S3, S5",
+			Firmware: &pb.FirmwareInfo{
+				BiosVendor:      "Intel",
+				BiosVersion:     "2.0.0",
+				BiosReleaseDate: timestamppb.New(time.Now()),
+			},
+			OsInfo: &pb.OSInfo{
+				OsInformation: "Linux Ubuntu 20.04",
+			},
+			Version: &pb.VersionInfo{
+				Version:           "1.0.0",
+				GitCommit:         "1234567890abcdef",
+				InbmVersionCommit: "1234567890abcdef",
+				BuildDate:         timestamppb.New(time.Now()),
+			},
+			Swbom: &pb.SWBOMInfo{
+				CollectionMethod:    "dpkg",
+				CollectionTimestamp: timestamppb.New(time.Now()),
+				Packages: []*pb.SoftwarePackage{
+					{
+						Name:         "package1",
+						Version:      "1.0.0",
+						Vendor:       "vendor1",
+						Type:         "deb",
+						Architecture: "amd64",
+						Description:  "Test package",
+						License:      "MIT",
+						InstallDate:  timestamppb.New(time.Now()),
+					},
+				},
+			},
+			AdditionalInfo: []string{"Additional info 1", "Additional info 2"},
 		}
 		displayAllInfo(all)
 		displayAllInfo(nil) // Test nil case

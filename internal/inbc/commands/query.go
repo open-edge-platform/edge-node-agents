@@ -59,14 +59,19 @@ func handleQueryCmd(
 		fmt.Println("QUERY command invoked.")
 
 		// Use default value if option is empty
-		if option == nil || *option == "" {
-			*option = "all"
+		var optionValue string
+		if option == nil {
+			optionValue = "all"
+		} else if *option == "" {
+			optionValue = "all"
+		} else {
+			optionValue = *option
 		}
 
 		// Parse and validate query option
-		queryOption, err := parseQueryOption(*option)
+		queryOption, err := parseQueryOption(optionValue)
 		if err != nil {
-			return fmt.Errorf("invalid query option '%s': %v", *option, err)
+			return fmt.Errorf("invalid query option '%s': %v", optionValue, err)
 		}
 
 		request := &pb.QueryRequest{
@@ -96,15 +101,26 @@ func handleQueryCmd(
 			return fmt.Errorf("error performing query: %v", err)
 		}
 
+		if resp == nil {
+			return fmt.Errorf("received nil response from server")
+		}
+
 		// Display response
-		displayQueryResponse(resp, *option)
+		displayQueryResponse(resp, optionValue)
 		return nil
 	}
 }
 
 // parseQueryOption converts string to QueryOption enum
 func parseQueryOption(option string) (pb.QueryOption, error) {
-	switch strings.ToLower(option) {
+	option = strings.ToLower(option)
+
+	// Check for empty string after trimming
+	if option == "" {
+		return pb.QueryOption_QUERY_OPTION_UNSPECIFIED, fmt.Errorf("query option cannot be empty")
+	}
+
+	switch option {
 	case "hw", "hardware":
 		return pb.QueryOption_QUERY_OPTION_HARDWARE, nil
 	case "fw", "firmware":
@@ -118,7 +134,7 @@ func parseQueryOption(option string) (pb.QueryOption, error) {
 	case "all":
 		return pb.QueryOption_QUERY_OPTION_ALL, nil
 	default:
-		return pb.QueryOption_QUERY_OPTION_UNSPECIFIED, fmt.Errorf("valid options are: hw, fw, os, swbom, version, all")
+		return pb.QueryOption_QUERY_OPTION_UNSPECIFIED, fmt.Errorf("invalid query option '%s'. Valid options: hw, fw, os, swbom, version, all", option)
 	}
 }
 
@@ -151,6 +167,11 @@ func displayQueryResponse(resp *pb.QueryResponse, option string) {
 		default:
 			fmt.Println("No specific data available")
 		}
+	} else {
+		// Show error details for failed responses
+		if !resp.GetSuccess() {
+			fmt.Printf("Query failed: %s\n", resp.GetError())
+		}
 	}
 }
 
@@ -161,30 +182,6 @@ func displayHardwareInfo(hw *pb.HardwareInfo) {
 	}
 
 	fmt.Println("\n=== Hardware Information ===")
-	if hw.GetManufacturer() != "" {
-		fmt.Printf("Manufacturer: %s\n", hw.GetManufacturer())
-	}
-	if hw.GetProduct() != "" {
-		fmt.Printf("Product: %s\n", hw.GetProduct())
-	}
-	if hw.GetStepping() != "" {
-		fmt.Printf("Stepping: %s\n", hw.GetStepping())
-	}
-	if hw.GetSku() != "" {
-		fmt.Printf("SKU: %s\n", hw.GetSku())
-	}
-	if hw.GetModel() != "" {
-		fmt.Printf("Model: %s\n", hw.GetModel())
-	}
-	if hw.GetSerialSum() != "" {
-		fmt.Printf("Serial Sum: %s\n", hw.GetSerialSum())
-	}
-	if hw.GetSystemManufacturer() != "" {
-		fmt.Printf("System Manufacturer: %s\n", hw.GetSystemManufacturer())
-	}
-	if hw.GetSystemProductName() != "" {
-		fmt.Printf("System Product Name: %s\n", hw.GetSystemProductName())
-	}
 	if hw.GetCpuId() != "" {
 		fmt.Printf("CPU ID: %s\n", hw.GetCpuId())
 	}
@@ -193,6 +190,12 @@ func displayHardwareInfo(hw *pb.HardwareInfo) {
 	}
 	if hw.GetDiskInformation() != "" {
 		fmt.Printf("Disk Information: %s\n", hw.GetDiskInformation())
+	}
+	if hw.GetSystemManufacturer() != "" {
+		fmt.Printf("System Manufacturer: %s\n", hw.GetSystemManufacturer())
+	}
+	if hw.GetSystemProductName() != "" {
+		fmt.Printf("System Product Name: %s\n", hw.GetSystemProductName())
 	}
 }
 
@@ -203,15 +206,6 @@ func displayFirmwareInfo(fw *pb.FirmwareInfo) {
 	}
 
 	fmt.Println("\n=== Firmware Information ===")
-	if fw.GetBootFwDate() != nil {
-		fmt.Printf("Boot Firmware Date: %s\n", fw.GetBootFwDate().AsTime().Format(time.RFC3339))
-	}
-	if fw.GetBootFwVendor() != "" {
-		fmt.Printf("Boot Firmware Vendor: %s\n", fw.GetBootFwVendor())
-	}
-	if fw.GetBootFwVersion() != "" {
-		fmt.Printf("Boot Firmware Version: %s\n", fw.GetBootFwVersion())
-	}
 	if fw.GetBiosVendor() != "" {
 		fmt.Printf("BIOS Vendor: %s\n", fw.GetBiosVendor())
 	}
@@ -230,34 +224,30 @@ func displayOSInfo(os *pb.OSInfo) {
 	}
 
 	fmt.Println("\n=== Operating System Information ===")
-	if os.GetOsType() != "" {
-		fmt.Printf("OS Type: %s\n", os.GetOsType())
-	}
-	if os.GetOsVersion() != "" {
-		fmt.Printf("OS Version: %s\n", os.GetOsVersion())
-	}
-	if os.GetOsReleaseDate() != nil {
-		fmt.Printf("OS Release Date: %s\n", os.GetOsReleaseDate().AsTime().Format(time.RFC3339))
-	}
 	if os.GetOsInformation() != "" {
 		fmt.Printf("OS Information: %s\n", os.GetOsInformation())
 	}
 }
 
-// displaySWBOMInfo displays software BOM information
+// displaySWBOMInfo displays software BOM information with ALL fields
 func displaySWBOMInfo(swbom *pb.SWBOMInfo) {
 	if swbom == nil {
 		return
 	}
 
 	fmt.Println("\n=== Software Bill of Materials ===")
+
+	// Collection timestamp
 	if swbom.GetCollectionTimestamp() != nil {
 		fmt.Printf("Collection Timestamp: %s\n", swbom.GetCollectionTimestamp().AsTime().Format(time.RFC3339))
 	}
+
+	// Collection method
 	if swbom.GetCollectionMethod() != "" {
 		fmt.Printf("Collection Method: %s\n", swbom.GetCollectionMethod())
 	}
 
+	// Packages with ALL fields
 	packages := swbom.GetPackages()
 	if len(packages) > 0 {
 		fmt.Printf("Total Packages: %d\n", len(packages))
@@ -267,19 +257,47 @@ func displaySWBOMInfo(swbom *pb.SWBOMInfo) {
 				fmt.Printf("... and %d more packages\n", len(packages)-10)
 				break
 			}
+
+			// Package name (required field)
 			fmt.Printf("  - %s", pkg.GetName())
+
+			// Package version
 			if pkg.GetVersion() != "" {
 				fmt.Printf(" (%s)", pkg.GetVersion())
 			}
+
+			// Package vendor
 			if pkg.GetVendor() != "" {
 				fmt.Printf(" by %s", pkg.GetVendor())
 			}
+
+			// Package type
+			if pkg.GetType() != "" {
+				fmt.Printf(" [%s]", pkg.GetType())
+			}
+
+			// Package architecture
+			if pkg.GetArchitecture() != "" {
+				fmt.Printf(" (%s)", pkg.GetArchitecture())
+			}
+
 			fmt.Println()
+
+			// Additional details (indented)
+			if pkg.GetDescription() != "" {
+				fmt.Printf("    Description: %s\n", pkg.GetDescription())
+			}
+			if pkg.GetLicense() != "" {
+				fmt.Printf("    License: %s\n", pkg.GetLicense())
+			}
+			if pkg.GetInstallDate() != nil {
+				fmt.Printf("    Install Date: %s\n", pkg.GetInstallDate().AsTime().Format(time.RFC3339))
+			}
 		}
 	}
 }
 
-// displayVersionInfo displays version information
+// displayVersionInfo displays version information with ALL fields
 func displayVersionInfo(version *pb.VersionInfo) {
 	if version == nil {
 		return
@@ -292,15 +310,31 @@ func displayVersionInfo(version *pb.VersionInfo) {
 	if version.GetInbmVersionCommit() != "" {
 		fmt.Printf("INBM Version Commit: %s\n", version.GetInbmVersionCommit())
 	}
-	if version.GetBuildDate() != nil {
-		fmt.Printf("Build Date: %s\n", version.GetBuildDate().AsTime().Format(time.RFC3339))
-	}
 	if version.GetGitCommit() != "" {
 		fmt.Printf("Git Commit: %s\n", version.GetGitCommit())
 	}
+	if version.GetBuildDate() != nil {
+		fmt.Printf("Build Date: %s\n", version.GetBuildDate().AsTime().Format(time.RFC3339))
+	}
 }
 
-// displayAllInfo displays all system information
+// displayPowerCapabilities displays power capabilities with ALL fields
+func displayPowerCapabilities(power *pb.PowerCapabilitiesInfo) {
+	if power == nil {
+		return
+	}
+
+	fmt.Println("\n=== Power Capabilities ===")
+	fmt.Printf("Shutdown: %t\n", power.GetShutdown())
+	fmt.Printf("Reboot: %t\n", power.GetReboot())
+	fmt.Printf("Suspend: %t\n", power.GetSuspend())
+	fmt.Printf("Hibernate: %t\n", power.GetHibernate())
+	if power.GetCapabilitiesJson() != "" {
+		fmt.Printf("Capabilities JSON: %s\n", power.GetCapabilitiesJson())
+	}
+}
+
+// displayAllInfo displays all system information with ALL fields
 func displayAllInfo(all *pb.AllInfo) {
 	if all == nil {
 		return
@@ -308,29 +342,40 @@ func displayAllInfo(all *pb.AllInfo) {
 
 	fmt.Println("\n=== All System Information ===")
 
+	// Hardware information
 	if all.GetHardware() != nil {
 		displayHardwareInfo(all.GetHardware())
 	}
 
+	// Firmware information
 	if all.GetFirmware() != nil {
 		displayFirmwareInfo(all.GetFirmware())
 	}
 
+	// OS information
 	if all.GetOsInfo() != nil {
 		displayOSInfo(all.GetOsInfo())
 	}
 
+	// Version information
 	if all.GetVersion() != nil {
 		displayVersionInfo(all.GetVersion())
 	}
 
-	if all.GetPowerCapabilities() != "" {
-		fmt.Printf("\nPower Capabilities: %s\n", all.GetPowerCapabilities())
+	// Power capabilities
+	if all.GetPowerCapabilities() != nil {
+		displayPowerCapabilities(all.GetPowerCapabilities())
 	}
 
+	// Software BOM
+	if all.GetSwbom() != nil {
+		displaySWBOMInfo(all.GetSwbom())
+	}
+
+	// Additional information
 	additionalInfo := all.GetAdditionalInfo()
 	if len(additionalInfo) > 0 {
-		fmt.Println("\nAdditional Information:")
+		fmt.Println("\n=== Additional Information ===")
 		for _, info := range additionalInfo {
 			fmt.Printf("  - %s\n", info)
 		}

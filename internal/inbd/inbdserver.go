@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	fwUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/fw_updater"
+	telemetry "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
 	appSource "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu/app_source"
@@ -290,12 +291,65 @@ func (s *InbdServer) RemoveConfig(ctx context.Context, req *pb.RemoveConfigReque
 
 // Query returns system information based on the query option
 func (s *InbdServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.QueryResponse, error) {
+
+	if req == nil {
+		return &pb.QueryResponse{
+			StatusCode: 400,
+			Error:      "request is required",
+			Success:    false,
+			Data:       nil,
+		}, nil
+	}
+
 	log.Printf("Received Query request for option: %s", req.Option)
 
+	if req.Option == pb.QueryOption_QUERY_OPTION_UNSPECIFIED {
+		return &pb.QueryResponse{
+			StatusCode: 400,
+			Error:      "invalid query option",
+			Success:    false,
+			Data:       nil,
+		}, nil
+	}
+
+	// Convert enum to string
+	optionStr := convertQueryOptionToString(req.Option)
+
+	queryHandler := telemetry.NewQueryHandler()
+	data, err := queryHandler.HandleQuery(optionStr)
+	if err != nil {
+		return &pb.QueryResponse{
+			StatusCode: 500,
+			Error:      err.Error(),
+			Success:    false,
+			Data:       nil,
+		}, nil
+	}
+
 	return &pb.QueryResponse{
-		StatusCode: 501,
-		Error:      "Not Implemented",
-		Success:    false,
-		Data:       nil,
+		StatusCode: 200,
+		Error:      "",
+		Success:    true,
+		Data:       data,
 	}, nil
+}
+
+// convertQueryOptionToString converts QueryOption enum to string
+func convertQueryOptionToString(option pb.QueryOption) string {
+	switch option {
+	case pb.QueryOption_QUERY_OPTION_HARDWARE:
+		return "hw"
+	case pb.QueryOption_QUERY_OPTION_FIRMWARE:
+		return "fw"
+	case pb.QueryOption_QUERY_OPTION_OS:
+		return "os"
+	case pb.QueryOption_QUERY_OPTION_SWBOM:
+		return "swbom"
+	case pb.QueryOption_QUERY_OPTION_VERSION:
+		return "version"
+	case pb.QueryOption_QUERY_OPTION_ALL:
+		return "all"
+	default:
+		return "all" // Default to "all" for unknown options
+	}
 }

@@ -5,7 +5,7 @@ package inbd.v1;
 import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 
-option go_package = "github.com/intel/intel-inb-manageability/pkg/api/inbd/v1";
+option go_package = "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1";
 
 service InbService {
   rpc UpdateSystemSoftware(UpdateSystemSoftwareRequest) returns (UpdateResponse);
@@ -207,7 +207,7 @@ message QueryRequest {
     (buf.validate.field).required = true,
     (buf.validate.field).enum = {
       defined_only: true,
-      not_in: [0]
+      not_in: [0] // Don't allow UNSPECIFIED
     }
   ];
 }
@@ -244,35 +244,23 @@ message QueryData {
 
 // Hardware information structure
 message HardwareInfo {
-  string manufacturer = 1;                  // Hardware manufacturer
-  string product = 2;                       // Product type
-  string stepping = 3;                      // Stepping
-  string sku = 4;                          // SKU
-  string model = 5;                        // Model number
-  string serial_sum = 6;                   // Serial number
-  string system_manufacturer = 7;          // System manufacturer
-  string system_product_name = 8;          // System product name
-  string cpu_id = 9;                       // CPU identifier
-  string total_physical_memory = 10;       // Total physical memory
-  string disk_information = 11;            // Disk information
+  string cpu_id = 1;                       // cpuId
+  string total_physical_memory = 2;        // totalPhysicalMemory
+  string disk_information = 3;             // diskInformation
+  string system_manufacturer = 4;          // systemManufacturer
+  string system_product_name = 5;          // systemProductName
 }
 
 // Firmware information structure
 message FirmwareInfo {
-  google.protobuf.Timestamp boot_fw_date = 1; // Firmware date
-  string boot_fw_vendor = 2;                  // Firmware vendor
-  string boot_fw_version = 3;                 // Firmware version
-  string bios_vendor = 4;                     // BIOS vendor
-  string bios_version = 5;                    // BIOS version
-  google.protobuf.Timestamp bios_release_date = 6; // BIOS release date
+  string bios_vendor = 1;                     // biosVendor
+  string bios_version = 2;                    // biosVersion
+  google.protobuf.Timestamp bios_release_date = 3; // biosReleaseDate
 }
 
 // Operating system information structure
 message OSInfo {
-  string os_type = 1;                       // Operating System type
-  string os_version = 2;                    // Operating System version
-  google.protobuf.Timestamp os_release_date = 3; // Operating System release date
-  string os_information = 4;                // Additional OS information
+  string os_information = 1;               // OS information
 }
 
 // Software BOM information structure
@@ -283,12 +271,14 @@ message SWBOMInfo {
 }
 
 message SoftwarePackage {
-  string name = 1;                          // Package name
+  string name = 1 [(buf.validate.field).string.min_len = 1]; // Package name
   string version = 2;                       // Package version
   string vendor = 3;                        // Package vendor/publisher
   google.protobuf.Timestamp install_date = 4; // Installation date
   string license = 5;                       // License information
   string description = 6;                   // Package description
+  string type = 7;                          // Package type (deb, rpm, mender, etc.)
+  string architecture = 8;                  // Package architecture
 }
 
 // Version information structure
@@ -299,12 +289,21 @@ message VersionInfo {
   string git_commit = 4;                    // Git commit hash
 }
 
+message PowerCapabilitiesInfo {
+  bool shutdown = 1;
+  bool reboot = 2;
+  bool suspend = 3;
+  bool hibernate = 4;
+  string capabilities_json = 5;
+}
+
 // Combined information structure (for "all" queries)
 message AllInfo {
   HardwareInfo hardware = 1;               // Hardware information
   FirmwareInfo firmware = 2;               // Firmware information
   OSInfo os_info = 3;                      // OS information
   VersionInfo version = 4;                 // Version information
-  string power_capabilities = 5;           // Power capabilities (Linux only)
-  repeated string additional_info = 6;     // Any additional system information
+  PowerCapabilitiesInfo power_capabilities = 5; // Power capabilities (Linux only)
+  SWBOMInfo swbom = 6;                          // SWBOM info
+  repeated string additional_info = 7;     // Any additional system information
 }
