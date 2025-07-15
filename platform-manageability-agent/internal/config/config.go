@@ -9,13 +9,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
+	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v3"
 )
 
 const HEARTBEAT_DEFAULT = 10
-
-var log = logger.Logger
 
 type ConfigManageability struct {
 	Enabled           bool          `yaml:"enabled"`
@@ -54,7 +52,7 @@ type Config struct {
 	Auth            ConfigAuth          `yaml:"auth"`
 }
 
-func New(configPath string) (*Config, error) {
+func New(configPath string, log *logrus.Entry) (*Config, error) {
 	// Set default config path if not provided
 	if configPath == "" {
 		configPath = "/etc/edge-node/platform-manageability/confs/platform-manageability-agent.yaml"

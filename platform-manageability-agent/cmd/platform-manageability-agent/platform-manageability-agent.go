@@ -21,6 +21,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/status"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
+	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,6 +33,9 @@ func main() {
 		os.Exit(0)
 	}
 
+	var log = logger.Logger
+	log.Infof("Starting Platform Manageability Agent")
+
 	// Initialize configuration
 	configPath := flag.String("config", "", "Config file path")
 	flag.Parse()
@@ -42,18 +46,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	confs, err := config.New(*configPath)
+	confs, err := config.New(*configPath, log)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to initialize configuration. Platform Manageability Agent will terminate %v\n", err)
 		os.Exit(1)
 	}
 
-	// Create logger locally
-	log := logrus.New()
-	log.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-	})
-	log.SetLevel(logrus.InfoLevel)
+	// Set the log level as per the configuration
+	logLevel := confs.LogLevel
+
+	switch logLevel {
+	case "debug":
+		log.Logger.SetLevel(logrus.DebugLevel)
+	case "error":
+		log.Logger.SetLevel(logrus.ErrorLevel)
+	case "info":
+		log.Logger.SetLevel(logrus.InfoLevel)
+	default:
+		log.Warnf("Unknown log level '%s', defaulting to 'info'. Supported values: debug, info, error", logLevel)
+		log.Logger.SetLevel(logrus.InfoLevel)
+	}
 
 	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
@@ -78,25 +90,7 @@ func main() {
 		}
 	}()
 
-	// Run the agent with dependency injection
-	if err := runAgentWithDependencies(ctx, cancel, log, confs); err != nil {
-		fmt.Fprintf(os.Stderr, "Agent failed: %v\n", err)
-		os.Exit(1)
-	}
-}
-
-// runAgentWithDependencies initializes the agent with proper dependency injection
-func runAgentWithDependencies(ctx context.Context, cancel context.CancelFunc, log *logrus.Logger, confs *config.Config) error {
-	log.Info("Starting Platform Manageability Agent")
-	log.Debugf("Platform Manageability Agent arguments: %v", os.Args[1:])
-
-	// Run the agent with injected dependencies
-	return runAgent(ctx, cancel, log, confs)
-}
-
-// runAgent runs the main agent logic with injected dependencies
-func runAgent(ctx context.Context, cancel context.CancelFunc, log *logrus.Logger, confs *config.Config) error {
-	// metrics
+	// Enable agent metrics
 	shutdown, err := metrics.Init(ctx, confs.MetricsEndpoint, confs.MetricsInterval, info.Component, info.Version)
 	if err != nil {
 		log.Errorf("Initialization of metrics failed: %v", err)
@@ -110,31 +104,15 @@ func runAgent(ctx context.Context, cancel context.CancelFunc, log *logrus.Logger
 		}()
 	}
 
-	// Set log level as per configuration
-	// Supported log levels: "debug", "info", "error"
-	logLevel := confs.LogLevel
-
-	switch logLevel {
-	case "debug":
-		log.SetLevel(logrus.DebugLevel)
-	case "error":
-		log.SetLevel(logrus.ErrorLevel)
-	case "info":
-		log.SetLevel(logrus.InfoLevel)
-	default:
-		log.Warnf("Unknown log level '%s', defaulting to 'info'. Supported values: debug, info, error", logLevel)
-		log.SetLevel(logrus.InfoLevel)
-	}
-
 	log.Info("Platform Manageability Agent started successfully")
 
 	// Main agent loop using context-aware ticker
 	var wg sync.WaitGroup
+	var lastUpdateTimestamp int64
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	wg.Add(1)
-	var lastUpdateTimestamp int64
 	go func() {
 		defer wg.Done()
 		for {
@@ -186,10 +164,10 @@ func runAgent(ctx context.Context, cancel context.CancelFunc, log *logrus.Logger
 		}
 	}()
 
-	return nil
+	log.Infof("Platform Manageability Agent finished")
 }
 
-func initStatusClientAndTicker(ctx context.Context, cancel context.CancelFunc, log *logrus.Logger, statusServer string) (*status.StatusClient, time.Duration) {
+func initStatusClientAndTicker(ctx context.Context, cancel context.CancelFunc, log *logrus.Entry, statusServer string) (*status.StatusClient, time.Duration) {
 	statusClient, err := status.InitClient(statusServer)
 	if err != nil {
 		log.Errorf("Failed to initialize status client: %v", err)
