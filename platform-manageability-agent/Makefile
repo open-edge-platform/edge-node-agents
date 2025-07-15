@@ -40,11 +40,9 @@ endif
 #   test:       Run unit tests (from common.mk)
 #   fuzztest:   Run fuzz tests (from common.mk)
 
-.PHONY: all build clean help lint package test fuzztest tarball
+.PHONY: all build clean help lint package test fuzztest tarball deb-push integration_test
 
-all: build lint test
-
-lint: golint
+all: build test
 
 clean:
 	@echo "---MAKEFILE CLEAN---"
@@ -92,3 +90,8 @@ package:
 	@echo "---END MAKEFILE PACKAGE---"
 
 tarball: common-tarball
+
+deb-push: common-deb-push
+
+integration_test:
+	@echo "TODO: Add integration tests for platform-manageability-agent"

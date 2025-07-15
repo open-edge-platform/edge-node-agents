@@ -69,7 +69,7 @@ func main() {
 			log.Infof("Received signal: %v; shutting down...", sig)
 			cancel()
 		case <-ctx.Done():
-			// Context was cancelled, exit goroutine
+			// Context was canceled, exit goroutine
 			return
 		}
 	}()

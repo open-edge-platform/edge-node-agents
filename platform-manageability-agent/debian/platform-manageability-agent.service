@@ -1,14 +1,14 @@
 [Unit]
-Description=platform-manageability Agent
+Description=Platform Manageability Agent
 Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/platform-manageability-agent/README.md
 
 [Service]
-ExecStart=/opt/edge-node/bin/platform-manageability-agent -config /etc/edge-node/node/confs/platform-manageability-agent.yaml
+ExecStart=/opt/edge-node/bin/pm-agent -config /etc/edge-node/node/confs/platform-manageability-agent.yaml
 StandardOutput=journal
 StandardError=journal
 RestartSec=60
 Restart=on-failure
-User=cluster-agent
+User=pm-agent
 Group=bm-agents
 CPUQuota=20%
 MemoryMax=128M
