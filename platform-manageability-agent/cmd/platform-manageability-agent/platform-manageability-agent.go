@@ -115,7 +115,6 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 		}()
 	}
 
-
 	log.Info("Platform Manageability Agent started successfully")
 
 	// Main agent loop using context-aware ticker
