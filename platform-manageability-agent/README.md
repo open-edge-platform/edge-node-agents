@@ -6,16 +6,13 @@
 
 ## Overview
 
-Platform Manageability Agent (PMA) is part of the Edge Manageability Framework. It provides a unified interface for managing platform-level manageability features on Edge Node devices, with a primary focus on Intel vPro technology and Device Management Toolkit activation. The agent integrates RPC (Remote provisioning client) and LMS (Local Management Service) configurations to enable comprehensive device management capabilities.
+Platform Manageability Agent (PMA) is part of the Edge Manageability Framework. It provides a unified interface for managing platform-level manageability features on Edge Node devices, with a primary focus on Intel vPro technology and Device Management Toolkit (OpenDMT). The agent integrates RPC to enable comprehensive vPRO device management capabilities.
 
 It:
 
 - Manages platform-level manageability features for Edge Nodes using Intel vPro technology
 - Enables Device Management Toolkit activation for remote device management
-- Integrates RPC and LMS configurations for comprehensive manageability operations
-- Provides hardware monitoring and management capabilities
-- Handles firmware and platform configuration operations
-- Reports platform status and metrics to the Edge Infrastructure Manager
+- Integrates RPC configurations for comprehensive manageability operations
 
 ## Develop
 

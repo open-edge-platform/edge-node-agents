@@ -8,7 +8,6 @@ StandardOutput=journal
 StandardError=journal
 RestartSec=60
 Restart=on-failure
-User=pm-agent
 Group=bm-agents
 CPUQuota=20%
 MemoryMax=128M

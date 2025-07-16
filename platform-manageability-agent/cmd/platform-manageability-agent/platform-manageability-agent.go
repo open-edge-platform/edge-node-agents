@@ -49,29 +49,38 @@ func main() {
 	log.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 	})
-	log.SetLevel(logrus.InfoLevel)
+
+	// Set log level as per configuration
+	// Supported log levels: "debug", "info", "error"
+	logLevel := confs.LogLevel
+	switch logLevel {
+	case "debug":
+		log.SetLevel(logrus.DebugLevel)
+	case "error":
+		log.SetLevel(logrus.ErrorLevel)
+	case "info":
+		log.SetLevel(logrus.InfoLevel)
+	default:
+		log.Warnf("Unknown log level '%s', defaulting to 'info'. Supported values: debug, info, error", logLevel)
+		log.SetLevel(logrus.InfoLevel)
+	}
 
 	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Set up signal handling before starting the agent
+
 	sigs := make(chan os.Signal, 1)
+	defer close(sigs) // Close the signal channel
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start signal handler goroutine with proper cleanup
 	go func() {
-		defer signal.Stop(sigs) // Cleanup signal notifications
-		defer close(sigs)       // Close the signal channel
 
-		select {
-		case sig := <-sigs:
-			log.Infof("Received signal: %v; shutting down...", sig)
-			cancel()
-		case <-ctx.Done():
-			// Context was canceled, exit goroutine
-			return
-		}
+		sig := <-sigs
+		log.Infof("Received signal: %v; shutting down...", sig)
+		cancel()
 	}()
 
 	// Run the agent with dependency injection
@@ -104,22 +113,6 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 				log.Errorf("Shutting down metrics failed! Error: %v", err)
 			}
 		}()
-	}
-
-	// Set log level as per configuration
-	// Supported log levels: "debug", "info", "error"
-	logLevel := confs.LogLevel
-
-	switch logLevel {
-	case "debug":
-		log.SetLevel(logrus.DebugLevel)
-	case "error":
-		log.SetLevel(logrus.ErrorLevel)
-	case "info":
-		log.SetLevel(logrus.InfoLevel)
-	default:
-		log.Warnf("Unknown log level '%s', defaulting to 'info'. Supported values: debug, info, error", logLevel)
-		log.SetLevel(logrus.InfoLevel)
 	}
 
 	log.Info("Platform Manageability Agent started successfully")
