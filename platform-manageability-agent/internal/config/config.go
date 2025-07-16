@@ -68,11 +68,11 @@ func New(configPath string, log *logrus.Entry) (*Config, error) {
 	}
 
 	if config.StatusEndpoint == "" || !strings.HasPrefix(config.StatusEndpoint, "unix://") {
-		return nil, fmt.Errorf("Agent status reporting address not provided by config file")
+		return nil, fmt.Errorf("agent status reporting address not provided by config file")
 	}
 
 	if config.GUID == "" {
-		return nil, fmt.Errorf("Edge Node GUID not provided by config file")
+		return nil, fmt.Errorf("edge Node GUID not provided by config file")
 	}
 
 	log.Infof("Configuration loaded successfully")
