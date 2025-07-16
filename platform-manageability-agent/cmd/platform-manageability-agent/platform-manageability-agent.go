@@ -132,7 +132,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		statusClient, statusInterval := initStatusClientAndTicker(ctx, cancel, log, confs.Status.Endpoint)
+		statusClient, statusInterval := initStatusClientAndTicker(ctx, cancel, log, confs.StatusEndpoint)
 		compareInterval := max(int64(statusInterval.Seconds()), int64(confs.Manageability.HeartbeatInterval.Seconds()))
 		statusTicker := time.NewTicker(1 * time.Nanosecond)
 		defer statusTicker.Stop()

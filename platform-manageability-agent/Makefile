@@ -74,6 +74,20 @@ pmabuild_with_race:
 
 build: pmabuild ssmbuild
 
+cover_unit:
+	mkdir -p $(BUILD_DIR)/coverage/unit
+	go test -v ./internal/... -cover -covermode count -args -test.gocoverdir=$(shell pwd)/$(BUILD_DIR)/coverage/unit | tee $(BUILD_DIR)/coverage/unit/unit.out
+	go tool covdata percent -i=$(BUILD_DIR)/coverage/unit
+	go tool covdata func -i=$(BUILD_DIR)/coverage/unit
+
+cover: cover_unit
+	go tool covdata textfmt -i=$(BUILD_DIR)/coverage/unit,$(BUILD_DIR)/coverage/integration -o $(BUILD_DIR)/coverage/profile
+	go tool cover -html $(BUILD_DIR)/coverage/profile -o $(BUILD_DIR)/coverage/coverage.html
+	go tool covdata percent -i=$(BUILD_DIR)/coverage/unit,$(BUILD_DIR)/coverage/integration
+	cat $(BUILD_DIR)/coverage/unit/unit.out | go-junit-report -set-exit-code > $(BUILD_DIR)/report.xml
+	sed -i "s#$(shell pwd)#github.com/open-edge-platform/edge-node-agents/platform-manageability-agent#g" $(BUILD_DIR)/coverage/profile
+	gocover-cobertura < $(BUILD_DIR)/coverage/profile > $(BUILD_DIR)/coverage.xml
+
 test: common-unit-test
 
 fuzztest: common-fuzztest

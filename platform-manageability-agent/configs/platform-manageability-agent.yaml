@@ -9,16 +9,7 @@ manageability:
   enabled: true
   serviceURL: infra.test.edgeorch.intel.com:443
   heartbeatInterval: 10s
-status:
-  endpoint: 'unix:///run/node-agent/node-agent.sock'
-  serviceClients: []
-  outboundClients: []
-  networkEndpoints: []
+statusEndpoint: 'unix:///run/node-agent/node-agent.sock'
 metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
 metricsInterval: 10s
-auth:
-  accessTokenURL: keycloak.edgeorch.intel.com
-  rsTokenURL: token-provider.edgeorch.intel.com
-  accessTokenPath: /etc/intel_edge_node/tokens
-  clientCredsPath: /etc/intel_edge_node/client-credentials
-  tokenClients: [ platform-manageability-agent ]
+accessTokenPath: /etc/intel_edge_node/tokens
