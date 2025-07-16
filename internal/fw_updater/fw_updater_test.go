@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 )
 
 func TestNewFWUpdater(t *testing.T) {
@@ -27,6 +28,7 @@ func TestNewFWUpdater(t *testing.T) {
 				req: &pb.UpdateFirmwareRequest{
 					Url: "https://example.com/firmware.bin",
 				},
+				// fs field will be set by NewFWUpdater to afero.NewOsFs()
 			},
 		},
 		{
@@ -34,6 +36,7 @@ func TestNewFWUpdater(t *testing.T) {
 			request: nil,
 			want: &FWUpdater{
 				req: nil,
+				// fs field will be set by NewFWUpdater to afero.NewOsFs()
 			},
 		},
 		{
@@ -45,6 +48,7 @@ func TestNewFWUpdater(t *testing.T) {
 				req: &pb.UpdateFirmwareRequest{
 					Url: "",
 				},
+				// fs field will be set by NewFWUpdater to afero.NewOsFs()
 			},
 		},
 	}
@@ -52,6 +56,11 @@ func TestNewFWUpdater(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewFWUpdater(tt.request)
+
+			// Check that fs field is set (non-nil)
+			if got.fs == nil {
+				t.Errorf("NewFWUpdater() fs field is nil, expected non-nil filesystem")
+			}
 
 			// Compare the request field
 			if got.req == nil && tt.want.req != nil {
@@ -84,7 +93,7 @@ func TestFWUpdater_UpdateFirmware(t *testing.T) {
 				Url: "http://example.com/firmware.bin",
 			},
 			expectedStatus:        500,
-			expectedErrorContains: "error loading config: failed to read configuration file: open /etc/intel_manageability.conf:",
+			expectedErrorContains: "failed to read schema file",
 		},
 		{
 			name: "config loading error with valid HTTPS URL",
@@ -92,7 +101,7 @@ func TestFWUpdater_UpdateFirmware(t *testing.T) {
 				Url: "https://secure-server.com/firmware.bin",
 			},
 			expectedStatus:        500,
-			expectedErrorContains: "error loading config: failed to read configuration file: open /etc/intel_manageability.conf:",
+			expectedErrorContains: "failed to read schema file",
 		},
 		{
 			name: "config loading error with complex URL path",
@@ -100,12 +109,13 @@ func TestFWUpdater_UpdateFirmware(t *testing.T) {
 				Url: "https://releases.example.com/v2.1/firmware/update.bin",
 			},
 			expectedStatus:        500,
-			expectedErrorContains: "error loading config: failed to read configuration file: open /etc/intel_manageability.conf:",
+			expectedErrorContains: "failed to read schema file",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Use default constructor which uses real filesystem (causing the expected error)
 			u := NewFWUpdater(tt.request)
 
 			// Note: This test currently tests the actual implementation
@@ -164,6 +174,39 @@ func TestFWUpdater_UpdateFirmware_WithNilRequest(t *testing.T) {
 	// The function should not return a Go error (based on current implementation)
 	if err != nil {
 		t.Errorf("UpdateFirmware() should not return Go error, got: %v", err)
+	}
+}
+
+func TestFWUpdater_UpdateFirmware_WithMockedFS(t *testing.T) {
+	// Test with mocked filesystem that has all required files
+	fs := setupMockFSForFWUpdater()
+
+	request := &pb.UpdateFirmwareRequest{
+		Url:         "http://example.com/firmware.bin",
+		ReleaseDate: nil, // This will cause a comparison issue but we can test config loading
+	}
+
+	u := NewFWUpdaterWithFS(request, fs)
+	got, err := u.UpdateFirmware()
+
+	// Should not return nil
+	if got == nil {
+		t.Errorf("UpdateFirmware() returned nil response")
+		return
+	}
+
+	// Error should be nil (errors are in the response)
+	if err != nil {
+		t.Errorf("UpdateFirmware() returned unexpected error: %v", err)
+		return
+	}
+
+	// Since we don't have ReleaseDate set, this should succeed past config loading
+	// but may fail later in the process due to other missing setup
+	// The key thing is that it should NOT fail on config file reading
+	if strings.Contains(got.Error, "failed to read schema file") ||
+		strings.Contains(got.Error, "failed to read config file") {
+		t.Errorf("UpdateFirmware() failed on config file reading with mocked FS: %v", got.Error)
 	}
 }
 
@@ -239,4 +282,73 @@ func TestFWUpdater_UpdateFirmware_ImprovedDesign(t *testing.T) {
 			t.Error("Expected error status code when download should fail")
 		}
 	})
+}
+
+// setupMockFSForFWUpdater creates a mock filesystem with the necessary config files for testing
+func setupMockFSForFWUpdater() afero.Fs {
+	fs := afero.NewMemMapFs()
+
+	// Create a valid schema file
+	validSchema := `{
+		"$schema": "http://json-schema.org/draft-07/schema#",
+		"type": "object",
+		"properties": {
+			"firmware_component": {
+				"type": "object",
+				"properties": {
+					"firmware_products": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {"type": "string"},
+								"tool_options": {"type": "boolean"},
+								"guid": {"type": "boolean"},
+								"bios_vendor": {"type": "string"},
+								"operating_system": {"type": "string"},
+								"firmware_tool": {"type": "string"},
+								"firmware_tool_args": {"type": "string"},
+								"firmware_tool_check_args": {"type": "string"},
+								"firmware_file_type": {"type": "string"},
+								"firmware_dest_path": {"type": "string"}
+							},
+							"required": ["name", "bios_vendor", "firmware_file_type"]
+						}
+					}
+				},
+				"required": ["firmware_products"]
+			}
+		},
+		"required": ["firmware_component"]
+	}`
+
+	// Create a valid config file
+	validConfig := `{
+		"firmware_component": {
+			"firmware_products": [
+				{
+					"name": "Alder Lake Client Platform",
+					"guid": true,
+					"bios_vendor": "Intel Corporation",
+					"operating_system": "linux",
+					"firmware_tool": "fwupdate",
+					"firmware_tool_args": "--apply",
+					"firmware_tool_check_args": "-s",
+					"firmware_file_type": "xx"
+				}
+			]
+		}
+	}`
+
+	// Write the files to the mock filesystem
+	err := afero.WriteFile(fs, "/usr/share/firmware_tool_config_schema.json", []byte(validSchema), 0644)
+	if err != nil {
+		panic("Failed to write schema file: " + err.Error())
+	}
+	err = afero.WriteFile(fs, "/etc/firmware_tool_info.conf", []byte(validConfig), 0644)
+	if err != nil {
+		panic("Failed to write config file: " + err.Error())
+	}
+
+	return fs
 }

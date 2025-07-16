@@ -22,21 +22,25 @@ The configuration file is structured as follows:
 ### **Fields**
 
 #### `os_updater`
+
 - **Description:** Contains configuration settings for the OS updater.
 - **Type:** Object
 - **Required:** Yes
 
 ##### **`trustedRepositories`**
+
 - **Description:** A list of trusted repository URLs that the OS updater can use for updates.
 - **Type:** Array of strings
 - **Required:** Yes
 - **Default Value:** An empty array (`[]`)
 
 ##### **`proceedWithoutRollback`**
+
 - **Description:** Indicates whether the OS updater should proceed with updates even if rollback functionality is unavailable.
 - **Type:** Boolean
 - **Required:** Yes
 - **Default Value:** `true`
+
 ---
 
 ## Example Configuration
@@ -64,7 +68,6 @@ Here is an example of a valid configuration file with trusted repositories:
 - The configuration file must conform to the JSON schema used for validation.
 - If the `trustedRepositories` array is empty, the OS updater will not have any repositories to use for updates.
 
-
 ---
 
 ## Validation
@@ -77,7 +80,7 @@ To validate the configuration file, use the JSON schema provided in the project.
 
 The configuration file is located at:
 
-```
+```cmd
 /etc/intel_manageability.conf
 ```
 
@@ -93,7 +96,6 @@ The configuration file is located at:
 
 - **Issue:** Updates fail due to rollback functionality being unavailable.
   - **Solution:** Set `proceedWithoutRollback` to `true` to allow updates to proceed without rollback.
-
 
 ---
 

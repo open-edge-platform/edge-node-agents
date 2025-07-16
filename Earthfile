@@ -78,7 +78,7 @@ run-golang-unit-tests:
         -coverpkg=./internal/... -coverprofile=cover.out
    
     # Enforce minimum coverage threshold for internal/ directory
-    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=68.2 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
+    RUN COVERAGE=$(go tool cover -func=cover.out | awk '/total:/ {print $3}' | tr -d '%') && MIN_COVERAGE=70.2 && echo "Total Coverage for internal/: $COVERAGE%" && echo "Minimum Required Coverage: $MIN_COVERAGE%" && awk -v coverage="$COVERAGE" -v min="$MIN_COVERAGE" 'BEGIN {if (coverage < min) {print "Coverage " coverage "% is below " min "%"; exit 1} else {print "Coverage " coverage "% meets the requirement."; exit 0}}'
     SAVE ARTIFACT cover.out AS LOCAL build/cover.out
     
 generate-proto:
@@ -143,28 +143,37 @@ build-deb:
     # Create the JWT token directory structure and empty access_token file in the package
     RUN mkdir -p etc/intel_edge_node/tokens/release-service && touch etc/intel_edge_node/tokens/release-service/access_token
 
-    # Copy the configuration file to the package directory
+    # Copy the configuration files to the package directory
     COPY fpm-templates/etc/intel_manageability.conf etc/intel_manageability.conf
+    COPY fpm-templates/etc/firmware_tool_info.conf etc/firmware_tool_info.conf
 
-    # Create the DEBIAN/conffiles file
+    # Create the DEBIAN/conffiles files
     RUN echo "/etc/intel_manageability.conf" >> DEBIAN/conffiles
+    RUN echo "/etc/firmware_tool_info.conf" >> DEBIAN/conffiles
     RUN echo "/etc/intel_edge_node/tokens/release-service/access_token" >> DEBIAN/conffiles
         
     # Set ownership and permissions for the configuration file
     RUN chown root:root etc/intel_manageability.conf
     RUN chmod 640 etc/intel_manageability.conf
+
+    # Set ownership and permissions for the firmware tool info file
+    RUN chown root:root etc/firmware_tool_info.conf
+    RUN chmod 640 etc/firmware_tool_info.conf
     
     # Set ownership and permissions for the JWT token file and directory
     RUN chown -R root:root etc/intel_edge_node
     RUN chmod 750 etc/intel_edge_node etc/intel_edge_node/tokens etc/intel_edge_node/tokens/release-service
     RUN chmod 640 etc/intel_edge_node/tokens/release-service/access_token
 
-    # Copy the schema file to the package directory
+    # Copy the schema files to the package directory
     COPY fpm-templates/usr/share/inbd_schema.json usr/share/inbd_schema.json
-    
-    # Set ownership and permissions for the schema file
+    COPY fpm-templates/usr/share/firmware_tool_config_schema.json usr/share/firmware_tool_config_schema.json
+
+    # Set ownership and permissions for the schema files
     RUN chown root:root usr/share/inbd_schema.json
     RUN chmod 640 usr/share/inbd_schema.json
+    RUN chown root:root usr/share/firmware_tool_config_schema.json
+    RUN chmod 640 usr/share/firmware_tool_config_schema.json
 
     # Copy the postinst script to the DEBIAN directory
     COPY fpm-templates/DEBIAN/postinst DEBIAN/postinst
@@ -172,9 +181,15 @@ build-deb:
     
     # Copy other files    
     COPY fpm-templates/etc/apparmor.d/usr.bin.inbd etc/apparmor.d/usr.bin.inbd
+    
+    COPY fpm-templates/usr/bin/UpdateFirmwareBlobFwupdtool.sh usr/bin/UpdateFirmwareBlobFwupdtool.sh
+    RUN chown root:root usr/bin/UpdateFirmwareBlobFwupdtool.sh
+    RUN chmod 755 usr/bin/UpdateFirmwareBlobFwupdtool.sh
+    
     COPY fpm-templates/usr/bin/provision-tc usr/bin/provision-tc
     RUN chown root:root usr/bin/provision-tc
     RUN chmod 700 usr/bin/provision-tc
+    
     COPY fpm-templates/usr/lib/systemd/system/inbd.service usr/lib/systemd/system/inbd.service
     
     # Create the control file

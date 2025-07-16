@@ -592,7 +592,6 @@ func TestUpdateFirmware_ValidURL(t *testing.T) {
 
 	req := &pb.UpdateFirmwareRequest{
 		Url:         "https://example.com/firmware.bin",
-		ToolOptions: "test-options",
 		DoNotReboot: true,
 		Username:    "testuser",
 		Signature:   "test-signature",

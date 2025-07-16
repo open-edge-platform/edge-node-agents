@@ -38,7 +38,6 @@ Performs a Firmware Over The Air (FOTA) update.
 ```commandline
 inbc fota {--uri URI} 
    {--releasedate RELEASE_DATE}
-   [--tooloptions TOOL_OPTIONS; default=""]
    [--reboot; default=true]
    [--username USERNAME; default=""]
    [--signature SIGNATURE; default=""]
@@ -345,9 +344,11 @@ inbc remove --path  os_updater.trustedRepositories:<https://abc.com/>
 ## QUERY
 
 ### Description
+
 Query device(s) for attributes
 
 ### Usage
+
 ```commandline
 inbc query
    [--option, -o=[all | hw | fw |  os | swbom | version ]; default='all']
@@ -374,9 +375,11 @@ inbc query --option swbom
 ```
 
 ### Option Results
+
 # Query Command
 
 ## Description
+
 The Query command can be called by either the cloud or INBC.  It will provide attribute information on the Host.
 
 ## Options
@@ -433,6 +436,7 @@ inbc restart
 ## SHUTDOWN
 
 ### Description
+
 Shutdown
 
 ### Usage

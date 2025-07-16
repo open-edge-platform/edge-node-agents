@@ -39,10 +39,6 @@ func TestFOTACmd(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "", releaseDate, "default release date should be empty")
 
-	toolOptions, err := flags.GetString("tooloptions")
-	assert.NoError(t, err)
-	assert.Equal(t, "", toolOptions, "default tool options should be empty")
-
 	reboot, err := flags.GetBool("reboot")
 	assert.NoError(t, err)
 	assert.Equal(t, true, reboot, "default reboot should be true")
@@ -56,7 +52,6 @@ func TestHandleFOTA(t *testing.T) {
 	socket := "/var/run/inbd.sock"
 	url := "http://example.com/package"
 	releaseDate := "2025-03-13T00:00:00Z"
-	toolOptions := "tooloptions"
 	reboot := true
 	userName := ""
 	signature := ""
@@ -74,7 +69,7 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, false)
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &toolOptions, &reboot, &userName, &signature, dialer)(cmd, args)
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, dialer)(cmd, args)
 		assert.NoError(t, err, "handleFOTA should not return an error")
 
 		mockClient.AssertExpectations(t)
@@ -86,7 +81,7 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, false)
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &toolOptions, &reboot, &userName, &badSignature, dialer)(cmd, args)
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &badSignature, dialer)(cmd, args)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "signature does not match expected format")
 	})
@@ -103,7 +98,7 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, false)
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &toolOptions, &reboot, &userName, &validSignature, dialer)(cmd, args)
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &validSignature, dialer)(cmd, args)
 		assert.NoError(t, err, "handleFOTA should not return an error for valid signature")
 		mockClient.AssertExpectations(t)
 	})
@@ -115,7 +110,7 @@ func TestHandleFOTA(t *testing.T) {
 		}
 
 		err := handleFOTA(&socket, &url, &invalidReleaseDate,
-			&toolOptions, &reboot, &userName, &signature, dialer)(cmd, args)
+			&reboot, &userName, &signature, dialer)(cmd, args)
 		assert.Error(t, err, "error parsing release date: parsing time")
 	})
 
@@ -125,7 +120,7 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, true)
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &toolOptions,
+		err := handleFOTA(&socket, &url, &releaseDate,
 			&reboot, &userName, &signature, dialer)(cmd, args)
 		assert.Error(t, err, "error setting up new gRPC client")
 	})
@@ -138,7 +133,7 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, false)
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &toolOptions, &reboot, &userName, &signature, dialer)(cmd, args)
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, dialer)(cmd, args)
 		assert.Error(t, err, "error updating firmware")
 	})
 
@@ -153,7 +148,7 @@ func TestHandleFOTA(t *testing.T) {
 			return mockClient, &mockConnWithCloseError{}, nil
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &toolOptions, &reboot, &userName, &signature, dialer)(cmd, args)
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, dialer)(cmd, args)
 		assert.NoError(t, err, "handleFOTA should not return an error even if Close fails")
 	})
 }

@@ -45,10 +45,9 @@ message UpdateFirmwareRequest {
   },
   (buf.validate.field).required = true]; // URL from which to remotely retrieve the package
   google.protobuf.Timestamp release_date = 2 [(buf.validate.field).required = true]; // Release date of the new firmware update.
-  string tool_options = 3 [(buf.validate.field).required = false]; // Options for the firmware update tool
-  bool do_not_reboot = 4;  // Whether to reboot the node after the firmware update attempt
-  string username = 5 [(buf.validate.field).required = false]; // Username if authentication is required for the package source
-  string signature = 6 [(buf.validate.field).required = false]; // Signature of the package
+  bool do_not_reboot = 3;  // Whether to reboot the node after the firmware update attempt
+  string username = 4 [(buf.validate.field).required = false]; // Username if authentication is required for the package source
+  string signature = 5 [(buf.validate.field).required = false]; // Signature of the package
 }
 
 message UpdateSystemSoftwareRequest {

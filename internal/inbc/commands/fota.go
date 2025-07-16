@@ -21,9 +21,8 @@ import (
 // FOTACmd returns a cobra command for the FOTA command
 func FOTACmd() *cobra.Command {
 	var socket string
-	var url string
+	var uri string
 	var releaseDate string
-	var toolOptions string
 	var reboot bool
 	var userName string
 	var signature string
@@ -32,13 +31,22 @@ func FOTACmd() *cobra.Command {
 		Use:   "fota",
 		Short: "Performs Firmware Update",
 		Long:  `Updates the firmware on the device.`,
-		RunE:  handleFOTA(&socket, &url, &releaseDate, &toolOptions, &reboot, &userName, &signature, Dial),
+		RunE:  handleFOTA(&socket, &uri, &releaseDate, &reboot, &userName, &signature, Dial),
 	}
 
 	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
-	cmd.Flags().StringVar(&url, "uri", "", "URI from which to remotely retrieve the package")
-	cmd.Flags().StringVar(&releaseDate, "releasedate", "", "Release date of the new SW update (RFC3339 format)")
-	cmd.Flags().StringVar(&toolOptions, "tooloptions", "", "Mode for installing the software update (full, no-download, download-only)")
+	cmd.Flags().StringVar(&uri, "uri", "", "URI from which to remotely retrieve the package")
+	err := cmd.MarkFlagRequired("uri")
+	if err != nil {
+		fmt.Printf("Error marking 'uri' flag as required: %v\n", err)
+		return nil
+	}
+	cmd.Flags().StringVar(&releaseDate, "releasedate", "", "Release date of the new firmware update in YYYY-MM-DD format (required)")
+	err = cmd.MarkFlagRequired("releasedate")
+	if err != nil {
+		fmt.Printf("Error marking 'releasedate' flag as required: %v\n", err)
+		return nil
+	}
 	cmd.Flags().BoolVar(&reboot, "reboot", true, "Whether to reboot after the software update attempt")
 	cmd.Flags().StringVar(&userName, "username", "", "Username if authentication is required for the package source")
 	cmd.Flags().StringVar(&signature, "signature", "", "Signature of the package")
@@ -51,7 +59,6 @@ func handleFOTA(
 	socket *string,
 	url *string,
 	releaseDate *string,
-	toolOptions *string,
 	reboot *bool,
 	username *string,
 	signature *string,
@@ -63,9 +70,17 @@ func handleFOTA(
 		// Validate and parse the release date
 		var releaseDateProto *timestamppb.Timestamp
 		if *releaseDate != "" {
-			parsedDate, err := time.Parse(time.RFC3339, *releaseDate)
+			var parsedDate time.Time
+			var err error
+
+			// Try parsing as YYYY-MM-DD format first
+			parsedDate, err = time.Parse(time.DateOnly, *releaseDate)
 			if err != nil {
-				return fmt.Errorf("error parsing release date: %v", err)
+				// If that fails, try parsing as RFC3339 (ISO 8601) format
+				parsedDate, err = time.Parse(time.RFC3339, *releaseDate)
+				if err != nil {
+					return fmt.Errorf("error parsing release date (expected YYYY-MM-DD or RFC3339 format): %v", err)
+				}
 			}
 			releaseDateProto = timestamppb.New(parsedDate)
 		}
@@ -83,7 +98,6 @@ func handleFOTA(
 		request := &pb.UpdateFirmwareRequest{
 			Url:         *url,
 			ReleaseDate: releaseDateProto,
-			ToolOptions: *toolOptions,
 			DoNotReboot: !*reboot,
 			Username:    *username,
 			Signature:   *signature,

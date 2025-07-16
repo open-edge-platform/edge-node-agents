@@ -1,0 +1,76 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Firmware Tool Info Configuration",
+    "type": "object",
+    "properties": {
+        "firmware_component": {
+            "type": "object",
+            "properties": {
+                "firmware_products": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Platform name identifier"
+                            },
+                            "tool_options": {
+                                "type": "boolean",
+                                "description": "Whether tool options are enabled"
+                            },
+                            "guid": {
+                                "type": "boolean",
+                                "description": "Whether GUID is used"
+                            },
+                            "bios_vendor": {
+                                "type": "string",
+                                "description": "BIOS vendor name"
+                            },
+                            "operating_system": {
+                                "type": "string",
+                                "description": "Target operating system"
+                            },
+                            "firmware_tool": {
+                                "type": "string",
+                                "description": "Path or name of the firmware update tool"
+                            },
+                            "firmware_tool_args": {
+                                "type": "string",
+                                "description": "Arguments to pass to the firmware tool"
+                            },
+                            "firmware_tool_check_args": {
+                                "type": "string",
+                                "description": "Arguments for firmware tool check operations"
+                            },
+                            "firmware_file_type": {
+                                "type": "string",
+                                "description": "File type/extension for firmware files"
+                            },
+                            "firmware_dest_path": {
+                                "type": "string",
+                                "description": "Destination path for firmware files"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "bios_vendor",
+                            "firmware_file_type"
+                        ],
+                        "additionalProperties": false
+                    },
+                    "minItems": 1,
+                    "description": "Array of firmware product configurations"
+                }
+            },
+            "required": [
+                "firmware_products"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "firmware_component"
+    ],
+    "additionalProperties": false
+}

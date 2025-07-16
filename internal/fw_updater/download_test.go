@@ -313,7 +313,6 @@ func TestDownloader_download_ComplexScenario(t *testing.T) {
 		Url:         "https://secure-repo.example.com/path/to/firmware-v2.1.bin",
 		Username:    "testuser",
 		Signature:   "abc123",
-		ToolOptions: "--verify-signature",
 	}
 
 	// Create memory filesystem with mock config

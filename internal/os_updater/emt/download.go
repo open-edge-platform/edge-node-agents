@@ -263,7 +263,10 @@ func (t *Downloader) downloadFileFromResponse(resp *http.Response, methodName st
 // handleAuthError processes authentication-related HTTP errors
 func (t *Downloader) handleAuthError(resp *http.Response, methodName string) error {
 	// Read response body for error details
-	bodyBytes, _ := io.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response body: %w", err)
+	}
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 		return fmt.Errorf("authentication failed with %s: status %d", methodName, resp.StatusCode)
