@@ -1,0 +1,13 @@
+Source: platform-manageability-agent
+Maintainer: Platform Manageability Agent Team <team@example.com>
+Section: misc
+Priority: optional
+Standards-Version: 1.0.0
+Build-Depends: debhelper-compat (= 12)
+
+Package: platform-manageability-agent
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Platform Manageability Agent manages platform-level manageability
+ features for Edge Nodes. It provides a unified interface for managing
+ hardware, firmware, and platform configurations on Edge Node devices.
