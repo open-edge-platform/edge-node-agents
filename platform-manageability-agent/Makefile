@@ -44,6 +44,8 @@ endif
 
 all: build test
 
+lint: golint
+
 clean:
 	@echo "---MAKEFILE CLEAN---"
 	rm -rf build

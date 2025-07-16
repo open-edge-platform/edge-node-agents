@@ -73,20 +73,14 @@ func main() {
 
 	// Set up signal handling before starting the agent
 	sigs := make(chan os.Signal, 1)
+	defer close(sigs) // Close the signal channel
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start signal handler goroutine with proper cleanup
 	go func() {
-		defer signal.Stop(sigs) // Cleanup signal notifications
-		defer close(sigs)       // Close the signal channel
-
-		select {
-		case sig := <-sigs:
-			log.Infof("Received signal: %v; shutting down...", sig)
-			cancel()
-		case <-ctx.Done():
-			// Context was canceled, exit goroutine
-			return
+		sig := <-sigs
+		log.Infof("Received signal: %v; shutting down...", sig)
+		cancel()
 		}
 	}()
 

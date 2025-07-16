@@ -39,6 +39,7 @@ func New(configPath string, log *logrus.Entry) (*Config, error) {
 
 	// Read configuration file
 	configBytes, err := utils.ReadFileNoLinks(configPath)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
