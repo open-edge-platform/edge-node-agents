@@ -81,7 +81,6 @@ func main() {
 		sig := <-sigs
 		log.Infof("Received signal: %v; shutting down...", sig)
 		cancel()
-		}
 	}()
 
 	// Enable agent metrics
