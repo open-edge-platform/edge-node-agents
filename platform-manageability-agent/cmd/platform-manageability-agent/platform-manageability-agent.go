@@ -15,7 +15,9 @@ import (
 	"time"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
+	auth "github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info"
+	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/comms"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	"github.com/sirupsen/logrus"
 )
@@ -116,6 +118,12 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 	}
 
 	log.Info("Platform Manageability Agent started successfully")
+
+	tlsConfig, err := auth.GetAuthConfig(auth.GetAuthContext(ctx, confs.Auth.AccessTokenPath), nil)
+	if err != nil {
+		log.Fatalf("TLS configuration creation failed! Error: %v", err)
+	}
+	dmManager := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.Auth.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
 
 	// Main agent loop using context-aware ticker
 	ticker := time.NewTicker(30 * time.Second)
