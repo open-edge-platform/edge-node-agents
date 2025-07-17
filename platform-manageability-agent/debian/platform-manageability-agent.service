@@ -10,6 +10,7 @@ RestartSec=60
 Restart=on-failure
 User=pm-agent
 Group=bm-agents
+User=platform-manageability-agent
 CPUQuota=20%
 MemoryMax=128M
 
