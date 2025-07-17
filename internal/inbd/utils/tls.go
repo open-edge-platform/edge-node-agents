@@ -17,6 +17,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/spf13/afero"
@@ -25,8 +26,36 @@ import (
 // Directories to store keys/certs
 const (
 	TLSDirPublic = "/etc/intel-manageability/public"
-	TLSDirSecret = "/etc/intel-manageability/secret"
 )
+
+// getTLSDirSecret returns the TLS secret directory path from configuration
+var (
+	tlsDirSecretCache string
+	tlsDirSecretOnce  sync.Once
+)
+
+func getTLSDirSecret() string {
+	tlsDirSecretOnce.Do(func() {
+		config, err := LoadConfig(afero.NewOsFs(), ConfigFilePath)
+		if err != nil {
+			// Fallback to default if config can't be loaded
+			tlsDirSecretCache = "/etc/intel-manageability/secret"
+			return
+		}
+		// Use LUKS mount point if available, otherwise use default
+		if config.LUKS.MountPoint != "" {
+			tlsDirSecretCache = config.LUKS.MountPoint
+		} else {
+			tlsDirSecretCache = "/etc/intel-manageability/secret"
+		}
+	})
+	return tlsDirSecretCache
+}
+
+// GetTLSDirSecret returns the TLS secret directory path from configuration
+func GetTLSDirSecret() string {
+	return getTLSDirSecret()
+}
 
 // GenerateLocalCA generates a local CA key and certificate.
 func GenerateLocalCA() (caCert *x509.Certificate, caKey *rsa.PrivateKey, err error) {
@@ -64,14 +93,15 @@ func GenerateLocalCA() (caCert *x509.Certificate, caKey *rsa.PrivateKey, err err
 	if err := MkdirAll(fs, TLSDirPublic, 0755); err != nil {
 		return nil, nil, err
 	}
-	if err := MkdirAll(fs, TLSDirSecret, 0700); err != nil {
+	tlsDirSecret := getTLSDirSecret()
+	if err := MkdirAll(fs, tlsDirSecret, 0700); err != nil {
 		return nil, nil, err
 	}
 
-	if err := writePEM(filepath.Join(TLSDirSecret, "ca.key"), "RSA PRIVATE KEY", x509.MarshalPKCS1PrivateKey(caKey)); err != nil {
+	if err := writePEM(filepath.Join(tlsDirSecret, "ca.key"), "RSA PRIVATE KEY", x509.MarshalPKCS1PrivateKey(caKey)); err != nil {
 		return nil, nil, fmt.Errorf("failed to write CA private key: %w", err)
 	}
-	if err := writePEM(filepath.Join(TLSDirSecret, "ca.crt"), "CERTIFICATE", caCertDER); err != nil {
+	if err := writePEM(filepath.Join(tlsDirSecret, "ca.crt"), "CERTIFICATE", caCertDER); err != nil {
 		return nil, nil, fmt.Errorf("failed to write CA certificate: %w", err)
 	}
 	if err := writePublicKey(filepath.Join(TLSDirPublic, "ca.pub"), &caKey.PublicKey); err != nil {
@@ -109,17 +139,18 @@ func GenerateAndSignCert(name string, caCert *x509.Certificate, caKey *rsa.Priva
 		return fmt.Errorf("failed to create %s certificate: %w", name, err)
 	}
 	fs := afero.NewOsFs()
-	if err := MkdirAll(fs, TLSDirSecret, 0700); err != nil {
+	tlsDirSecret := getTLSDirSecret()
+	if err := MkdirAll(fs, tlsDirSecret, 0700); err != nil {
 		return err
 	}
 	if err := MkdirAll(fs, TLSDirPublic, 0755); err != nil {
 		return err
 	}
 
-	if err := writePEM(filepath.Join(TLSDirSecret, name+".key"), "RSA PRIVATE KEY", x509.MarshalPKCS1PrivateKey(key)); err != nil {
+	if err := writePEM(filepath.Join(tlsDirSecret, name+".key"), "RSA PRIVATE KEY", x509.MarshalPKCS1PrivateKey(key)); err != nil {
 		return fmt.Errorf("failed to write private key for %s: %w", name, err)
 	}
-	if err := writePEM(filepath.Join(TLSDirSecret, name+".crt"), "CERTIFICATE", certDER); err != nil {
+	if err := writePEM(filepath.Join(tlsDirSecret, name+".crt"), "CERTIFICATE", certDER); err != nil {
 		return fmt.Errorf("failed to write certificate for '%s': %w", name, err)
 	}
 	if err := writePublicKey(filepath.Join(TLSDirPublic, name+".pub"), &key.PublicKey); err != nil {
@@ -149,7 +180,8 @@ func writePublicKey(filename string, pub *rsa.PublicKey) error {
 
 // SetupTLSCertificates generates CA, inbc, and inbd keys/certs if not present.
 func SetupTLSCertificates() error {
-	caCrtPath := filepath.Join(TLSDirSecret, "ca.crt")
+	tlsDirSecret := getTLSDirSecret()
+	caCrtPath := filepath.Join(tlsDirSecret, "ca.crt")
 	if _, err := os.Stat(caCrtPath); err == nil {
 		return nil // Return early if CA certificate already exists
 	}

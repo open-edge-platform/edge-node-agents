@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
 
 	"github.com/spf13/afero"
@@ -87,16 +88,19 @@ func RunServer(deps ServerDeps) error {
 		return fmt.Errorf("failed to set up TLS certificates: %w", err)
 	}
 
+	// Get TLS secret directory path from configuration
+	tlsSecretDir := utils.GetTLSDirSecret()
+
 	// Load server cert and key for mTLS
-	cert, err := deps.LoadX509KeyPair(
-		utils.TLSDirSecret+"/inbd.crt",
-		utils.TLSDirSecret+"/inbd.key",
-	)
+	certPath := filepath.Join(tlsSecretDir, "inbd.crt")
+	keyPath := filepath.Join(tlsSecretDir, "inbd.key")
+	cert, err := deps.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
 		return fmt.Errorf("failed to load server certificate: %w", err)
 	}
 	fs := deps.NewOsFs()
-	caCert, err := deps.ReadFile(fs, utils.TLSDirSecret+"/ca.crt")
+	caCertPath := filepath.Join(tlsSecretDir, "ca.crt")
+	caCert, err := deps.ReadFile(fs, caCertPath)
 	if err != nil {
 		return fmt.Errorf("failed to read CA certificate: %w", err)
 	}

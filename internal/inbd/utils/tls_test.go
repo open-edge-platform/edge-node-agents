@@ -24,7 +24,8 @@ func cleanupFiles(t *testing.T, fs afero.Fs, files []string) {
 }
 
 func TestTLSDirConstants(t *testing.T) {
-	if TLSDirSecret == "" || TLSDirPublic == "" {
+	tlsDirSecret := getTLSDirSecret()
+	if tlsDirSecret == "" || TLSDirPublic == "" {
 		t.Error("TLSDirSecret or TLSDirPublic should not be empty")
 	}
 }
@@ -39,9 +40,10 @@ func TestGenerateLocalCA(t *testing.T) {
 	}
 	// cleanup
 	fs := afero.NewOsFs()
+	tlsDirSecret := getTLSDirSecret()
 	cleanupFiles(t, fs, []string{
-		filepath.Join(TLSDirSecret, "ca.key"),
-		filepath.Join(TLSDirSecret, "ca.crt"),
+		filepath.Join(tlsDirSecret, "ca.key"),
+		filepath.Join(tlsDirSecret, "ca.crt"),
 		filepath.Join(TLSDirPublic, "ca.pub"),
 	})
 }
@@ -57,19 +59,21 @@ func TestGenerateAndSignCert(t *testing.T) {
 	}
 	// cleanup
 	fs := afero.NewOsFs()
+	tlsDirSecret := getTLSDirSecret()
 	cleanupFiles(t, fs, []string{
-		filepath.Join(TLSDirSecret, "testsvc.key"),
-		filepath.Join(TLSDirSecret, "testsvc.crt"),
+		filepath.Join(tlsDirSecret, "testsvc.key"),
+		filepath.Join(tlsDirSecret, "testsvc.crt"),
 		filepath.Join(TLSDirPublic, "testsvc.pub"),
-		filepath.Join(TLSDirSecret, "ca.key"),
-		filepath.Join(TLSDirSecret, "ca.crt"),
+		filepath.Join(tlsDirSecret, "ca.key"),
+		filepath.Join(tlsDirSecret, "ca.crt"),
 		filepath.Join(TLSDirPublic, "ca.pub"),
 	})
 }
 
 func TestSetupTLSCertificates(t *testing.T) {
 	// Remove ca.crt if exists to force regeneration
-	caCrtPath := filepath.Join(TLSDirSecret, "ca.crt")
+	tlsDirSecret := getTLSDirSecret()
+	caCrtPath := filepath.Join(tlsDirSecret, "ca.crt")
 	fs := afero.NewOsFs()
 	if err := RemoveFile(fs, caCrtPath); err != nil {
 		t.Logf("Warning: failed to remove ca.crt: %v", err)
@@ -92,12 +96,12 @@ func TestSetupTLSCertificates(t *testing.T) {
 
 	// cleanup
 	cleanupFiles(t, fs, []string{
-		filepath.Join(TLSDirSecret, "ca.key"),
-		filepath.Join(TLSDirSecret, "ca.crt"),
-		filepath.Join(TLSDirSecret, "inbc.key"),
-		filepath.Join(TLSDirSecret, "inbc.crt"),
-		filepath.Join(TLSDirSecret, "inbd.key"),
-		filepath.Join(TLSDirSecret, "inbd.crt"),
+		filepath.Join(tlsDirSecret, "ca.key"),
+		filepath.Join(tlsDirSecret, "ca.crt"),
+		filepath.Join(tlsDirSecret, "inbc.key"),
+		filepath.Join(tlsDirSecret, "inbc.crt"),
+		filepath.Join(tlsDirSecret, "inbd.key"),
+		filepath.Join(tlsDirSecret, "inbd.crt"),
 		filepath.Join(TLSDirPublic, "ca.pub"),
 		filepath.Join(TLSDirPublic, "inbc.pub"),
 		filepath.Join(TLSDirPublic, "inbd.pub"),

@@ -12,11 +12,11 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net"
-
-	"github.com/spf13/afero"
+	"path/filepath"
 
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -26,13 +26,19 @@ type Dialer func(ctx context.Context, addr string) (pb.InbServiceClient, *grpc.C
 
 // Dial returns a new gRPC client with mTLS
 func Dial(ctx context.Context, addr string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+	// Get TLS secret directory path from configuration
+	tlsSecretDir := utils.GetTLSDirSecret()
+
 	// Load client cert and key from secret directory
-	cert, err := tls.LoadX509KeyPair(utils.TLSDirSecret+"/inbc.crt", utils.TLSDirSecret+"/inbc.key")
+	certPath := filepath.Join(tlsSecretDir, "inbc.crt")
+	keyPath := filepath.Join(tlsSecretDir, "inbc.key")
+	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load client certificate: %w", err)
 	}
 	// Load CA cert from secret directory
-	caCert, err := utils.ReadFile(afero.NewOsFs(), utils.TLSDirSecret+"/ca.crt")
+	caCertPath := filepath.Join(tlsSecretDir, "ca.crt")
+	caCert, err := utils.ReadFile(afero.NewOsFs(), caCertPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read CA certificate: %w", err)
 	}

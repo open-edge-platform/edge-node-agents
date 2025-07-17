@@ -23,6 +23,11 @@ import (
 )
 
 func main() {
+	// Check if running as root
+	if os.Geteuid() != 0 {
+		log.Fatal("inbd must be run as root (use sudo)")
+	}
+
 	socket := flag.String("s", "/var/run/inbd.sock", "UNIX domain socket path")
 	flag.Parse()
 
