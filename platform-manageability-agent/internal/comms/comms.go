@@ -17,6 +17,7 @@ import (
 
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
+	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
 	pb "github.com/open-edge-platform/infra-external/dm-manager/pkg/api/dm-manager"
 )
 
@@ -86,24 +87,14 @@ func ConnectToDMManager(ctx context.Context, serviceAddr string, tlsConfig *tls.
 	}
 }
 
-// Open Questions:
-// 1. I'm setting UUID in the hostID field, is this the correct approach or should we use a different identifier?
-// 2. If Version is empty, should we set it to a default value or leave it empty?
-// 3. If Version is not found in the output, should we simply set status to Disabled?
-// 4. Should we handle the case where rpc amtinfo command fails and send the error message to dm-manager?
-
 // ParseAMTInfo parses the output of the `rpc amtinfo` command and populates the AMTStatusRequest.
-func ParseAMTInfo(output string) (*pb.AMTStatusRequest, error) {
+func ParseAMTInfo(uuid string, output []byte) (*pb.AMTStatusRequest, error) {
 	var (
 		status  = pb.AMTStatus_DISABLED
 		version string
 	)
-	cmd := exec.Command("sudo", ".dmidecode", "-s", "system-uuid")
-	uuid, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve UUID: %v", err)
-	}
-	scanner := bufio.NewScanner(strings.NewReader(output))
+
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	for scanner.Scan() {
 		line := scanner.Text()
 
@@ -115,8 +106,9 @@ func ParseAMTInfo(output string) (*pb.AMTStatusRequest, error) {
 			}
 		}
 	}
+
 	req := &pb.AMTStatusRequest{
-		HostId:  string(uuid),
+		HostId:  strings.TrimSpace(string(uuid)),
 		Status:  status,
 		Version: version,
 	}
@@ -125,35 +117,36 @@ func ParseAMTInfo(output string) (*pb.AMTStatusRequest, error) {
 
 // ReportAMTStatus executes the `rpc amtinfo` command, parses the output, and sends the AMT status to the server.
 func (cli *Client) ReportAMTStatus(ctx context.Context) error {
-	cmd := exec.Command("sudo", "./rpc", "amtinfo")
-	output, err := cmd.Output()
+	uuid, err := utils.GetSystemUUID()
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to execute `rpc amtinfo` command: %v", err)
-		cli.ReportErrorToDMManager(ctx, errMsg)
-		return err
+		return fmt.Errorf("failed to retrieve UUID: %w", err)
 	}
-	req, err := ParseAMTInfo(string(output))
+
+	output, err := utils.ExecuteWithRetries("sudo", []string{"./rpc", "amtinfo"})
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to parse `rpc amtinfo` output: %v", err)
-		cli.ReportErrorToDMManager(ctx, errMsg)
-		return err
+		req := &pb.AMTStatusRequest{
+			HostId:  uuid,
+			Status:  pb.AMTStatus_DISABLED,
+			Version: "",
+		}
+		_, reportErr := cli.DMMgrClient.ReportAMTStatus(ctx, req)
+		if reportErr != nil {
+			return fmt.Errorf("failed to report AMTStatus to DM Manager: %w", reportErr)
+		}
+		return fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)
 	}
+
+	req, err := ParseAMTInfo(uuid, output)
+	if err != nil {
+		return fmt.Errorf("failed to parse `rpc amtinfo` output: %w", err)
+	}
+
 	_, err = cli.DMMgrClient.ReportAMTStatus(ctx, req)
 	if err != nil {
-		return fmt.Errorf("failed to report AMT status: %v", err)
+		return fmt.Errorf("failed to report AMT status: %w", err)
 	}
 	log.Logger.Info("Successfully reported AMT status")
 	return nil
-}
-
-func (cli *Client) ReportErrorToDMManager(ctx context.Context, errMsg string) {
-	req := &pb.AMTStatusRequest{
-		// Add field to send error message.
-	}
-	_, err := cli.DMMgrClient.ReportAMTStatus(ctx, req)
-	if err != nil {
-		log.Logger.Errorf("Failed to report error to DM Manager: %v", err)
-	}
 }
 
 // RetrieveActivationDetails retrieves activation details and executes the activation command if required.
@@ -163,7 +156,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	}
 	resp, err := cli.DMMgrClient.RetrieveActivationDetails(ctx, req)
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve activation details: %v", err)
+		return fmt.Errorf("Failed to retrieve activation details: %w", err)
 	}
 
 	log.Logger.Infof("Retrieved activation details: HostID=%s, Operation=%v, ProfileName=%s",
@@ -175,7 +168,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			return fmt.Errorf("Failed to execute activation command: %v, Output: %s", err, string(output))
+			return fmt.Errorf("failed to execute activation command: %w, Output: %s", err, string(output))
 		}
 		// TODO: Parse the output and send the activation result back to DM Manager.
 	}
