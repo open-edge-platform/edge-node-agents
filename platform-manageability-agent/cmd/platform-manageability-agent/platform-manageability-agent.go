@@ -123,7 +123,9 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 	if err != nil {
 		log.Fatalf("TLS configuration creation failed! Error: %v", err)
 	}
-	dmManager := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.Auth.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
+
+	// TODO: Call the APIs using the client created here.
+	_ = comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.Auth.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
 
 	// Main agent loop using context-aware ticker
 	ticker := time.NewTicker(30 * time.Second)

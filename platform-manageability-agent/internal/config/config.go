@@ -52,6 +52,7 @@ type Config struct {
 	MetricsEndpoint string              `yaml:"metricsEndpoint"`
 	MetricsInterval time.Duration       `yaml:"metricsInterval"`
 	Auth            ConfigAuth          `yaml:"auth"`
+	RPSAddress      string              `yaml:"rpsAddress"`
 }
 
 func New(configPath string) (*Config, error) {
