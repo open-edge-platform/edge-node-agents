@@ -87,8 +87,8 @@ func ConnectToDMManager(ctx context.Context, serviceAddr string, tlsConfig *tls.
 	}
 }
 
-// ParseAMTInfo parses the output of the `rpc amtinfo` command and populates the AMTStatusRequest.
-func ParseAMTInfo(uuid string, output []byte) (*pb.AMTStatusRequest, error) {
+// parseAMTInfo parses the output of the `rpc amtinfo` command and populates the AMTStatusRequest.
+func parseAMTInfo(uuid string, output []byte) (*pb.AMTStatusRequest, error) {
 	var (
 		status  = pb.AMTStatus_DISABLED
 		version string
@@ -136,7 +136,7 @@ func (cli *Client) ReportAMTStatus(ctx context.Context) error {
 		return fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)
 	}
 
-	req, err := ParseAMTInfo(uuid, output)
+	req, err := parseAMTInfo(uuid, output)
 	if err != nil {
 		return fmt.Errorf("failed to parse `rpc amtinfo` output: %w", err)
 	}
