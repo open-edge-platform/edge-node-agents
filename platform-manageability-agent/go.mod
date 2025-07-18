@@ -5,6 +5,7 @@ go 1.24.4
 toolchain go1.24.5
 
 require (
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/open-edge-platform/edge-node-agents/common v1.7.1
 	github.com/open-edge-platform/infra-external/dm-manager v0.2.2

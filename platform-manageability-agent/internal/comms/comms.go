@@ -57,7 +57,7 @@ func (cli *Client) Connect(ctx context.Context) (err error) {
 		grpc.WithUnaryInterceptor(timeout.UnaryClientInterceptor(connTimeout)),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 	if err != nil {
-		return fmt.Errorf("connection to %v failed: %v", cli.DMMgrServiceAddr, err)
+		return fmt.Errorf("connection to %v failed: %w", cli.DMMgrServiceAddr, err)
 	}
 	cli.DMMgrClient = pb.NewDeviceManagementClient(cli.GrpcConn)
 	return nil
@@ -149,6 +149,14 @@ func (cli *Client) ReportAMTStatus(ctx context.Context) error {
 	return nil
 }
 
+// TODO:
+// 1. Immplement polling logic to periodically query the API for
+// operations that need to be performed once PMA is started.
+// a. When operationType is activate, PMA should execute the activation command.
+// b. When operationType is not activate, PMA should continue polling for the next operation.
+
+// 2. Implement logic to handle the activation command and report back the results to DM Manager.
+
 // RetrieveActivationDetails retrieves activation details and executes the activation command if required.
 func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string, conf *config.Config) error {
 	req := &pb.ActivationRequest{
@@ -159,7 +167,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		return fmt.Errorf("Failed to retrieve activation details: %w", err)
 	}
 
-	log.Logger.Infof("Retrieved activation details: HostID=%s, Operation=%v, ProfileName=%s",
+	log.Logger.Debugf("Retrieved activation details: HostID=%s, Operation=%v, ProfileName=%s",
 		resp.HostId, resp.Operation, resp.ProfileName)
 
 	if resp.Operation == pb.OperationType_ACTIVATE {

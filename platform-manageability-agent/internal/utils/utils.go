@@ -9,18 +9,14 @@ import (
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
 )
 
-const (
-	maxRetries    = 3
-	retryInterval = 5 * time.Second
-)
-
 func ExecuteWithRetries(command string, args []string) ([]byte, error) {
-	var output []byte
-	var err error
+	maxRetries := 3
+	retryInterval := 5 * time.Second
 
+	var err error
 	for i := 1; i <= maxRetries; i++ {
 		cmd := exec.Command(command, args...)
-		output, err = cmd.Output()
+		output, err := cmd.Output()
 		if err == nil {
 			return output, nil
 		}

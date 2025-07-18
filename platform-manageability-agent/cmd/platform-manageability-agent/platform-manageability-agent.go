@@ -11,9 +11,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
 	auth "github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info"
@@ -22,7 +24,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const AGENT_NAME = "platform-manageability-agent"
+const (
+	AGENT_NAME  = "platform-manageability-agent"
+	MAX_RETRIES = 3
+)
 
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "version" {
@@ -124,8 +129,39 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 		log.Fatalf("TLS configuration creation failed! Error: %v", err)
 	}
 
-	// TODO: Call the APIs using the client created here.
-	_ = comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.Auth.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
+	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.Auth.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
+
+	// Open Questions:
+	// 1. Should we report AMTStatus periodically or just once at startup?
+	// 2. If perodic, then what if the system is never AMT enabled? Should there be max retries and exit if AMT is never enabled?
+	// 3. If there is an error in reporting AMT status, should we fatal after max retries?
+	err = dmMgrClient.ReportAMTStatus(ctx)
+	if err != nil {
+		log.Fatalf("AMT status report failed! Error: %v", err)
+	}
+
+	var (
+		lastActivationCheckTimestamp int64
+		activationCheckInterval      = 30 * time.Second // TODO: Make this configurable.
+	)
+
+	activationTicker := time.NewTicker(activationCheckInterval)
+	go func() {
+		op := func() error {
+			// TODO: Retrieve HostID.
+			return dmMgrClient.RetrieveActivationDetails(ctx, "<host_id>", confs)
+		}
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-activationTicker.C:
+				activationTicker.Stop()
+				updateWithRetry(ctx, log, op, &lastActivationCheckTimestamp)
+			}
+			activationTicker.Reset(activationCheckInterval)
+		}
+	}()
 
 	// Main agent loop using context-aware ticker
 	ticker := time.NewTicker(30 * time.Second)
@@ -140,5 +176,14 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 			log.Debug("Platform Manageability Agent heartbeat")
 			// TODO: Add main agent functionality here (e.g., health checks, work scheduling, etc.)
 		}
+	}
+}
+
+func updateWithRetry(ctx context.Context, log *logrus.Logger, op func() error, lastUpdateTimestamp *int64) {
+	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.WithContext(backoff.NewExponentialBackOff(), ctx), MAX_RETRIES))
+	if err != nil {
+		log.Errorf("Retry error: %v", err)
+	} else {
+		atomic.StoreInt64(lastUpdateTimestamp, time.Now().Unix())
 	}
 }
