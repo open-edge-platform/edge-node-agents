@@ -11,7 +11,7 @@ onboarding:
   heartbeatInterval: 10s
 status:
   endpoint: '/run/node-agent/node-agent.sock'
-  serviceClients: [ hardware-discovery-agent, cluster-agent, platform-update-agent, platform-telemetry-agent ]
+  serviceClients: [ hardware-discovery-agent, cluster-agent, platform-manageability-agent, platform-update-agent, platform-telemetry-agent ]
   outboundClients: [ platform-observability-collector, platform-observability-health-check, platform-observability-logging, platform-observability-metrics ]
   networkEndpoints:
     - name: client-proxy

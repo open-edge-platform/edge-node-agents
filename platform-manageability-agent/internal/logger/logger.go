@@ -5,16 +5,9 @@
 package logger
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/open-edge-platform/edge-node-agents/common/pkg/logger"
+
+	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info"
 )
 
-// Logger is the global logger instance for the Platform Manageability Agent
-var Logger = logrus.New()
-
-func init() {
-	// Set default log format and level
-	Logger.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-	})
-	Logger.SetLevel(logrus.InfoLevel)
-}
+var Logger = logger.New(info.Component, info.Version)
