@@ -26,7 +26,6 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/comms"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
-	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
 	pb "github.com/open-edge-platform/infra-external/dm-manager/pkg/api/dm-manager"
 )
 
@@ -115,13 +114,17 @@ func main() {
 	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
 
 	var (
+		wg sync.WaitGroup
+
 		isAMTEnabled                = false
 		amtStatusCheckInterval      = 30 * time.Second // TODO: Make this configurable.
 		lastAMTStatusCheckTimestamp int64
 	)
-
-	amtStatusTicker := time.NewTicker(amtStatusCheckInterval)
 	go func() {
+		defer wg.Done()
+		amtStatusTicker := time.NewTicker(amtStatusCheckInterval)
+		defer amtStatusTicker.Stop()
+
 		op := func() error {
 			status, err := dmMgrClient.ReportAMTStatus(ctx)
 			if err != nil || status == pb.AMTStatus_DISABLED {
@@ -149,20 +152,17 @@ func main() {
 		lastActivationCheckTimestamp int64
 		activationCheckInterval      = 30 * time.Second // TODO: Make this configurable.
 	)
-
-	activationTicker := time.NewTicker(activationCheckInterval)
 	go func() {
+		defer wg.Done()
+		activationTicker := time.NewTicker(activationCheckInterval)
+		defer activationTicker.Stop()
+
 		op := func() error {
 			if !isAMTEnabled {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
 			}
-			uuid, err := utils.GetSystemUUID()
-			if err != nil {
-				log.Errorf("Failed to retrieve UUID: %v", err)
-				return err
-			}
-			err = dmMgrClient.RetrieveActivationDetails(ctx, uuid, confs)
+			err = dmMgrClient.RetrieveActivationDetails(ctx, confs)
 			if err != nil {
 				log.Errorf("Failed to retrieve activation details: %v", err)
 				return err
@@ -183,7 +183,6 @@ func main() {
 	}()
 
 	// Main agent loop using context-aware ticker
-	var wg sync.WaitGroup
 	var lastUpdateTimestamp int64
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()

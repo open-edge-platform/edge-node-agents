@@ -152,18 +152,15 @@ func (cli *Client) ReportAMTStatus(ctx context.Context) (pb.AMTStatus, error) {
 	return req.Status, nil
 }
 
-// TODO:
-// 1. Immplement polling logic to periodically query the API for
-// operations that need to be performed once PMA is started.
-// a. When operationType is activate, PMA should execute the activation command.
-// b. When operationType is not activate, PMA should continue polling for the next operation.
-
-// 2. Implement logic to handle the activation command and report back the results to DM Manager.
-
 // RetrieveActivationDetails retrieves activation details and executes the activation command if required.
-func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string, conf *config.Config) error {
+func (cli *Client) RetrieveActivationDetails(ctx context.Context, conf *config.Config) error {
+	uuid, err := utils.GetSystemUUID()
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve activation details: %w", err)
+	}
+
 	req := &pb.ActivationRequest{
-		HostId: hostID,
+		HostId: uuid,
 	}
 	resp, err := cli.DMMgrClient.RetrieveActivationDetails(ctx, req)
 	if err != nil {
@@ -175,13 +172,47 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 
 	if resp.Operation == pb.OperationType_ACTIVATE {
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
-		cmd := exec.Command("sudo", "rpc", "activate", "-u", rpsAddress, "-n", "-profile", resp.ProfileName)
+		// TODO:
+		// This is a placeholder, replace with actual logic to fetch the password.
+		// Need to check how to fetch the password from dm-manager, hardcoded for now.
+		password := "P@ssw0rd"
+		cmd := exec.Command("sudo", "rpc", "activate", "-u", rpsAddress, "-n", "-profile", resp.ProfileName, "-password", password)
 
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to execute activation command: %w, Output: %s", err, string(output))
 		}
-		// TODO: Parse the output and send the activation result back to DM Manager.
+
+		var req *pb.ActivationResultRequest
+		if isProvisioned(string(output)) {
+			req = &pb.ActivationResultRequest{
+				HostId:           uuid,
+				ActivationStatus: pb.ActivationStatus_PROVISIONED,
+			}
+			log.Logger.Info("Provisioning successful: CIRA is configured")
+		} else {
+			req = &pb.ActivationResultRequest{
+				HostId:           uuid,
+				ActivationStatus: pb.ActivationStatus_FAILED,
+			}
+			log.Logger.Warn("Provisioning failed: CIRA is not configured")
+		}
+		_, err = cli.DMMgrClient.ReportActivationResults(ctx, req)
+		if err != nil {
+			return fmt.Errorf("failed to report Activation results: %w", err)
+		}
 	}
 	return nil
+}
+
+// isProvisioned checks if the output contains the line indicating provisioning success
+func isProvisioned(output string) bool {
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, `msg="CIRA: Configured"`) {
+			return true
+		}
+	}
+	return false
 }
