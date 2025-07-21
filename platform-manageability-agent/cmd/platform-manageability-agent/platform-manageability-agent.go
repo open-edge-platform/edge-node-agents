@@ -141,6 +141,13 @@ func main() {
 			} else {
 				log.Info("Module mei_me loaded successfully")
 			}
+			service := "lms.service"
+			for _, action := range []string{"enable", "start"} {
+				log.Info("%sing %s...\n", action, service)
+				if err := enableService(action, service); err != nil {
+					log.Errorf("Error while enabling service:", err)
+				}
+			}
 			return nil
 		}
 		for {
@@ -247,6 +254,15 @@ func main() {
 	}()
 
 	log.Infof("Platform Manageability Agent finished")
+}
+
+func enableService(action, service string) error {
+	cmd := exec.Command("sudo", "systemctl", action, service)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return log.Errorf("failed to %s %s: %v, output: %s", action, service, err, output)
+	}
+	return nil
 }
 
 func loadModule(module string) error {
