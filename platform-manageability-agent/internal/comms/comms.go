@@ -116,37 +116,40 @@ func parseAMTInfo(uuid string, output []byte) (*pb.AMTStatusRequest, error) {
 }
 
 // ReportAMTStatus executes the `rpc amtinfo` command, parses the output, and sends the AMT status to the server.
-func (cli *Client) ReportAMTStatus(ctx context.Context) error {
+func (cli *Client) ReportAMTStatus(ctx context.Context) (pb.AMTStatus, error) {
+	defaultStatus := pb.AMTStatus_DISABLED
+
 	uuid, err := utils.GetSystemUUID()
 	if err != nil {
-		return fmt.Errorf("failed to retrieve UUID: %w", err)
+		return defaultStatus, fmt.Errorf("failed to retrieve UUID: %w", err)
 	}
 
+	// TODO: RPC location need to be checked.
 	output, err := utils.ExecuteWithRetries("sudo", []string{"./rpc", "amtinfo"})
 	if err != nil {
 		req := &pb.AMTStatusRequest{
 			HostId:  uuid,
-			Status:  pb.AMTStatus_DISABLED,
+			Status:  defaultStatus,
 			Version: "",
 		}
 		_, reportErr := cli.DMMgrClient.ReportAMTStatus(ctx, req)
 		if reportErr != nil {
-			return fmt.Errorf("failed to report AMTStatus to DM Manager: %w", reportErr)
+			return defaultStatus, fmt.Errorf("failed to report AMTStatus to DM Manager: %w", reportErr)
 		}
-		return fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)
+		return defaultStatus, fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)
 	}
 
 	req, err := parseAMTInfo(uuid, output)
 	if err != nil {
-		return fmt.Errorf("failed to parse `rpc amtinfo` output: %w", err)
+		return defaultStatus, fmt.Errorf("failed to parse `rpc amtinfo` output: %w", err)
 	}
 
 	_, err = cli.DMMgrClient.ReportAMTStatus(ctx, req)
 	if err != nil {
-		return fmt.Errorf("failed to report AMT status: %w", err)
+		return defaultStatus, fmt.Errorf("failed to report AMT status: %w", err)
 	}
 	log.Logger.Info("Successfully reported AMT status")
-	return nil
+	return req.Status, nil
 }
 
 // TODO:

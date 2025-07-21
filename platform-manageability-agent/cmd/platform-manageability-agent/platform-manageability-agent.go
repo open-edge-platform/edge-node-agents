@@ -16,12 +16,15 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/sirupsen/logrus"
+
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
 	auth "github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/comms"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
-	"github.com/sirupsen/logrus"
+	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
+	pb "github.com/open-edge-platform/infra-external/dm-manager/pkg/api/dm-manager"
 )
 
 const (
@@ -131,14 +134,36 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 
 	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.Auth.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
 
-	// Open Questions:
-	// 1. Should we report AMTStatus periodically or just once at startup?
-	// 2. If perodic, then what if the system is never AMT enabled? Should there be max retries and exit if AMT is never enabled?
-	// 3. If there is an error in reporting AMT status, should we fatal after max retries?
-	err = dmMgrClient.ReportAMTStatus(ctx)
-	if err != nil {
-		log.Fatalf("AMT status report failed! Error: %v", err)
-	}
+	var (
+		isAMTEnabled                = false
+		amtStatusCheckInterval      = 30 * time.Second // TODO: Make this configurable.
+		lastAMTStatusCheckTimestamp int64
+	)
+
+	amtStatusTicker := time.NewTicker(amtStatusCheckInterval)
+	go func() {
+		op := func() error {
+			status, err := dmMgrClient.ReportAMTStatus(ctx)
+			if err != nil || status == pb.AMTStatus_DISABLED {
+				log.Errorf("Failed to report AMT status: %v", err)
+				isAMTEnabled = false
+				return err
+			}
+			log.Info("Successfully reported AMT status")
+			isAMTEnabled = true
+			return nil
+		}
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-amtStatusTicker.C:
+				amtStatusTicker.Stop()
+				updateWithRetry(ctx, log, op, &lastAMTStatusCheckTimestamp)
+			}
+			amtStatusTicker.Reset(amtStatusCheckInterval)
+		}
+	}()
 
 	var (
 		lastActivationCheckTimestamp int64
@@ -148,8 +173,22 @@ func runAgent(ctx context.Context, log *logrus.Logger, confs *config.Config) err
 	activationTicker := time.NewTicker(activationCheckInterval)
 	go func() {
 		op := func() error {
-			// TODO: Retrieve HostID.
-			return dmMgrClient.RetrieveActivationDetails(ctx, "<host_id>", confs)
+			if !isAMTEnabled {
+				log.Info("Skipping activation check because AMT is not enabled")
+				return nil
+			}
+			uuid, err := utils.GetSystemUUID()
+			if err != nil {
+				log.Errorf("Failed to retrieve UUID: %v", err)
+				return err
+			}
+			err = dmMgrClient.RetrieveActivationDetails(ctx, uuid, confs)
+			if err != nil {
+				log.Errorf("Failed to retrieve activation details: %v", err)
+				return err
+			}
+			log.Info("Successfully retrieved activation details")
+			return nil
 		}
 		for {
 			select {
