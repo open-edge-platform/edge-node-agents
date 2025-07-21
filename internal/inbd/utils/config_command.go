@@ -7,10 +7,13 @@
 package utils
 
 import (
+	"archive/tar"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/spf13/afero"
+	"io"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -31,10 +34,59 @@ func (c *ConfigOperation) LoadConfigCommand(uri, signature string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// Verify signature if provided
+	if signature != "" {
+		if err := VerifySignature(signature, uri, nil); err != nil {
+			return fmt.Errorf("signature verification failed: %w", err)
+		}
+	}
+
 	fs := afero.Afero{Fs: afero.NewOsFs()}
-	input, err := ReadFile(fs.Fs, uri)
-	if err != nil {
-		return fmt.Errorf("failed to read new config: %w", err)
+
+	// Determine if the input is a tar file
+	isTar := false
+	if strings.HasSuffix(strings.ToLower(uri), ".tar") {
+		isTar = true
+	}
+
+	var input []byte
+
+	if isTar {
+		// Extract intel_manageability.conf from tar to a temp file
+		tarFile, err := fs.Open(uri)
+		if err != nil {
+			return fmt.Errorf("failed to open tar file: %w", err)
+		}
+		defer tarFile.Close()
+
+		tr := tar.NewReader(tarFile)
+		found := false
+		for {
+			hdr, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("failed to read tar file: %w", err)
+			}
+			if filepath.Base(hdr.Name) == "intel_manageability.conf" {
+				input, err = io.ReadAll(tr)
+				if err != nil {
+					return fmt.Errorf("failed to read config from tar: %w", err)
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("intel_manageability.conf not found in tar archive")
+		}
+	} else {
+		var err error
+		input, err = ReadFile(fs.Fs, uri)
+		if err != nil {
+			return fmt.Errorf("failed to read new config: %w", err)
+		}
 	}
 
 	// Validate input against schema before writing

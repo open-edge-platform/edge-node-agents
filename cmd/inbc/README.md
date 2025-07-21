@@ -257,6 +257,30 @@ inbc load
 inbc load --uri  <URI to config file>/config.file
 ```
 
+#### Load new Configuration File with signature
+
+You can load a configuration file with a signature in two ways:
+
+1. **Direct config file signature:**
+   The signature must be generated over the config file itself.
+
+   ```commandline
+   sudo inbc load --uri <URI to config file>/config.conf --signature "<hex_signature_string>"
+   ```
+
+2. **Tarball with PEM and config:**
+   The configuration file you provide must be named `intel_manageability.conf`.
+   To use a signature with a PEM certificate, create a tar archive containing both the `intel_manageability.conf` file and the PEM certificate file.
+   The signature must be generated over the entire tarball, not just the config file.
+
+   ```commandline
+   sudo inbc load --uri <URI to config file>/config.tar --signature "<hex_signature_string>"
+   ```
+
+**Note:**
+- For tarball mode, both `intel_manageability.conf` and the PEM file must be present in the tar archive.
+- The signature must match the file or tarball as described above.
+
 ## GET
 
 ### Description

@@ -27,3 +27,15 @@ const RebootCmd = "/usr/sbin/reboot"
 
 // ShutdownCmd is the command used to shutdown the system.
 const ShutdownCmd = "/usr/sbin/shutdown"
+
+// OTAPackageCertPath is the path to the OTA package certificate.
+const OTAPackageCertPath = "/etc/intel-manageability/public/ota_package.pem"
+
+// ConfigFileName is the expected configuration file name.
+const ConfigFileName = "intel_manageability.conf"
+
+// MinKeySizeBits is the minimum allowed RSA key size in bits for signature verification.
+const MinKeySizeBits = 3000
+
+// Context Timeouts
+const SignatureVerificationTimeoutInSeconds = 30

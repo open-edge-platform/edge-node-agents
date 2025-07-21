@@ -28,7 +28,10 @@ func GetOSInfo() (*pb.OSInfo, error) {
 // getOSInformation gets comprehensive OS information
 func getOSInformation() string {
 	// Get system information
-	hostname, _ := os.Hostname()
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "unknown-host" // Fallback to a safe default
+	}
 
 	// Get kernel version on Linux
 	var kernelVersion string
