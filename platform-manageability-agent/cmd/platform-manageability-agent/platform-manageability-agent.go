@@ -142,15 +142,15 @@ func main() {
 			log.Info("Successfully reported AMT status")
 			atomic.StoreInt32(&isAMTEnabled, 1)
 			if err := loadModule("mei_me"); err != nil {
-				log.Errorf("Error while loading module:", err)
+				log.Errorf("Error while loading module: %v", err)
 			} else {
 				log.Info("Module mei_me loaded successfully")
 			}
 			service := "lms.service"
 			for _, action := range []string{"enable", "start"} {
-				log.Info("%sing %s...\n", action, service)
+				log.Infof("%sing %s...\n", action, service)
 				if err := enableService(action, service); err != nil {
-					log.Errorf("Error while enabling service:", err)
+					log.Errorf("Error while enabling service: %v", err)
 				}
 			}
 			return nil
