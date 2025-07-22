@@ -10,7 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"sync"
 	"sync/atomic"
@@ -266,15 +265,11 @@ func enableService(action, service string) error {
 	allowedActions := map[string]bool{"enable": true, "start": true}
 	allowedServices := map[string]bool{"lms.service": true}
 
-	if !allowedActions[action] {
-		return fmt.Errorf("invalid action: %v", action)
-	}
-	if !allowedServices[service] {
-		return fmt.Errorf("invalid service: %v", service)
+	if !allowedActions[action] || !allowedServices[service] {
+		return fmt.Errorf("invalid service details")
 	}
 
-	cmd := exec.Command("sudo", "systemctl", action, service)
-	output, err := cmd.CombinedOutput()
+	output, err := utils.ExecuteWithRetries("sudo", []string{"systemctl", action, service})
 	if err != nil {
 		return fmt.Errorf("failed to %s %s: %v, output: %s", action, service, err, output)
 	}
@@ -282,8 +277,7 @@ func enableService(action, service string) error {
 }
 
 func loadModule(module string) error {
-	cmd := exec.Command("sudo", "modprobe", module)
-	output, err := cmd.CombinedOutput()
+	output, err := utils.ExecuteWithRetries("sudo", []string{"modprobe", module})
 	if err != nil {
 		return fmt.Errorf("failed to load module %s: %v, output: %s", module, err, output)
 	}

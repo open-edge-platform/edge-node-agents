@@ -75,7 +75,7 @@ func ConnectToDMManager(ctx context.Context, serviceAddr string, tlsConfig *tls.
 	for {
 		select {
 		case <-ctx.Done():
-			log.Logger.Info("Connecting to DM Manager has been cancelled")
+			log.Logger.Info("Connecting to DM Manager has been canceled")
 			return nil
 		case <-cyclicalTicker.C:
 			err := dmMgr.Connect(ctx)
