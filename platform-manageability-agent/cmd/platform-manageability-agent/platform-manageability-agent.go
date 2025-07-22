@@ -147,7 +147,7 @@ func main() {
 				log.Info("Module mei_me loaded successfully")
 			}
 			service := "lms.service"
-			for _, action := range []string{"enable", "start"} {
+			for _, action := range []string{"unmask", "enable", "start"} {
 				log.Infof("%sing %s...\n", action, service)
 				if err := enableService(action, service); err != nil {
 					log.Errorf("Error while enabling service: %v", err)
@@ -263,7 +263,7 @@ func main() {
 }
 
 func enableService(action, service string) error {
-	allowedActions := map[string]bool{"enable": true, "start": true}
+	allowedActions := map[string]bool{"unmask": true, "enable": true, "start": true}
 	allowedServices := map[string]bool{"lms.service": true}
 
 	if !allowedActions[action] || !allowedServices[service] {
