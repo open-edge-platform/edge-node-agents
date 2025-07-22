@@ -26,6 +26,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/comms"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
+	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
 	pb "github.com/open-edge-platform/infra-external/dm-manager/pkg/api/dm-manager"
 )
 
@@ -113,12 +114,16 @@ func main() {
 
 	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
 
+	hostID, err := utils.GetSystemUUID()
+	if err != nil {
+		log.Fatalf("Failed to retrieve system UUID with an error: %v", err)
+	}
 	var (
 		wg sync.WaitGroup
 
-		isAMTEnabled                = false
 		amtStatusCheckInterval      = confs.Manageability.HeartbeatInterval
 		lastAMTStatusCheckTimestamp int64
+		isAMTEnabled                int32
 	)
 	wg.Add(1)
 	go func() {
@@ -127,14 +132,14 @@ func main() {
 		defer amtStatusTicker.Stop()
 
 		op := func() error {
-			status, err := dmMgrClient.ReportAMTStatus(ctx)
+			status, err := dmMgrClient.ReportAMTStatus(ctx, hostID)
 			if err != nil || status == pb.AMTStatus_DISABLED {
 				log.Errorf("Failed to report AMT status: %v", err)
-				isAMTEnabled = false
+				atomic.StoreInt32(&isAMTEnabled, 0)
 				return err
 			}
 			log.Info("Successfully reported AMT status")
-			isAMTEnabled = true
+			atomic.StoreInt32(&isAMTEnabled, 1)
 			return nil
 		}
 		for {
@@ -150,8 +155,8 @@ func main() {
 	}()
 
 	var (
-		lastActivationCheckTimestamp int64
 		activationCheckInterval      = confs.Manageability.HeartbeatInterval
+		lastActivationCheckTimestamp int64
 	)
 	wg.Add(1)
 	go func() {
@@ -160,11 +165,11 @@ func main() {
 		defer activationTicker.Stop()
 
 		op := func() error {
-			if !isAMTEnabled {
+			if atomic.LoadInt32(&isAMTEnabled) == 0 {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
 			}
-			err = dmMgrClient.RetrieveActivationDetails(ctx, confs)
+			err = dmMgrClient.RetrieveActivationDetails(ctx, hostID, confs)
 			if err != nil {
 				log.Errorf("Failed to retrieve activation details: %v", err)
 				return err

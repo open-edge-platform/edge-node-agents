@@ -119,19 +119,14 @@ func parseAMTInfo(uuid string, output []byte) (*pb.AMTStatusRequest, error) {
 }
 
 // ReportAMTStatus executes the `rpc amtinfo` command, parses the output, and sends the AMT status to the server.
-func (cli *Client) ReportAMTStatus(ctx context.Context) (pb.AMTStatus, error) {
+func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTStatus, error) {
 	defaultStatus := pb.AMTStatus_DISABLED
-
-	uuid, err := utils.GetSystemUUID()
-	if err != nil {
-		return defaultStatus, fmt.Errorf("failed to retrieve UUID: %w", err)
-	}
 
 	// TODO: RPC location need to be checked.
 	output, err := utils.ExecuteWithRetries("sudo", []string{"./rpc", "amtinfo"})
 	if err != nil {
 		req := &pb.AMTStatusRequest{
-			HostId:  uuid,
+			HostId:  hostID,
 			Status:  defaultStatus,
 			Version: "",
 		}
@@ -142,7 +137,7 @@ func (cli *Client) ReportAMTStatus(ctx context.Context) (pb.AMTStatus, error) {
 		return defaultStatus, fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)
 	}
 
-	req, err := parseAMTInfo(uuid, output)
+	req, err := parseAMTInfo(hostID, output)
 	if err != nil {
 		return defaultStatus, fmt.Errorf("failed to parse `rpc amtinfo` output: %w", err)
 	}
@@ -156,14 +151,9 @@ func (cli *Client) ReportAMTStatus(ctx context.Context) (pb.AMTStatus, error) {
 }
 
 // RetrieveActivationDetails retrieves activation details and executes the activation command if required.
-func (cli *Client) RetrieveActivationDetails(ctx context.Context, conf *config.Config) error {
-	uuid, err := utils.GetSystemUUID()
-	if err != nil {
-		return fmt.Errorf("Failed to retrieve activation details: %w", err)
-	}
-
+func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string, conf *config.Config) error {
 	req := &pb.ActivationRequest{
-		HostId: uuid,
+		HostId: hostID,
 	}
 	resp, err := cli.DMMgrClient.RetrieveActivationDetails(ctx, req)
 	if err != nil {
@@ -189,13 +179,13 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, conf *config.C
 		var req *pb.ActivationResultRequest
 		if isProvisioned(string(output)) {
 			req = &pb.ActivationResultRequest{
-				HostId:           uuid,
+				HostId:           hostID,
 				ActivationStatus: pb.ActivationStatus_PROVISIONED,
 			}
 			log.Logger.Info("Provisioning successful: CIRA is configured")
 		} else {
 			req = &pb.ActivationResultRequest{
-				HostId:           uuid,
+				HostId:           hostID,
 				ActivationStatus: pb.ActivationStatus_FAILED,
 			}
 			log.Logger.Warn("Provisioning failed: CIRA is not configured")
