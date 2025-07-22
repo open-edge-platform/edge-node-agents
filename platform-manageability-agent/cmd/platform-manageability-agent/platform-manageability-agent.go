@@ -35,13 +35,14 @@ const (
 	MAX_RETRIES = 3
 )
 
+var log = logger.Logger
+
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "version" {
 		fmt.Printf("%v v%v\n", info.Component, info.Version)
 		os.Exit(0)
 	}
 
-	var log = logger.Logger
 	log.Infof("Starting Platform Manageability Agent")
 
 	// Initialize configuration
@@ -271,16 +272,18 @@ func enableService(action, service string) error {
 
 	output, err := utils.ExecuteWithRetries("sudo", []string{"systemctl", action, service})
 	if err != nil {
-		return fmt.Errorf("failed to %s %s: %v, output: %s", action, service, err, output)
+		return fmt.Errorf("failed to %s %s: %v", action, service, err)
 	}
+	log.Info("Service %s %sed successfully: %s", service, action, string(output))
 	return nil
 }
 
 func loadModule(module string) error {
 	output, err := utils.ExecuteWithRetries("sudo", []string{"modprobe", module})
 	if err != nil {
-		return fmt.Errorf("failed to load module %s: %v, output: %s", module, err, output)
+		return fmt.Errorf("failed to load module %s: %v", module, err)
 	}
+	log.Info("Module loaded successfully:", string(output))
 	return nil
 }
 
