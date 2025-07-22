@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"sync"
 	"sync/atomic"
@@ -140,6 +141,18 @@ func main() {
 			}
 			log.Info("Successfully reported AMT status")
 			atomic.StoreInt32(&isAMTEnabled, 1)
+			if err := loadModule("mei_me"); err != nil {
+				log.Errorf("Error while loading module:", err)
+			} else {
+				log.Info("Module mei_me loaded successfully")
+			}
+			service := "lms.service"
+			for _, action := range []string{"enable", "start"} {
+				log.Info("%sing %s...\n", action, service)
+				if err := enableService(action, service); err != nil {
+					log.Errorf("Error while enabling service:", err)
+				}
+			}
 			return nil
 		}
 		for {
@@ -247,6 +260,34 @@ func main() {
 	}()
 
 	log.Infof("Platform Manageability Agent finished")
+}
+
+func enableService(action, service string) error {
+	allowedActions := map[string]bool{"enable": true, "start": true}
+	allowedServices := map[string]bool{"lms.service": true}
+
+	if !allowedActions[action] {
+		return fmt.Errorf("invalid action: %v", action)
+	}
+	if !allowedServices[service] {
+		return fmt.Errorf("invalid service: %v", service)
+	}
+
+	cmd := exec.Command("sudo", "systemctl", action, service)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to %s %s: %v, output: %s", action, service, err, output)
+	}
+	return nil
+}
+
+func loadModule(module string) error {
+	cmd := exec.Command("sudo", "modprobe", module)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to load module %s: %v, output: %s", module, err, output)
+	}
+	return nil
 }
 
 func initStatusClientAndTicker(ctx context.Context, cancel context.CancelFunc, log *logrus.Entry, statusServer string) (*status.StatusClient, time.Duration) {
