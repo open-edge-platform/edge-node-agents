@@ -10,7 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"sync"
 	"sync/atomic"
@@ -18,7 +17,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
@@ -119,9 +117,10 @@ func main() {
 		wg sync.WaitGroup
 
 		isAMTEnabled                = false
-		amtStatusCheckInterval      = 30 * time.Second // TODO: Make this configurable.
+		amtStatusCheckInterval      = confs.Manageability.HeartbeatInterval
 		lastAMTStatusCheckTimestamp int64
 	)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		amtStatusTicker := time.NewTicker(amtStatusCheckInterval)
@@ -136,18 +135,6 @@ func main() {
 			}
 			log.Info("Successfully reported AMT status")
 			isAMTEnabled = true
-			if err := loadModule("mei_me"); err != nil {
-				log.Errorf("Error while loading module:", err)
-			} else {
-				log.Info("Module mei_me loaded successfully")
-			}
-			service := "lms.service"
-			for _, action := range []string{"enable", "start"} {
-				log.Info("%sing %s...\n", action, service)
-				if err := enableService(action, service); err != nil {
-					log.Errorf("Error while enabling service:", err)
-				}
-			}
 			return nil
 		}
 		for {
@@ -164,8 +151,9 @@ func main() {
 
 	var (
 		lastActivationCheckTimestamp int64
-		activationCheckInterval      = 30 * time.Second // TODO: Make this configurable.
+		activationCheckInterval      = confs.Manageability.HeartbeatInterval
 	)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		activationTicker := time.NewTicker(activationCheckInterval)
@@ -254,24 +242,6 @@ func main() {
 	}()
 
 	log.Infof("Platform Manageability Agent finished")
-}
-
-func enableService(action, service string) error {
-	cmd := exec.Command("sudo", "systemctl", action, service)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return log.Errorf("failed to %s %s: %v, output: %s", action, service, err, output)
-	}
-	return nil
-}
-
-func loadModule(module string) error {
-	cmd := exec.Command("sudo", "modprobe", module)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return log.Errorf("failed to load module %s: %v, output: %s", module, err, output)
-	}
-	return nil
 }
 
 func initStatusClientAndTicker(ctx context.Context, cancel context.CancelFunc, log *logrus.Entry, statusServer string) (*status.StatusClient, time.Duration) {
