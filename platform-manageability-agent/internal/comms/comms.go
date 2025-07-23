@@ -9,7 +9,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -35,6 +34,7 @@ type Client struct {
 	GrpcConn         *grpc.ClientConn
 	DMMgrClient      pb.DeviceManagementClient
 	RetryInterval    time.Duration
+	Executor         utils.CommandExecutor
 }
 
 func WithNetworkDialer(serviceAddr string) func(*Client) {
@@ -45,13 +45,19 @@ func WithNetworkDialer(serviceAddr string) func(*Client) {
 	}
 }
 
-func NewClient(serviceURL string, tlsConfig *tls.Config) *Client {
+func NewClient(serviceURL string, tlsConfig *tls.Config, options ...func(*Client)) *Client {
 	cli := &Client{}
 	cli.DMMgrServiceAddr = serviceURL
 	cli.RetryInterval = retryInterval
 	cli.Transport = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
+	cli.Executor = &utils.RealCommandExecutor{}
 
 	WithNetworkDialer(cli.DMMgrServiceAddr)(cli)
+
+	// options can be used to override default values, e.g. from unit tests
+	for _, o := range options {
+		o(cli)
+	}
 	return cli
 }
 
@@ -123,7 +129,7 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 	defaultStatus := pb.AMTStatus_DISABLED
 
 	// TODO: RPC location need to be checked.
-	output, err := utils.ExecuteWithRetries("sudo", []string{"./rpc", "amtinfo"})
+	output, err := cli.Executor.ExecuteWithRetries("sudo", []string{"./rpc", "amtinfo"})
 	if err != nil {
 		req := &pb.AMTStatusRequest{
 			HostId:  hostID,
@@ -169,9 +175,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		// This is a placeholder, replace with actual logic to fetch the password.
 		// Need to check how to fetch the password from dm-manager, hardcoded for now.
 		password := "P@ssw0rd"
-		cmd := exec.Command("sudo", "rpc", "activate", "-u", rpsAddress, "-n", "-profile", resp.ProfileName, "-password", password)
-
-		output, err := cmd.CombinedOutput()
+		output, err := cli.Executor.ExecuteCommand("sudo", "rpc", "activate", "-u", rpsAddress, "-n", "-profile", resp.ProfileName, "-password", password)
 		if err != nil {
 			return fmt.Errorf("failed to execute activation command: %w, Output: %s", err, string(output))
 		}
