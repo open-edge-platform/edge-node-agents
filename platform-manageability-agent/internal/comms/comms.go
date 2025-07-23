@@ -97,7 +97,7 @@ func ConnectToDMManager(ctx context.Context, serviceAddr string, tlsConfig *tls.
 }
 
 // parseAMTInfo parses the output of the `rpc amtinfo` command and populates the AMTStatusRequest.
-func parseAMTInfo(uuid string, output []byte) (*pb.AMTStatusRequest, error) {
+func parseAMTInfo(uuid string, output []byte) *pb.AMTStatusRequest {
 	var (
 		status  = pb.AMTStatus_DISABLED
 		version string
@@ -117,11 +117,11 @@ func parseAMTInfo(uuid string, output []byte) (*pb.AMTStatusRequest, error) {
 	}
 
 	req := &pb.AMTStatusRequest{
-		HostId:  strings.TrimSpace(string(uuid)),
+		HostId:  uuid,
 		Status:  status,
 		Version: version,
 	}
-	return req, nil
+	return req
 }
 
 // ReportAMTStatus executes the `rpc amtinfo` command, parses the output, and sends the AMT status to the server.
@@ -143,11 +143,7 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 		return defaultStatus, fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)
 	}
 
-	req, err := parseAMTInfo(hostID, output)
-	if err != nil {
-		return defaultStatus, fmt.Errorf("failed to parse `rpc amtinfo` output: %w", err)
-	}
-
+	req := parseAMTInfo(hostID, output)
 	_, err = cli.DMMgrClient.ReportAMTStatus(ctx, req)
 	if err != nil {
 		return defaultStatus, fmt.Errorf("failed to report AMT status: %w", err)
@@ -163,7 +159,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	}
 	resp, err := cli.DMMgrClient.RetrieveActivationDetails(ctx, req)
 	if err != nil {
-		return fmt.Errorf("Failed to retrieve activation details: %w", err)
+		return fmt.Errorf("failed to retrieve activation details: %w", err)
 	}
 
 	log.Logger.Debugf("Retrieved activation details: HostID=%s, Operation=%v, ProfileName=%s",
