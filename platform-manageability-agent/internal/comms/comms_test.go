@@ -73,7 +73,7 @@ func (m *mockDeviceManagementServer) ReportActivationResults(ctx context.Context
 
 func runMockServer(server pb.DeviceManagementServer) (*bufconn.Listener, *grpc.Server) {
 	lis := bufconn.Listen(1024 * 1024)
-	creds, err := credentials.NewServerTLSFromFile("../../test/server-cert.pem", "../../test/server-key.pem")
+	creds, err := credentials.NewServerTLSFromFile("../../test/_dummy-cert.pem", "../../test/_dummy-key.pem")
 	if err != nil {
 		log.Logger.Fatalf("Failed to load TLS credentials: %v", err)
 	}
