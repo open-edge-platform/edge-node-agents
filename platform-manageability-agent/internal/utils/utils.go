@@ -6,11 +6,16 @@ package utils
 import (
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
 )
+
+var allowedCommands = map[string][]string{
+	"sudo": {"./rpc", "rpc"},
+}
 
 // CommandExecutor defines an interface for executing commands.
 // This allows for mocking in tests.
@@ -24,6 +29,10 @@ type RealCommandExecutor struct{}
 func (r *RealCommandExecutor) ExecuteWithRetries(command string, args []string) ([]byte, error) {
 	maxRetries := 3
 	retryInterval := 5 * time.Second
+
+	if !isCommandAllowed(command, args) {
+		return nil, fmt.Errorf("command not allowed: %s %v", command, args)
+	}
 
 	var err error
 	for i := 1; i <= maxRetries; i++ {
@@ -41,6 +50,9 @@ func (r *RealCommandExecutor) ExecuteWithRetries(command string, args []string) 
 }
 
 func (r *RealCommandExecutor) ExecuteCommand(name string, args ...string) ([]byte, error) {
+	if !isCommandAllowed(name, args) {
+		return nil, fmt.Errorf("command not allowed: %s %v", name, args)
+	}
 	cmd := exec.Command(name, args...)
 	return cmd.CombinedOutput()
 }
@@ -52,4 +64,16 @@ func GetSystemUUID() (string, error) {
 		return "", fmt.Errorf("failed to retrieve UUID: %v", err)
 	}
 	return strings.TrimSpace(string(uuid)), nil
+}
+
+func isCommandAllowed(command string, args []string) bool {
+	allowedArgs, exists := allowedCommands[command]
+	if !exists {
+		return false
+	}
+
+	if len(args) == 0 {
+		return false
+	}
+	return slices.Contains(allowedArgs, args[0])
 }
