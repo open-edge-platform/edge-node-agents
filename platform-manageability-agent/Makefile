@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-NAME ?= platform-manageability-agent
+NAME ?= pm-agent
 GO_MOD ?= readonly
 BUILD_DIR ?= build/artifacts
 PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
