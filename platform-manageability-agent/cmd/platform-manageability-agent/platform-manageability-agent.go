@@ -246,6 +246,7 @@ func main() {
 		}
 	}()
 
+	wg.Wait()
 	log.Infof("Platform Manageability Agent finished")
 }
 
