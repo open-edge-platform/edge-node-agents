@@ -2,8 +2,6 @@ module github.com/open-edge-platform/edge-node-agents/platform-manageability-age
 
 go 1.24.4
 
-toolchain go1.24.5
-
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2

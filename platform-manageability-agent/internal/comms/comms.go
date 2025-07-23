@@ -129,7 +129,7 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 	defaultStatus := pb.AMTStatus_DISABLED
 
 	// TODO: RPC location need to be checked.
-	output, err := cli.Executor.ExecuteWithRetries("sudo", []string{"./rpc", "amtinfo"})
+	output, err := cli.Executor.ExecuteAMTInfo()
 	if err != nil {
 		req := &pb.AMTStatusRequest{
 			HostId:  hostID,
@@ -171,7 +171,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		// This is a placeholder, replace with actual logic to fetch the password.
 		// Need to check how to fetch the password from dm-manager, hardcoded for now.
 		password := "P@ssw0rd"
-		output, err := cli.Executor.ExecuteCommand("sudo", "rpc", "activate", "-u", rpsAddress, "-n", "-profile", resp.ProfileName, "-password", password)
+		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
 		if err != nil {
 			return fmt.Errorf("failed to execute activation command: %w, Output: %s", err, string(output))
 		}

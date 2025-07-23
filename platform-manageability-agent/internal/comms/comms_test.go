@@ -35,18 +35,12 @@ type mockCommandExecutor struct {
 	activationError  error
 }
 
-func (m *mockCommandExecutor) ExecuteWithRetries(command string, args []string) ([]byte, error) {
-	if command == "sudo" && len(args) >= 2 && args[0] == "./rpc" && args[1] == "amtinfo" {
-		return m.amtInfoOutput, m.amtInfoError
-	}
-	return nil, fmt.Errorf("unexpected command: %s %v", command, args)
+func (m *mockCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
+	return m.amtInfoOutput, m.amtInfoError
 }
 
-func (m *mockCommandExecutor) ExecuteCommand(name string, args ...string) ([]byte, error) {
-	if name == "sudo" && len(args) >= 2 && args[0] == "rpc" && args[1] == "activate" {
-		return m.activationOutput, m.activationError
-	}
-	return nil, fmt.Errorf("unexpected command: %s %v", name, args)
+func (m *mockCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, password string) ([]byte, error) {
+	return m.activationOutput, m.activationError
 }
 
 func (m *mockDeviceManagementServer) ReportAMTStatus(ctx context.Context, req *pb.AMTStatusRequest) (*pb.AMTStatusResponse, error) {
