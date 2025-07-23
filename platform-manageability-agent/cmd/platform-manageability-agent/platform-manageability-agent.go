@@ -271,7 +271,7 @@ func enableService(action, service string) error {
 		return fmt.Errorf("invalid service details")
 	}
 
-	output, err := utils.ExecuteWithRetries("sudo", []string{"systemctl", action, service})
+	output, err := utils.ExecuteCommands("sudo", []string{"systemctl", action, service})
 	if err != nil {
 		return fmt.Errorf("failed to %s %s: %v", action, service, err)
 	}
@@ -280,7 +280,7 @@ func enableService(action, service string) error {
 }
 
 func loadModule(module string) error {
-	output, err := utils.ExecuteWithRetries("sudo", []string{"modprobe", module})
+	output, err := utils.ExecuteCommands("sudo", []string{"modprobe", module})
 	if err != nil {
 		return fmt.Errorf("failed to load module %s: %v", module, err)
 	}

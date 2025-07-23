@@ -1,0 +1,4 @@
+platform-manageability-agent: dir-or-file-in-opt opt/edge-node/
+platform-manageability-agent: dir-or-file-in-opt opt/edge-node/bin/
+platform-manageability-agent: dir-or-file-in-opt opt/edge-node/bin/pm-agent
+platform-manageability-agent: shared-library-lacks-prerequisites opt/edge-node/bin/pm-agent
