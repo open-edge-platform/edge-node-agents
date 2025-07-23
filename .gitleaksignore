@@ -1,0 +1,3 @@
+# Test certificates - safe to ignore.
+platform-manageability-agent/test/_dummy-key.pem
+platform-manageability-agent/test/_dummy-cert.pem
