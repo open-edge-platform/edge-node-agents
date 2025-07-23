@@ -12,7 +12,16 @@ import (
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
 )
 
-func ExecuteWithRetries(command string, args []string) ([]byte, error) {
+// CommandExecutor defines an interface for executing commands.
+// This allows for mocking in tests.
+type CommandExecutor interface {
+	ExecuteWithRetries(command string, args []string) ([]byte, error)
+	ExecuteCommand(name string, args ...string) ([]byte, error)
+}
+
+type RealCommandExecutor struct{}
+
+func (r *RealCommandExecutor) ExecuteWithRetries(command string, args []string) ([]byte, error) {
 	maxRetries := 3
 	retryInterval := 5 * time.Second
 
@@ -29,6 +38,11 @@ func ExecuteWithRetries(command string, args []string) ([]byte, error) {
 		}
 	}
 	return nil, fmt.Errorf("command `%s` failed after %d retries: %v", command, maxRetries, err)
+}
+
+func (r *RealCommandExecutor) ExecuteCommand(name string, args ...string) ([]byte, error) {
+	cmd := exec.Command(name, args...)
+	return cmd.CombinedOutput()
 }
 
 func GetSystemUUID() (string, error) {
