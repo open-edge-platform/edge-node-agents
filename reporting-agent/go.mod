@@ -3,7 +3,7 @@ module github.com/open-edge-platform/edge-node-agents/reporting-agent
 go 1.24.1
 
 require (
-	github.com/cenkalti/backoff/v5 v5.0.2
+	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/open-edge-platform/edge-node-agents/common v1.7.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
