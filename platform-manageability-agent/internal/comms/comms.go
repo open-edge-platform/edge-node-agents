@@ -128,7 +128,6 @@ func parseAMTInfo(uuid string, output []byte) *pb.AMTStatusRequest {
 func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTStatus, error) {
 	defaultStatus := pb.AMTStatus_DISABLED
 
-	// TODO: RPC location need to be checked.
 	output, err := cli.Executor.ExecuteAMTInfo()
 	if err != nil {
 		req := &pb.AMTStatusRequest{
@@ -148,7 +147,9 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 	if err != nil {
 		return defaultStatus, fmt.Errorf("failed to report AMT status: %w", err)
 	}
-	log.Logger.Info("Successfully reported AMT status")
+
+	log.Logger.Debugf("Reported AMT status: HostID=%s, Status=%v, Version=%s",
+		req.HostId, req.Status, req.Version)
 	return req.Status, nil
 }
 
@@ -159,7 +160,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	}
 	resp, err := cli.DMMgrClient.RetrieveActivationDetails(ctx, req)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve activation details: %w", err)
+		return fmt.Errorf("failed to retrieve activation details for host %s: %w", hostID, err)
 	}
 
 	log.Logger.Debugf("Retrieved activation details: HostID=%s, Operation=%v, ProfileName=%s",
@@ -173,7 +174,8 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		password := "P@ssw0rd"
 		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
 		if err != nil {
-			return fmt.Errorf("failed to execute activation command: %w, Output: %s", err, string(output))
+			return fmt.Errorf("failed to execute activation command for host %s: %w, Output: %s",
+				hostID, err, string(output))
 		}
 
 		var req *pb.ActivationResultRequest
@@ -182,23 +184,25 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 				HostId:           hostID,
 				ActivationStatus: pb.ActivationStatus_PROVISIONED,
 			}
-			log.Logger.Info("Provisioning successful: CIRA is configured")
+			log.Logger.Infof("Provisioning successful for host: %s", hostID)
 		} else {
 			req = &pb.ActivationResultRequest{
 				HostId:           hostID,
 				ActivationStatus: pb.ActivationStatus_FAILED,
 			}
-			log.Logger.Warn("Provisioning failed: CIRA is not configured")
+			log.Logger.Infof("Provisioning failed for host: %s", hostID)
 		}
 		_, err = cli.DMMgrClient.ReportActivationResults(ctx, req)
 		if err != nil {
-			return fmt.Errorf("failed to report Activation results: %w", err)
+			return fmt.Errorf("failed to report Activation results for host: %s, error: %w", hostID, err)
 		}
+		log.Logger.Debugf("Reported activation results: HostID=%s, ActivationStatus=%v",
+			hostID, req.ActivationStatus)
 	}
 	return nil
 }
 
-// isProvisioned checks if the output contains the line indicating provisioning success
+// isProvisioned checks if the output contains the line indicating provisioning success.
 func isProvisioned(output string) bool {
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {

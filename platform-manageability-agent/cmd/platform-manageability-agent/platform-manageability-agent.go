@@ -33,9 +33,18 @@ import (
 const (
 	AGENT_NAME  = "platform-manageability-agent"
 	MAX_RETRIES = 3
+
+	// AMTStatus constants representing the state of AMT.
+	AMTStatusDisabled int32 = 0
+	AMTStatusEnabled  int32 = 1
 )
 
 var log = logger.Logger
+var isAMTEnabled int32
+
+func isAMTCurrentlyEnabled() bool {
+	return atomic.LoadInt32(&isAMTEnabled) == AMTStatusEnabled
+}
 
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "version" {
@@ -113,6 +122,7 @@ func main() {
 		log.Fatalf("TLS configuration creation failed! Error: %v", err)
 	}
 
+	log.Infof("Connecting to Device Management Manager at %s", confs.Manageability.ServiceURL)
 	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
 
 	hostID, err := utils.GetSystemUUID()
@@ -134,10 +144,17 @@ func main() {
 
 		op := func() error {
 			status, err := dmMgrClient.ReportAMTStatus(ctx, hostID)
-			if err != nil || status == pb.AMTStatus_DISABLED {
-				log.Errorf("Failed to report AMT status: %v", err)
-				atomic.StoreInt32(&isAMTEnabled, 0)
-				return err
+			if err != nil {
+				return fmt.Errorf("failed to report AMT status: %w", err)
+			}
+			switch status {
+			case pb.AMTStatus_DISABLED:
+				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
+			case pb.AMTStatus_ENABLED:
+				atomic.StoreInt32(&isAMTEnabled, AMTStatusEnabled)
+			default:
+				log.Warnf("Unknown AMT status: %v, treating as disabled", status)
+				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
 			}
 			log.Info("Successfully reported AMT status")
 			atomic.StoreInt32(&isAMTEnabled, 1)
@@ -178,14 +195,13 @@ func main() {
 		defer activationTicker.Stop()
 
 		op := func() error {
-			if atomic.LoadInt32(&isAMTEnabled) == 0 {
+			if !isAMTCurrentlyEnabled() {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
 			}
 			err = dmMgrClient.RetrieveActivationDetails(ctx, hostID, confs)
 			if err != nil {
-				log.Errorf("Failed to retrieve activation details: %v", err)
-				return err
+				return fmt.Errorf("failed to retrieve activation details: %w", err)
 			}
 			log.Info("Successfully retrieved activation details")
 			return nil
