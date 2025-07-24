@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 # Test certificates - safe to ignore.
 platform-manageability-agent/test/_dummy-key.pem
 platform-manageability-agent/test/_dummy-cert.pem
