@@ -7,9 +7,9 @@ logLevel: info
 GUID: 'aaaaaaaa-0000-1111-2222-bbbbbbbbcccc'
 manageability:
   enabled: true
-  serviceURL: infra.test.edgeorch.intel.com:443
+  serviceURL: 'infra.test.edgeorch.intel.com:443'
   heartbeatInterval: 10s
 statusEndpoint: 'unix:///run/node-agent/node-agent.sock'
 metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
 metricsInterval: 10s
-accessTokenPath: /etc/intel_edge_node/tokens
+accessTokenPath: /etc/intel_edge_node/tokens/platform-manageability-agent/access_token

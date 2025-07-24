@@ -117,13 +117,13 @@ func main() {
 
 	log.Info("Platform Manageability Agent started successfully")
 
-	tlsConfig, err := auth.GetAuthConfig(auth.GetAuthContext(ctx, confs.AccessTokenPath), nil)
+	tlsConfig, err := auth.GetAuthConfig(ctx, nil)
 	if err != nil {
 		log.Fatalf("TLS configuration creation failed! Error: %v", err)
 	}
 
 	log.Infof("Connecting to Device Management Manager at %s", confs.Manageability.ServiceURL)
-	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
+	dmMgrClient := comms.ConnectToDMManager(ctx, confs.Manageability.ServiceURL, tlsConfig)
 
 	hostID, err := utils.GetSystemUUID()
 	if err != nil {
@@ -142,7 +142,7 @@ func main() {
 		defer amtStatusTicker.Stop()
 
 		op := func() error {
-			status, err := dmMgrClient.ReportAMTStatus(ctx, hostID)
+			status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
 			if err != nil {
 				return fmt.Errorf("failed to report AMT status: %w", err)
 			}
@@ -200,7 +200,7 @@ func main() {
 			}
 
 			log.Debugf("AMT is enabled, checking activation details for host %s", hostID)
-			err = dmMgrClient.RetrieveActivationDetails(ctx, hostID, confs)
+			err = dmMgrClient.RetrieveActivationDetails(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID, confs)
 			if err != nil {
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
 			}
