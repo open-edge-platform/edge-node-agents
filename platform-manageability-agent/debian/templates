@@ -1,0 +1,4 @@
+Template: platform-manageability-agent/manageability.serviceURL
+Type: string
+Default: localhost:443
+Description: Onboarding service  URL:
