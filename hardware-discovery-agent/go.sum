@@ -44,8 +44,8 @@ github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 h1:PpXWgLPs+Fqr32
 github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35/go.mod h1:autxFIvghDt3jPTLoqZ9OZ7s9qTGNAWmYCjVFWPX/zg=
 github.com/open-edge-platform/edge-node-agents/common v1.7.1 h1:6BrEqf5w9rTk3a4XBuWyAuFnGr0/NW5+8mxjZyA4lfs=
 github.com/open-edge-platform/edge-node-agents/common v1.7.1/go.mod h1:MbjzFRp5qIY7MxhN2vfC0CE4d/xGwPgfzcBS6ABsHX4=
-github.com/open-edge-platform/infra-managers/host v1.22.1 h1:y68NSEDJHWLnlh3gWJkxHMKLDWY1VsP1Myx1TeCqdF8=
-github.com/open-edge-platform/infra-managers/host v1.22.1/go.mod h1:LEQUvxNRHE95Yr1dDTwVX0Nbyl3e2+/60L7Dp4FqrNE=
+github.com/open-edge-platform/infra-managers/host v1.23.0 h1:AiruY+8aQ9ld9/1CuFSclQXX6FhvDqoAIrFmxyRVTHg=
+github.com/open-edge-platform/infra-managers/host v1.23.0/go.mod h1:bJ/IHDVVWW37pXxT7afjsMuL+yr9PDKM65I88O9op8o=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
@@ -111,8 +111,8 @@ google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822 h1:
 google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822/go.mod h1:h3c4v36UTKzUiuaOKQ6gr3S+0hovBtUrXzTG/i3+XEc=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822 h1:fc6jSaCT0vBduLYZHYrBBNY4dsWuvgyff9noRNDdBeE=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250603155806-513f23925822/go.mod h1:qQ0YXyHHx3XkvlzUtpXDkS29lDSafHMZBAZDc03LQ3A=
-google.golang.org/grpc v1.74.0 h1:sxRSkyLxlceWQiqDofxDot3d4u7DyoHPc7SBXMj8gGY=
-google.golang.org/grpc v1.74.0/go.mod h1:NZUaK8dAMUfzhK6uxZ+9511LtOrk73UGWOFoNvz7z+s=
+google.golang.org/grpc v1.74.2 h1:WoosgB65DlWVC9FqI82dGsZhWFNBSLjQ84bjROOpMu4=
+google.golang.org/grpc v1.74.2/go.mod h1:CtQ+BGjaAIXHs/5YS3i473GqwBBa1zGQNevxdeBEXrM=
 google.golang.org/protobuf v1.36.6 h1:z1NpPI8ku2WgiWnf+t9wTPsn6eP1L7ksHUlkfLvd9xY=
 google.golang.org/protobuf v1.36.6/go.mod h1:jduwjTPXsFjZGTmRluh+L6NjiWu7pchiJ2/5YcXBHnY=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
