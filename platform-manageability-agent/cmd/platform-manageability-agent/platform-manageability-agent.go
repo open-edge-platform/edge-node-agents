@@ -134,7 +134,6 @@ func main() {
 
 		amtStatusCheckInterval      = confs.Manageability.HeartbeatInterval
 		lastAMTStatusCheckTimestamp int64
-		isAMTEnabled                int32
 	)
 	wg.Add(1)
 	go func() {
@@ -185,6 +184,8 @@ func main() {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
 			}
+
+			log.Debugf("AMT is enabled, checking activation details for host %s", hostID)
 			err = dmMgrClient.RetrieveActivationDetails(ctx, hostID, confs)
 			if err != nil {
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
