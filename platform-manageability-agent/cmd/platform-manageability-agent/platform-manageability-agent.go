@@ -136,8 +136,10 @@ func main() {
 		defer wg.Done()
 
 		op := func() error {
+			log.Infof("Reporting AMT status for host %s", hostID)
 			status, err := dmMgrClient.ReportAMTStatus(ctx, hostID)
 			if err != nil {
+				log.Errorf("Failed to report AMT status for host %s: %v", hostID, err)
 				return fmt.Errorf("failed to report AMT status: %w", err)
 			}
 			switch status {
@@ -179,7 +181,7 @@ func main() {
 				return nil
 			}
 
-			log.Debugf("AMT is enabled, checking activation details for host %s", hostID)
+			log.Infof("AMT is enabled, checking activation details for host %s", hostID)
 			err = dmMgrClient.RetrieveActivationDetails(ctx, hostID, confs)
 			if err != nil {
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
