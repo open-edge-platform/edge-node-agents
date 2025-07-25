@@ -31,6 +31,7 @@ type Config struct {
 	StatusEndpoint  string              `yaml:"statusEndpoint"`
 	MetricsEndpoint string              `yaml:"metricsEndpoint"`
 	MetricsInterval time.Duration       `yaml:"metricsInterval"`
+	RPSAddress      string              `yaml:"rpsAddress"`
 	AccessTokenPath string              `yaml:"accessTokenPath"`
 }
 
