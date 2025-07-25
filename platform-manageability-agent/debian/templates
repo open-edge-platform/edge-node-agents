@@ -2,3 +2,8 @@ Template: platform-manageability-agent/manageability.serviceURL
 Type: string
 Default: localhost:443
 Description: Onboarding service  URL:
+
+Template: platform-manageability-agent/rpsAddress
+Type: string
+Default: localhost
+Description: RPS address:

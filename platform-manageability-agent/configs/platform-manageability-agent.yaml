@@ -9,6 +9,7 @@ manageability:
   enabled: true
   serviceURL: 'infra.test.edgeorch.intel.com:443'
   heartbeatInterval: 10s
+rpsAddress: 'rps.test.edgeorch.intel.com'
 statusEndpoint: 'unix:///run/node-agent/node-agent.sock'
 metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
 metricsInterval: 10s

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -157,15 +158,14 @@ func main() {
 
 			// Only initialize module and service once when AMT is enabled
 			if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
-				if err := loadModule("mei_me"); err != nil {
+				if err := loadModule(); err != nil {
 					log.Errorf("Error while loading module: %v", err)
 				} else {
 					log.Info("Module mei_me loaded successfully")
 				}
-				service := "lms.service"
 				for _, action := range []string{"unmask", "enable", "start"} {
-					log.Infof("%sing %s...\n", action, service)
-					if err := enableService(action, service); err != nil {
+					log.Infof("%sing %s...\n", action, "lms.service")
+					if err := enableService(action); err != nil {
 						log.Errorf("Error while enabling service: %v", err)
 					}
 				}
@@ -198,8 +198,8 @@ func main() {
 			if !isAMTCurrentlyEnabled() {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
-			}	
-      log.Infof("AMT is enabled, checking activation details for host %s", hostID)
+			}
+			log.Infof("AMT is enabled, checking activation details for host %s", hostID)
 			err = dmMgrClient.RetrieveActivationDetails(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID, confs)
 			if err != nil {
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
@@ -280,28 +280,43 @@ func main() {
 	log.Infof("Platform Manageability Agent finished")
 }
 
-func enableService(action, service string) error {
+func enableService(action string) error {
 	allowedActions := map[string]bool{"unmask": true, "enable": true, "start": true}
 	allowedServices := map[string]bool{"lms.service": true}
 
-	if !allowedActions[action] || !allowedServices[service] {
+	if !allowedActions[action] || !allowedServices["lms.service"] {
 		return fmt.Errorf("invalid service details")
 	}
 
-	output, err := utils.ExecuteCommands("sudo", []string{"systemctl", action, service})
-	if err != nil {
-		return fmt.Errorf("failed to %s %s: %v", action, service, err)
+	// Check if the service is already running
+	output, err := utils.ExecuteCommands("systemctl", []string{"is-active", "lms.service"})
+	if err == nil && strings.TrimSpace(string(output)) == "active" {
+		log.Infof("Service %s is already running, skipping %s operation", "lms.service", action)
+		return nil
 	}
-	log.Infof("Service %s %s successfully: %s", service, action, string(output))
+
+	output, err = utils.ExecuteCommands("sudo", []string{"systemctl", action, "lms.service"})
+	if err != nil {
+		return fmt.Errorf("failed to %s %s: %v", action, "lms.service", err)
+	}
+	log.Infof("Service %s %s successfully: %s", "lms.service", action, string(output))
 	return nil
 }
 
-func loadModule(module string) error {
-	output, err := utils.ExecuteCommands("sudo", []string{"modprobe", module})
-	if err != nil {
-		return fmt.Errorf("failed to load module %s: %v", module, err)
+func loadModule() error {
+	// Check if the module is already loaded using lsmod | grep
+	output, err := utils.ExecuteCommands("sh", []string{"-c", "lsmod | grep mei_me"})
+	if err == nil && len(strings.TrimSpace(string(output))) > 0 {
+		log.Infof("Module mei_me is already loaded, skipping load operation")
+		return nil
 	}
-	log.Info("Module loaded successfully:", string(output))
+
+	// Load the module if not already loaded
+	output, err = utils.ExecuteCommands("sudo", []string{"modprobe", "mei_me"})
+	if err != nil {
+		return fmt.Errorf("failed to load module %s: %v", "mei_me", err)
+	}
+	log.Infof("Module %s loaded successfully: %s", "mei_me", string(output))
 	return nil
 }
 

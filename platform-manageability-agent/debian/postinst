@@ -9,6 +9,11 @@ if [ ! -z "$RET" ]; then
     sed -i "s/^  serviceURL: '.*'/  serviceURL: '$RET'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
 fi
 
+db_get platform-manageability-agent/rpsAddress
+if [ ! -z "$RET" ]; then
+    sed -i "s/^  rpsAddress: '.*'/  rpsAddress: '$RET'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
+fi
+
 # Create system group if it doesn't exist
 groupadd -f bm-agents --system
 
