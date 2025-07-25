@@ -282,9 +282,8 @@ func main() {
 
 func enableService(action string) error {
 	allowedActions := map[string]bool{"unmask": true, "enable": true, "start": true}
-	allowedServices := map[string]bool{"lms.service": true}
 
-	if !allowedActions[action] || !allowedServices["lms.service"] {
+	if !allowedActions[action] {
 		return fmt.Errorf("invalid service details")
 	}
 
