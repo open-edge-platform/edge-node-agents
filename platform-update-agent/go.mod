@@ -3,7 +3,7 @@
 
 module github.com/open-edge-platform/edge-node-agents/platform-update-agent
 
-go 1.24.1
+go 1.24.4
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
@@ -11,12 +11,12 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/open-edge-platform/edge-node-agents/common v1.7.1
-	github.com/open-edge-platform/infra-managers/maintenance v1.22.1
+	github.com/open-edge-platform/infra-managers/maintenance v1.23.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.14.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
-	google.golang.org/grpc v1.74.0
+	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.33.3
