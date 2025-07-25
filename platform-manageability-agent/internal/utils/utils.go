@@ -46,12 +46,3 @@ func (r *RealCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, passwo
 	cmd := exec.Command("sudo", "/etc/intel_edge_node/rpc", "activate", "-u", rpsAddress, "-profile", profileName, "-password", password, "-n")
 	return cmd.CombinedOutput()
 }
-
-func GetSystemUUID() (string, error) {
-	cmd := exec.Command("sudo", "dmidecode", "-s", "system-uuid")
-	uuid, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("failed to retrieve UUID: %v", err)
-	}
-	return strings.TrimSpace(string(uuid)), nil
-}

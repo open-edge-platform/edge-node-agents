@@ -26,7 +26,6 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/comms"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
-	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
 	pb "github.com/open-edge-platform/infra-external/dm-manager/pkg/api/dm-manager"
 )
 
@@ -125,10 +124,7 @@ func main() {
 	log.Infof("Connecting to Device Management Manager at %s", confs.Manageability.ServiceURL)
 	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
 
-	hostID, err := utils.GetSystemUUID()
-	if err != nil {
-		log.Fatalf("Failed to retrieve system UUID with an error: %v", err)
-	}
+	hostID := confs.GUID
 
 	var wg sync.WaitGroup
 	wg.Add(1)

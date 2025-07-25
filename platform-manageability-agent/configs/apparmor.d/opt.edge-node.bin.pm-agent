@@ -1,0 +1,21 @@
+# Last Modified: Fri Jul 25 17:44;00 2025
+abi <abi/3.0>
+
+include <tunables/global>
+
+/opt/edge-node/bin/pm-agent {
+  include <abstractions/apache2-common>
+  include <abstractions/base>
+  include <abstractions/ssl_certs>
+
+  /opt/edge-node/bin/pm-agent mr,
+  /run/node-agent/node-agent.sock rw,
+  /run/platform-observability-agent/platform-observability-agent.sock rw,
+  /usr/bin/rpc mr,
+  /usr/bin/sysmtectl mr,
+  owner /etc/intel_edge_node/tokens/platform-manageability-agent/access_token r,
+  owner /etc/edge-node/node/confs/platform-manageability-agent.yaml r,
+  owner /proc/*/cgroup r,
+  owner /proc/*/stat r,
+
+}
