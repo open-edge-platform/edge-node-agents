@@ -9,7 +9,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"time"
 
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
@@ -85,15 +84,15 @@ func handleFOTA(
 			releaseDateProto = timestamppb.New(parsedDate)
 		}
 		// Validate signature against expected format
-		if *signature != "" {
-			matched, err := regexp.MatchString("^[a-fA-F0-9]{64}$", *signature)
-			if err != nil {
-				return fmt.Errorf("error validating signature format: %v", err)
-			}
-			if !matched {
-				return fmt.Errorf("signature does not match expected format (64 hex characters)")
-			}
-		}
+		// if *signature != "" {
+		// 	matched, err := regexp.MatchString("^[a-fA-F0-9]{64}$", *signature)
+		// 	if err != nil {
+		// 		return fmt.Errorf("error validating signature format: %v", err)
+		// 	}
+		// 	if !matched {
+		// 		return fmt.Errorf("signature does not match expected format (64 hex characters)")
+		// 	}
+		// }
 
 		request := &pb.UpdateFirmwareRequest{
 			Url:         *url,

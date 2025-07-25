@@ -23,9 +23,14 @@ var allowedBaseDirs = []string{
 	"/etc",
 	"/tmp",
 	"/usr/share",
-	"/var/cache/manageability/repository-tool/sota",
+	"/usr/bin",
+	"/usr/sbin",
+	"/opt",
+	"/var/cache/manageability",
 	"/var/intel-manageability",
 	"/var/log",
+	"/sys/class/dmi/id/",
+	"/proc",
 }
 
 // IsBTRFSFileSystem checks if the filesystem type of the given path is BTRFS.
@@ -215,6 +220,11 @@ func isFilePathSymLink(path string) error {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return fmt.Errorf("error resolving absolute path: %w", err)
+	}
+
+	// Allow DMI paths even if they contain symlinks - these are system-controlled and safe
+	if strings.HasPrefix(path, "/sys/class/dmi/id/") {
+		return nil
 	}
 
 	// Check if path exists first

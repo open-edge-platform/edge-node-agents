@@ -29,7 +29,7 @@ const RebootCmd = "/usr/sbin/reboot"
 const ShutdownCmd = "/usr/sbin/shutdown"
 
 // OTAPackageCertPath is the path to the OTA package certificate.
-const OTAPackageCertPath = "/etc/intel-manageability/public/ota_package.pem"
+const OTAPackageCertPath = "/etc/intel-manageability/public/ota_package_cert.pem"
 
 // ConfigFileName is the expected configuration file name.
 const ConfigFileName = "intel_manageability.conf"

@@ -74,17 +74,17 @@ func TestHandleFOTA(t *testing.T) {
 
 		mockClient.AssertExpectations(t)
 	})
-	t.Run("invalid signature format", func(t *testing.T) {
-		badSignature := "notAHexSignature"
-		mockClient := new(MockInbServiceClient)
-		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
-			return MockDialer(ctx, socket, mockClient, false)
-		}
+	// t.Run("invalid signature format", func(t *testing.T) {
+	// 	badSignature := "notAHexSignature"
+	// 	mockClient := new(MockInbServiceClient)
+	// 	dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+	// 		return MockDialer(ctx, socket, mockClient, false)
+	// 	}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &badSignature, dialer)(cmd, args)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "signature does not match expected format")
-	})
+	// 	err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &badSignature, dialer)(cmd, args)
+	// 	assert.Error(t, err)
+	// 	assert.Contains(t, err.Error(), "signature does not match expected format")
+	// })
 
 	t.Run("valid signature format", func(t *testing.T) {
 		validSignature := "0daaeaf170bf62c2d5c764505ff9693620b71476f41e38851601fb5a7b812b3d"

@@ -117,6 +117,7 @@
   /usr/bin/dpkg-query rUx,
   /usr/bin/dpkg-split rUx,
   /usr/bin/ip rUx,
+  /usr/bin/lsblk rix,
   /usr/bin/snapper rUx,
   /usr/bin/sudo rix,
   /usr/bin/tpm2 rUx,
