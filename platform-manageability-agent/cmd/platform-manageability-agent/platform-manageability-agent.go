@@ -138,7 +138,9 @@ func main() {
 
 		op := func() error {
 			status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
+			log.Infof("Reporting AMT status for host %s", hostID)
 			if err != nil {
+				log.Errorf("Failed to report AMT status for host %s: %v", hostID, err)
 				return fmt.Errorf("failed to report AMT status: %w", err)
 			}
 			switch status {
@@ -196,9 +198,8 @@ func main() {
 			if !isAMTCurrentlyEnabled() {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
-			}
-
-			log.Debugf("AMT is enabled, checking activation details for host %s", hostID)
+			}	
+      log.Infof("AMT is enabled, checking activation details for host %s", hostID)
 			err = dmMgrClient.RetrieveActivationDetails(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID, confs)
 			if err != nil {
 				return fmt.Errorf("failed to retrieve activation details: %w", err)

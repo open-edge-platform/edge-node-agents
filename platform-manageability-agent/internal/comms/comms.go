@@ -147,10 +147,17 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 	req := parseAMTInfo(hostID, output)
 	_, err = cli.DMMgrClient.ReportAMTStatus(ctx, req)
 	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.FailedPrecondition:
+				log.Logger.Debugf("Received %v, %v", st.Message(), err.Error())
+				return req.Status, nil
+			}
+		}
 		return defaultStatus, fmt.Errorf("failed to report AMT status: %w", err)
 	}
 
-	log.Logger.Debugf("Reported AMT status: HostID=%s, Status=%v, Version=%s",
+	log.Logger.Infof("Reported AMT status: HostID=%s, Status=%v, Version=%s",
 		req.HostId, req.Status, req.Version)
 	return req.Status, nil
 }
