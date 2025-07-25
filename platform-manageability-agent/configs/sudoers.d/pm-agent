@@ -1,1 +1,1 @@
-pm-agent  ALL=(root) NOPASSWD:/etc/intel_edge_node/rpc,/usr/sbin/dmidecode,/usr/bin/systemctl
+pm-agent  ALL=(root) NOPASSWD:/etc/intel_edge_node/rpc,/usr/sbin/dmidecode,/usr/bin/systemctl,/usr/sbin/modprobe

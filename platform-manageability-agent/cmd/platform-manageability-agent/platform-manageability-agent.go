@@ -41,6 +41,7 @@ const (
 
 var log = logger.Logger
 var isAMTEnabled int32
+var isModuleAndServiceInitialized int32
 
 func isAMTCurrentlyEnabled() bool {
 	return atomic.LoadInt32(&isAMTEnabled) == AMTStatusEnabled
@@ -157,16 +158,20 @@ func main() {
 			}
 			log.Info("Successfully reported AMT status")
 			atomic.StoreInt32(&isAMTEnabled, 1)
-			if err := loadModule("mei_me"); err != nil {
-				log.Errorf("Error while loading module: %v", err)
-			} else {
-				log.Info("Module mei_me loaded successfully")
-			}
-			service := "lms.service"
-			for _, action := range []string{"unmask", "enable", "start"} {
-				log.Infof("%sing %s...\n", action, service)
-				if err := enableService(action, service); err != nil {
-					log.Errorf("Error while enabling service: %v", err)
+
+			// Only initialize module and service once when AMT is enabled
+			if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
+				if err := loadModule("mei_me"); err != nil {
+					log.Errorf("Error while loading module: %v", err)
+				} else {
+					log.Info("Module mei_me loaded successfully")
+				}
+				service := "lms.service"
+				for _, action := range []string{"unmask", "enable", "start"} {
+					log.Infof("%sing %s...\n", action, service)
+					if err := enableService(action, service); err != nil {
+						log.Errorf("Error while enabling service: %v", err)
+					}
 				}
 			}
 			return nil
@@ -292,7 +297,7 @@ func enableService(action, service string) error {
 	if err != nil {
 		return fmt.Errorf("failed to %s %s: %v", action, service, err)
 	}
-	log.Info("Service %s %sed successfully: %s", service, action, string(output))
+	log.Infof("Service %s %s successfully: %s", service, action, string(output))
 	return nil
 }
 
