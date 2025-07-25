@@ -15,7 +15,9 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
@@ -160,6 +162,13 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	}
 	resp, err := cli.DMMgrClient.RetrieveActivationDetails(ctx, req)
 	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.FailedPrecondition:
+				log.Logger.Debugf("%v, %v", st.Message(), err.Error())
+				return nil
+			}
+		}
 		return fmt.Errorf("failed to retrieve activation details for host %s: %w", hostID, err)
 	}
 
