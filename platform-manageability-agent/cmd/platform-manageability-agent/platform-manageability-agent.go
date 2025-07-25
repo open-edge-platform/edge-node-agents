@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -39,7 +40,9 @@ const (
 	AMTStatusEnabled  int32 = 1
 )
 
+var log = logger.Logger
 var isAMTEnabled int32
+var isModuleAndServiceInitialized int32
 
 func isAMTCurrentlyEnabled() bool {
 	return atomic.LoadInt32(&isAMTEnabled) == AMTStatusEnabled
@@ -51,7 +54,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	var log = logger.Logger
 	log.Infof("Starting Platform Manageability Agent")
 
 	// Initialize configuration
@@ -117,13 +119,13 @@ func main() {
 
 	log.Info("Platform Manageability Agent started successfully")
 
-	tlsConfig, err := auth.GetAuthConfig(auth.GetAuthContext(ctx, confs.AccessTokenPath), nil)
+	tlsConfig, err := auth.GetAuthConfig(ctx, nil)
 	if err != nil {
 		log.Fatalf("TLS configuration creation failed! Error: %v", err)
 	}
 
 	log.Infof("Connecting to Device Management Manager at %s", confs.Manageability.ServiceURL)
-	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
+	dmMgrClient := comms.ConnectToDMManager(ctx, confs.Manageability.ServiceURL, tlsConfig)
 
 	hostID, err := utils.GetSystemUUID()
 	if err != nil {
@@ -136,8 +138,8 @@ func main() {
 		defer wg.Done()
 
 		op := func() error {
+			status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
 			log.Infof("Reporting AMT status for host %s", hostID)
-			status, err := dmMgrClient.ReportAMTStatus(ctx, hostID)
 			if err != nil {
 				log.Errorf("Failed to report AMT status for host %s: %v", hostID, err)
 				return fmt.Errorf("failed to report AMT status: %w", err)
@@ -150,6 +152,23 @@ func main() {
 			default:
 				log.Warnf("Unknown AMT status: %v, treating as disabled", status)
 				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
+			}
+			log.Info("Successfully reported AMT status")
+			atomic.StoreInt32(&isAMTEnabled, 1)
+
+			// Only initialize module and service once when AMT is enabled
+			if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
+				if err := loadModule(); err != nil {
+					log.Errorf("Error while loading module: %v", err)
+				} else {
+					log.Info("Module mei_me loaded successfully")
+				}
+				for _, action := range []string{"unmask", "enable", "start"} {
+					log.Infof("%sing %s...\n", action, "lms.service")
+					if err := enableService(action); err != nil {
+						log.Errorf("Error while enabling service: %v", err)
+					}
+				}
 			}
 			return nil
 		}
@@ -180,9 +199,8 @@ func main() {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
 			}
-
 			log.Infof("AMT is enabled, checking activation details for host %s", hostID)
-			err = dmMgrClient.RetrieveActivationDetails(ctx, hostID, confs)
+			err = dmMgrClient.RetrieveActivationDetails(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID, confs)
 			if err != nil {
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
 			}
@@ -260,6 +278,45 @@ func main() {
 
 	wg.Wait()
 	log.Infof("Platform Manageability Agent finished")
+}
+
+func enableService(action string) error {
+	allowedActions := map[string]bool{"unmask": true, "enable": true, "start": true}
+
+	if !allowedActions[action] {
+		return fmt.Errorf("invalid service details")
+	}
+
+	// Check if the service is already running
+	output, err := utils.ExecuteCommands("systemctl", []string{"is-active", "lms.service"})
+	if err == nil && strings.TrimSpace(string(output)) == "active" {
+		log.Infof("Service %s is already running, skipping %s operation", "lms.service", action)
+		return nil
+	}
+
+	output, err = utils.ExecuteCommands("sudo", []string{"systemctl", action, "lms.service"})
+	if err != nil {
+		return fmt.Errorf("failed to %s %s: %v", action, "lms.service", err)
+	}
+	log.Infof("Service %s %s successfully: %s", "lms.service", action, string(output))
+	return nil
+}
+
+func loadModule() error {
+	// Check if the module is already loaded using lsmod | grep
+	output, err := utils.ExecuteCommands("sh", []string{"-c", "lsmod | grep mei_me"})
+	if err == nil && len(strings.TrimSpace(string(output))) > 0 {
+		log.Infof("Module mei_me is already loaded, skipping load operation")
+		return nil
+	}
+
+	// Load the module if not already loaded
+	output, err = utils.ExecuteCommands("sudo", []string{"modprobe", "mei_me"})
+	if err != nil {
+		return fmt.Errorf("failed to load module %s: %v", "mei_me", err)
+	}
+	log.Infof("Module %s loaded successfully: %s", "mei_me", string(output))
+	return nil
 }
 
 func initStatusClientAndTicker(ctx context.Context, cancel context.CancelFunc, log *logrus.Entry, statusServer string) (*status.StatusClient, time.Duration) {

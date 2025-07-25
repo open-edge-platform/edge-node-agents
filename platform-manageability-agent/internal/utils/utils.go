@@ -21,6 +21,16 @@ type CommandExecutor interface {
 
 type RealCommandExecutor struct{}
 
+func ExecuteCommands(command string, args []string) ([]byte, error) {
+	cmd := exec.Command(command, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		log.Logger.Errorf("Failed to execute command %s with args %v: %v", command, args, err)
+		return nil, fmt.Errorf("failed to execute command %s with args %v: %w", command, args, err)
+	}
+	return output, nil
+}
+
 // ExecuteAMTInfo executes the AMT info command with retries.
 func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 	maxRetries := 3
