@@ -1,6 +1,6 @@
 module github.com/open-edge-platform/edge-node-agents/node-agent
 
-go 1.24.1
+go 1.24.4
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
@@ -62,9 +62,9 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
-	github.com/open-edge-platform/infra-managers/host v1.22.1
+	github.com/open-edge-platform/infra-managers/host v1.23.0
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
 	golang.org/x/sys v0.33.0 // indirect
-	google.golang.org/grpc v1.74.0
+	google.golang.org/grpc v1.74.2
 )
