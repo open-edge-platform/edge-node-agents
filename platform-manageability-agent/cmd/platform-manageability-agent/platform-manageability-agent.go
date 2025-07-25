@@ -130,17 +130,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to retrieve system UUID with an error: %v", err)
 	}
-	var (
-		wg sync.WaitGroup
 
-		amtStatusCheckInterval      = confs.Manageability.HeartbeatInterval
-		lastAMTStatusCheckTimestamp int64
-	)
+	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		amtStatusTicker := time.NewTicker(amtStatusCheckInterval)
-		defer amtStatusTicker.Stop()
 
 		op := func() error {
 			status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
@@ -176,16 +170,16 @@ func main() {
 			}
 			return nil
 		}
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-amtStatusTicker.C:
-				amtStatusTicker.Stop()
-				updateWithRetry(ctx, log, op, &lastAMTStatusCheckTimestamp)
+		err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+		if err != nil {
+			if ctx.Err() != nil {
+				log.Info("AMT status reporting cancelled due to context cancellation")
+			} else {
+				log.Errorf("Failed to report AMT status for host %s after retries: %v", hostID, err)
 			}
-			amtStatusTicker.Reset(amtStatusCheckInterval)
+			return
 		}
+		log.Infof("Successfully reported AMT status for host %s", hostID)
 	}()
 
 	var (
@@ -209,7 +203,7 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
 			}
-			log.Info("Successfully retrieved activation details")
+			log.Infof("Successfully retrieved activation details for host %s", hostID)
 			return nil
 		}
 		for {

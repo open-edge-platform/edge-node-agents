@@ -1,6 +1,6 @@
 module github.com/open-edge-platform/edge-node-agents/platform-telemetry-agent
 
-go 1.24.1
+go 1.24.4
 
 require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
@@ -8,11 +8,11 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/open-edge-platform/edge-node-agents/common v1.7.1
-	github.com/open-edge-platform/infra-managers/telemetry v1.22.0
+	github.com/open-edge-platform/infra-managers/telemetry v1.23.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
-	google.golang.org/grpc v1.74.0
+	google.golang.org/grpc v1.74.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 

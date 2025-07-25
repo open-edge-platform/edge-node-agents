@@ -1,18 +1,18 @@
 module github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent
 
-go 1.24.2
+go 1.24.4
 
 require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/open-edge-platform/edge-node-agents/common v1.7.1
-	github.com/open-edge-platform/infra-managers/host v1.22.1
+	github.com/open-edge-platform/infra-managers/host v1.23.0
 	github.com/safchain/ethtool v0.6.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
-	google.golang.org/grpc v1.74.0
+	google.golang.org/grpc v1.74.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
