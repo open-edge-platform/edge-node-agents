@@ -594,7 +594,7 @@ func TestUpdateFirmware_ValidURL(t *testing.T) {
 		Url:         "https://example.com/firmware.bin",
 		DoNotReboot: true,
 		Username:    "testuser",
-		Signature:   "test-signature",
+		Signature:   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 	}
 
 	resp, err := server.UpdateFirmware(ctx, req)

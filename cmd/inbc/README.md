@@ -41,6 +41,7 @@ inbc fota {--uri URI}
    [--reboot; default=true]
    [--username USERNAME; default=""]
    [--signature SIGNATURE; default=""]
+   [--hash_algorithm <sha256|sha384|sha512>; default="sha384"]
 ```
 
 #### Examples
@@ -51,6 +52,7 @@ inbc fota
    --releasedate 2026-06-01
    --reboot=false
    --signature <hash string of signature>
+   --hash_algorithm "<sha256|sha384|sha512>"
 ```
 
 ### SOTA
@@ -247,7 +249,12 @@ Load a new configuration file.   This will replace the existing configuration fi
 inbc load
    [--uri, -u URI]
    {--signature, -s SIGNATURE}
+   [--hash_algorithm <sha256|sha384|sha512>]
 ```
+
+--uri (required): The URI to the config file.
+--signature (optional): The signature for the config file.
+--hash_algorithm (optional): The hash algorithm to use for signature verification (sha256, sha384, or sha512). Default is sha384.
 
 ### Examples
 
@@ -265,7 +272,7 @@ You can load a configuration file with a signature in two ways:
    The signature must be generated over the config file itself.
 
    ```commandline
-   sudo inbc load --uri <URI to config file>/config.conf --signature "<hex_signature_string>"
+   sudo inbc load --uri <URI to config file>/config.conf --signature "<hex_signature_string>" --hash_algorithm "<sha256|sha384|sha512>"
    ```
 
 2. **Tarball with PEM and config:**
@@ -274,7 +281,7 @@ You can load a configuration file with a signature in two ways:
    The signature must be generated over the entire tarball, not just the config file.
 
    ```commandline
-   sudo inbc load --uri <URI to config file>/config.tar --signature "<hex_signature_string>"
+   sudo inbc load --uri <URI to config file>/config.tar --signature "<hex_signature_string>" --hash_algorithm "<sha256|sha384|sha512>"
    ```
 
 **Note:**

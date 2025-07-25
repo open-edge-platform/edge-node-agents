@@ -30,13 +30,24 @@ type ConfigOperation struct {
 }
 
 // LoadConfigCommand copies the file at uri to /etc/intel_manageability.conf
-func (c *ConfigOperation) LoadConfigCommand(uri, signature string) error {
+func (c *ConfigOperation) LoadConfigCommand(uri, signature, hashAlgorithm string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// Default to sha384 if not provided
+	finalHashAlgorithm := "sha384"
+	if hashAlgorithm != "" {
+		switch strings.ToLower(hashAlgorithm) {
+		case "sha256", "sha384", "sha512":
+			finalHashAlgorithm = strings.ToLower(hashAlgorithm)
+		default:
+			return fmt.Errorf("invalid hash algorithm: %s (must be 'sha256', 'sha384', or 'sha512')", hashAlgorithm)
+		}
+	}
+
 	// Verify signature if provided
 	if signature != "" {
-		if err := VerifySignature(signature, uri, nil); err != nil {
+		if err := VerifySignature(signature, uri, ParseHashAlgorithm(finalHashAlgorithm)); err != nil {
 			return fmt.Errorf("signature verification failed: %w", err)
 		}
 	}

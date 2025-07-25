@@ -77,6 +77,20 @@ func NewFWUpdaterWithMocks(req *pb.UpdateFirmwareRequest, fs afero.Fs, hwProvide
 func (u *FWUpdater) UpdateFirmware() (*pb.UpdateResponse, error) {
 	log.Println("Starting firmware update process.")
 
+	// Validate hash algorithm, default to sha384 if not provided
+	finalHashAlgorithm := "sha384"
+	if u.req.HashAlgorithm != "" {
+		switch strings.ToLower(u.req.HashAlgorithm) {
+		case "sha256", "sha384", "sha512":
+			finalHashAlgorithm = strings.ToLower(u.req.HashAlgorithm)
+		default:
+			return &pb.UpdateResponse{
+				StatusCode: 400,
+				Error:      "invalid hash algorithm: must be 'sha256', 'sha384', or 'sha512'",
+			}, nil
+		}
+	}
+
 	hwInfo, err := u.hwProvider.GetHardwareInfo()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
@@ -123,12 +137,16 @@ func (u *FWUpdater) UpdateFirmware() (*pb.UpdateResponse, error) {
 	// Verify signature if provided
 	if u.req.Signature != "" {
 		log.Printf("Verifying signature for downloaded firmware package: %s", firmwareFilePath)
-		if err := utils.VerifySignature(u.req.Signature, firmwareFilePath, nil); err != nil {
+		if err := utils.VerifySignature(
+			u.req.Signature,
+			firmwareFilePath,
+			utils.ParseHashAlgorithm(finalHashAlgorithm),
+		); err != nil {
 			// Clean up downloaded file on signature verification failure
 			if removeErr := u.fs.Remove(firmwareFilePath); removeErr != nil {
 				log.Printf("Warning: failed to remove invalid firmware file %s: %v", firmwareFilePath, removeErr)
 			}
-			return &pb.UpdateResponse{StatusCode: 500, Error: fmt.Sprintf("Signature verification failed: %v", err)}, nil
+			return &pb.UpdateResponse{StatusCode: 400, Error: fmt.Sprintf("Signature verification failed: %v", err)}, nil
 		}
 		log.Printf("Signature verification passed for firmware package.")
 	} else {

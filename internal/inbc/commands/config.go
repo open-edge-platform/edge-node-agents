@@ -21,16 +21,17 @@ import (
 // ConfigLoadCmd returns the 'load' subcommand.
 func ConfigLoadCmd() *cobra.Command {
 	var socket string
-	var uri, signature string
+	var uri, signature, hashAlgorithm string
 	cmd := &cobra.Command{
 		Use:   "load",
 		Short: "Load a new configuration file",
-		RunE:  handleConfigLoadCmd(&socket, &uri, &signature, Dial),
+		RunE:  handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, Dial),
 	}
 
 	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
 	cmd.Flags().StringVarP(&uri, "uri", "u", "", "URI to config file")
 	cmd.Flags().StringVarP(&signature, "signature", "s", "", "Signature for config file")
+	cmd.Flags().StringVar(&hashAlgorithm, "hash_algorithm", "", "Hash algorithm to use for signature verification (sha256, sha384, sha512). Default is sha384.")
 	must(cmd.MarkFlagRequired("uri"))
 
 	return cmd
@@ -41,6 +42,7 @@ func handleConfigLoadCmd(
 	socket *string,
 	uri *string,
 	signature *string,
+	hashAlgorithm *string,
 	dialer func(context.Context, string) (pb.InbServiceClient, grpc.ClientConnInterface, error),
 ) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
@@ -50,9 +52,19 @@ func handleConfigLoadCmd(
 			return errors.New("uri is required")
 		}
 
+		// TODO: Validate signature against expected format
+		// TODO: Add unittest test case for invalid signature format
+
+		// Default to sha384 if not provided
+		finalHashAlgorithm := "sha384"
+		if hashAlgorithm != nil && *hashAlgorithm != "" {
+			finalHashAlgorithm = *hashAlgorithm
+		}
+
 		request := &pb.LoadConfigRequest{
-			Uri:       *uri,
-			Signature: *signature,
+			Uri:           *uri,
+			Signature:     *signature,
+			HashAlgorithm: finalHashAlgorithm,
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)
@@ -76,6 +88,9 @@ func handleConfigLoadCmd(
 		resp, err := client.LoadConfig(ctx, request)
 		if err != nil {
 			return fmt.Errorf("error performing config load: %v", err)
+		}
+		if resp.StatusCode != 200 || resp.Error != "" {
+			return fmt.Errorf("config load failed: %s", resp.Error)
 		}
 
 		fmt.Printf("CONFIG LOAD Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())

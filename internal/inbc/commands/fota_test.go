@@ -54,7 +54,7 @@ func TestHandleFOTA(t *testing.T) {
 	releaseDate := "2025-03-13T00:00:00Z"
 	reboot := true
 	userName := ""
-	signature := ""
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 	cmd := &cobra.Command{}
 	args := []string{}
 
@@ -69,22 +69,12 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, false)
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, dialer)(cmd, args)
+		var hashAlgorithm string
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, &hashAlgorithm, dialer)(cmd, args)
 		assert.NoError(t, err, "handleFOTA should not return an error")
 
 		mockClient.AssertExpectations(t)
 	})
-	// t.Run("invalid signature format", func(t *testing.T) {
-	// 	badSignature := "notAHexSignature"
-	// 	mockClient := new(MockInbServiceClient)
-	// 	dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
-	// 		return MockDialer(ctx, socket, mockClient, false)
-	// 	}
-
-	// 	err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &badSignature, dialer)(cmd, args)
-	// 	assert.Error(t, err)
-	// 	assert.Contains(t, err.Error(), "signature does not match expected format")
-	// })
 
 	t.Run("valid signature format", func(t *testing.T) {
 		validSignature := "0daaeaf170bf62c2d5c764505ff9693620b71476f41e38851601fb5a7b812b3d"
@@ -98,7 +88,8 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, false)
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &validSignature, dialer)(cmd, args)
+		var hashAlgorithm string
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &validSignature, &hashAlgorithm, dialer)(cmd, args)
 		assert.NoError(t, err, "handleFOTA should not return an error for valid signature")
 		mockClient.AssertExpectations(t)
 	})
@@ -109,8 +100,9 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, false)
 		}
 
+		var hashAlgorithm string
 		err := handleFOTA(&socket, &url, &invalidReleaseDate,
-			&reboot, &userName, &signature, dialer)(cmd, args)
+			&reboot, &userName, &signature, &hashAlgorithm, dialer)(cmd, args)
 		assert.Error(t, err, "error parsing release date: parsing time")
 	})
 
@@ -120,8 +112,9 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, true)
 		}
 
+		var hashAlgorithm string
 		err := handleFOTA(&socket, &url, &releaseDate,
-			&reboot, &userName, &signature, dialer)(cmd, args)
+			&reboot, &userName, &signature, &hashAlgorithm, dialer)(cmd, args)
 		assert.Error(t, err, "error setting up new gRPC client")
 	})
 
@@ -133,7 +126,8 @@ func TestHandleFOTA(t *testing.T) {
 			return MockDialer(ctx, socket, mockClient, false)
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, dialer)(cmd, args)
+		var hashAlgorithm string
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, &hashAlgorithm, dialer)(cmd, args)
 		assert.Error(t, err, "error updating firmware")
 	})
 
@@ -148,7 +142,58 @@ func TestHandleFOTA(t *testing.T) {
 			return mockClient, &mockConnWithCloseError{}, nil
 		}
 
-		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, dialer)(cmd, args)
+		var hashAlgorithm string
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, &hashAlgorithm, dialer)(cmd, args)
 		assert.NoError(t, err, "handleFOTA should not return an error even if Close fails")
+	})
+
+	t.Run("valid hash algorithm is accepted", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("UpdateFirmware", mock.Anything, mock.MatchedBy(func(req *pb.UpdateFirmwareRequest) bool {
+			return req.HashAlgorithm == "sha512"
+		}), mock.Anything).Return(&pb.UpdateResponse{
+			StatusCode: 200,
+			Error:      "",
+		}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return MockDialer(ctx, socket, mockClient, false)
+		}
+
+		hashAlgorithm := "sha512"
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, &hashAlgorithm, dialer)(cmd, args)
+		assert.NoError(t, err, "handleFOTA should not return an error for valid hash algorithm")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("invalid hash algorithm is rejected", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return MockDialer(ctx, socket, mockClient, false)
+		}
+
+		hashAlgorithm := "md5"
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, &hashAlgorithm, dialer)(cmd, args)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid hash algorithm")
+	})
+
+	t.Run("empty hash algorithm defaults to sha384", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("UpdateFirmware", mock.Anything, mock.MatchedBy(func(req *pb.UpdateFirmwareRequest) bool {
+			return req.HashAlgorithm == "sha384"
+		}), mock.Anything).Return(&pb.UpdateResponse{
+			StatusCode: 200,
+			Error:      "",
+		}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return MockDialer(ctx, socket, mockClient, false)
+		}
+
+		var hashAlgorithm string // empty
+		err := handleFOTA(&socket, &url, &releaseDate, &reboot, &userName, &signature, &hashAlgorithm, dialer)(cmd, args)
+		assert.NoError(t, err, "handleFOTA should default to sha384 when hashAlgorithm is empty")
+		mockClient.AssertExpectations(t)
 	})
 }

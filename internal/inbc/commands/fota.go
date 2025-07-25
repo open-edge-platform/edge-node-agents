@@ -9,6 +9,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
@@ -25,12 +26,13 @@ func FOTACmd() *cobra.Command {
 	var reboot bool
 	var userName string
 	var signature string
+	var hashAlgorithm string
 
 	cmd := &cobra.Command{
 		Use:   "fota",
 		Short: "Performs Firmware Update",
 		Long:  `Updates the firmware on the device.`,
-		RunE:  handleFOTA(&socket, &uri, &releaseDate, &reboot, &userName, &signature, Dial),
+		RunE:  handleFOTA(&socket, &uri, &releaseDate, &reboot, &userName, &signature, &hashAlgorithm, Dial),
 	}
 
 	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
@@ -49,6 +51,7 @@ func FOTACmd() *cobra.Command {
 	cmd.Flags().BoolVar(&reboot, "reboot", true, "Whether to reboot after the software update attempt")
 	cmd.Flags().StringVar(&userName, "username", "", "Username if authentication is required for the package source")
 	cmd.Flags().StringVar(&signature, "signature", "", "Signature of the package")
+	cmd.Flags().StringVar(&hashAlgorithm, "hash_algorithm", "", "Hash algorithm to use for signature verification (sha256, sha384, sha512). Default is sha384.")
 
 	return cmd
 }
@@ -61,6 +64,7 @@ func handleFOTA(
 	reboot *bool,
 	username *string,
 	signature *string,
+	hashAlgorithm *string,
 	dialer func(context.Context, string) (pb.InbServiceClient, grpc.ClientConnInterface, error),
 ) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
@@ -83,23 +87,27 @@ func handleFOTA(
 			}
 			releaseDateProto = timestamppb.New(parsedDate)
 		}
-		// Validate signature against expected format
-		// if *signature != "" {
-		// 	matched, err := regexp.MatchString("^[a-fA-F0-9]{64}$", *signature)
-		// 	if err != nil {
-		// 		return fmt.Errorf("error validating signature format: %v", err)
-		// 	}
-		// 	if !matched {
-		// 		return fmt.Errorf("signature does not match expected format (64 hex characters)")
-		// 	}
-		// }
+		// TODO: Validate signature against expected format
+		// TODO: Add unittest test case for invalid signature format
+
+		// Default to sha384 if not provided
+		finalHashAlgorithm := "sha384"
+		if hashAlgorithm != nil && *hashAlgorithm != "" {
+			switch strings.ToLower(*hashAlgorithm) {
+			case "sha256", "sha384", "sha512":
+				finalHashAlgorithm = strings.ToLower(*hashAlgorithm)
+			default:
+				return fmt.Errorf("invalid hash algorithm: must be 'sha256', 'sha384', or 'sha512'")
+			}
+		}
 
 		request := &pb.UpdateFirmwareRequest{
-			Url:         *url,
-			ReleaseDate: releaseDateProto,
-			DoNotReboot: !*reboot,
-			Username:    *username,
-			Signature:   *signature,
+			Url:           *url,
+			ReleaseDate:   releaseDateProto,
+			DoNotReboot:   !*reboot,
+			Username:      *username,
+			Signature:     *signature,
+			HashAlgorithm: finalHashAlgorithm,
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)

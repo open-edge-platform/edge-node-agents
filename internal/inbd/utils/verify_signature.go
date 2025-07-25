@@ -61,14 +61,14 @@ func VerifySignature(signature, pathToFile string, hashAlgorithm *HashAlgorithm)
 	extension := getFileExtension(pathToFile)
 	var certPath string
 
-	// Handle tar files containing packages and optional PEM certificates
+	// Handle tar files (FOTA/SOTA/config packages)
 	if strings.ToLower(extension) == "tar" {
 		tarContents, err := extractAndValidateTarContents(fs, pathToFile)
 		if err != nil {
 			return fmt.Errorf("signature check failed: %w", err)
 		}
 
-		// Use embedded PEM certificate if available (priority over system cert)
+		// Use embedded PEM certificate if available, else system cert
 		if tarContents.HasPEM {
 			// Create temporary certificate file
 			tempCertFile := filepath.Join(filepath.Dir(pathToFile), "temp_cert.pem")
@@ -89,7 +89,7 @@ func VerifySignature(signature, pathToFile string, hashAlgorithm *HashAlgorithm)
 			certPath = OTAPackageCertPath
 		}
 	} else {
-		// Single file validation (currently config focused, expandable for FOTA/SOTA)
+		// Single file validation (config, FOTA, SOTA)
 		if !isValidPackageFile(pathToFile) {
 			return fmt.Errorf("signature check failed: unsupported file format")
 		}
@@ -210,14 +210,17 @@ func isPEMFile(filename string) bool {
 // validatePEMContent validates PEM certificate content
 func validatePEMContent(pemContent string) error {
 	if strings.TrimSpace(pemContent) == "" {
+		log.Printf("PEM validation failed: empty PEM content")
 		return fmt.Errorf("empty PEM content")
 	}
 	block, _ := pem.Decode([]byte(pemContent))
 	if block == nil {
+		log.Printf("PEM validation failed: could not decode PEM content")
 		return fmt.Errorf("failed to decode PEM content")
 	}
 	_, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
+		log.Printf("PEM validation failed: could not parse X.509 certificate: %v", err)
 		return fmt.Errorf("failed to parse X.509 certificate: %w", err)
 	}
 	return nil
@@ -293,27 +296,32 @@ func verifyChecksumWithCertificateFile(fs afero.Fs, certPath, signature string, 
 	ctx, cancel := context.WithTimeout(context.Background(), SignatureVerificationTimeoutInSeconds*time.Second)
 	defer cancel()
 	if !IsFileExist(fs, certPath) {
+		log.Printf("Certificate file does not exist: %s", certPath)
 		return fmt.Errorf("certificate file does not exist: %s", certPath)
 	}
 	certContent, err := ReadFile(fs, certPath)
 	if err != nil {
+		log.Printf("Could not load certificate from %s: %v", certPath, err)
 		return fmt.Errorf("could not load certificate: %w", err)
 	}
 
 	// Parse PEM certificate
 	block, _ := pem.Decode(certContent)
 	if block == nil {
+		log.Printf("Failed to parse PEM certificate at %s: PEM decode failed", certPath)
 		return fmt.Errorf("failed to parse PEM certificate")
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
+		log.Printf("Failed to parse certificate at %s: %v", certPath, err)
 		return fmt.Errorf("failed to parse certificate: %w", err)
 	}
 
 	// Get public key
 	pubKey, ok := cert.PublicKey.(*rsa.PublicKey)
 	if !ok {
+		log.Printf("Certificate at %s does not contain RSA public key", certPath)
 		return fmt.Errorf("certificate does not contain RSA public key")
 	}
 
@@ -372,4 +380,19 @@ func verifyChecksumWithKey(ctx context.Context, pubKey *rsa.PublicKey, signature
 		lastErr = err
 	}
 	return fmt.Errorf("checksum of data does not match signature in manifest: %w", lastErr)
+}
+
+// Helper to convert string to *HashAlgorithm
+func ParseHashAlgorithm(algo string) *HashAlgorithm {
+	switch strings.ToLower(algo) {
+	case "sha256":
+		a := SHA256
+		return &a
+	case "sha512":
+		a := SHA512
+		return &a
+	default:
+		a := SHA384
+		return &a
+	}
 }

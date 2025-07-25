@@ -68,7 +68,7 @@ func TestHandleSOTA(t *testing.T) {
 	mode := "full"
 	reboot := true
 	packageList := []string{"package1", "package2"}
-	signature := "signature"
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 	cmd := &cobra.Command{}
 	args := []string{}
 
@@ -86,7 +86,8 @@ func TestHandleSOTA(t *testing.T) {
 			return "ubuntu", nil
 		}
 
-		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+		var hashAlgorithm string
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
 		assert.NoError(t, err, "handleSOTA should not return an error")
 
 		mockClient.AssertExpectations(t)
@@ -102,8 +103,9 @@ func TestHandleSOTA(t *testing.T) {
 			return "ubuntu", nil
 		}
 
+		var hashAlgorithm string
 		err := handleSOTA(&socket, &url, &invalidReleaseDate,
-			&mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+			&mode, &reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
 		assert.Error(t, err, "error parsing release date: parsing time")
 	})
 
@@ -116,7 +118,8 @@ func TestHandleSOTA(t *testing.T) {
 		detectOS := func() (string, error) {
 			return "ubuntu", nil
 		}
-		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &duplicatePackageList, &signature, detectOS, dialer)(cmd, args)
+		var hashAlgorithm string
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &duplicatePackageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
 		assert.Error(t, err, "duplicate package in the package list: package1")
 	})
 
@@ -130,8 +133,9 @@ func TestHandleSOTA(t *testing.T) {
 			return "ubuntu", nil
 		}
 
+		var hashAlgorithm string
 		err := handleSOTA(&socket, &url, &releaseDate,
-			&invalidMode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+			&invalidMode, &reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
 		assert.Error(t, err, "invalid mode. Use one of full, no-download, download-only")
 	})
 
@@ -143,8 +147,9 @@ func TestHandleSOTA(t *testing.T) {
 		detectOS := func() (string, error) {
 			return "ubuntu", nil
 		}
+		var hashAlgorithm string
 		err := handleSOTA(&socket, &url, &releaseDate, &mode,
-			&reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+			&reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
 		assert.Error(t, err, "error setting up new gRPC client")
 	})
 
@@ -159,7 +164,8 @@ func TestHandleSOTA(t *testing.T) {
 			return "ubuntu", nil
 		}
 
-		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+		var hashAlgorithm string
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
 		assert.Error(t, err, "error updating system software")
 	})
 
@@ -177,7 +183,67 @@ func TestHandleSOTA(t *testing.T) {
 			return "ubuntu", nil
 		}
 
-		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+		var hashAlgorithm string
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
 		assert.NoError(t, err, "handleSOTA should not return an error even if Close fails")
+	})
+
+	t.Run("valid hash algorithm is accepted", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("UpdateSystemSoftware", mock.Anything, mock.MatchedBy(func(req *pb.UpdateSystemSoftwareRequest) bool {
+			return req.HashAlgorithm == "sha512"
+		}), mock.Anything).Return(&pb.UpdateResponse{
+			StatusCode: 200,
+			Error:      "",
+		}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return MockDialer(ctx, socket, mockClient, false)
+		}
+		detectOS := func() (string, error) {
+			return "ubuntu", nil
+		}
+
+		hashAlgorithm := "sha512"
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
+		assert.NoError(t, err, "handleSOTA should not return an error for valid hash algorithm")
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("invalid hash algorithm is rejected", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return MockDialer(ctx, socket, mockClient, false)
+		}
+		detectOS := func() (string, error) {
+			return "ubuntu", nil
+		}
+
+		hashAlgorithm := "md5"
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid hash algorithm")
+	})
+
+	t.Run("empty hash algorithm defaults to sha384", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("UpdateSystemSoftware", mock.Anything, mock.MatchedBy(func(req *pb.UpdateSystemSoftwareRequest) bool {
+			return req.HashAlgorithm == "sha384"
+		}), mock.Anything).Return(&pb.UpdateResponse{
+			StatusCode: 200,
+			Error:      "",
+		}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return MockDialer(ctx, socket, mockClient, false)
+		}
+		detectOS := func() (string, error) {
+			return "ubuntu", nil
+		}
+
+		var hashAlgorithm string // empty
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, &hashAlgorithm, detectOS, dialer)(cmd, args)
+		assert.NoError(t, err, "handleSOTA should default to sha384 when hashAlgorithm is empty")
+		mockClient.AssertExpectations(t)
 	})
 }

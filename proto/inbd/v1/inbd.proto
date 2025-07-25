@@ -48,6 +48,7 @@ message UpdateFirmwareRequest {
   bool do_not_reboot = 3;  // Whether to reboot the node after the firmware update attempt
   string username = 4 [(buf.validate.field).required = false]; // Username if authentication is required for the package source
   string signature = 5 [(buf.validate.field).required = false]; // Signature of the package
+  string hash_algorithm = 6 [(buf.validate.field).required = false]; // "sha256", "sha384", "sha512"
 }
 
 message UpdateSystemSoftwareRequest {
@@ -79,6 +80,7 @@ message UpdateSystemSoftwareRequest {
       }
   }]; // List of packages to install if whole package update isn't desired.
   string signature = 6 [(buf.validate.field).required = false]; // Signature of the package
+  string hash_algorithm = 7 [(buf.validate.field).required = false]; // "sha256", "sha384", "sha512"
 }
 
 message UpdateOSSourceRequest {
@@ -139,7 +141,8 @@ message LoadConfigRequest {
       expression: "this != '' && this.isUri()"
     }
   ];
-  string signature = 2 [(buf.validate.field).required = false];
+  string signature = 2 [(buf.validate.field).required = false]; // Signature of the package
+  string hash_algorithm = 3 [(buf.validate.field).required = false]; // "sha256", "sha384", "sha512"
 }
 
 message GetConfigRequest {

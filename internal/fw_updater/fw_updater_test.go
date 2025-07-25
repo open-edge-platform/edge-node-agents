@@ -1283,3 +1283,55 @@ func TestMockFileInfo_AllMethods(t *testing.T) {
 		t.Errorf("Expected Sys nil, got %v", sys)
 	}
 }
+func TestFWUpdater_UpdateFirmware_HashAlgorithmHandling(t *testing.T) {
+	fs := setupMockFSForFWUpdater()
+
+	t.Run("valid hash algorithm is accepted", func(t *testing.T) {
+		request := &pb.UpdateFirmwareRequest{
+			Url:           "http://example.com/firmware.bin",
+			HashAlgorithm: "sha512", // valid
+		}
+		u := NewFWUpdaterWithFS(request, fs)
+		resp, err := u.UpdateFirmware()
+		if err != nil {
+			t.Errorf("UpdateFirmware() returned unexpected error: %v", err)
+		}
+		if resp.StatusCode == 400 && strings.Contains(resp.Error, "invalid hash algorithm") {
+			t.Errorf("Did not expect hash algorithm error for valid input, got: %v", resp.Error)
+		}
+	})
+
+	t.Run("invalid hash algorithm is rejected", func(t *testing.T) {
+		request := &pb.UpdateFirmwareRequest{
+			Url:           "http://example.com/firmware.bin",
+			HashAlgorithm: "md5", // invalid
+		}
+		u := NewFWUpdaterWithFS(request, fs)
+		resp, err := u.UpdateFirmware()
+		if err != nil {
+			t.Errorf("UpdateFirmware() returned unexpected error: %v", err)
+		}
+		if resp.StatusCode != 400 {
+			t.Errorf("Expected status 400 for invalid hash algorithm, got %v", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Error, "invalid hash algorithm") {
+			t.Errorf("Expected error message about invalid hash algorithm, got %v", resp.Error)
+		}
+	})
+
+	t.Run("empty hash algorithm defaults to sha384", func(t *testing.T) {
+		request := &pb.UpdateFirmwareRequest{
+			Url:           "http://example.com/firmware.bin",
+			HashAlgorithm: "", // empty, should default to sha384
+		}
+		u := NewFWUpdaterWithFS(request, fs)
+		resp, err := u.UpdateFirmware()
+		if err != nil {
+			t.Errorf("UpdateFirmware() returned unexpected error: %v", err)
+		}
+		// Should not fail due to hash algorithm
+		if resp.StatusCode == 400 && strings.Contains(resp.Error, "invalid hash algorithm") {
+			t.Errorf("Did not expect hash algorithm error for empty input, got: %v", resp.Error)
+		}
+	})
+}

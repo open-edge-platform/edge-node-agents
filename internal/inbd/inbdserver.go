@@ -112,6 +112,24 @@ func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareR
 		return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil
 	}
 
+	// TODO: Validate signature against expected format
+	// TODO: Add unittest test case for invalid signature format
+
+	// Validate hash algorithm, default to sha384 if not provided
+	finalHashAlgorithm := "sha384"
+	if req.HashAlgorithm != "" {
+		switch strings.ToLower(req.HashAlgorithm) {
+		case "sha256", "sha384", "sha512":
+			finalHashAlgorithm = strings.ToLower(req.HashAlgorithm)
+		default:
+			return &pb.UpdateResponse{
+				StatusCode: 400,
+				Error:      "invalid hash algorithm: must be 'sha256', 'sha384', or 'sha512'",
+			}, nil
+		}
+	}
+	req.HashAlgorithm = finalHashAlgorithm
+
 	resp, err := fwUpdater.NewFWUpdater(req).UpdateFirmware()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
@@ -223,7 +241,26 @@ func (s *InbdServer) LoadConfig(ctx context.Context, req *pb.LoadConfigRequest) 
 		return &pb.ConfigResponse{StatusCode: 400, Error: "uri is required", Success: false}, nil
 	}
 	op := &utils.ConfigOperation{}
-	err := op.LoadConfigCommand(req.Uri, req.Signature)
+
+	// TODO: Validate signature against expected format
+	// TODO: Add unittest test case for invalid signature format
+
+	// Validate hash algorithm, default to sha384 if not provided
+	finalHashAlgorithm := "sha384"
+	if req.HashAlgorithm != "" {
+		switch strings.ToLower(req.HashAlgorithm) {
+		case "sha256", "sha384", "sha512":
+			finalHashAlgorithm = strings.ToLower(req.HashAlgorithm)
+		default:
+			return &pb.ConfigResponse{
+				StatusCode: 400,
+				Error:      "invalid hash algorithm: must be 'sha256', 'sha384', or 'sha512'",
+				Success:    false,
+			}, nil
+		}
+	}
+
+	err := op.LoadConfigCommand(req.Uri, req.Signature, finalHashAlgorithm)
 	if err != nil {
 		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
 	}

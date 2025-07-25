@@ -21,7 +21,7 @@ import (
 func TestHandleConfigLoadCmd_Success(t *testing.T) {
 	socket := "/tmp/test.sock"
 	uri := "file:///tmp/intel_manageability.conf"
-	signature := "test-signature"
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	mockClient := &MockInbServiceClient{}
 	mockClient.On("LoadConfig", mock.Anything, mock.Anything, mock.Anything).
@@ -31,8 +31,9 @@ func TestHandleConfigLoadCmd_Success(t *testing.T) {
 		return mockClient, &MockClientConn{}, nil
 	}
 
+	var hashAlgorithm string
 	cmd := &cobra.Command{}
-	err := handleConfigLoadCmd(&socket, &uri, &signature, dialer)(cmd, []string{})
+	err := handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, dialer)(cmd, []string{})
 	assert.NoError(t, err)
 	mockClient.AssertCalled(t, "LoadConfig", mock.Anything, mock.Anything, mock.Anything)
 }
@@ -40,14 +41,15 @@ func TestHandleConfigLoadCmd_Success(t *testing.T) {
 func TestHandleConfigLoadCmd_MissingURI(t *testing.T) {
 	socket := "/tmp/test.sock"
 	uri := ""
-	signature := "test-signature"
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
 		return nil, nil, nil
 	}
 
+	var hashAlgorithm string
 	cmd := &cobra.Command{}
-	err := handleConfigLoadCmd(&socket, &uri, &signature, dialer)(cmd, []string{})
+	err := handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, dialer)(cmd, []string{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "uri is required")
 }
@@ -153,14 +155,15 @@ func TestHandleConfigRemoveCmd_InvalidPathFormat(t *testing.T) {
 func TestHandleConfigLoadCmd_DialError(t *testing.T) {
 	socket := "/tmp/test.sock"
 	uri := "file:///tmp/intel_manageability.conf"
-	signature := "test-signature"
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
 		return nil, nil, errors.New("mock dial error")
 	}
 
+	var hashAlgorithm string
 	cmd := &cobra.Command{}
-	err := handleConfigLoadCmd(&socket, &uri, &signature, dialer)(cmd, []string{})
+	err := handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, dialer)(cmd, []string{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "mock dial error")
 }
@@ -168,7 +171,7 @@ func TestHandleConfigLoadCmd_DialError(t *testing.T) {
 func TestHandleConfigLoadCmd_GrpcError(t *testing.T) {
 	socket := "/tmp/test.sock"
 	uri := "file:///tmp/intel_manageability.conf"
-	signature := "test-signature"
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	mockClient := &MockInbServiceClient{}
 	mockClient.On("LoadConfig", mock.Anything, mock.Anything, mock.Anything).
@@ -178,8 +181,9 @@ func TestHandleConfigLoadCmd_GrpcError(t *testing.T) {
 		return mockClient, &MockClientConn{}, nil
 	}
 
+	var hashAlgorithm string
 	cmd := &cobra.Command{}
-	err := handleConfigLoadCmd(&socket, &uri, &signature, dialer)(cmd, []string{})
+	err := handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, dialer)(cmd, []string{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "grpc error")
 }
@@ -395,8 +399,9 @@ func TestHandleConfigLoadCmd_EmptySignature(t *testing.T) {
 		return mockClient, &MockClientConn{}, nil
 	}
 
+	var hashAlgorithm string
 	cmd := &cobra.Command{}
-	err := handleConfigLoadCmd(&socket, &uri, &signature, dialer)(cmd, []string{})
+	err := handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, dialer)(cmd, []string{})
 	assert.NoError(t, err)
 	mockClient.AssertCalled(t, "LoadConfig", mock.Anything, mock.Anything, mock.Anything)
 }
@@ -417,4 +422,72 @@ func TestHandleConfigGetCmd_MultiKey(t *testing.T) {
 	err := handleConfigGetCmd(&socket, &path, dialer)(cmd, []string{})
 	assert.NoError(t, err)
 	mockClient.AssertCalled(t, "GetConfig", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestHandleConfigLoadCmd_HashAlgorithm_PassedAndUsed(t *testing.T) {
+	socket := "/tmp/test.sock"
+	uri := "file:///tmp/intel_manageability.conf"
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	hashAlgorithm := "sha512"
+
+	mockClient := &MockInbServiceClient{}
+	mockClient.On("LoadConfig", mock.Anything, mock.MatchedBy(func(req *pb.LoadConfigRequest) bool {
+		return req.HashAlgorithm == "sha512"
+	}), mock.Anything).
+		Return(&pb.ConfigResponse{StatusCode: 200, Error: "", Success: true, Message: "OK"}, nil)
+
+	dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+		return mockClient, &MockClientConn{}, nil
+	}
+
+	cmd := &cobra.Command{}
+	err := handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, dialer)(cmd, []string{})
+	assert.NoError(t, err)
+	mockClient.AssertCalled(t, "LoadConfig", mock.Anything, mock.MatchedBy(func(req *pb.LoadConfigRequest) bool {
+		return req.HashAlgorithm == "sha512"
+	}), mock.Anything)
+}
+
+func TestHandleConfigLoadCmd_HashAlgorithm_Invalid(t *testing.T) {
+	socket := "/tmp/test.sock"
+	uri := "file:///tmp/intel_manageability.conf"
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	hashAlgorithm := "invalidalgo"
+
+	mockClient := &MockInbServiceClient{}
+	mockClient.On("LoadConfig", mock.Anything, mock.Anything, mock.Anything).
+		Return(&pb.ConfigResponse{StatusCode: 400, Error: "invalid hash algorithm", Success: false, Message: ""}, nil)
+
+	dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+		return mockClient, &MockClientConn{}, nil
+	}
+
+	cmd := &cobra.Command{}
+	err := handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, dialer)(cmd, []string{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid hash algorithm")
+}
+
+func TestHandleConfigLoadCmd_DefaultHashAlgorithm(t *testing.T) {
+	socket := "/tmp/test.sock"
+	uri := "file:///tmp/intel_manageability.conf"
+	signature := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	var hashAlgorithm string // not set, should default to sha384
+
+	mockClient := &MockInbServiceClient{}
+	mockClient.On("LoadConfig", mock.Anything, mock.MatchedBy(func(req *pb.LoadConfigRequest) bool {
+		return req.HashAlgorithm == "" || req.HashAlgorithm == "sha384"
+	}), mock.Anything).
+		Return(&pb.ConfigResponse{StatusCode: 200, Error: "", Success: true, Message: "OK"}, nil)
+
+	dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+		return mockClient, &MockClientConn{}, nil
+	}
+
+	cmd := &cobra.Command{}
+	err := handleConfigLoadCmd(&socket, &uri, &signature, &hashAlgorithm, dialer)(cmd, []string{})
+	assert.NoError(t, err)
+	mockClient.AssertCalled(t, "LoadConfig", mock.Anything, mock.MatchedBy(func(req *pb.LoadConfigRequest) bool {
+		return req.HashAlgorithm == "" || req.HashAlgorithm == "sha384"
+	}), mock.Anything)
 }

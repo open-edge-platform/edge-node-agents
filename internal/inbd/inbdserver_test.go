@@ -707,3 +707,97 @@ func TestConvertQueryOptionToString(t *testing.T) {
 		}
 	}
 }
+
+func TestInbdServer_LoadConfig(t *testing.T) {
+	server := &InbdServer{}
+	ctx := context.Background()
+
+	t.Run("empty URI", func(t *testing.T) {
+		req := &pb.LoadConfigRequest{Uri: ""}
+		resp, err := server.LoadConfig(ctx, req)
+		if err != nil {
+			t.Errorf("LoadConfig() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("LoadConfig() returned nil response")
+		}
+		if resp.StatusCode != 400 {
+			t.Errorf("LoadConfig() StatusCode = %v, want 400", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Error, "uri is required") {
+			t.Errorf("LoadConfig() Error = %v, want containing 'uri is required'", resp.Error)
+		}
+	})
+
+	t.Run("invalid hash algorithm", func(t *testing.T) {
+		req := &pb.LoadConfigRequest{
+			Uri:           "file:///tmp/intel_manageability.conf",
+			HashAlgorithm: "invalidalgo",
+		}
+		resp, err := server.LoadConfig(ctx, req)
+		if err != nil {
+			t.Errorf("LoadConfig() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("LoadConfig() returned nil response")
+		}
+		if resp.StatusCode != 400 {
+			t.Errorf("LoadConfig() StatusCode = %v, want 400", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Error, "invalid hash algorithm") {
+			t.Errorf("LoadConfig() Error = %v, want containing 'invalid hash algorithm'", resp.Error)
+		}
+	})
+
+	t.Run("valid request defaults to sha384", func(t *testing.T) {
+		req := &pb.LoadConfigRequest{
+			Uri: "file:///tmp/intel_manageability.conf",
+			// No hash algorithm provided
+		}
+		resp, err := server.LoadConfig(ctx, req)
+		if err != nil {
+			t.Errorf("LoadConfig() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("LoadConfig() returned nil response")
+		}
+		// StatusCode may be 200 or 500 depending on file existence, but should not be 400
+		if resp.StatusCode == 400 {
+			t.Errorf("LoadConfig() StatusCode = %v, did not expect 400 for valid request", resp.StatusCode)
+		}
+	})
+
+	t.Run("valid request with sha256", func(t *testing.T) {
+		req := &pb.LoadConfigRequest{
+			Uri:           "file:///tmp/intel_manageability.conf",
+			HashAlgorithm: "sha256",
+		}
+		resp, err := server.LoadConfig(ctx, req)
+		if err != nil {
+			t.Errorf("LoadConfig() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("LoadConfig() returned nil response")
+		}
+		if resp.StatusCode == 400 {
+			t.Errorf("LoadConfig() StatusCode = %v, did not expect 400 for valid request", resp.StatusCode)
+		}
+	})
+
+	t.Run("valid request with sha512", func(t *testing.T) {
+		req := &pb.LoadConfigRequest{
+			Uri:           "file:///tmp/intel_manageability.conf",
+			HashAlgorithm: "sha512",
+		}
+		resp, err := server.LoadConfig(ctx, req)
+		if err != nil {
+			t.Errorf("LoadConfig() returned unexpected error: %v", err)
+		}
+		if resp == nil {
+			t.Fatal("LoadConfig() returned nil response")
+		}
+		if resp.StatusCode == 400 {
+			t.Errorf("LoadConfig() StatusCode = %v, did not expect 400 for valid request", resp.StatusCode)
+		}
+	})
+}

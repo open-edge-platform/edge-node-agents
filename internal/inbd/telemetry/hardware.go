@@ -8,6 +8,7 @@ package telemetry
 import (
 	"fmt"
 	"github.com/spf13/afero"
+	"log"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -23,25 +24,35 @@ func GetHardwareInfo() (*pb.HardwareInfo, error) {
 	if runtime.GOOS == "linux" {
 		if manufacturer, err := readDMIInfo("/sys/class/dmi/id/sys_vendor"); err == nil {
 			hw.SystemManufacturer = strings.TrimSpace(manufacturer)
+		} else {
+			log.Printf("Failed to read SystemManufacturer: %v", err)
 		}
 
 		if product, err := readDMIInfo("/sys/class/dmi/id/product_name"); err == nil {
 			hw.SystemProductName = strings.TrimSpace(product)
+		} else {
+			log.Printf("Failed to read SystemProductName: %v", err)
 		}
 
 		// Get CPU ID from /proc/cpuinfo
 		if cpuID, err := getCPUInfo(); err == nil {
 			hw.CpuId = cpuID
+		} else {
+			log.Printf("Failed to read CpuId: %v", err)
 		}
 
 		// Get memory info
 		if memInfo, err := getMemoryInfo(); err == nil {
 			hw.TotalPhysicalMemory = memInfo
+		} else {
+			log.Printf("Failed to read TotalPhysicalMemory: %v", err)
 		}
 
 		// Get disk info
 		if diskInfo, err := getDiskInfo(); err == nil {
 			hw.DiskInformation = diskInfo
+		} else {
+			log.Printf("Failed to read DiskInformation: %v", err)
 		}
 	}
 

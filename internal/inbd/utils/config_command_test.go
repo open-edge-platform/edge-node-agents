@@ -51,7 +51,7 @@ func TestLoadConfigCommand_ValidAndInvalid(t *testing.T) {
 	writeTestConfig(t, fs, validFile.Name(), valid)
 
 	op := &ConfigOperation{}
-	err = op.LoadConfigCommand(validFile.Name(), "")
+	err = op.LoadConfigCommand(validFile.Name(), "", "")
 	assert.NoError(t, err)
 
 	// Invalid config (not JSON)
@@ -61,7 +61,7 @@ func TestLoadConfigCommand_ValidAndInvalid(t *testing.T) {
 	defer os.Remove(invalidFile.Name())
 	err = WriteFile(fs, invalidFile.Name(), []byte("{notjson"), 0644)
 	assert.NoError(t, err)
-	err = op.LoadConfigCommand(invalidFile.Name(), "")
+	err = op.LoadConfigCommand(invalidFile.Name(), "", "")
 	assert.Error(t, err)
 }
 
@@ -464,7 +464,7 @@ func TestLoadConfigCommand_WithSignatureVerification(t *testing.T) {
 		assert.NoError(t, err)
 
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), signatureFile.Name())
+		err = op.LoadConfigCommand(configFile.Name(), signatureFile.Name(), "")
 
 		if err != nil {
 			assert.Contains(t, err.Error(), "signature")
@@ -476,7 +476,7 @@ func TestLoadConfigCommand_WithSignatureVerification(t *testing.T) {
 		nonExistentSig := "/tmp/does_not_exist.sig"
 
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), nonExistentSig)
+		err = op.LoadConfigCommand(configFile.Name(), nonExistentSig, "")
 
 		// Should return error for non-existent signature file
 		assert.Error(t, err)
@@ -485,7 +485,7 @@ func TestLoadConfigCommand_WithSignatureVerification(t *testing.T) {
 
 	t.Run("Load config without signature when optional", func(t *testing.T) {
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), "")
+		err = op.LoadConfigCommand(configFile.Name(), "", "")
 
 		assert.NoError(t, err)
 	})
@@ -531,7 +531,7 @@ func TestLoadConfigCommand_SignatureAlgorithmSupport(t *testing.T) {
 		assert.NoError(t, err)
 
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), sigFile.Name())
+		err = op.LoadConfigCommand(configFile.Name(), sigFile.Name(), "")
 
 		// Accept either success or proper verification failure
 		if err != nil {
@@ -551,7 +551,7 @@ func TestLoadConfigCommand_SignatureAlgorithmSupport(t *testing.T) {
 		assert.NoError(t, err)
 
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), hexSigFile.Name())
+		err = op.LoadConfigCommand(configFile.Name(), hexSigFile.Name(), "")
 
 		// Accept either success or proper verification failure
 		if err != nil {
@@ -570,7 +570,7 @@ func TestLoadConfigCommand_SignatureAlgorithmSupport(t *testing.T) {
 		assert.NoError(t, err)
 
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), invalidSigFile.Name())
+		err = op.LoadConfigCommand(configFile.Name(), invalidSigFile.Name(), "")
 
 		// Should fail for invalid format
 		assert.Error(t, err)
@@ -618,7 +618,7 @@ func TestLoadConfigCommand_SignatureIntegrity(t *testing.T) {
 		assert.NoError(t, err)
 
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), signatureFile.Name())
+		err = op.LoadConfigCommand(configFile.Name(), signatureFile.Name(), "")
 
 		// For testing purposes, accept either success or verification failure
 		if err != nil {
@@ -637,7 +637,7 @@ func TestLoadConfigCommand_SignatureIntegrity(t *testing.T) {
 		assert.NoError(t, err)
 
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), emptySigFile.Name())
+		err = op.LoadConfigCommand(configFile.Name(), emptySigFile.Name(), "")
 
 		// Should fail for empty signature
 		assert.Error(t, err)
@@ -656,10 +656,60 @@ func TestLoadConfigCommand_SignatureIntegrity(t *testing.T) {
 		assert.NoError(t, err)
 
 		op := &ConfigOperation{}
-		err = op.LoadConfigCommand(configFile.Name(), malformedSigFile.Name())
+		err = op.LoadConfigCommand(configFile.Name(), malformedSigFile.Name(), "")
 
 		// Should fail for malformed signature
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "signature")
+	})
+}
+
+func TestLoadConfigCommand_HashAlgorithmHandling(t *testing.T) {
+	fs := afero.NewOsFs()
+
+	// Setup config and schema files
+	tmpConfig, err := CreateTempFile(fs, "/tmp", "test_config_*.json")
+	assert.NoError(t, err)
+	tmpConfig.Close()
+	defer os.Remove(tmpConfig.Name())
+	configFilePath = tmpConfig.Name()
+
+	tmpSchema, err := CreateTempFile(fs, "/tmp", "test_schema_*.json")
+	assert.NoError(t, err)
+	tmpSchema.Close()
+	defer os.Remove(tmpSchema.Name())
+	schemaFilePath = tmpSchema.Name()
+	writeTestSchema(t, fs, schemaFilePath)
+
+	validConfig := map[string]interface{}{
+		"os_updater": map[string]interface{}{
+			"maxCacheSize": 10,
+		},
+	}
+	writeTestConfig(t, fs, configFilePath, validConfig)
+
+	t.Run("valid hash algorithm is accepted", func(t *testing.T) {
+		op := &ConfigOperation{}
+		err := op.LoadConfigCommand(configFilePath, "", "sha512")
+		// Accept either success or signature error (since no signature file)
+		if err != nil {
+			assert.NotContains(t, err.Error(), "invalid hash algorithm")
+		}
+	})
+
+	t.Run("invalid hash algorithm is rejected", func(t *testing.T) {
+		op := &ConfigOperation{}
+		err := op.LoadConfigCommand(configFilePath, "", "md5")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid hash algorithm")
+	})
+
+	t.Run("empty hash algorithm defaults to sha384", func(t *testing.T) {
+		op := &ConfigOperation{}
+		err := op.LoadConfigCommand(configFilePath, "", "")
+		// Accept either success or signature error (since no signature file)
+		if err != nil {
+			assert.NotContains(t, err.Error(), "invalid hash algorithm")
+		}
 	})
 }
