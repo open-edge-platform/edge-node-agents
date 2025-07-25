@@ -13,3 +13,4 @@ statusEndpoint: 'unix:///run/node-agent/node-agent.sock'
 metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
 metricsInterval: 10s
 accessTokenPath: /etc/intel_edge_node/tokens
+rpcCredenitalsPath: /etc/intel_edge_node/rpc-credentials

@@ -17,7 +17,8 @@ import (
 
 var log = logger.Logger
 
-func createConfigFile(t *testing.T, version string, logLevel string, guid string, url string, interval time.Duration, statusEndpoint string, accessTokenPath string) string {
+func createConfigFile(t *testing.T, version string, logLevel string, guid string, url string, interval time.Duration,
+	statusEndpoint string, accessTokenPath string, address string, credsPath string) string {
 	f, err := os.CreateTemp(t.TempDir(), "test_config")
 	require.NoError(t, err)
 
@@ -30,10 +31,12 @@ func createConfigFile(t *testing.T, version string, logLevel string, guid string
 			ServiceURL:        url,
 			HeartbeatInterval: interval,
 		},
-		StatusEndpoint:  statusEndpoint,
-		MetricsEndpoint: statusEndpoint,
-		MetricsInterval: interval,
-		AccessTokenPath: accessTokenPath,
+		StatusEndpoint:     statusEndpoint,
+		MetricsEndpoint:    statusEndpoint,
+		MetricsInterval:    interval,
+		RPSAddress:         address,
+		AccessTokenPath:    accessTokenPath,
+		RpcCredentialsPath: credsPath,
 	}
 
 	file, err := yaml.Marshal(c)
@@ -55,8 +58,10 @@ func TestValidConfig(t *testing.T) {
 	interval := 30 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+	address := "infra.test.edgeorch.intel.com:443"
+	credsPath := "/tmp/credentials"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath, address, credsPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -70,6 +75,8 @@ func TestValidConfig(t *testing.T) {
 	assert.Equal(t, statusEndpoint, cfg.MetricsEndpoint)
 	assert.Equal(t, interval, cfg.MetricsInterval)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
+	assert.Equal(t, address, cfg.RPSAddress)
+	assert.Equal(t, credsPath, cfg.RpcCredentialsPath)
 }
 
 func TestInvalidConfigPath(t *testing.T) {
@@ -99,8 +106,10 @@ func TestSymlinkConfigPath(t *testing.T) {
 	interval := 30 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+	address := "infra.test.edgeorch.intel.com:443"
+	credsPath := "/tmp/credentials"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath, address, credsPath)
 	defer os.Remove(fileName)
 
 	symlinkConfig := "/tmp/sysmlink_config.txt"
@@ -119,7 +128,7 @@ func TestPartialConfigFile(t *testing.T) {
 	statusEndpoint := "unix://test-socket.sock"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, "", "", guid, url, 0*time.Second, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, "", "", guid, url, 0*time.Second, statusEndpoint, accessTokenPath, "", "")
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName, log)
@@ -133,6 +142,8 @@ func TestPartialConfigFile(t *testing.T) {
 	assert.Equal(t, statusEndpoint, cfg.MetricsEndpoint)
 	assert.Equal(t, 10*time.Second, cfg.MetricsInterval)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
+	assert.Equal(t, "", cfg.RPSAddress)
+	assert.Equal(t, "", cfg.RpcCredentialsPath)
 }
 
 func TestMissingHeartbeatIntervals(t *testing.T) {
@@ -142,8 +153,10 @@ func TestMissingHeartbeatIntervals(t *testing.T) {
 	url := "localhost"
 	statusEndpoint := "unix://test-socket.sock"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+	address := "infra.test.edgeorch.intel.com:443"
+	credsPath := "/tmp/credentials"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, 0*time.Second, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, 0*time.Second, statusEndpoint, accessTokenPath, address, credsPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -157,6 +170,8 @@ func TestMissingHeartbeatIntervals(t *testing.T) {
 	assert.Equal(t, statusEndpoint, cfg.MetricsEndpoint)
 	assert.Equal(t, 10*time.Second, cfg.MetricsInterval)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
+	assert.Equal(t, address, cfg.RPSAddress)
+	assert.Equal(t, credsPath, cfg.RpcCredentialsPath)
 }
 
 func TestMissingServiceURL(t *testing.T) {
@@ -166,8 +181,10 @@ func TestMissingServiceURL(t *testing.T) {
 	interval := 30 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+	address := "infra.test.edgeorch.intel.com:443"
+	credsPath := "/tmp/credentials"
 
-	fileName := createConfigFile(t, version, logLevel, guid, "", interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, "", interval, statusEndpoint, accessTokenPath, address, credsPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -182,8 +199,10 @@ func TestMissingTokenPath(t *testing.T) {
 	url := "localhost"
 	interval := 30 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
+	address := "infra.test.edgeorch.intel.com:443"
+	credsPath := "/tmp/credentials"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, "")
+	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, "", address, credsPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -198,8 +217,10 @@ func TestMissingStatusEndpoint(t *testing.T) {
 	url := "localhost"
 	interval := 30 * time.Second
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+	address := "infra.test.edgeorch.intel.com:443"
+	credsPath := "/tmp/credentials"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, "", accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, interval, "", accessTokenPath, address, credsPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -215,8 +236,10 @@ func TestInvalidStatusEndpoint(t *testing.T) {
 	interval := 30 * time.Second
 	statusEndpoint := "invalid-socket.sock"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+	address := "infra.test.edgeorch.intel.com:443"
+	credsPath := "/tmp/credentials"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath, address, credsPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -231,8 +254,10 @@ func TestMissingGUID(t *testing.T) {
 	interval := 30 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+	address := "infra.test.edgeorch.intel.com:443"
+	credsPath := "/tmp/credentials"
 
-	fileName := createConfigFile(t, version, logLevel, "", url, interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, "", url, interval, statusEndpoint, accessTokenPath, address, credsPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
