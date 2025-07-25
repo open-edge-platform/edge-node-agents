@@ -10,6 +10,9 @@ groupadd -f bm-agents --system
 # Create system user if it doesn't exist
 id -u platform-manageability-agent >/dev/null 2>&1 || useradd platform-manageability-agent --system -g bm-agents -s /sbin/nologin
 
-# Directory and permission setup is handled by node-agent
+# Set file ownership for platform-manageability-agent
+chmod 700 /etc/intel_edge_node/rpc-credentials
+chmod 600 /etc/intel_edge_node/rpc-credentials/*
+chown pm-agent:bm-agent -R /etc/intel_edge_node/rpc-credentials
 
 #DEBHELPER#

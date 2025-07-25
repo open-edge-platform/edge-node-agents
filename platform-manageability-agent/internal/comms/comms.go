@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	commonUtils "github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
@@ -177,11 +179,12 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 
 	if resp.Operation == pb.OperationType_ACTIVATE {
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
-		// TODO:
-		// This is a placeholder, replace with actual logic to fetch the password.
-		// Need to check how to fetch the password from dm-manager, hardcoded for now.
-		password := "P@ssw0rd"
-		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
+		rpcCredentialsFile := filepath.Join(conf.RpcCredentialsPath, "access_credentials")
+		credentials, err := commonUtils.ReadFileNoLinks(rpcCredentialsFile)
+		if err != nil {
+			return fmt.Errorf("failed to read RPC credentials file: %v", err)
+		}
+		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, string(credentials))
 		if err != nil {
 			return fmt.Errorf("failed to execute activation command for host %s: %w, Output: %s",
 				hostID, err, string(output))
