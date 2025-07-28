@@ -156,7 +156,7 @@ func main() {
 		err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
 		if err != nil {
 			if ctx.Err() != nil {
-				log.Info("AMT status reporting cancelled due to context cancellation")
+				log.Info("AMT status reporting canceled due to context cancellation")
 			} else {
 				log.Errorf("Failed to report AMT status for host %s after retries: %v", hostID, err)
 			}
