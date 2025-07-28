@@ -9,7 +9,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
@@ -29,13 +28,12 @@ func SOTACmd() *cobra.Command {
 	var reboot bool
 	var packageList []string
 	var signature string
-	var hashAlgorithm string
 
 	cmd := &cobra.Command{
 		Use:   "sota",
 		Short: "Performs System Software Update",
 		Long:  `Updates the system software on the device.`,
-		RunE:  handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, &hashAlgorithm, utils.DetectOS, Dial),
+		RunE:  handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, utils.DetectOS, Dial),
 	}
 
 	cmd.Flags().StringVar(&socket, "socket", "/var/run/inbd.sock", "UNIX domain socket path")
@@ -45,7 +43,6 @@ func SOTACmd() *cobra.Command {
 	cmd.Flags().BoolVar(&reboot, "reboot", true, "Whether to reboot after the software update attempt")
 	cmd.Flags().StringSliceVar(&packageList, "package-list", []string{}, "List of packages to install if whole package update isn't desired")
 	cmd.Flags().StringVar(&signature, "signature", "", "Signature of the package")
-	cmd.Flags().StringVar(&hashAlgorithm, "hash_algorithm", "", "Hash algorithm to use for signature verification (sha256, sha384, sha512). Default is sha384.")
 
 	return cmd
 }
@@ -59,7 +56,6 @@ func handleSOTA(
 	reboot *bool,
 	packageList *[]string,
 	signature *string,
-	hashAlgorithm *string,
 	detectOS func() (string, error),
 	dialer func(context.Context, string) (pb.InbServiceClient, grpc.ClientConnInterface, error),
 ) func(*cobra.Command, []string) error {
@@ -98,28 +94,13 @@ func handleSOTA(
 			return fmt.Errorf("invalid mode. Use one of full, no-download, download-only")
 		}
 
-		// TODO: Validate signature against expected format
-		// TODO: Add unittest test case for invalid signature format
-
-		// Default to sha384 if not provided
-		finalHashAlgorithm := "sha384"
-		if hashAlgorithm != nil && *hashAlgorithm != "" {
-			switch strings.ToLower(*hashAlgorithm) {
-			case "sha256", "sha384", "sha512":
-				finalHashAlgorithm = strings.ToLower(*hashAlgorithm)
-			default:
-				return fmt.Errorf("invalid hash algorithm: must be 'sha256', 'sha384', or 'sha512'")
-			}
-		}
-
 		request := &pb.UpdateSystemSoftwareRequest{
-			Url:           *url,
-			ReleaseDate:   releaseDateProto,
-			Mode:          pb.UpdateSystemSoftwareRequest_DownloadMode(downloadMode),
-			DoNotReboot:   !*reboot,
-			PackageList:   *packageList,
-			Signature:     *signature,
-			HashAlgorithm: finalHashAlgorithm,
+			Url:         *url,
+			ReleaseDate: releaseDateProto,
+			Mode:        pb.UpdateSystemSoftwareRequest_DownloadMode(downloadMode),
+			DoNotReboot: !*reboot,
+			PackageList: *packageList,
+			Signature:   *signature,
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)

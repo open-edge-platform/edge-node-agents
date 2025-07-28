@@ -45,7 +45,7 @@ type TarContents struct {
 }
 
 // VerifySignature verifies that the signed checksum of the package matches the package received
-// Generic function that supports configuration, FOTA, and SOTA packages with embedded PEM certificates
+// Generic function that supports configuration, and FOTA packages with embedded PEM certificates
 func VerifySignature(signature, pathToFile string, hashAlgorithm *HashAlgorithm) error {
 	fs := afero.NewOsFs()
 
@@ -61,7 +61,7 @@ func VerifySignature(signature, pathToFile string, hashAlgorithm *HashAlgorithm)
 	extension := getFileExtension(pathToFile)
 	var certPath string
 
-	// Handle tar files (FOTA/SOTA/config packages)
+	// Handle tar files (FOTA/config packages)
 	if strings.ToLower(extension) == "tar" {
 		tarContents, err := extractAndValidateTarContents(fs, pathToFile)
 		if err != nil {
@@ -89,7 +89,7 @@ func VerifySignature(signature, pathToFile string, hashAlgorithm *HashAlgorithm)
 			certPath = OTAPackageCertPath
 		}
 	} else {
-		// Single file validation (config, FOTA, SOTA)
+		// Single file validation (config, FOTA)
 		if !isValidPackageFile(pathToFile) {
 			return fmt.Errorf("signature check failed: unsupported file format")
 		}
@@ -161,7 +161,7 @@ func extractAndValidateTarContents(fs afero.Fs, tarPath string) (*TarContents, e
 		filename := header.Name
 		basename := filepath.Base(filename)
 
-		// Check file types (currently config focused, expandable for FOTA/SOTA)
+		// Check file types (currently config focused)
 		switch {
 		case isPEMFile(basename):
 			if !contents.HasPEM {
