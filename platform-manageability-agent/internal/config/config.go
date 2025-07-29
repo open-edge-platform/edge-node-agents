@@ -24,16 +24,15 @@ type ConfigManageability struct {
 }
 
 type Config struct {
-	Version            string              `yaml:"version"`
-	LogLevel           string              `yaml:"logLevel"`
-	GUID               string              `yaml:"GUID"`
-	Manageability      ConfigManageability `yaml:"manageability"`
-	StatusEndpoint     string              `yaml:"statusEndpoint"`
-	MetricsEndpoint    string              `yaml:"metricsEndpoint"`
-	MetricsInterval    time.Duration       `yaml:"metricsInterval"`
-	RPSAddress         string              `yaml:"rpsAddress"`
-	AccessTokenPath    string              `yaml:"accessTokenPath"`
-	RpcCredentialsPath string              `yaml:"rpcCredentialsPath"`
+	Version         string              `yaml:"version"`
+	LogLevel        string              `yaml:"logLevel"`
+	GUID            string              `yaml:"GUID"`
+	Manageability   ConfigManageability `yaml:"manageability"`
+	StatusEndpoint  string              `yaml:"statusEndpoint"`
+	MetricsEndpoint string              `yaml:"metricsEndpoint"`
+	MetricsInterval time.Duration       `yaml:"metricsInterval"`
+	RPSAddress      string              `yaml:"rpsAddress"`
+	AccessTokenPath string              `yaml:"accessTokenPath"`
 }
 
 func New(configPath string, log *logrus.Entry) (*Config, error) {

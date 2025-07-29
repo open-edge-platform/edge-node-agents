@@ -8,8 +8,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,9 +21,6 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
 	pb "github.com/open-edge-platform/infra-external/dm-manager/pkg/api/dm-manager"
 )
-
-const testRpcCredentialsPath = "/tmp/credentials"
-const testCredentials = "testLogin"
 
 type mockDeviceManagementServer struct {
 	pb.UnimplementedDeviceManagementServer
@@ -59,6 +54,7 @@ func (m *mockDeviceManagementServer) RetrieveActivationDetails(ctx context.Conte
 		HostId:      req.HostId,
 		Operation:   m.operationType,
 		ProfileName: "mock-profile",
+		RpsDetails:  "testLogin",
 	}, nil
 }
 
@@ -115,18 +111,8 @@ func TestRetrieveActivationDetails_DeactivateOperation(t *testing.T) {
 	err := client.Connect(context.Background())
 	assert.NoError(t, err, "Client should connect successfully")
 
-	err = os.MkdirAll(testRpcCredentialsPath, 0755)
-	assert.Nil(t, err)
-	credentialsFile := filepath.Join(testRpcCredentialsPath, "access_credentials")
-	_, err = os.OpenFile(credentialsFile, os.O_CREATE, 0644)
-	assert.Nil(t, err)
-	err = os.WriteFile(credentialsFile, []byte(testCredentials), 0600)
-	assert.Nil(t, err)
-	defer os.RemoveAll(testRpcCredentialsPath)
-
 	err = client.RetrieveActivationDetails(context.Background(), "host-id", &config.Config{
-		RPSAddress:         "mock-service",
-		RpcCredentialsPath: testRpcCredentialsPath,
+		RPSAddress: "mock-service",
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails for deactivate should not process")
 }
@@ -163,18 +149,8 @@ func TestRetrieveActivationDetails_Success(t *testing.T) {
 	err := client.Connect(context.Background())
 	assert.NoError(t, err, "Client should connect successfully")
 
-	err = os.MkdirAll(testRpcCredentialsPath, 0755)
-	assert.Nil(t, err)
-	credentialsFile := filepath.Join(testRpcCredentialsPath, "access_credentials")
-	_, err = os.OpenFile(credentialsFile, os.O_CREATE, 0644)
-	assert.Nil(t, err)
-	err = os.WriteFile(credentialsFile, []byte(testCredentials), 0600)
-	assert.Nil(t, err)
-	defer os.RemoveAll(testRpcCredentialsPath)
-
 	err = client.RetrieveActivationDetails(context.Background(), "host-id", &config.Config{
-		RPSAddress:         "mock-service",
-		RpcCredentialsPath: testRpcCredentialsPath,
+		RPSAddress: "mock-service",
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
@@ -217,18 +193,8 @@ func TestRetrieveActivationDetails_Failed(t *testing.T) {
 	err := client.Connect(context.Background())
 	assert.NoError(t, err, "Client should connect successfully")
 
-	err = os.MkdirAll(testRpcCredentialsPath, 0755)
-	assert.Nil(t, err)
-	credentialsFile := filepath.Join(testRpcCredentialsPath, "access_credentials")
-	_, err = os.OpenFile(credentialsFile, os.O_CREATE, 0644)
-	assert.Nil(t, err)
-	err = os.WriteFile(credentialsFile, []byte(testCredentials), 0600)
-	assert.Nil(t, err)
-	defer os.RemoveAll(testRpcCredentialsPath)
-
 	err = client.RetrieveActivationDetails(context.Background(), "host-id", &config.Config{
-		RPSAddress:         "mock-service",
-		RpcCredentialsPath: testRpcCredentialsPath,
+		RPSAddress: "mock-service",
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 

@@ -9,7 +9,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,7 +19,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
-	commonUtils "github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
@@ -186,12 +184,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 
 	if resp.Operation == pb.OperationType_ACTIVATE {
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
-		rpcCredentialsFile := filepath.Join(conf.RpcCredentialsPath, "access_credentials")
-		credentials, err := commonUtils.ReadFileNoLinks(rpcCredentialsFile)
-		if err != nil {
-			return fmt.Errorf("failed to read RPC credentials file: %v", err)
-		}
-		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, string(credentials))
+		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, resp.RpsDetails)
 		if err != nil {
 			return fmt.Errorf("failed to execute activation command for host %s: %w, Output: %s",
 				hostID, err, string(output))
