@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+# Test data and files
+platform-manageability-agent/test/
+platform-manageability-agent/test/_dummy-key.pem
+platform-manageability-agent/test/_dummy-cert.pem
+./platform-manageability-agent/test/_dummy-key.pem
+./platform-manageability-agent/test/_dummy-cert.pem
+**/test/_dummy-key.pem
+**/test/_dummy-cert.pem
