@@ -9,3 +9,4 @@ platform-manageability-agent/test/_dummy-cert.pem
 ./platform-manageability-agent/test/_dummy-cert.pem
 **/test/_dummy-key.pem
 **/test/_dummy-cert.pem
+/test
