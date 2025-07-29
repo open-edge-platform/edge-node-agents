@@ -1,1 +1,1 @@
-platform-manageability-agent  ALL=(root) NOPASSWD:/usr/bin/rpc
+platform-manageability-agent  ALL=(root) NOPASSWD:/usr/bin/rpc,/usr/bin/systemctl,/usr/sbin/modprobe

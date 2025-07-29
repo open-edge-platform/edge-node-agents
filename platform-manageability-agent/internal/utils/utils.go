@@ -6,7 +6,6 @@ package utils
 import (
 	"fmt"
 	"os/exec"
-	"strings"
 	"time"
 
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
