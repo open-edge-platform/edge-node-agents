@@ -2,4 +2,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Test data and files
-platform-manageability-agent/test/
+platform-manageability-agent/test/_dummy-key.pem
+platform-manageability-agent/test/_dummy-cert.pem
