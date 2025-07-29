@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -25,9 +26,13 @@ import (
 	pb "github.com/open-edge-platform/infra-external/dm-manager/pkg/api/dm-manager"
 )
 
-const retryInterval = 10 * time.Second
-const tickerInterval = 500 * time.Millisecond
-const connTimeout = 5 * time.Second
+const (
+	retryInterval  = 10 * time.Second
+	tickerInterval = 500 * time.Millisecond
+	connTimeout    = 5 * time.Second
+)
+
+var ErrActivationSkipped = errors.New("activation skipped")
 
 type Client struct {
 	DMMgrServiceAddr string
@@ -172,8 +177,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		if st, ok := status.FromError(err); ok {
 			switch st.Code() {
 			case codes.FailedPrecondition:
-				log.Logger.Debugf("%v, %v", st.Message(), err.Error())
-				return nil
+				return fmt.Errorf("%w: host %s precondition failed - %v", ErrActivationSkipped, hostID, st.Message())
 			}
 		}
 		return fmt.Errorf("failed to retrieve activation details for host %s: %w", hostID, err)
@@ -193,6 +197,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 			return fmt.Errorf("failed to execute activation command for host %s: %w, Output: %s",
 				hostID, err, string(output))
 		}
+		log.Logger.Debugf("Activation command output for host %s: %s", hostID, string(output))
 
 		var req *pb.ActivationResultRequest
 		if isProvisioned(string(output)) {
