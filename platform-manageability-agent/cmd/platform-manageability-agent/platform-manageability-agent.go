@@ -149,15 +149,7 @@ func main() {
 				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
 			case pb.AMTStatus_ENABLED:
 				atomic.StoreInt32(&isAMTEnabled, AMTStatusEnabled)
-			default:
-				log.Warnf("Unknown AMT status: %v, treating as disabled", status)
-				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
-			}
-			log.Info("Successfully reported AMT status")
-			atomic.StoreInt32(&isAMTEnabled, 1)
-
-			// Only initialize module and service once when AMT is enabled
-			if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
+        if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
 				if err := loadModule(); err != nil {
 					log.Errorf("Error while loading module: %v", err)
 				} else {
@@ -169,6 +161,10 @@ func main() {
 						log.Errorf("Error while enabling service: %v", err)
 					}
 				}
+			}
+			default:
+				log.Warnf("Unknown AMT status: %v, treating as disabled", status)
+				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
 			}
 			return nil
 		}
@@ -199,8 +195,8 @@ func main() {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
 			}
-			log.Infof("AMT is enabled, checking activation details for host %s", hostID)
       
+			log.Infof("AMT is enabled, checking activation details for host %s", hostID)      
 			// FIXME: https://github.com/open-edge-platform/edge-node-agents/pull/170#discussion_r2236433075
 			// The suggestion is to combine the activation check and retrieval of activation details into a single call
 			// to reduce the number of RPC calls.
