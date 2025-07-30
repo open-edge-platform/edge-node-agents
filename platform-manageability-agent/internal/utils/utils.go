@@ -21,7 +21,7 @@ type CommandExecutor interface {
 
 type RealCommandExecutor struct{}
 
-func ExecuteCommands(command string, args []string) ([]byte, error) {
+func ExecuteCommand(command string, args []string) ([]byte, error) {
 	cmd := exec.Command(command, args...)
 	output, err := cmd.Output()
 	if err != nil {

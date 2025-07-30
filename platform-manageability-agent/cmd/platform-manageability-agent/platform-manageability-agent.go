@@ -40,9 +40,12 @@ const (
 	AMTStatusEnabled  int32 = 1
 )
 
-var log = logger.Logger
-var isAMTEnabled int32
-var isModuleAndServiceInitialized int32
+var (
+	log = logger.Logger
+
+	isAMTEnabled                  int32
+	isModuleAndServiceInitialized int32
+)
 
 func isAMTCurrentlyEnabled() bool {
 	return atomic.LoadInt32(&isAMTEnabled) == AMTStatusEnabled
@@ -138,12 +141,13 @@ func main() {
 		defer wg.Done()
 
 		op := func() error {
-			status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
 			log.Infof("Reporting AMT status for host %s", hostID)
+			status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
 			if err != nil {
 				log.Errorf("Failed to report AMT status for host %s: %v", hostID, err)
 				return fmt.Errorf("failed to report AMT status: %w", err)
 			}
+
 			switch status {
 			case pb.AMTStatus_DISABLED:
 				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
@@ -292,13 +296,13 @@ func enableService(action string) error {
 	}
 
 	// Check if the service is already running
-	output, err := utils.ExecuteCommands("systemctl", []string{"is-active", "lms.service"})
+	output, err := utils.ExecuteCommand("systemctl", []string{"is-active", "lms.service"})
 	if err == nil && strings.TrimSpace(string(output)) == "active" {
 		log.Infof("Service %s is already running, skipping %s operation", "lms.service", action)
 		return nil
 	}
 
-	output, err = utils.ExecuteCommands("sudo", []string{"systemctl", action, "lms.service"})
+	output, err = utils.ExecuteCommand("sudo", []string{"systemctl", action, "lms.service"})
 	if err != nil {
 		return fmt.Errorf("failed to %s %s: %v", action, "lms.service", err)
 	}
@@ -308,14 +312,14 @@ func enableService(action string) error {
 
 func loadModule() error {
 	// Check if the module is already loaded using lsmod | grep
-	output, err := utils.ExecuteCommands("sh", []string{"-c", "lsmod | grep mei_me"})
+	output, err := utils.ExecuteCommand("sh", []string{"-c", "lsmod | grep mei_me"})
 	if err == nil && len(strings.TrimSpace(string(output))) > 0 {
-		log.Infof("Module mei_me is already loaded, skipping load operation")
+		log.Info("Module mei_me is already loaded, skipping load operation")
 		return nil
 	}
 
 	// Load the module if not already loaded
-	output, err = utils.ExecuteCommands("sudo", []string{"modprobe", "mei_me"})
+	output, err = utils.ExecuteCommand("sudo", []string{"modprobe", "mei_me"})
 	if err != nil {
 		return fmt.Errorf("failed to load module %s: %v", "mei_me", err)
 	}
