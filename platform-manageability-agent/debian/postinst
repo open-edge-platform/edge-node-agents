@@ -4,11 +4,21 @@ set -e
 
 . /usr/share/debconf/confmodule
 
+db_get platform-manageability-agent/manageability.serviceURL
+if [ ! -z "$RET" ]; then
+    sed -i "s/^  serviceURL: '.*'/  serviceURL: '$RET'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
+fi
+
+db_get platform-manageability-agent/rpsAddress
+if [ ! -z "$RET" ]; then
+    sed -i "s/^rpsAddress: '.*'/rpsAddress: '$RET'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
+fi
+
 # Create system group if it doesn't exist
 groupadd -f bm-agents --system
 
 # Create system user if it doesn't exist
-id -u platform-manageability-agent >/dev/null 2>&1 || useradd platform-manageability-agent --system -g bm-agents -s /sbin/nologin
+id -u pm-agent >/dev/null 2>&1 || useradd pm-agent --system -g bm-agents -s /sbin/nologin
 
 # Directory and permission setup is handled by node-agent
 

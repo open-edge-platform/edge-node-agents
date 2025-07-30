@@ -21,6 +21,16 @@ type CommandExecutor interface {
 
 type RealCommandExecutor struct{}
 
+func ExecuteCommand(command string, args []string) ([]byte, error) {
+	cmd := exec.Command(command, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		log.Logger.Errorf("Failed to execute command %s with args %v: %v", command, args, err)
+		return nil, fmt.Errorf("failed to execute command %s with args %v: %w", command, args, err)
+	}
+	return output, nil
+}
+
 // ExecuteAMTInfo executes the AMT info command with retries.
 func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 	maxRetries := 3
@@ -28,7 +38,7 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 
 	var err error
 	for i := 1; i <= maxRetries; i++ {
-		cmd := exec.Command("sudo", "/etc/intel_edge_node/rpc", "amtinfo")
+		cmd := exec.Command("sudo", "/usr/bin/rpc", "amtinfo")
 		output, err := cmd.Output()
 		if err == nil {
 			return output, nil
@@ -43,7 +53,7 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 
 // ExecuteAMTActivate executes the AMT activate command.
 func (r *RealCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, password string) ([]byte, error) {
-	cmd := exec.Command("sudo", "/etc/intel_edge_node/rpc", "activate", "-u", rpsAddress, "-profile", profileName, "-password", password, "-n")
+	cmd := exec.Command("sudo", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-profile", profileName, "-password", password, "-n")
 	return cmd.CombinedOutput()
 }
 

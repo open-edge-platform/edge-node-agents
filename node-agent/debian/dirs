@@ -10,6 +10,7 @@ etc/intel_edge_node/tokens/node-agent
 etc/intel_edge_node/tokens/platform-observability-agent
 etc/intel_edge_node/tokens/platform-telemetry-agent
 etc/intel_edge_node/tokens/platform-update-agent
+etc/intel_edge_node/tokens/platform-manageability-agent
 etc/intel_edge_node/tokens/prometheus
 etc/intel_edge_node/tokens/release-service
 run/node-agent

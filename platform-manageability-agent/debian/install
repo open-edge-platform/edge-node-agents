@@ -1,1 +1,2 @@
 configs/platform-manageability-agent.yaml etc/edge-node/node/confs
+configs/sudoers.d/pm-agent etc/sudoers.d
