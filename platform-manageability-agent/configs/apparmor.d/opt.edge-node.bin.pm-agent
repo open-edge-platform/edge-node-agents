@@ -15,7 +15,7 @@ include <tunables/global>
   /run/node-agent/node-agent.sock rw,
   /run/platform-observability-agent/platform-observability-agent.sock rw,
   /usr/bin/rpc mr,
-  /user/bin/systemctl mr,
+  /usr/bin/systemctl mr,
   /usr/sbin/modprobe mr,
 
 }
