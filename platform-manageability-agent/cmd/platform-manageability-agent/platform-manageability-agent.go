@@ -17,15 +17,33 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/sirupsen/logrus"
+
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/metrics"
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/status"
+	auth "github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info"
+	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/comms"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
-	"github.com/sirupsen/logrus"
+	"github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/utils"
+	pb "github.com/open-edge-platform/infra-external/dm-manager/pkg/api/dm-manager"
 )
 
-const AGENT_NAME = "platform-manageability-agent"
+const (
+	AGENT_NAME  = "platform-manageability-agent"
+	MAX_RETRIES = 3
+
+	// AMTStatus constants representing the state of AMT.
+	AMTStatusDisabled int32 = 0
+	AMTStatusEnabled  int32 = 1
+)
+
+var isAMTEnabled int32
+
+func isAMTCurrentlyEnabled() bool {
+	return atomic.LoadInt32(&isAMTEnabled) == AMTStatusEnabled
+}
 
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "version" {
@@ -99,8 +117,98 @@ func main() {
 
 	log.Info("Platform Manageability Agent started successfully")
 
-	// Main agent loop using context-aware ticker
+	tlsConfig, err := auth.GetAuthConfig(auth.GetAuthContext(ctx, confs.AccessTokenPath), nil)
+	if err != nil {
+		log.Fatalf("TLS configuration creation failed! Error: %v", err)
+	}
+
+	log.Infof("Connecting to Device Management Manager at %s", confs.Manageability.ServiceURL)
+	dmMgrClient := comms.ConnectToDMManager(auth.GetAuthContext(ctx, confs.AccessTokenPath), confs.Manageability.ServiceURL, tlsConfig)
+
+	hostID, err := utils.GetSystemUUID()
+	if err != nil {
+		log.Fatalf("Failed to retrieve system UUID with an error: %v", err)
+	}
+
 	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		op := func() error {
+			log.Infof("Reporting AMT status for host %s", hostID)
+			status, err := dmMgrClient.ReportAMTStatus(ctx, hostID)
+			if err != nil {
+				log.Errorf("Failed to report AMT status for host %s: %v", hostID, err)
+				return fmt.Errorf("failed to report AMT status: %w", err)
+			}
+			switch status {
+			case pb.AMTStatus_DISABLED:
+				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
+			case pb.AMTStatus_ENABLED:
+				atomic.StoreInt32(&isAMTEnabled, AMTStatusEnabled)
+			default:
+				log.Warnf("Unknown AMT status: %v, treating as disabled", status)
+				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
+			}
+			return nil
+		}
+		err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+		if err != nil {
+			if ctx.Err() != nil {
+				log.Info("AMT status reporting canceled due to context cancellation")
+			} else {
+				log.Errorf("Failed to report AMT status for host %s after retries: %v", hostID, err)
+			}
+			return
+		}
+		log.Infof("Successfully reported AMT status for host %s", hostID)
+	}()
+
+	var (
+		activationCheckInterval      = confs.Manageability.HeartbeatInterval
+		lastActivationCheckTimestamp int64
+	)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		activationTicker := time.NewTicker(activationCheckInterval)
+		defer activationTicker.Stop()
+
+		op := func() error {
+			if !isAMTCurrentlyEnabled() {
+				log.Info("Skipping activation check because AMT is not enabled")
+				return nil
+			}
+
+			log.Infof("AMT is enabled, checking activation details for host %s", hostID)
+			// FIXME: https://github.com/open-edge-platform/edge-node-agents/pull/170#discussion_r2236433075
+			// The suggestion is to combine the activation check and retrieval of activation details into a single call
+			// to reduce the number of RPC calls.
+			err = dmMgrClient.RetrieveActivationDetails(ctx, hostID, confs)
+			if err != nil {
+				if errors.Is(err, comms.ErrActivationSkipped) {
+					log.Logger.Debugf("AMT activation skipped for host %s - reason: %v", hostID, err)
+					return nil
+				}
+				return fmt.Errorf("failed to retrieve activation details: %w", err)
+			}
+			log.Infof("Successfully retrieved activation details for host %s", hostID)
+			return nil
+		}
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-activationTicker.C:
+				activationTicker.Stop()
+				updateWithRetry(ctx, log, op, &lastActivationCheckTimestamp)
+			}
+			activationTicker.Reset(activationCheckInterval)
+		}
+	}()
+
+	// Main agent loop using context-aware ticker
 	var lastUpdateTimestamp int64
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -157,6 +265,7 @@ func main() {
 		}
 	}()
 
+	wg.Wait()
 	log.Infof("Platform Manageability Agent finished")
 }
 
@@ -184,4 +293,13 @@ func initStatusClientAndTicker(ctx context.Context, cancel context.CancelFunc, l
 	}
 
 	return statusClient, interval
+}
+
+func updateWithRetry(ctx context.Context, log *logrus.Entry, op func() error, lastUpdateTimestamp *int64) {
+	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.WithContext(backoff.NewExponentialBackOff(), ctx), MAX_RETRIES))
+	if err != nil {
+		log.Errorf("Retry error: %v", err)
+	} else {
+		atomic.StoreInt64(lastUpdateTimestamp, time.Now().Unix())
+	}
 }
