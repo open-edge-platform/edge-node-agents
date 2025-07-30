@@ -200,6 +200,10 @@ func main() {
 				return nil
 			}
 			log.Infof("AMT is enabled, checking activation details for host %s", hostID)
+      
+			// FIXME: https://github.com/open-edge-platform/edge-node-agents/pull/170#discussion_r2236433075
+			// The suggestion is to combine the activation check and retrieval of activation details into a single call
+			// to reduce the number of RPC calls.
 			err = dmMgrClient.RetrieveActivationDetails(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID, confs)
 			if err != nil {
 				if errors.Is(err, comms.ErrActivationSkipped) {
