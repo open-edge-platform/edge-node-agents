@@ -149,19 +149,19 @@ func main() {
 				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
 			case pb.AMTStatus_ENABLED:
 				atomic.StoreInt32(&isAMTEnabled, AMTStatusEnabled)
-        if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
-				if err := loadModule(); err != nil {
-					log.Errorf("Error while loading module: %v", err)
-				} else {
-					log.Info("Module mei_me loaded successfully")
-				}
-				for _, action := range []string{"unmask", "enable", "start"} {
-					log.Infof("%sing %s...\n", action, "lms.service")
-					if err := enableService(action); err != nil {
-						log.Errorf("Error while enabling service: %v", err)
+				if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
+					if err := loadModule(); err != nil {
+						log.Errorf("Error while loading module: %v", err)
+					} else {
+						log.Info("Module mei_me loaded successfully")
+					}
+					for _, action := range []string{"unmask", "enable", "start"} {
+						log.Infof("%sing %s...\n", action, "lms.service")
+						if err := enableService(action); err != nil {
+							log.Errorf("Error while enabling service: %v", err)
+						}
 					}
 				}
-			}
 			default:
 				log.Warnf("Unknown AMT status: %v, treating as disabled", status)
 				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
@@ -195,8 +195,8 @@ func main() {
 				log.Info("Skipping activation check because AMT is not enabled")
 				return nil
 			}
-      
-			log.Infof("AMT is enabled, checking activation details for host %s", hostID)      
+
+			log.Infof("AMT is enabled, checking activation details for host %s", hostID)
 			// FIXME: https://github.com/open-edge-platform/edge-node-agents/pull/170#discussion_r2236433075
 			// The suggestion is to combine the activation check and retrieval of activation details into a single call
 			// to reduce the number of RPC calls.
