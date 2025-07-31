@@ -4,7 +4,7 @@
 ---
 metadata:
   schemaVersion: 2.0.0
-  release: 1.1.7-dev
+  release: 1.1.7
 repository:
   codename: 3.1
   component: main
@@ -16,10 +16,10 @@ packages:
     version: 1.7.1
     ociArtifact: edge-orch/en/deb/hardware-discovery-agent
   - name: node-agent
-    version: 1.7.2
+    version: 1.7.3
     ociArtifact: edge-orch/en/deb/node-agent
   - name: platform-manageability-agent
-    version: 0.1.2
+    version: 0.1.3
     ociArtifact: edge-orch/en/deb/platform-manageability-agent
   - name: platform-observability-agent
     version: 1.8.0
