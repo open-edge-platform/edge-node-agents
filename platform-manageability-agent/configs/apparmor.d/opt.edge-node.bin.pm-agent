@@ -1,21 +1,67 @@
 # Last Modified: Fri Jul 25 17:44:00 2025
-abi <abi/3.0>
+abi <abi/3.0>,
 
 include <tunables/global>
 
 /opt/edge-node/bin/pm-agent {
-  include <abstractions/apache2-common>
   include <abstractions/base>
   include <abstractions/ssl_certs>
 
+  capability audit_write,
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+
+  network inet dgram,
+  network inet stream,
+  network netlink raw,
+
+  /dev/mei0 rw,
+  /dev/tty rw,
+  /etc/default/locale r,
   /etc/edge-node/node/confs/platform-manageability-agent.yaml r,
-  /etc/intel_edge_node/rpc-credentials/access_credentials r,
+  /etc/environment r,
+  /etc/group r,
+  /etc/host.conf r,
+  /etc/hosts r,
   /etc/intel_edge_node/tokens/platform-manageability-agent/access_token r,
+  /etc/login.defs r,
+  /etc/nsswitch.conf r,
+  /etc/pam.d/common-account r,
+  /etc/pam.d/common-auth r,
+  /etc/pam.d/common-password r,
+  /etc/pam.d/common-session r,
+  /etc/pam.d/common-session-noninteractive r,
+  /etc/pam.d/other r,
+  /etc/pam.d/sudo r,
+  /etc/passwd r,
+  /etc/security/capability.conf r,
+  /etc/security/limits.conf r,
+  /etc/security/limits.d/ r,
+  /etc/security/pam_env.conf r,
+  /etc/shadow r,
+  /etc/sudo.conf r,
+  /etc/sudoers r,
+  /etc/sudoers.d/ r,
+  /etc/sudoers.d/** r,
   /opt/edge-node/bin/pm-agent mr,
+  /proc/bus/pci/devices r,
+  /proc/modules r,
+  /proc/*/limits r,
+  /proc/*/mountinfo r,
+  /proc/*/net/dev r,
   /run/node-agent/node-agent.sock rw,
   /run/platform-observability-agent/platform-observability-agent.sock rw,
-  /usr/bin/rpc mr,
-  /usr/bin/systemctl mr,
-  /usr/sbin/modprobe mr,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /run/systemd/userdb/ r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /usr/bin/rpc ix,
+  /usr/bin/sudo ix,
+  /usr/bin/systemctl ix,
+  /usr/libexec/sudo/libsudo_util.so.* mr,
+  /usr/libexec/sudo/sudoers.so mr,
+  /usr/sbin/modprobe ix,
+  owner /proc/*/cgroup r,
+  owner /proc/*/stat r,
 
 }
