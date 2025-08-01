@@ -156,7 +156,7 @@ func TestRetrieveActivationDetails_Success(t *testing.T) {
 	// Verify that the activation result was reported with PROVISIONED status.
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
 	assert.Equal(t, "host-id", capturedRequest.HostId, "Host ID should match")
-	assert.Equal(t, pb.ActivationStatus_PROVISIONED, capturedRequest.ActivationStatus,
+	assert.Equal(t, pb.ActivationStatus_ACTIVATED, capturedRequest.ActivationStatus,
 		"Activation status should be PROVISIONED when CIRA is configured")
 }
 
@@ -200,7 +200,7 @@ func TestRetrieveActivationDetails_Failed(t *testing.T) {
 	// Verify that the activation result was reported with FAILED status.
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
 	assert.Equal(t, "host-id", capturedRequest.HostId, "Host ID should match")
-	assert.Equal(t, pb.ActivationStatus_FAILED, capturedRequest.ActivationStatus,
+	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
 		"Activation status should be FAILED when CIRA is not configured")
 }
 
