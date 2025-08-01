@@ -18,6 +18,7 @@ include <tunables/global>
 
   network inet dgram,
   network inet stream,
+  network inet6 dgram,
   network netlink raw,
 
   ptrace read,
