@@ -51,10 +51,10 @@ func (m *mockDeviceManagementServer) ReportAMTStatus(ctx context.Context, req *p
 func (m *mockDeviceManagementServer) RetrieveActivationDetails(ctx context.Context, req *pb.ActivationRequest) (*pb.ActivationDetailsResponse, error) {
 	log.Logger.Infof("Received RetrieveActivationDetails request: %v", req)
 	return &pb.ActivationDetailsResponse{
-		HostId:      req.HostId,
-		Operation:   m.operationType,
-		ProfileName: "mock-profile",
-		RpsDetails:  "testLogin",
+		HostId:         req.HostId,
+		Operation:      m.operationType,
+		ProfileName:    "mock-profile",
+		ActionPassword: "testLogin",
 	}, nil
 }
 
@@ -154,11 +154,11 @@ func TestRetrieveActivationDetails_Success(t *testing.T) {
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
-	// Verify that the activation result was reported with PROVISIONED status.
+	// Verify that the activation result was reported with ACTIVATED status.
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
 	assert.Equal(t, "host-id", capturedRequest.HostId, "Host ID should match")
-	assert.Equal(t, pb.ActivationStatus_PROVISIONED, capturedRequest.ActivationStatus,
-		"Activation status should be PROVISIONED when CIRA is configured")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATED, capturedRequest.ActivationStatus,
+		"Activation status should be ACTIVATED when CIRA is configured")
 }
 
 func TestRetrieveActivationDetails_Failed(t *testing.T) {
@@ -198,11 +198,11 @@ func TestRetrieveActivationDetails_Failed(t *testing.T) {
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
-	// Verify that the activation result was reported with FAILED status.
+	// Verify that the activation result was reported with ACTIVATION_FAILED status.
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
 	assert.Equal(t, "host-id", capturedRequest.HostId, "Host ID should match")
-	assert.Equal(t, pb.ActivationStatus_FAILED, capturedRequest.ActivationStatus,
-		"Activation status should be FAILED when CIRA is not configured")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
+		"Activation status should be ACTIVATION_FAILED when CIRA is not configured")
 }
 
 func TestReportAMTStatus_Success(t *testing.T) {
