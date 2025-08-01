@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -134,10 +135,12 @@ func TestRetrieveActivationDetails_Success(t *testing.T) {
 		lis.Close()
 	}()
 
-	// Create mock executor with successful activation output.
+	// Create mock executor with successful activation output and AMT info with connected RAS status.
 	mockExecutor := &mockCommandExecutor{
 		activationOutput: []byte(`msg="CIRA: Configured"`),
 		activationError:  nil,
+		amtInfoOutput:    []byte("Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: connected"),
+		amtInfoError:     nil,
 	}
 
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
@@ -178,10 +181,12 @@ func TestRetrieveActivationDetails_Failed(t *testing.T) {
 		lis.Close()
 	}()
 
-	// Create mock executor with failed activation output (no CIRA: Configured).
+	// Create mock executor with failed activation output (no CIRA: Configured) and disconnected RAS status.
 	mockExecutor := &mockCommandExecutor{
 		activationOutput: []byte(`msg="Activation failed"`),
 		activationError:  nil,
+		amtInfoOutput:    []byte("Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: not connected"),
+		amtInfoError:     nil,
 	}
 
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
@@ -202,6 +207,68 @@ func TestRetrieveActivationDetails_Failed(t *testing.T) {
 	assert.Equal(t, "host-id", capturedRequest.HostId, "Host ID should match")
 	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
 		"Activation status should be FAILED when CIRA is not configured")
+}
+
+func TestRetrieveActivationDetails_Connecting_Timeout(t *testing.T) {
+	var capturedRequests []*pb.ActivationResultRequest
+
+	mockServer := &mockDeviceManagementServer{
+		operationType: pb.OperationType_ACTIVATE,
+		onReportActivationResults: func(ctx context.Context, req *pb.ActivationResultRequest) (*pb.ActivationResultResponse, error) {
+			capturedRequests = append(capturedRequests, req) // Capture all requests
+			log.Logger.Infof("Received ReportActivationResults request: %v", req)
+			return &pb.ActivationResultResponse{}, nil
+		},
+	}
+
+	lis, server := runMockServer(mockServer)
+	defer func() {
+		server.GracefulStop()
+		lis.Close()
+	}()
+
+	// Create mock executor with connecting status that never changes to connected.
+	mockExecutor := &mockCommandExecutor{
+		activationOutput: []byte(`msg="CIRA: Configured"`),
+		activationError:  nil,
+		amtInfoOutput:    []byte("Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: connecting"),
+		amtInfoError:     nil,
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig,
+		WithBufconnDialer(lis),
+		WithMockExecutor(mockExecutor))
+
+	err := client.Connect(context.Background())
+	assert.NoError(t, err, "Client should connect successfully")
+
+	// Use a longer timeout context for testing to avoid premature cancellation
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = client.RetrieveActivationDetails(ctx, "host-id", &config.Config{
+		RPSAddress: "mock-service",
+	})
+
+	// The function should return an error due to the test context timeout, but that's expected
+	// since we're testing the timeout scenario
+	if err != nil {
+		t.Logf("Expected error due to context timeout: %v", err)
+	}
+
+	// Verify that at least one ACTIVATING status was reported during monitoring
+	assert.NotEmpty(t, capturedRequests, "At least one activation result should have been reported")
+
+	// Check that we received ACTIVATING status reports
+	hasActivatingStatus := false
+	for _, req := range capturedRequests {
+		if req.ActivationStatus == pb.ActivationStatus_ACTIVATING {
+			hasActivatingStatus = true
+			break
+		}
+	}
+	assert.True(t, hasActivatingStatus, "Should have received at least one ACTIVATING status report")
 }
 
 func TestReportAMTStatus_Success(t *testing.T) {
