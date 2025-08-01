@@ -1,2 +1,3 @@
 configs/platform-manageability-agent.yaml etc/edge-node/node/confs
 configs/apparmor.d/opt.edge-node.bin.pm-agent etc/apparmor.d
+configs/sudoers.d/pm-agent etc/sudoers.d
