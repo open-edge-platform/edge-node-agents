@@ -188,11 +188,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 
 	if resp.Operation == pb.OperationType_ACTIVATE {
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
-		// TODO:
-		// This is a placeholder, replace with actual logic to fetch the password.
-		// Need to check how to fetch the password from dm-manager, hardcoded for now.
-		password := "P@ssw0rd"
-		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
+		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, resp.ActionPassword)
 		if err != nil {
 			return fmt.Errorf("failed to execute activation command for host %s: %w, Output: %s",
 				hostID, err, string(output))
@@ -203,13 +199,13 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		if isProvisioned(string(output)) {
 			req = &pb.ActivationResultRequest{
 				HostId:           hostID,
-				ActivationStatus: pb.ActivationStatus_PROVISIONED,
+				ActivationStatus: pb.ActivationStatus_ACTIVATED,
 			}
 			log.Logger.Infof("Provisioning successful for host: %s", hostID)
 		} else {
 			req = &pb.ActivationResultRequest{
 				HostId:           hostID,
-				ActivationStatus: pb.ActivationStatus_FAILED,
+				ActivationStatus: pb.ActivationStatus_ACTIVATION_FAILED,
 			}
 			log.Logger.Infof("Provisioning failed for host: %s", hostID)
 		}
