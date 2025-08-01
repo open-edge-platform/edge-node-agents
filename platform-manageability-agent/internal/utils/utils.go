@@ -6,7 +6,6 @@ package utils
 import (
 	"fmt"
 	"os/exec"
-	"strings"
 	"time"
 
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
@@ -55,13 +54,4 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 func (r *RealCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, password string) ([]byte, error) {
 	cmd := exec.Command("sudo", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-profile", profileName, "-password", password, "-n")
 	return cmd.CombinedOutput()
-}
-
-func GetSystemUUID() (string, error) {
-	cmd := exec.Command("sudo", "dmidecode", "-s", "system-uuid")
-	uuid, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("failed to retrieve UUID: %v", err)
-	}
-	return strings.TrimSpace(string(uuid)), nil
 }
