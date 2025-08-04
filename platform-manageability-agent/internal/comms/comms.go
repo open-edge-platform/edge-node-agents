@@ -194,6 +194,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	req := &pb.ActivationRequest{
 		HostId: hostID,
 	}
+	var resReq *pb.ActivationResultRequest
 	resp, err := cli.DMMgrClient.RetrieveActivationDetails(ctx, req)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
@@ -208,7 +209,34 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	log.Logger.Debugf("Retrieved activation details: HostID=%s, Operation=%v, ProfileName=%s",
 		resp.HostId, resp.Operation, resp.ProfileName)
 
-	if resp.Operation == pb.OperationType_ACTIVATE {
+	output, err := cli.Executor.ExecuteAMTInfo()
+	if err != nil {
+		log.Logger.Warnf("Failed to execute final AMT info check for host %s: %v", hostID, err)
+		resReq = &pb.ActivationResultRequest{
+			HostId:           hostID,
+			ActivationStatus: pb.ActivationStatus_ACTIVATION_FAILED,
+		}
+		_, err = cli.DMMgrClient.ReportActivationResults(ctx, resReq)
+		if err != nil {
+			return fmt.Errorf("failed to report activation results for host %s: %w", hostID, err)
+		}
+
+	}
+
+	rasStatus, ok := parseAMTInfoField(output, "RAS Remote Status")
+	if !ok {
+		log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
+		resReq = &pb.ActivationResultRequest{
+			HostId:           hostID,
+			ActivationStatus: pb.ActivationStatus_ACTIVATION_FAILED,
+		}
+		_, err = cli.DMMgrClient.ReportActivationResults(ctx, resReq)
+		if err != nil {
+			return fmt.Errorf("failed to report activation results for host %s: %w", hostID, err)
+		}
+	}
+
+	if resp.Operation == pb.OperationType_ACTIVATE && strings.ToLower(strings.TrimSpace(rasStatus)) == "not connected" {
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
 		// TODO:
 		// This is a placeholder, replace with actual logic to fetch the password.
@@ -222,112 +250,129 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		log.Logger.Debugf("Activation command output for host %s: %s", hostID, string(output))
 
 		// Monitor RAS Remote Status with 3-minute timeout
-		activationStatus, err := cli.monitorActivationStatus(ctx, hostID)
-		if err != nil {
-			return fmt.Errorf("failed to monitor activation status for host %s: %w", hostID, err)
-		}
+		// activationStatus, err := cli.monitorActivationStatus(ctx, hostID)
+		// if err != nil {
+		// 	return fmt.Errorf("failed to monitor activation status for host %s: %w", hostID, err)
+		// }
 
-		req := &pb.ActivationResultRequest{
+		resReq = &pb.ActivationResultRequest{
 			HostId:           hostID,
-			ActivationStatus: activationStatus,
+			ActivationStatus: pb.ActivationStatus_ACTIVATING,
 		}
 
-		_, err = cli.DMMgrClient.ReportActivationResults(ctx, req)
-		if err != nil {
-			return fmt.Errorf("failed to report activation results for host %s: %w", hostID, err)
+	} else if strings.ToLower(strings.TrimSpace(rasStatus)) == "connecting" {
+		resReq = &pb.ActivationResultRequest{
+			HostId:           hostID,
+			ActivationStatus: pb.ActivationStatus_ACTIVATING,
 		}
-		log.Logger.Debugf("Reported activation results: HostID=%s, ActivationStatus=%v",
-			hostID, req.ActivationStatus)
+	} else if strings.ToLower(strings.TrimSpace(rasStatus)) == "connected" {
+		resReq = &pb.ActivationResultRequest{
+			HostId:           hostID,
+			ActivationStatus: pb.ActivationStatus_ACTIVATED,
+		}
+
+	} else {
+		resReq = &pb.ActivationResultRequest{
+			HostId:           hostID,
+			ActivationStatus: pb.ActivationStatus_UNSPECIFIED,
+		}
+
 	}
+	_, err = cli.DMMgrClient.ReportActivationResults(ctx, resReq)
+	if err != nil {
+		return fmt.Errorf("failed to report activation results for host %s: %w", hostID, err)
+	}
+	log.Logger.Debugf("Reported activation results: HostID=%s, ActivationStatus=%v",
+		hostID, resReq.ActivationStatus)
 	return nil
 }
 
 // monitorActivationStatus monitors the RAS Remote Status for up to 3 minutes
-func (cli *Client) monitorActivationStatus(ctx context.Context, hostID string) (pb.ActivationStatus, error) {
-	const (
-		monitorTimeout = 3 * time.Minute
-		checkInterval  = 2 * time.Second
-	)
+// func (cli *Client) monitorActivationStatus(ctx context.Context, hostID string) (pb.ActivationStatus, error) {
+// 	const (
+// 		monitorTimeout = 3 * time.Minute
+// 		checkInterval  = 2 * time.Second
+// 	)
 
-	// Create a timeout context for monitoring
-	monitorCtx, cancel := context.WithTimeout(ctx, monitorTimeout)
-	defer cancel()
+// 	// Create a timeout context for monitoring
+// 	monitorCtx, cancel := context.WithTimeout(ctx, monitorTimeout)
+// 	defer cancel()
 
-	ticker := time.NewTicker(checkInterval)
-	defer ticker.Stop()
+// 	ticker := time.NewTicker(checkInterval)
+// 	defer ticker.Stop()
 
-	log.Logger.Infof("Starting activation status monitoring for host: %s", hostID)
+// 	log.Logger.Infof("Starting activation status monitoring for host: %s", hostID)
 
-	for {
-		select {
-		case <-monitorCtx.Done():
-			// Timeout reached, perform final check
-			output, err := cli.Executor.ExecuteAMTInfo()
-			if err != nil {
-				log.Logger.Warnf("Failed to execute final AMT info check for host %s: %v", hostID, err)
-				return pb.ActivationStatus_ACTIVATION_FAILED, nil
-			}
+// 	for {
+// 		select {
+// 		case <-monitorCtx.Done():
+// 			// Timeout reached, perform final check
+// 			output, err := cli.Executor.ExecuteAMTInfo()
+// 			if err != nil {
+// 				log.Logger.Warnf("Failed to execute final AMT info check for host %s: %v", hostID, err)
+// 				return pb.ActivationStatus_ACTIVATION_FAILED, nil
+// 			}
 
-			rasStatus, ok := parseAMTInfoField(output, "RAS Remote Status")
-			if !ok {
-				log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
-				return pb.ActivationStatus_ACTIVATION_FAILED, nil
-			}
+// 			rasStatus, ok := parseAMTInfoField(output, "RAS Remote Status")
+// 			if !ok {
+// 				log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
+// 				return pb.ActivationStatus_ACTIVATION_FAILED, nil
+// 			}
 
-			log.Logger.Infof("Activation monitoring timeout reached for host: %s, final status: %s", hostID, rasStatus)
+// 			log.Logger.Infof("Activation monitoring timeout reached for host: %s, final status: %s", hostID, rasStatus)
 
-			switch strings.ToLower(strings.TrimSpace(rasStatus)) {
-			case "connected":
-				log.Logger.Infof("Activation successful for host: %s", hostID)
-				return pb.ActivationStatus_ACTIVATED, nil
-			case "connecting":
-				log.Logger.Infof("Activation timeout - still connecting for host: %s", hostID)
-				return pb.ActivationStatus_ACTIVATION_FAILED, nil
-			default:
-				log.Logger.Infof("Activation failed for host: %s, status: %s", hostID, rasStatus)
-				return pb.ActivationStatus_ACTIVATION_FAILED, nil
-			}
+// 			switch strings.ToLower(strings.TrimSpace(rasStatus)) {
+// 			case "connected":
+// 				log.Logger.Infof("Activation successful for host: %s", hostID)
+// 				return pb.ActivationStatus_ACTIVATED, nil
+// 			case "connecting":
+// 				log.Logger.Infof("Activation timeout - still connecting for host: %s", hostID)
+// 				return pb.ActivationStatus_ACTIVATION_FAILED, nil
+// 			default:
+// 				log.Logger.Infof("Activation failed for host: %s, status: %s", hostID, rasStatus)
+// 				return pb.ActivationStatus_ACTIVATION_FAILED, nil
+// 			}
 
-		case <-ticker.C:
-			output, err := cli.Executor.ExecuteAMTInfo()
-			if err != nil {
-				log.Logger.Warnf("Failed to execute AMT info during monitoring for host %s: %v", hostID, err)
-				continue
-			}
+// 		case <-ticker.C:
+// 			output, err := cli.Executor.ExecuteAMTInfo()
+// 			if err != nil {
+// 				log.Logger.Warnf("Failed to execute AMT info during monitoring for host %s: %v", hostID, err)
+// 				continue
+// 			}
 
-			rasStatus, ok := parseAMTInfoField(output, "RAS Remote Status")
-			if !ok {
-				log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
-				continue
-			}
+// 			rasStatus, ok := parseAMTInfoField(output, "RAS Remote Status")
+// 			if !ok {
+// 				log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
+// 				continue
+// 			}
 
-			normalizedStatus := strings.ToLower(strings.TrimSpace(rasStatus))
-			log.Logger.Debugf("Current RAS Remote Status for host %s: %s", hostID, rasStatus)
+// 			normalizedStatus := strings.ToLower(strings.TrimSpace(rasStatus))
+// 			log.Logger.Debugf("Current RAS Remote Status for host %s: %s", hostID, rasStatus)
 
-			switch normalizedStatus {
-			case "connected":
-				log.Logger.Infof("Activation successful for host: %s", hostID)
-				return pb.ActivationStatus_ACTIVATED, nil
-			case "connecting":
-				log.Logger.Debugf("Host %s is still connecting, continuing to monitor...", hostID)
-				req := &pb.ActivationResultRequest{
-					HostId:           hostID,
-					ActivationStatus: pb.ActivationStatus_ACTIVATING,
-				}
-				_, err = cli.DMMgrClient.ReportActivationResults(ctx, req)
-				if err != nil {
-					return pb.ActivationStatus_ACTIVATION_FAILED, err
-				}
-			case "not connected":
-				log.Logger.Infof("Activation failed for host: %s - not connected", hostID)
-				return pb.ActivationStatus_ACTIVATION_FAILED, nil
-			default:
-				log.Logger.Debugf("Unknown RAS Remote Status for host %s: %s, continuing to monitor...", hostID, rasStatus)
-				// Continue monitoring for unknown states
-			}
-		}
-	}
-}
+// 			switch normalizedStatus {
+// 			case "connected":
+// 				log.Logger.Infof("Activation successful for host: %s", hostID)
+// 				return pb.ActivationStatus_ACTIVATED, nil
+// 			case "connecting":
+// 				log.Logger.Debugf("Host %s is still connecting, continuing to monitor...", hostID)
+// 				req := &pb.ActivationResultRequest{
+// 					HostId:           hostID,
+// 					ActivationStatus: pb.ActivationStatus_ACTIVATING,
+// 				}
+// 				_, err = cli.DMMgrClient.ReportActivationResults(ctx, req)
+// 				if err != nil {
+// 					return pb.ActivationStatus_ACTIVATION_FAILED, err
+// 				}
+// 			case "not connected":
+// 				log.Logger.Infof("Activation failed for host: %s - not connected", hostID)
+// 				return pb.ActivationStatus_ACTIVATION_FAILED, nil
+// 			default:
+// 				log.Logger.Debugf("Unknown RAS Remote Status for host %s: %s, continuing to monitor...", hostID, rasStatus)
+// 				// Continue monitoring for unknown states
+// 			}
+// 		}
+// 	}
+// }
 
 // // isProvisioned checks if the output contains the line indicating provisioning success.
 // func isProvisioned(output string) bool {
