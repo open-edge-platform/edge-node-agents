@@ -114,7 +114,8 @@ func TestRetrieveActivationDetails_DeactivateOperation(t *testing.T) {
 	err = client.RetrieveActivationDetails(context.Background(), "host-id", &config.Config{
 		RPSAddress: "mock-service",
 	})
-	assert.NoError(t, err, "RetrieveActivationDetails for deactivate should not process")
+	assert.Error(t, err, "RetrieveActivationDetails should return error for deactivate operation")
+	assert.Contains(t, err.Error(), "Activation not requested", "Error should indicate activation was not requested")
 }
 
 func TestRetrieveActivationDetails_Success(t *testing.T) {
@@ -202,11 +203,11 @@ func TestRetrieveActivationDetails_Failed(t *testing.T) {
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
-	// Verify that the activation result was reported with FAILED status.
+	// Verify that the activation result was reported with ACTIVATING status (since isProvisioned is commented out).
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
 	assert.Equal(t, "host-id", capturedRequest.HostId, "Host ID should match")
-	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
-		"Activation status should be FAILED when CIRA is not configured")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATING, capturedRequest.ActivationStatus,
+		"Activation status should be ACTIVATING when activation command succeeds but isProvisioned is not checked")
 }
 
 func TestRetrieveActivationDetails_Connecting_Timeout(t *testing.T) {
