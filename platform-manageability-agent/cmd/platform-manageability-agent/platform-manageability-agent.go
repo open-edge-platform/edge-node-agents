@@ -136,7 +136,7 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
-	var lastPollTimestamp int64
+	var lastCheckTimestamp int64
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -146,6 +146,10 @@ func main() {
 			status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
 			if err != nil {
 				log.Errorf("Failed to report AMT status for host %s: %v", hostID, err)
+				// Deliberately induce unhealthy state by increasing elapsed time.
+				// This is done to ensure the other goroutine does not report false positive.
+				// Can be consolidated when the goroutines are merged.
+				atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix()-3600)
 				return fmt.Errorf("failed to report AMT status: %w", err)
 			}
 
@@ -198,7 +202,7 @@ func main() {
 		op := func() error {
 			if !isAMTCurrentlyEnabled() {
 				log.Info("Skipping activation check because AMT is not enabled")
-				atomic.StoreInt64(&lastPollTimestamp, time.Now().Unix()) // To report Agent healthy if AMT disabled
+				atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix()) // To report Agent healthy if AMT disabled
 				return nil
 			}
 
@@ -214,7 +218,7 @@ func main() {
 				}
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
 			}
-			atomic.StoreInt64(&lastPollTimestamp, time.Now().Unix()) // To report Agent healthy if AMT enabled
+			atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix()) // To report Agent healthy if AMT enabled
 			log.Infof("Successfully retrieved activation details for host %s", hostID)
 			return nil
 		}
@@ -265,7 +269,7 @@ func main() {
 			case <-statusTicker.C:
 				statusTicker.Stop()
 
-				lastCheck := atomic.LoadInt64(&lastPollTimestamp)
+				lastCheck := atomic.LoadInt64(&lastCheckTimestamp)
 				now := time.Now().Unix()
 				// To ensure the agent is not marked as not ready due to a functional delay, a
 				// check of 2x of interval is considered. This should prevent false negatives.
