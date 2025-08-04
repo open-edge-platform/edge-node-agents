@@ -113,5 +113,8 @@
 
 ## Platform Manageability Agent Changelog
 
+### 0.1.3
+- Fix heartbeat to Noade Agent
+
 ### 0.1.0
 - Initial platform manageability agent

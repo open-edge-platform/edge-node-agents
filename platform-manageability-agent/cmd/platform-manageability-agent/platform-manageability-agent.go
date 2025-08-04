@@ -136,6 +136,7 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
+	var lastPollTimestamp int64
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -197,6 +198,7 @@ func main() {
 		op := func() error {
 			if !isAMTCurrentlyEnabled() {
 				log.Info("Skipping activation check because AMT is not enabled")
+				atomic.StoreInt64(&lastPollTimestamp, time.Now().Unix()) // To report Agent healthy if AMT disabled
 				return nil
 			}
 
@@ -212,6 +214,7 @@ func main() {
 				}
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
 			}
+			atomic.StoreInt64(&lastPollTimestamp, time.Now().Unix()) // To report Agent healthy if AMT enabled
 			log.Infof("Successfully retrieved activation details for host %s", hostID)
 			return nil
 		}
@@ -228,7 +231,6 @@ func main() {
 	}()
 
 	// Main agent loop using context-aware ticker
-	var lastUpdateTimestamp int64
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -242,7 +244,6 @@ func main() {
 				return
 			case <-ticker.C:
 				log.Debug("Platform Manageability Agent heartbeat")
-				atomic.StoreInt64(&lastUpdateTimestamp, time.Now().Unix())
 				// TODO: Add main agent functionality here (e.g., health checks, work scheduling, etc.)
 			}
 		}
@@ -264,7 +265,7 @@ func main() {
 			case <-statusTicker.C:
 				statusTicker.Stop()
 
-				lastCheck := atomic.LoadInt64(&lastUpdateTimestamp)
+				lastCheck := atomic.LoadInt64(&lastPollTimestamp)
 				now := time.Now().Unix()
 				// To ensure the agent is not marked as not ready due to a functional delay, a
 				// check of 2x of interval is considered. This should prevent false negatives.
