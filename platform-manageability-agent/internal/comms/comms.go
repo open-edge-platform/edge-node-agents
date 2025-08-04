@@ -246,15 +246,3 @@ func (cli *Client) reportActivationResult(ctx context.Context, hostID string, st
 		hostID, req.ActivationStatus)
 	return nil
 }
-
-// isProvisioned checks if the output contains the line indicating provisioning success.
-func isProvisioned(output string) bool {
-	scanner := bufio.NewScanner(strings.NewReader(output))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, `msg="CIRA: Configured"`) {
-			return true
-		}
-	}
-	return false
-}
