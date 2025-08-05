@@ -103,6 +103,7 @@ func main() {
 	go func() {
 		sig := <-sigs
 		log.Infof("Received signal: %v; shutting down...", sig)
+		log.Info("Platform Manageability Agent shutting down")
 		cancel()
 	}()
 
@@ -135,64 +136,56 @@ func main() {
 		log.Fatalf("Failed to retrieve system UUID with an error: %v", err)
 	}
 
-	var wg sync.WaitGroup
-	var lastCheckTimestamp int64
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	op := func() error {
+		log.Infof("Reporting AMT status for host %s", hostID)
+		status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
+		if err != nil {
+			log.Errorf("Failed to report AMT status for host %s: %v", hostID, err)
+			return fmt.Errorf("failed to report AMT status: %w", err)
+		}
 
-		op := func() error {
-			log.Infof("Reporting AMT status for host %s", hostID)
-			status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
-			if err != nil {
-				log.Errorf("Failed to report AMT status for host %s: %v", hostID, err)
-				// Deliberately induce unhealthy state by increasing elapsed time.
-				// This is done to ensure the other goroutine does not report false positive.
-				// Can be consolidated when the goroutines are merged.
-				atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix()-3600)
-				return fmt.Errorf("failed to report AMT status: %w", err)
-			}
-
-			switch status {
-			case pb.AMTStatus_DISABLED:
-				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
-			case pb.AMTStatus_ENABLED:
-				atomic.StoreInt32(&isAMTEnabled, AMTStatusEnabled)
-				if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
-					if err := loadModule(); err != nil {
-						log.Errorf("Error while loading module: %v", err)
-					} else {
-						log.Info("Module mei_me loaded successfully")
-					}
-					for _, action := range []string{"unmask", "enable", "start"} {
-						log.Infof("%sing %s...\n", action, "lms.service")
-						if err := enableService(action); err != nil {
-							log.Errorf("Error while enabling service: %v", err)
-						}
+		switch status {
+		case pb.AMTStatus_DISABLED:
+			atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
+		case pb.AMTStatus_ENABLED:
+			atomic.StoreInt32(&isAMTEnabled, AMTStatusEnabled)
+			if atomic.CompareAndSwapInt32(&isModuleAndServiceInitialized, 0, 1) {
+				if err := loadModule(); err != nil {
+					log.Errorf("Error while loading module: %v", err)
+				} else {
+					log.Info("Module mei_me loaded successfully")
+				}
+				for _, action := range []string{"unmask", "enable", "start"} {
+					log.Infof("%sing %s...\n", action, "lms.service")
+					if err := enableService(action); err != nil {
+						log.Errorf("Error while enabling service: %v", err)
 					}
 				}
-			default:
-				log.Warnf("Unknown AMT status: %v, treating as disabled", status)
-				atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
 			}
-			return nil
+		default:
+			log.Warnf("Unknown AMT status: %v, treating as disabled", status)
+			atomic.StoreInt32(&isAMTEnabled, AMTStatusDisabled)
 		}
-		err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
-		if err != nil {
-			if ctx.Err() != nil {
-				log.Info("AMT status reporting canceled due to context cancellation")
-			} else {
-				log.Errorf("Failed to report AMT status for host %s after retries: %v", hostID, err)
-			}
-			return
+		return nil
+	}
+	err = backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+	if err != nil {
+		if ctx.Err() != nil {
+			log.Info("AMT status reporting canceled due to context cancellation")
+		} else {
+			log.Errorf("Failed to report AMT status for host %s after retries: %v", hostID, err)
 		}
-		log.Infof("Successfully reported AMT status for host %s", hostID)
-	}()
+		return
+	}
+	log.Infof("Successfully reported AMT status for host %s", hostID)
 
 	var (
+		wg                           sync.WaitGroup
 		activationCheckInterval      = confs.Manageability.HeartbeatInterval
 		lastActivationCheckTimestamp int64
+		lastCheckTimestamp           int64
 	)
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -231,25 +224,6 @@ func main() {
 				updateWithRetry(ctx, log, op, &lastActivationCheckTimestamp)
 			}
 			activationTicker.Reset(activationCheckInterval)
-		}
-	}()
-
-	// Main agent loop using context-aware ticker
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				log.Info("Platform Manageability Agent shutting down")
-				return
-			case <-ticker.C:
-				log.Debug("Platform Manageability Agent heartbeat")
-				// TODO: Add main agent functionality here (e.g., health checks, work scheduling, etc.)
-			}
 		}
 	}()
 
