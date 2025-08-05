@@ -131,10 +131,7 @@ func main() {
 	log.Infof("Connecting to Device Management Manager at %s", confs.Manageability.ServiceURL)
 	dmMgrClient := comms.ConnectToDMManager(ctx, confs.Manageability.ServiceURL, tlsConfig)
 
-	hostID, err := utils.GetSystemUUID()
-	if err != nil {
-		log.Fatalf("Failed to retrieve system UUID with an error: %v", err)
-	}
+	hostID := confs.GUID
 
 	op := func() error {
 		log.Infof("Reporting AMT status for host %s", hostID)

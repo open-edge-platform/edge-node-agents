@@ -20,6 +20,7 @@ groupadd -f bm-agents --system
 # Create system user if it doesn't exist
 id -u pm-agent >/dev/null 2>&1 || useradd pm-agent --system -g bm-agents -s /sbin/nologin
 
-# Directory and permission setup is handled by node-agent
+GUID="$(cat /sys/class/dmi/id/product_uuid)"
+sed -i "s/^GUID: '.*'/GUID: '$GUID'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
 
 #DEBHELPER#
