@@ -4,6 +4,7 @@ package config_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,7 +18,8 @@ import (
 
 var log = logger.Logger
 
-func createConfigFile(t *testing.T, version string, logLevel string, guid string, url string, interval time.Duration, statusEndpoint string, accessTokenPath string) string {
+func createConfigFile(t *testing.T, version string, logLevel string, guid string, url string, statusInterval time.Duration, metricsInterval time.Duration,
+	statusEndpoint string, metricsEndpoint string, rpsAddress string, accessTokenPath string) string {
 	f, err := os.CreateTemp(t.TempDir(), "test_config")
 	require.NoError(t, err)
 
@@ -28,11 +30,12 @@ func createConfigFile(t *testing.T, version string, logLevel string, guid string
 		Manageability: config.ConfigManageability{
 			Enabled:           true,
 			ServiceURL:        url,
-			HeartbeatInterval: interval,
+			HeartbeatInterval: statusInterval,
 		},
 		StatusEndpoint:  statusEndpoint,
-		MetricsEndpoint: statusEndpoint,
-		MetricsInterval: interval,
+		MetricsEndpoint: metricsEndpoint,
+		MetricsInterval: metricsInterval,
+		RPSAddress:      rpsAddress,
 		AccessTokenPath: accessTokenPath,
 	}
 
@@ -52,11 +55,14 @@ func TestValidConfig(t *testing.T) {
 	logLevel := "info"
 	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
 	url := "localhost"
-	interval := 30 * time.Second
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -65,10 +71,11 @@ func TestValidConfig(t *testing.T) {
 	assert.Equal(t, logLevel, cfg.LogLevel)
 	assert.Equal(t, guid, cfg.GUID)
 	assert.Equal(t, url, cfg.Manageability.ServiceURL)
-	assert.Equal(t, interval, cfg.Manageability.HeartbeatInterval)
+	assert.Equal(t, statusInterval, cfg.Manageability.HeartbeatInterval)
 	assert.Equal(t, statusEndpoint, cfg.StatusEndpoint)
-	assert.Equal(t, statusEndpoint, cfg.MetricsEndpoint)
-	assert.Equal(t, interval, cfg.MetricsInterval)
+	assert.Equal(t, metricsEndpoint, cfg.MetricsEndpoint)
+	assert.Equal(t, metricsInterval, cfg.MetricsInterval)
+	assert.Equal(t, rpsAddress, cfg.RPSAddress)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
 }
 
@@ -96,12 +103,15 @@ func TestSymlinkConfigPath(t *testing.T) {
 	logLevel := "info"
 	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
 	url := "localhost"
-	interval := 30 * time.Second
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath)
-	defer os.Remove(fileName)
+	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	defer os.Remove(fileName) // clean up
 
 	symlinkConfig := "/tmp/sysmlink_config.txt"
 	defer os.Remove(symlinkConfig)
@@ -117,9 +127,11 @@ func TestPartialConfigFile(t *testing.T) {
 	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
 	url := "localhost"
 	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, "", "", guid, url, 0*time.Second, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, "", "", guid, url, 0*time.Second, 0*time.Second, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName, log)
@@ -130,8 +142,9 @@ func TestPartialConfigFile(t *testing.T) {
 	assert.Equal(t, url, cfg.Manageability.ServiceURL)
 	assert.Equal(t, 10*time.Second, cfg.Manageability.HeartbeatInterval)
 	assert.Equal(t, statusEndpoint, cfg.StatusEndpoint)
-	assert.Equal(t, statusEndpoint, cfg.MetricsEndpoint)
+	assert.Equal(t, metricsEndpoint, cfg.MetricsEndpoint)
 	assert.Equal(t, 10*time.Second, cfg.MetricsInterval)
+	assert.Equal(t, rpsAddress, cfg.RPSAddress)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
 }
 
@@ -141,9 +154,11 @@ func TestMissingHeartbeatIntervals(t *testing.T) {
 	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
 	url := "localhost"
 	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, 0*time.Second, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, 0*time.Second, 0*time.Second, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -154,8 +169,9 @@ func TestMissingHeartbeatIntervals(t *testing.T) {
 	assert.Equal(t, url, cfg.Manageability.ServiceURL)
 	assert.Equal(t, 10*time.Second, cfg.Manageability.HeartbeatInterval)
 	assert.Equal(t, statusEndpoint, cfg.StatusEndpoint)
-	assert.Equal(t, statusEndpoint, cfg.MetricsEndpoint)
+	assert.Equal(t, metricsEndpoint, cfg.MetricsEndpoint)
 	assert.Equal(t, 10*time.Second, cfg.MetricsInterval)
+	assert.Equal(t, rpsAddress, cfg.RPSAddress)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
 }
 
@@ -163,11 +179,14 @@ func TestMissingServiceURL(t *testing.T) {
 	version := "v0.1.0"
 	logLevel := "info"
 	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
-	interval := 30 * time.Second
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, "", interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, "", statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -180,10 +199,13 @@ func TestMissingTokenPath(t *testing.T) {
 	logLevel := "info"
 	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
 	url := "localhost"
-	interval := 30 * time.Second
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, "")
+	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, "")
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -196,10 +218,32 @@ func TestMissingStatusEndpoint(t *testing.T) {
 	logLevel := "info"
 	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
 	url := "localhost"
-	interval := 30 * time.Second
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, "", accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, "", metricsEndpoint, rpsAddress, accessTokenPath)
+	defer os.Remove(fileName) // clean up
+
+	cfg, err := config.New(fileName, log)
+	require.Error(t, err)
+	require.Nil(t, cfg)
+}
+
+func TestMissingMetricsEndpoint(t *testing.T) {
+	version := "v0.1.0"
+	logLevel := "info"
+	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
+	url := "localhost"
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
+	statusEndpoint := "unix://test-socket.sock"
+	rpsAddress := "test-address.test.com"
+	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+
+	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, "", rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -212,11 +256,34 @@ func TestInvalidStatusEndpoint(t *testing.T) {
 	logLevel := "info"
 	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
 	url := "localhost"
-	interval := 30 * time.Second
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
 	statusEndpoint := "invalid-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	defer os.Remove(fileName) // clean up
+
+	cfg, err := config.New(fileName, log)
+	require.Error(t, err)
+	require.Nil(t, cfg)
+}
+
+func TestInvalidMetricsEndpoint(t *testing.T) {
+	version := "v0.1.0"
+	logLevel := "info"
+	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
+	url := "localhost"
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
+	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "invalid-metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
+	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+
+	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -228,14 +295,155 @@ func TestMissingGUID(t *testing.T) {
 	version := "v0.1.0"
 	logLevel := "info"
 	url := "localhost"
-	interval := 30 * time.Second
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
 	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, "", url, interval, statusEndpoint, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, "", url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
 	require.Error(t, err)
 	require.Nil(t, cfg)
+}
+
+func TestMissingRPSAddress(t *testing.T) {
+	version := "v0.1.0"
+	logLevel := "info"
+	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
+	url := "localhost"
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
+	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+
+	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, "", accessTokenPath)
+	defer os.Remove(fileName) // clean up
+
+	cfg, err := config.New(fileName, log)
+	require.Error(t, err)
+	require.Nil(t, cfg)
+}
+
+func FuzzNew(f *testing.F) {
+	f.Add("/tmp/test_file.yaml")
+	f.Fuzz(func(t *testing.T, testConfigPath string) {
+		conf, err := config.New(testConfigPath, log)
+
+		// Test if error received, if yes, confirm that no config has been provided
+		if err != nil {
+			if conf != nil {
+				t.Errorf("Error %v returned but configuration is no nil!", err)
+			}
+		}
+
+		// Test if no error received, if yes, confirm that required configurations have been set
+		if err == nil {
+			if conf == nil {
+				t.Error("No error received but configuration is nil!")
+			}
+			if conf != nil {
+				if conf.GUID == "" {
+					t.Error("GUID is not set in configuration")
+				}
+				if conf.Manageability.ServiceURL == "" {
+					t.Error("ServiceURL is not set in configuration")
+				}
+				if conf.Manageability.HeartbeatInterval <= 0 {
+					t.Error("HeartbeatInterval is set to an invalid value in configuration")
+				}
+				if conf.RPSAddress == "" {
+					t.Error("RPSAddress is not set in configuration")
+				}
+				if conf.StatusEndpoint == "" {
+					t.Error("StatusEndpoint is not set in configuration")
+				}
+				if !strings.HasPrefix(conf.StatusEndpoint, "unix://") {
+					t.Error("StatusEndpoint is not a Unix socket address")
+				}
+				if conf.MetricsEndpoint == "" {
+					t.Error("MetricsEndpoint is not set in configuration")
+				}
+				if !strings.HasPrefix(conf.MetricsEndpoint, "unix://") {
+					t.Error("MetricsEndpoint is not a Unix socket address")
+				}
+				if conf.MetricsInterval <= 0 {
+					t.Error("MetricsInterval is set to an invalid value in configuration")
+				}
+				if conf.AccessTokenPath == "" {
+					t.Error("AccessTokenPath is not set in configuration")
+				}
+			}
+		}
+	})
+}
+
+func FuzzConfigNew(f *testing.F) {
+	exampleConfigFileContents := []byte("# SPDX-FileCopyrightText: (C) 2025 Intel Corporation\n# SPDX-License-Identifier: Apache-2.0\n\n---\nversion: v0.1.0\nlogLevel: info\nGUID: 'aaaaaaaa-0000-1111-2222-bbbbbbbbcccc'\nmanageability:\n  enabled: true\n  serviceURL: 'infra.test.edgeorch.intel.com:443'\n  heartbeatInterval: 10s\nrpsAddress: 'rps.test.edgeorch.intel.com'\nstatusEndpoint: 'unix:///run/node-agent/node-agent.sock'\nmetricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'\nmetricsInterval: 10s\naccessTokenPath: /etc/intel_edge_node/tokens/platform-manageability-agent/access_token")
+	f.Add(exampleConfigFileContents)
+	f.Fuzz(func(t *testing.T, testConfigFileContents []byte) {
+		testFile, err := os.CreateTemp(t.TempDir(), "example_config.yaml")
+		if err != nil {
+			t.Error("Error creating test config file")
+		}
+		defer os.Remove(testFile.Name())
+
+		_, err = testFile.Write(testConfigFileContents)
+		if err != nil {
+			t.Error("Error writing information to config file")
+		}
+
+		err = testFile.Close()
+		if err != nil {
+			t.Error("Error closing file")
+		}
+
+		conf, err := config.New(testFile.Name(), log)
+		if err != nil {
+			if conf != nil {
+				t.Errorf("Error %v returned but configuration is not nil!", err)
+			}
+		}
+		if err == nil {
+			if conf == nil {
+				t.Error("No error returned but configuration is nil!")
+			}
+			if conf != nil {
+				if conf.GUID == "" {
+					t.Error("GUID is not set in configuration")
+				}
+				if conf.Manageability.ServiceURL == "" {
+					t.Error("ServiceURL is not set in configuration")
+				}
+				if conf.Manageability.HeartbeatInterval <= 0 {
+					t.Error("HeartbeatInterval is set to an invalid value in configuration")
+				}
+				if conf.RPSAddress == "" {
+					t.Error("RPSAddress is not set in configuration")
+				}
+				if conf.StatusEndpoint == "" {
+					t.Error("StatusEndpoint is not set in configuration")
+				}
+				if !strings.HasPrefix(conf.StatusEndpoint, "unix://") {
+					t.Error("StatusEndpoint is not a Unix socket address")
+				}
+				if conf.MetricsEndpoint == "" {
+					t.Error("MetricsEndpoint is not set in configuration")
+				}
+				if !strings.HasPrefix(conf.MetricsEndpoint, "unix://") {
+					t.Error("MetricsEndpoint is not a Unix socket address")
+				}
+				if conf.MetricsInterval <= 0 {
+					t.Error("MetricsInterval is set to an invalid value in configuration")
+				}
+				if conf.AccessTokenPath == "" {
+					t.Error("AccessTokenPath is not set in configuration")
+				}
+			}
+		}
+	})
 }
