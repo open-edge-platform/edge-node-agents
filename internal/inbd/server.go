@@ -5,20 +5,15 @@
 package inbd
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
 	"os/user"
-	"path/filepath"
 	"strconv"
 
 	"github.com/spf13/afero"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 
-	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
 )
 
@@ -27,23 +22,18 @@ const schemaFilePath = "/usr/share/inbd_schema.json"
 
 // ServerDeps groups the dependencies needed for running the server.
 type ServerDeps struct {
-	Socket               string
-	Stat                 func(string) (os.FileInfo, error)
-	Remove               func(string) error
-	NetListen            func(network, address string) (net.Listener, error)
-	Umask                func(int) int
-	NewGRPCServer        func(...grpc.ServerOption) *grpc.Server
-	RegisterService      func(*grpc.Server)
-	ServeFunc            func(*grpc.Server, net.Listener) error
-	IsValidJSON          func(afero.Afero, string, string) (bool, error)
-	GetInbcGroupID       func() (int, error)
-	Chown                func(string, int, int) error                  // os.Chown
-	Chmod                func(string, os.FileMode) error               // os.Chmod
-	SetupTLSCertificates func() error                                  // Function to set up TLS certificates
-	LoadX509KeyPair      func(string, string) (tls.Certificate, error) // tls.LoadX509KeyPair
-	ReadFile             func(afero.Fs, string) ([]byte, error)        // utils.ReadFile
-	NewOsFs              func() afero.Fs                               // Function to create a new OsFs instance
-	AppendCertsFromPEM   func(*x509.CertPool, []byte) bool             // Mockable function for appending certs
+	Socket          string
+	Stat            func(string) (os.FileInfo, error)
+	Remove          func(string) error
+	NetListen       func(network, address string) (net.Listener, error)
+	Umask           func(int) int
+	NewGRPCServer   func(...grpc.ServerOption) *grpc.Server
+	RegisterService func(*grpc.Server)
+	ServeFunc       func(*grpc.Server, net.Listener) error
+	IsValidJSON     func(afero.Afero, string, string) (bool, error)
+	GetInbcGroupID  func() (int, error)
+	Chown           func(string, int, int) error    // os.Chown
+	Chmod           func(string, os.FileMode) error // os.Chmod
 }
 
 // RunServer implements the core logic of the server:
@@ -83,49 +73,15 @@ func RunServer(deps ServerDeps) error {
 	}
 
 	deps.Umask(oldUmask)
-	// Set up TLS certificates
-	if err := deps.SetupTLSCertificates(); err != nil {
-		return fmt.Errorf("failed to set up TLS certificates: %w", err)
-	}
 
-	// Get TLS secret directory path from configuration
-	tlsSecretDir := utils.GetTLSDirSecret()
-
-	// Load server cert and key for mTLS
-	certPath := filepath.Join(tlsSecretDir, "inbd.crt")
-	keyPath := filepath.Join(tlsSecretDir, "inbd.key")
-	cert, err := deps.LoadX509KeyPair(certPath, keyPath)
-	if err != nil {
-		return fmt.Errorf("failed to load server certificate: %w", err)
-	}
-	fs := deps.NewOsFs()
-	caCertPath := filepath.Join(tlsSecretDir, "ca.crt")
-	caCert, err := deps.ReadFile(fs, caCertPath)
-	if err != nil {
-		return fmt.Errorf("failed to read CA certificate: %w", err)
-	}
-	caPool := x509.NewCertPool()
-	if !deps.AppendCertsFromPEM(caPool, caCert) {
-		return fmt.Errorf("failed to append CA certificate")
-	}
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		ClientCAs:    caPool,
-		ClientAuth:   tls.RequireAndVerifyClientCert,
-		MinVersion:   tls.VersionTLS12,
-		MaxVersion:   tls.VersionTLS13,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, // TLS 1.2
-			// TLS 1.3 cipher suites are not configurable in Go, but TLS_AES_256_GCM_SHA384 is always enabled for TLS 1.3
-		},
-	}
-
-	grpcServer := deps.NewGRPCServer(grpc.Creds(credentials.NewTLS(tlsConfig)))
+	grpcServer := deps.NewGRPCServer()
 	deps.RegisterService(grpcServer)
 
 	// VerifyUpdateAfterReboot verifies the update after reboot.
 	// It compares the version in dispatcher_state file with the current system version.
 	// If the versions are different, the system successfully boots into the new image.
+
+	fs := afero.NewOsFs()
 
 	err = osUpdater.VerifyUpdateAfterReboot(fs)
 	if err != nil {

@@ -57,8 +57,3 @@ To run server as a service:
 
 * When build is complete, build output will be in the `dist` folder.
 * See `dist/README.txt` for a description of the build output.
-
-## Note
-This Framework manages TLS certificate generation for secure communication between inbd (INBM Daemon) and inbc (INBM Client). By default, it generates a local Certificate Authority (CA) and uses it to sign certificates for both inbd and inbc, enabling mutual TLS authentication for development and testing.
-### Security Recommendation:
-For production deployments, do NOT use self-signed or locally generated certificates. Always obtain certificates from a trusted Certificate Authority (CA) to ensure proper security, trust, and interoperability.

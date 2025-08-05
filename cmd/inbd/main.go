@@ -5,13 +5,10 @@
 package main
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"flag"
 	"log"
 	"net"
 	"os"
-	"os/signal"
 	"syscall"
 
 	"google.golang.org/grpc"
@@ -61,55 +58,10 @@ func main() {
 		Chmod: func(path string, mode os.FileMode) error {
 			return os.Chmod(path, mode)
 		},
-		SetupTLSCertificates: func() error {
-			return utils.SetupTLSCertificates()
-		},
-		LoadX509KeyPair: tls.LoadX509KeyPair,
-		ReadFile:        utils.ReadFile,
-		NewOsFs:         afero.NewOsFs,
-		AppendCertsFromPEM: func(pool *x509.CertPool, pemCerts []byte) bool {
-			return pool.AppendCertsFromPEM(pemCerts)
-		},
 	}
 
-	config, err := utils.LoadConfig(afero.NewOsFs(), utils.ConfigFilePath)
-	if err != nil {
-		log.Printf("Failed to load config: %s", err)
-		os.Exit(1)
-	}
-
-	if err := utils.SetupLUKSVolume(afero.NewOsFs(), config); err != nil {
-		log.Printf("Failed to set up LUKS volume: %s", err)
-	}
-
-	// --- Signal handling for graceful shutdown ---
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-
-	serverErrCh := make(chan error, 1)
-	go func() {
-		// Run the server in a goroutine
-		serverErrCh <- inbd.RunServer(deps)
-	}()
-
-	select {
-	case sig := <-sigCh:
-		log.Printf("Received signal %s, cleaning up...", sig)
-		if config != nil {
-			if err := utils.RemoveLUKSVolume(config); err != nil {
-				log.Printf("Failed to Remove LUKS volume: %s", err)
-			}
-		}
-		os.Exit(0)
-	case err := <-serverErrCh:
-		if err != nil {
-			log.Printf("Server failed: %v", err)
-		}
-		if config != nil {
-			if err := utils.RemoveLUKSVolume(config); err != nil {
-				log.Printf("Failed to Remove LUKS volume: %s", err)
-			}
-		}
-		os.Exit(1)
+	// Run the server (returning an error instead of calling log.Fatal internally).
+	if err := inbd.RunServer(deps); err != nil {
+		log.Fatalf("Server failed: %v", err)
 	}
 }

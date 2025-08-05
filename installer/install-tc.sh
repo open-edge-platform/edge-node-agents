@@ -149,11 +149,6 @@ fi
 
 pushd "$INST_DIR" > /dev/null
 
-# install tpm tools and cryptsetup
-apt-get install -y tpm2-tools tpm2-abrmd
-systemctl enable tpm2-abrmd
-apt-get install -y cryptsetup
-
 if [ $? -ne 0 ]; then
   echo "Issue with installation. Will force."
   apt-get install -f

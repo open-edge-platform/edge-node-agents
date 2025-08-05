@@ -59,43 +59,6 @@ func TestLoadConfig(t *testing.T) {
 	})
 }
 
-func TestLoadConfig_IntelManageabilityConf(t *testing.T) {
-	fs := afero.NewMemMapFs()
-	configContent := `
-{
-    "os_updater": {
-        "trustedRepositories": [],
-        "proceedWithoutRollback": true
-    },
-    "luks":{
-        "volumePath": "/var/intel-manageability/secret.img",
-        "mapperName": "intel-manageability-secret",
-        "mountPoint": "/etc/intel-manageability/secret",
-        "passwordLength": 20,
-        "size": 32,
-        "useTPM": true,
-        "user": "root",
-        "group": "root"
-    }
-}`
-	err := afero.WriteFile(fs, "intel_manageability.conf", []byte(configContent), 0644)
-	assert.NoError(t, err)
-
-	config, err := LoadConfig(fs, "intel_manageability.conf")
-	assert.NoError(t, err)
-	assert.NotNil(t, config)
-	assert.Equal(t, 0, len(config.OSUpdater.TrustedRepositories))
-	assert.True(t, config.OSUpdater.ProceedWithoutRollback)
-	assert.Equal(t, "/var/intel-manageability/secret.img", config.LUKS.VolumePath)
-	assert.Equal(t, "intel-manageability-secret", config.LUKS.MapperName)
-	assert.Equal(t, "/etc/intel-manageability/secret", config.LUKS.MountPoint)
-	assert.Equal(t, 20, config.LUKS.PasswordLength)
-	assert.Equal(t, 32, config.LUKS.Size)
-	assert.True(t, config.LUKS.UseTPM)
-	assert.Equal(t, "root", config.LUKS.User)
-	assert.Equal(t, "root", config.LUKS.Group)
-}
-
 func TestIsTrustedRepository(t *testing.T) {
 	config := &Configurations{
 		OSUpdater: struct {

@@ -9,16 +9,11 @@ package utils
 import (
 	"fmt"
 	"time"
-
-	"github.com/spf13/afero"
 )
 
 // RebootSystem reboots the system using the provided command executor.
 func RebootSystem(cmdExecutor Executor) error {
 	fmt.Println("Rebooting ")
-
-	// Try to clean up LUKS volume if possible
-	cleanupLUKS()
 
 	time.Sleep(2 * time.Second)
 
@@ -30,25 +25,9 @@ func RebootSystem(cmdExecutor Executor) error {
 	return nil
 }
 
-// cleanupLUKS Before Shutdown/Reboot attempts to load config and cleanup LUKS volume
-func cleanupLUKS() {
-	config, err := LoadConfig(afero.NewOsFs(), ConfigFilePath)
-	if err != nil {
-		fmt.Printf("Warning: Could not load config for LUKS cleanup: %v\n", err)
-		return
-	}
-
-	if err := RemoveLUKSVolume(config); err != nil {
-		fmt.Printf("Warning: Failed to remove LUKS volume before shutdown: %v\n", err)
-	}
-}
-
 // ShutdownSystem shuts down the system using the provided command executor.
 func ShutdownSystem(cmdExecutor Executor) error {
 	fmt.Print("Shutting down ")
-
-	// Try to clean up LUKS volume if possible
-	cleanupLUKS()
 
 	time.Sleep(2 * time.Second)
 

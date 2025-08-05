@@ -6,11 +6,10 @@ package inbd
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"net"
 	"os"
+	"syscall"
 	"testing"
 	"time"
 
@@ -70,25 +69,42 @@ type fakeAddr string
 func (a fakeAddr) Network() string { return string(a) }
 func (a fakeAddr) String() string  { return string(a) }
 
-// createBaseTLSServerDeps returns a ServerDeps with default TLS mocks configured.
-func createBaseTLSServerDeps() ServerDeps {
-	return ServerDeps{
+// TestRunServer_Success verifies that when no socket file exists RunServer succeeds.
+func TestRunServer_Success(t *testing.T) {
+	fl := &fakeListener{}
+	removeCalled := false
+
+	deps := ServerDeps{
 		Socket: "dummy.sock",
 		Stat: func(name string) (os.FileInfo, error) {
+			// Simulate file not exists.
 			return nil, os.ErrNotExist
 		},
-		Remove: os.Remove,
+		Remove: func(name string) error {
+			removeCalled = true
+			return nil
+		},
 		NetListen: func(network, address string) (net.Listener, error) {
-			return &fakeListener{}, nil
+			if network != "unix" || address != "dummy.sock" {
+				return nil, errors.New("unexpected parameters")
+			}
+			return fl, nil
 		},
 		Umask: func(mask int) int {
+			// Return 0 for the old umask.
 			return 0
 		},
 		NewGRPCServer: func(opts ...grpc.ServerOption) *grpc.Server {
 			return grpc.NewServer(opts...)
 		},
-		RegisterService: func(gs *grpc.Server) {},
+		RegisterService: func(gs *grpc.Server) {
+			// Registration indicator.
+		},
 		ServeFunc: func(gs *grpc.Server, lis net.Listener) error {
+			if lis != fl {
+				return errors.New("listener mismatch")
+			}
+			// No actual serving.
 			return nil
 		},
 		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
@@ -103,45 +119,6 @@ func createBaseTLSServerDeps() ServerDeps {
 		Chmod: func(path string, mode os.FileMode) error {
 			return nil
 		},
-		SetupTLSCertificates: func() error {
-			return nil
-		},
-		LoadX509KeyPair: func(certFile, keyFile string) (tls.Certificate, error) {
-			return tls.Certificate{}, nil
-		},
-		ReadFile: func(fs afero.Fs, filename string) ([]byte, error) {
-			return []byte("mock CA certificate"), nil
-		},
-		NewOsFs: func() afero.Fs {
-			return afero.NewMemMapFs()
-		},
-		AppendCertsFromPEM: func(pool *x509.CertPool, pemCerts []byte) bool {
-			return true
-		},
-	}
-}
-
-// TestRunServer_Success verifies that when no socket file exists RunServer succeeds.
-func TestRunServer_Success(t *testing.T) {
-	fl := &fakeListener{}
-	removeCalled := false
-
-	deps := createBaseTLSServerDeps()
-	deps.Remove = func(name string) error {
-		removeCalled = true
-		return nil
-	}
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		if network != "unix" || address != "dummy.sock" {
-			return nil, errors.New("unexpected parameters")
-		}
-		return fl, nil
-	}
-	deps.ServeFunc = func(gs *grpc.Server, lis net.Listener) error {
-		if lis != fl {
-			return errors.New("listener mismatch")
-		}
-		return nil
 	}
 
 	err := RunServer(deps)
@@ -156,21 +133,48 @@ func TestRunServer_Success(t *testing.T) {
 func TestRunServer_ConfigValidationFails(t *testing.T) {
 	fl := &fakeListener{}
 
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		if network != "unix" || address != "dummy.sock" {
-			return nil, errors.New("unexpected parameters")
-		}
-		return fl, nil
-	}
-	deps.ServeFunc = func(gs *grpc.Server, lis net.Listener) error {
-		if lis != fl {
-			return errors.New("listener mismatch")
-		}
-		return nil
-	}
-	deps.IsValidJSON = func(afero.Afero, string, string) (bool, error) {
-		return true, errors.New("invalid JSON")
+	deps := ServerDeps{
+		Socket: "dummy.sock",
+		Stat: func(name string) (os.FileInfo, error) {
+			// Simulate file not exists.
+			return nil, os.ErrNotExist
+		},
+		Remove: os.Remove,
+		NetListen: func(network, address string) (net.Listener, error) {
+			if network != "unix" || address != "dummy.sock" {
+				return nil, errors.New("unexpected parameters")
+			}
+			return fl, nil
+		},
+		Umask: func(mask int) int {
+			// Return 0 for the old umask.
+			return 0
+		},
+		NewGRPCServer: func(opts ...grpc.ServerOption) *grpc.Server {
+			return grpc.NewServer(opts...)
+		},
+		RegisterService: func(gs *grpc.Server) {
+			// Registration indicator.
+		},
+		ServeFunc: func(gs *grpc.Server, lis net.Listener) error {
+			if lis != fl {
+				return errors.New("listener mismatch")
+			}
+			// No actual serving.
+			return nil
+		},
+		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
+			return true, errors.New("invalid JSON")
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
+		},
 	}
 
 	err := RunServer(deps)
@@ -182,21 +186,48 @@ func TestRunServer_ConfigValidationFails(t *testing.T) {
 func TestRunServer_ConfigValidationInvalid(t *testing.T) {
 	fl := &fakeListener{}
 
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		if network != "unix" || address != "dummy.sock" {
-			return nil, errors.New("unexpected parameters")
-		}
-		return fl, nil
-	}
-	deps.ServeFunc = func(gs *grpc.Server, lis net.Listener) error {
-		if lis != fl {
-			return errors.New("listener mismatch")
-		}
-		return nil
-	}
-	deps.IsValidJSON = func(afero.Afero, string, string) (bool, error) {
-		return false, nil
+	deps := ServerDeps{
+		Socket: "dummy.sock",
+		Stat: func(name string) (os.FileInfo, error) {
+			// Simulate file not exists.
+			return nil, os.ErrNotExist
+		},
+		Remove: os.Remove,
+		NetListen: func(network, address string) (net.Listener, error) {
+			if network != "unix" || address != "dummy.sock" {
+				return nil, errors.New("unexpected parameters")
+			}
+			return fl, nil
+		},
+		Umask: func(mask int) int {
+			// Return 0 for the old umask.
+			return 0
+		},
+		NewGRPCServer: func(opts ...grpc.ServerOption) *grpc.Server {
+			return grpc.NewServer(opts...)
+		},
+		RegisterService: func(gs *grpc.Server) {
+			// Registration indicator.
+		},
+		ServeFunc: func(gs *grpc.Server, lis net.Listener) error {
+			if lis != fl {
+				return errors.New("listener mismatch")
+			}
+			// No actual serving.
+			return nil
+		},
+		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
+			return false, nil
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
+		},
 	}
 
 	err := RunServer(deps)
@@ -207,16 +238,23 @@ func TestRunServer_ConfigValidationInvalid(t *testing.T) {
 
 // TestRunServer_RemoveError simulates a failure removing the existing socket.
 func TestRunServer_RemoveError(t *testing.T) {
-	deps := createBaseTLSServerDeps()
-	deps.Stat = func(name string) (os.FileInfo, error) {
-		return dummyFileInfo{}, nil
+	deps := ServerDeps{
+		Socket: "dummy.sock",
+		Stat: func(name string) (os.FileInfo, error) {
+			return dummyFileInfo{}, nil
+		},
+		Remove: func(name string) error {
+			return errors.New("remove failed")
+		},
+		// Other functions are not invoked.
+		NetListen: nil,
+		Umask:     syscall.Umask,
+		NewGRPCServer: func(opts ...grpc.ServerOption) *grpc.Server {
+			return grpc.NewServer(opts...)
+		},
+		RegisterService: func(gs *grpc.Server) {},
+		ServeFunc:       func(gs *grpc.Server, lis net.Listener) error { return nil },
 	}
-	deps.Remove = func(name string) error {
-		return errors.New("remove failed")
-	}
-	// Other functions are not invoked.
-	deps.NetListen = nil
-
 	err := RunServer(deps)
 	if err == nil || err.Error() != "error removing socket: remove failed" {
 		t.Errorf("Expected error on remove, got %v", err)
@@ -225,11 +263,31 @@ func TestRunServer_RemoveError(t *testing.T) {
 
 // TestRunServer_NetListenError simulates a failure when creating the listener.
 func TestRunServer_NetListenError(t *testing.T) {
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		return nil, errors.New("netListen failed")
+	deps := ServerDeps{
+		Socket: "dummy.sock",
+		Stat: func(name string) (os.FileInfo, error) {
+			return nil, os.ErrNotExist
+		},
+		Remove: os.Remove,
+		NetListen: func(network, address string) (net.Listener, error) {
+			return nil, errors.New("netListen failed")
+		},
+		Umask: func(mask int) int { return 0 },
+		NewGRPCServer: func(opts ...grpc.ServerOption) *grpc.Server {
+			return grpc.NewServer(opts...)
+		},
+		RegisterService: func(gs *grpc.Server) {},
+		ServeFunc:       func(gs *grpc.Server, lis net.Listener) error { return nil },
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
+		},
 	}
-
 	err := RunServer(deps)
 	if err == nil || err.Error() != "error listening on socket dummy.sock: netListen failed" {
 		t.Errorf("Expected netListen error, got %v", err)
@@ -239,14 +297,36 @@ func TestRunServer_NetListenError(t *testing.T) {
 // TestRunServer_ServeError simulates an error during serving.
 func TestRunServer_ServeError(t *testing.T) {
 	fl := &fakeListener{}
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		return fl, nil
+	deps := ServerDeps{
+		Socket: "dummy.sock",
+		Stat: func(name string) (os.FileInfo, error) {
+			return nil, os.ErrNotExist
+		},
+		Remove: os.Remove,
+		NetListen: func(network, address string) (net.Listener, error) {
+			return fl, nil
+		},
+		Umask: func(mask int) int { return 0 },
+		NewGRPCServer: func(opts ...grpc.ServerOption) *grpc.Server {
+			return grpc.NewServer(opts...)
+		},
+		RegisterService: func(gs *grpc.Server) {},
+		ServeFunc: func(gs *grpc.Server, lis net.Listener) error {
+			return errors.New("serve error")
+		},
+		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
+			return true, nil
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
+		},
 	}
-	deps.ServeFunc = func(gs *grpc.Server, lis net.Listener) error {
-		return errors.New("serve error")
-	}
-
 	err := RunServer(deps)
 	if err == nil || err.Error() != "serve error" {
 		t.Errorf("Expected serve error, got %v", err)
@@ -258,12 +338,38 @@ func TestRunServer_RegisterCalled(t *testing.T) {
 	registerCalled := false
 	fl := &fakeListener{}
 
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		return fl, nil
-	}
-	deps.RegisterService = func(gs *grpc.Server) {
-		registerCalled = true
+	deps := ServerDeps{
+		Socket: "dummy.sock",
+		Stat: func(name string) (os.FileInfo, error) {
+			return nil, os.ErrNotExist
+		},
+		Remove: os.Remove,
+		NetListen: func(network, address string) (net.Listener, error) {
+			return fl, nil
+		},
+		Umask: func(mask int) int { return 0 },
+		NewGRPCServer: func(opts ...grpc.ServerOption) *grpc.Server {
+			return grpc.NewServer(opts...)
+		},
+		RegisterService: func(gs *grpc.Server) {
+			registerCalled = true
+		},
+		ServeFunc: func(gs *grpc.Server, lis net.Listener) error {
+			return nil
+		},
+		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
+			// Not used in this test.
+			return true, nil
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
+		},
 	}
 
 	err := RunServer(deps)
@@ -280,15 +386,38 @@ func TestRunServer_UmaskRestoration(t *testing.T) {
 	var maskSet []int
 	fl := &fakeListener{}
 
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		return fl, nil
+	deps := ServerDeps{
+		Socket: "dummy.sock",
+		Stat: func(name string) (os.FileInfo, error) {
+			return nil, os.ErrNotExist
+		},
+		Remove: os.Remove,
+		NetListen: func(network, address string) (net.Listener, error) {
+			return fl, nil
+		},
+		Umask: func(mask int) int {
+			maskSet = append(maskSet, mask)
+			return 0 // old umask
+		},
+		NewGRPCServer: func(opts ...grpc.ServerOption) *grpc.Server {
+			return grpc.NewServer(opts...)
+		},
+		RegisterService: func(gs *grpc.Server) {},
+		ServeFunc:       func(gs *grpc.Server, lis net.Listener) error { return nil },
+		IsValidJSON: func(afero.Afero, string, string) (bool, error) {
+			// Not used in this test.
+			return true, nil
+		},
+		GetInbcGroupID: func() (int, error) {
+			return 1000, nil // Simulate a valid group ID.
+		},
+		Chown: func(path string, uid, gid int) error {
+			return nil
+		},
+		Chmod: func(path string, mode os.FileMode) error {
+			return nil
+		},
 	}
-	deps.Umask = func(mask int) int {
-		maskSet = append(maskSet, mask)
-		return 0 // old umask
-	}
-
 	err := RunServer(deps)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -303,60 +432,6 @@ func TestRunServer_UmaskRestoration(t *testing.T) {
 		t.Errorf("Expected second Umask call with 0, got %o", maskSet[1])
 	}
 
-}
-
-// TestRunServer_TLSSetupError simulates an error during TLS certificate setup.
-func TestRunServer_TLSSetupError(t *testing.T) {
-	fl := &fakeListener{}
-
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		return fl, nil
-	}
-	deps.SetupTLSCertificates = func() error {
-		return errors.New("TLS setup failed")
-	}
-
-	err := RunServer(deps)
-	if err == nil || err.Error() != "failed to set up TLS certificates: TLS setup failed" {
-		t.Errorf("Expected TLS setup error, got %v", err)
-	}
-}
-
-// TestRunServer_LoadX509KeyPairError simulates an error during certificate loading.
-func TestRunServer_LoadX509KeyPairError(t *testing.T) {
-	fl := &fakeListener{}
-
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		return fl, nil
-	}
-	deps.LoadX509KeyPair = func(certFile, keyFile string) (tls.Certificate, error) {
-		return tls.Certificate{}, errors.New("failed to load certificate")
-	}
-
-	err := RunServer(deps)
-	if err == nil || err.Error() != "failed to load server certificate: failed to load certificate" {
-		t.Errorf("Expected certificate load error, got %v", err)
-	}
-}
-
-// TestRunServer_ReadFileError simulates an error during CA certificate reading.
-func TestRunServer_ReadFileError(t *testing.T) {
-	fl := &fakeListener{}
-
-	deps := createBaseTLSServerDeps()
-	deps.NetListen = func(network, address string) (net.Listener, error) {
-		return fl, nil
-	}
-	deps.ReadFile = func(fs afero.Fs, filename string) ([]byte, error) {
-		return nil, errors.New("failed to read CA certificate")
-	}
-
-	err := RunServer(deps)
-	if err == nil || err.Error() != "failed to read CA certificate: failed to read CA certificate" {
-		t.Errorf("Expected CA certificate read error, got %v", err)
-	}
 }
 
 // TestSetPowerState_UnspecifiedAction tests SetPowerState with unspecified power action
