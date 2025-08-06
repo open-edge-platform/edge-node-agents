@@ -45,6 +45,7 @@
   /etc/ r,
   /etc/intel-manageability/ rw,
   /etc/intel-manageability/** rw,
+  /etc/intel-manageability/public/ota_package_cert.pem r,
   /etc/dpkg/dpkg.cfg r,
   /etc/dpkg/dpkg.cfg.d/ r,
   /etc/dpkg/dpkg.cfg.d/* r,

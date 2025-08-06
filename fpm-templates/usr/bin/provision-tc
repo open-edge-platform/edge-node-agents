@@ -6,10 +6,14 @@
 
 set -eo pipefail
 
+readonly OTA_CERT_DIR="/etc/intel-manageability/public"
+readonly OTA_CERT_PATH="${OTA_CERT_DIR}/ota_package_cert.pem"
+
 ### The main provisioning function
 function provision {
 
   create_group
+  provision_ota_certificate
   enable_inbd
   echo "Intel(R) In-Band Manageability Provisioning Complete"
   exit 0
@@ -25,6 +29,108 @@ function enable_inbd {
 function create_group {
   echo "Creating group"
   groupadd -r inbd || true
+}
+
+function provision_ota_certificate {
+  echo ""
+  echo "=== OTA Certificate Provisioning ==="
+
+  # Check for environment variable to skip OTA certificate provisioning
+  if [[ "${NO_OTA_CERT:-}" == "1" ]]; then
+    echo "NO_OTA_CERT=1 detected. Skipping OTA certificate provisioning."
+    echo "WARNING: OTA package signature verification will be disabled."
+    return 0
+  fi
+
+  echo "Signature checks on OTA packages require a valid certificate."
+
+  read -p "Do you want to provide a certificate file for OTA package signature verification? (y/n): " -n 1 -r
+  echo ""
+
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    # Create certificate directory
+    mkdir -p "${OTA_CERT_DIR}"
+
+    # Check if certificate already exists
+    if [[ -f "${OTA_CERT_PATH}" ]]; then
+      echo "Certificate already exists at ${OTA_CERT_PATH}"
+      read -p "Do you want to replace it? (y/n): " -n 1 -r
+      echo ""
+      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Keeping existing certificate."
+        return 0
+      fi
+    fi
+
+    # Get certificate from user
+    while true; do
+      read -p "Load certificate from file? (y/n): " -n 1 -r
+      echo ""
+
+      if [[ $REPLY =~ ^[Yy]$ ]]; then
+        # Load from file
+        read -p "Enter path to OTA package certificate file (*.pem): " cert_file_path
+
+        if [[ ! -f "${cert_file_path}" ]]; then
+          echo "Error: File '${cert_file_path}' not found."
+          continue
+        fi
+
+        # Validate PEM format
+        if ! validate_pem_certificate "${cert_file_path}"; then
+          echo "Error: Invalid PEM certificate format."
+          continue
+        fi
+
+        # Copy certificate
+        cp "${cert_file_path}" "${OTA_CERT_PATH}"
+        break
+
+      else
+        # Manual input
+        echo "Enter certificate content (paste PEM content, then press Ctrl+D):"
+        cat > "${OTA_CERT_PATH}"
+
+        # Validate PEM format
+        if ! validate_pem_certificate "${OTA_CERT_PATH}"; then
+          echo "Error: Invalid PEM certificate format."
+          rm -f "${OTA_CERT_PATH}"
+          continue
+        fi
+        break
+      fi
+    done
+
+    # Set proper permissions
+    chmod 644 "${OTA_CERT_PATH}"
+    chown root:root "${OTA_CERT_PATH}"
+
+    echo "OTA certificate successfully provisioned at: ${OTA_CERT_PATH}"
+    echo "INBM will use this certificate for OTA package signature verification."
+
+  else
+    echo "Proceeding without provisioning an OTA certificate."
+    echo "WARNING: OTA package signature verification will be disabled."
+  fi
+}
+
+function validate_pem_certificate {
+  local cert_file="$1"
+
+  # Check if file contains PEM certificate
+  if grep -q "BEGIN CERTIFICATE" "${cert_file}" && grep -q "END CERTIFICATE" "${cert_file}"; then
+    # Use openssl to validate certificate format
+    if command -v openssl >/dev/null 2>&1; then
+      if openssl x509 -in "${cert_file}" -noout >/dev/null 2>&1; then
+        return 0
+      fi
+    else
+      # Basic validation if openssl not available
+      return 0
+    fi
+  fi
+
+  return 1
 }
 
 provision
