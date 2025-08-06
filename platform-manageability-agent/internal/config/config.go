@@ -52,11 +52,11 @@ func New(configPath string, log *logrus.Entry) (*Config, error) {
 	}
 
 	// Set default values if not specified
-	if config.Manageability.HeartbeatInterval == 0 {
+	if config.Manageability.HeartbeatInterval == 0 || config.Manageability.HeartbeatInterval <= 0 {
 		config.Manageability.HeartbeatInterval = HEARTBEAT_DEFAULT * time.Second
 	}
 
-	if config.MetricsInterval == 0 {
+	if config.MetricsInterval == 0 || config.MetricsInterval <= 0 {
 		config.MetricsInterval = HEARTBEAT_DEFAULT * time.Second
 	}
 
@@ -72,8 +72,16 @@ func New(configPath string, log *logrus.Entry) (*Config, error) {
 		return nil, fmt.Errorf("agent status reporting address not provided by config file")
 	}
 
+	if config.MetricsEndpoint == "" || !strings.HasPrefix(config.MetricsEndpoint, "unix://") {
+		return nil, fmt.Errorf("agent metrics reporting address not provided by config file")
+	}
+
 	if config.GUID == "" {
 		return nil, fmt.Errorf("edge Node GUID not provided by config file")
+	}
+
+	if config.RPSAddress == "" {
+		return nil, fmt.Errorf("RPS Address not provided by config file")
 	}
 
 	log.Infof("Configuration loaded successfully")
