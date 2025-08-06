@@ -113,8 +113,29 @@
 
 ## Platform Manageability Agent Changelog
 
+### 0.1.6
+- Add fuzz tests
+
+### 0.1.5
+- Fix heartbeat to Node Agent
+
 ### 0.1.4
-- Fix heartbeat to Noade Agent
+- Add AppArmor profile
+
+### 0.1.3
+- Load mei module
+- Start lms service
+
+### 0.1.2
+- Enable gRPC communication with DM manager
+- Implement API calls
+
+### 0.1.1
+- Add PMA to Edge Node manifest
+- Update CI for PMA
+- Add sudoers file
+- Add agent status reporting
+- Fix Debian package installation
 
 ### 0.1.0
 - Initial platform manageability agent
