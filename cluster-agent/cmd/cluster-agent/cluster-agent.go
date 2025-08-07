@@ -38,10 +38,10 @@ const AGENT_NAME = "cluster-agent"
 
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "version" {
-		fmt.Printf("test %v v%v\n", info.Component, info.Version)
+		fmt.Printf("%v v%v\n", info.Component, info.Version)
 		os.Exit(0)
 	}
-	log.Infof("Starting Cluster Agent. Args: %v\n", os.Args[1:])
+	log.Infof("Test Starting Cluster Agent. Args: %v\n", os.Args[1:])
 
 	ctx, cancel := context.WithCancel(context.Background())
 
