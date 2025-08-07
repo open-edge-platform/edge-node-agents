@@ -269,7 +269,7 @@ func (cli *Client) isProvisioned(ctx context.Context, output string, hostID stri
 				rasStatus, _ := parseAMTInfoField(output_info, "RAS Remote Status")
 				normalizedStatus := strings.ToLower(strings.TrimSpace(rasStatus))
 				log.Logger.Debugf("Current RAS Remote Status for host %s: %s", hostID, normalizedStatus)
-				if normalizedStatus != "connecting" || normalizedStatus != "connected" {
+				if (normalizedStatus != "connecting") && (normalizedStatus != "connected") {
 					log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
 					return fmt.Errorf("RAS Remote Status not found retry AMTInfo: %s", hostID)
 				}
