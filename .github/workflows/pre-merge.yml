@@ -66,8 +66,8 @@ jobs:
       #run_fuzz_test: true  ## gets executed when run_integration_test: true
       run_package_build: true
       #run_package_test: true  ## deosn't seem to do anything aparth from an echo
-      #run_shellcheck_common: true  ## should be part of make lint
-      #run_shellcheck_agent: true  ## should be part of make lint
+      run_shellcheck_common: true  ## should be part of make lint
+      run_shellcheck_agent: true  ## should be part of make lint
       prefix_tag_separator: "/"
       project_folder: ${{ matrix.project_folder }}
       remove_cache_go: true
