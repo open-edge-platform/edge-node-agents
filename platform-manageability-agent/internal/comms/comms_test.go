@@ -115,7 +115,7 @@ func TestRetrieveActivationDetails_DeactivateOperation(t *testing.T) {
 		RPSAddress: "mock-service",
 	})
 	assert.Error(t, err, "RetrieveActivationDetails should return error for deactivate operation")
-	assert.Contains(t, err.Error(), "Activation not requested", "Error should indicate activation was not requested")
+	assert.Contains(t, err.Error(), "activation not requested", "Error should indicate activation was not requested")
 }
 
 func TestRetrieveActivationDetails_Success(t *testing.T) {

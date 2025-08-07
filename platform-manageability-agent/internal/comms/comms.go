@@ -183,7 +183,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 
 	// Skip activation if operation is not ACTIVATE
 	if resp.Operation != pb.OperationType_ACTIVATE {
-		return fmt.Errorf("Activation not requested for host %s: %w", hostID, err)
+		return fmt.Errorf("activation not requested for host %s: %w", hostID, err)
 	}
 
 	// Get AMT info to check RAS Remote Status
