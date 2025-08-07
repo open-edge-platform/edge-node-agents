@@ -42,7 +42,7 @@ func runAgent(cmd *cobra.Command, _ []string) {
 	coll := collector.NewCollector(log)
 	var dataCollected model.Root
 	if shortMode {
-		log.Info("Agent started in short mode.")
+		log.Info("Test Agent started in short mode.")
 		dataCollected = coll.CollectDataShort(cfg)
 	} else {
 		log.Info("Agent started in full mode.")
