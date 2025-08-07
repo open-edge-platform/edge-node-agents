@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -209,8 +210,8 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
 		password := resp.ActionPassword
 		activationOutput, activationErr := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
-		ok := isProvisioned(string(activationOutput))
-		if activationErr != nil && !ok {
+		ok := cli.isProvisioned(ctx, string(activationOutput), hostID)
+		if !ok {
 			log.Logger.Errorf("Failed to execute activation command for host %s: %v, Output: %s",
 				hostID, activationErr, string(activationOutput))
 			activationStatus = pb.ActivationStatus_ACTIVATION_FAILED
@@ -253,14 +254,36 @@ func (cli *Client) reportActivationResult(ctx context.Context, hostID string, st
 }
 
 // isProvisioned checks if the output contains the line indicating provisioning success.
-func isProvisioned(output string) bool {
+func (cli *Client) isProvisioned(ctx context.Context, output string, hostID string) bool {
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, `msg="CIRA: Configured"`) {
-			time.Sleep(time.Second * 20)
+			op := func() error {
+				output_info, err := cli.Executor.ExecuteAMTInfo()
+				if err != nil {
+					log.Logger.Warnf("Failed to execute AMT info check for host %s: %v", hostID, err)
+					return err
+				}
+
+				rasStatus, _ := parseAMTInfoField(output_info, "RAS Remote Status")
+				normalizedStatus := strings.ToLower(strings.TrimSpace(rasStatus))
+				log.Logger.Debugf("Current RAS Remote Status for host dxxxxxx %s: %s", hostID, normalizedStatus)
+				if normalizedStatus != "connecting" {
+					log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
+					return fmt.Errorf("RAS Remote Status not found retry AMTInfo: %s", hostID)
+				}
+				return nil
+			}
+			err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+			if err != nil {
+				log.Logger.Warnf("Failed to execute AMT info check for host %s: %v", hostID, err)
+				return false
+			}
+			log.Logger.Debugf("is Provisioning passed %s", hostID)
 			return true
 		}
 	}
+	log.Logger.Debugf("is Provisioning failed %s", hostID)
 	return false
 }

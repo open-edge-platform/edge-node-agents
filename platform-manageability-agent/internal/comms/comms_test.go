@@ -203,11 +203,11 @@ func TestRetrieveActivationDetails_Failed(t *testing.T) {
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
-	// Verify that the activation result was reported with ACTIVATING status (since isProvisioned is commented out).
+	// Verify that the activation result was reported with ACTIVATION_FAILED status since CIRA is not configured.
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
 	assert.Equal(t, "host-id", capturedRequest.HostId, "Host ID should match")
-	assert.Equal(t, pb.ActivationStatus_ACTIVATING, capturedRequest.ActivationStatus,
-		"Activation status should be ACTIVATING when activation command succeeds but isProvisioned is not checked")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
+		"Activation status should be ACTIVATION_FAILED when CIRA is not configured")
 }
 
 func TestRetrieveActivationDetails_Connecting_Timeout(t *testing.T) {
