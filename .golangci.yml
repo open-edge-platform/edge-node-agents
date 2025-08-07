@@ -134,7 +134,8 @@ output:
   # Output path can be either `stdout`, `stderr` or path to the file to write to.
   # Example: "checkstyle:report.json,colored-line-number"
   # Default: colored-line-number
-  formats: colored-line-number
+  formats:
+    colored-line-number: stdout
 
   # Order to use when sorting results.
   # Possible values: `file`, `linter`, and `severity`.
