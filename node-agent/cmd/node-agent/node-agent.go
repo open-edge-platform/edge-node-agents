@@ -51,7 +51,7 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigs
-		log.Infof("Received signal: %v; shutting down...", sig)
+		log.Infof("Test Received signal: %v; shutting down...", sig)
 		if sig == syscall.SIGTERM {
 			cancel(errSigterm)
 		} else {

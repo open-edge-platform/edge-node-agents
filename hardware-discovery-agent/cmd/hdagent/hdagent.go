@@ -41,7 +41,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.Infof("Starting Hardware Discovery Agent.")
+	log.Infof("Test Starting Hardware Discovery Agent.")
 	ctx, cancel := context.WithCancel(context.Background())
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
