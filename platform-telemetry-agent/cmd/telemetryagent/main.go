@@ -52,7 +52,7 @@ func setViperConfig(cfgFilePath string) {
 	// Read the configuration file
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Errorf("Error reading config file:%v\n", err)
+		log.Errorf("Test Error reading config file:%v\n", err)
 	}
 }
 
