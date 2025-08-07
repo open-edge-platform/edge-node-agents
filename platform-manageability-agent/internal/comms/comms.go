@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -103,41 +104,28 @@ func ConnectToDMManager(ctx context.Context, serviceAddr string, tlsConfig *tls.
 	}
 }
 
-// parseAMTInfo parses the output of the `rpc amtinfo` command and populates the AMTStatusRequest.
-func parseAMTInfo(uuid string, output []byte) *pb.AMTStatusRequest {
-	var (
-		status  = pb.AMTStatus_DISABLED
-		version string
-	)
-
+func parseAMTInfoField(output []byte, parseKey string) (string, bool) {
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if strings.HasPrefix(line, "Version") {
+		if strings.HasPrefix(line, parseKey) {
 			parts := strings.Split(line, ":")
 			if len(parts) > 1 {
-				version = strings.TrimSpace(parts[1])
-				status = pb.AMTStatus_ENABLED
+				return strings.TrimSpace(parts[1]), true
 			}
 		}
 	}
-
-	req := &pb.AMTStatusRequest{
-		HostId:  uuid,
-		Status:  status,
-		Version: version,
-	}
-	return req
+	return "", false
 }
 
 // ReportAMTStatus executes the `rpc amtinfo` command, parses the output, and sends the AMT status to the server.
 func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTStatus, error) {
 	defaultStatus := pb.AMTStatus_DISABLED
-
+	var req *pb.AMTStatusRequest
 	output, err := cli.Executor.ExecuteAMTInfo()
 	if err != nil {
-		req := &pb.AMTStatusRequest{
+		req = &pb.AMTStatusRequest{
 			HostId:  hostID,
 			Status:  defaultStatus,
 			Version: "",
@@ -149,7 +137,14 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 		return defaultStatus, fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)
 	}
 
-	req := parseAMTInfo(hostID, output)
+	value, ok := parseAMTInfoField(output, "Version")
+	if ok {
+		req = &pb.AMTStatusRequest{
+			HostId:  hostID,
+			Status:  pb.AMTStatus_ENABLED,
+			Version: value,
+		}
+	}
 	_, err = cli.DMMgrClient.ReportAMTStatus(ctx, req)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
@@ -186,51 +181,109 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	log.Logger.Debugf("Retrieved activation details: HostID=%s, Operation=%v, ProfileName=%s",
 		resp.HostId, resp.Operation, resp.ProfileName)
 
-	if resp.Operation == pb.OperationType_ACTIVATE {
-		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
-		// TODO:
-		// This is a placeholder, replace with actual logic to fetch the password.
-		// Need to check how to fetch the password from dm-manager, hardcoded for now.
-		password := "P@ssw0rd"
-		output, err := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
-		if err != nil {
-			return fmt.Errorf("failed to execute activation command for host %s: %w, Output: %s",
-				hostID, err, string(output))
-		}
-		log.Logger.Debugf("Activation command output for host %s: %s", hostID, string(output))
-
-		var req *pb.ActivationResultRequest
-		if isProvisioned(string(output)) {
-			req = &pb.ActivationResultRequest{
-				HostId:           hostID,
-				ActivationStatus: pb.ActivationStatus_PROVISIONED,
-			}
-			log.Logger.Infof("Provisioning successful for host: %s", hostID)
-		} else {
-			req = &pb.ActivationResultRequest{
-				HostId:           hostID,
-				ActivationStatus: pb.ActivationStatus_FAILED,
-			}
-			log.Logger.Infof("Provisioning failed for host: %s", hostID)
-		}
-		_, err = cli.DMMgrClient.ReportActivationResults(ctx, req)
-		if err != nil {
-			return fmt.Errorf("failed to report Activation results for host: %s, error: %w", hostID, err)
-		}
-		log.Logger.Debugf("Reported activation results: HostID=%s, ActivationStatus=%v",
-			hostID, req.ActivationStatus)
+	// Skip activation if operation is not ACTIVATE
+	if resp.Operation != pb.OperationType_ACTIVATE {
+		return fmt.Errorf("activation not requested for host %s: %w", hostID, err)
 	}
+
+	// Get AMT info to check RAS Remote Status
+	output, err := cli.Executor.ExecuteAMTInfo()
+	if err != nil {
+		log.Logger.Warnf("Failed to execute AMT info check for host %s: %v", hostID, err)
+		return cli.reportActivationResult(ctx, hostID, pb.ActivationStatus_ACTIVATION_FAILED)
+	}
+
+	rasStatus, ok := parseAMTInfoField(output, "RAS Remote Status")
+	if !ok {
+		log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
+		return cli.reportActivationResult(ctx, hostID, pb.ActivationStatus_ACTIVATION_FAILED)
+	}
+
+	normalizedStatus := strings.ToLower(strings.TrimSpace(rasStatus))
+	log.Logger.Debugf("Current RAS Remote Status for host %s: %s", hostID, rasStatus)
+
+	// Determine activation status based on RAS Remote Status
+	var activationStatus pb.ActivationStatus
+	switch normalizedStatus {
+	case "not connected":
+		// Execute activation command
+		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
+		password := resp.ActionPassword
+		activationOutput, activationErr := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
+		ok := cli.isProvisioned(ctx, string(activationOutput), hostID)
+		if !ok {
+			log.Logger.Errorf("Failed to execute activation command for host %s: %v, Output: %s",
+				hostID, activationErr, string(activationOutput))
+			activationStatus = pb.ActivationStatus_ACTIVATION_FAILED
+		} else {
+			log.Logger.Debugf("Activation command output for host %s: %s", hostID, string(activationOutput))
+			// Check if activation was successful by looking for success indicators in output
+			activationStatus = pb.ActivationStatus_ACTIVATING
+			log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
+		}
+	case "connecting":
+		activationStatus = pb.ActivationStatus_ACTIVATING
+		log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
+	case "connected":
+		activationStatus = pb.ActivationStatus_ACTIVATED
+		log.Logger.Debugf("setting activation status to  %s: %s", activationStatus, hostID)
+	default:
+		log.Logger.Warnf("Unknown RAS Remote Status for host %s: %s", hostID, rasStatus)
+		activationStatus = pb.ActivationStatus_UNSPECIFIED
+		log.Logger.Debugf("setting activation status to  %s: %s", activationStatus, hostID)
+	}
+
+	return cli.reportActivationResult(ctx, hostID, activationStatus)
+}
+
+// reportActivationResult reports the activation result to the DM Manager
+func (cli *Client) reportActivationResult(ctx context.Context, hostID string, status pb.ActivationStatus) error {
+	req := &pb.ActivationResultRequest{
+		HostId:           hostID,
+		ActivationStatus: status,
+	}
+
+	_, err := cli.DMMgrClient.ReportActivationResults(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to report activation results for host %s: %w", hostID, err)
+	}
+
+	log.Logger.Infof("Reported activation results: HostID=%s, ActivationStatus=%v",
+		hostID, req.ActivationStatus)
 	return nil
 }
 
 // isProvisioned checks if the output contains the line indicating provisioning success.
-func isProvisioned(output string) bool {
+func (cli *Client) isProvisioned(ctx context.Context, output string, hostID string) bool {
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, `msg="CIRA: Configured"`) {
+			op := func() error {
+				output_info, err := cli.Executor.ExecuteAMTInfo()
+				if err != nil {
+					log.Logger.Warnf("Failed to execute AMT info check for host %s: %v", hostID, err)
+					return err
+				}
+
+				rasStatus, _ := parseAMTInfoField(output_info, "RAS Remote Status")
+				normalizedStatus := strings.ToLower(strings.TrimSpace(rasStatus))
+				log.Logger.Debugf("Current RAS Remote Status for host %s: %s", hostID, normalizedStatus)
+				if (normalizedStatus != "connecting") && (normalizedStatus != "connected") {
+					log.Logger.Warnf("RAS Remote Status not found in AMT info output for host: %s", hostID)
+					return fmt.Errorf("RAS Remote Status not found retry AMTInfo: %s", hostID)
+				}
+				return nil
+			}
+			err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+			if err != nil {
+				log.Logger.Warnf("Failed to execute AMT info check for host %s: %v", hostID, err)
+				return false
+			}
+			log.Logger.Debugf("is Provisioning passed %s", hostID)
 			return true
 		}
 	}
+	log.Logger.Debugf("is Provisioning failed %s", hostID)
 	return false
 }
