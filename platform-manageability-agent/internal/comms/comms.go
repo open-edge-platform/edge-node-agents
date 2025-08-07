@@ -209,7 +209,8 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
 		password := resp.ActionPassword
 		activationOutput, activationErr := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
-		if activationErr != nil {
+		ok := isProvisioned(string(activationOutput))
+		if activationErr != nil && !ok {
 			log.Logger.Errorf("Failed to execute activation command for host %s: %v, Output: %s",
 				hostID, activationErr, string(activationOutput))
 			activationStatus = pb.ActivationStatus_ACTIVATION_FAILED
@@ -217,14 +218,18 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 			log.Logger.Debugf("Activation command output for host %s: %s", hostID, string(activationOutput))
 			// Check if activation was successful by looking for success indicators in output
 			activationStatus = pb.ActivationStatus_ACTIVATING
+			log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
 		}
 	case "connecting":
 		activationStatus = pb.ActivationStatus_ACTIVATING
+		log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
 	case "connected":
 		activationStatus = pb.ActivationStatus_ACTIVATED
+		log.Logger.Debugf("setting activation status to  %s: %s", activationStatus, hostID)
 	default:
 		log.Logger.Warnf("Unknown RAS Remote Status for host %s: %s", hostID, rasStatus)
 		activationStatus = pb.ActivationStatus_UNSPECIFIED
+		log.Logger.Debugf("setting activation status to  %s: %s", activationStatus, hostID)
 	}
 
 	return cli.reportActivationResult(ctx, hostID, activationStatus)
@@ -242,7 +247,20 @@ func (cli *Client) reportActivationResult(ctx context.Context, hostID string, st
 		return fmt.Errorf("failed to report activation results for host %s: %w", hostID, err)
 	}
 
-	log.Logger.Debugf("Reported activation results: HostID=%s, ActivationStatus=%v",
+	log.Logger.Infof("Reported activation results: HostID=%s, ActivationStatus=%v",
 		hostID, req.ActivationStatus)
 	return nil
+}
+
+// isProvisioned checks if the output contains the line indicating provisioning success.
+func isProvisioned(output string) bool {
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, `msg="CIRA: Configured"`) {
+			time.Sleep(time.Second * 20)
+			return true
+		}
+	}
+	return false
 }
