@@ -62,6 +62,7 @@ The location of the installation scripts will be different depending on whether 
 |:-------------------------------------|:-------------------------------------------------|:------------------------------------------|
 | Installs INBM for Ubuntu  | `inbm/output/install-tc.sh`                      | `inbm/install-tc.sh`                      |
 | Uninstalls INBM for Ubuntu or Debian | `inbm/output/uninstall-tc.sh`                    | `inbm/uninstall-tc.sh`                    |
+| Uninstalls Python version of Turtle Creek if it exists on the host | `inbm/output/uninstall-python-tc.sh | `inbm/uninstall-python-tc.sh` |
 
 #### Install options
 

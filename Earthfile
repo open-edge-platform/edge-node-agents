@@ -204,6 +204,7 @@ package:
     COPY LICENSE dist/inbm/LICENSE
     COPY installer/install-tc.sh dist/inbm/install-tc.sh
     COPY installer/uninstall-tc.sh dist/inbm/uninstall-tc.sh
+    COPY installer/uninstall-python-tc.sh dist/inbm/uninstall-python-tc.sh
     COPY build/intel-inbm.deb dist/inbm/intel-inbm.deb
 
     SAVE ARTIFACT dist/inbm AS LOCAL ./dist/inbm

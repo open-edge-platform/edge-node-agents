@@ -4,6 +4,7 @@ set -eo pipefail
 # Usage:
 #   Run with SSL Certificates (default): sudo ./install-tc.sh
 #   Run without SSL Certificates (dev): sudo ./install-tc.sh dev
+#   Cleanup Python installation only: sudo ./install-tc.sh cleanup
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
@@ -13,6 +14,64 @@ trap_error() {
 }
 
 trap trap_error ERR
+
+# Function to detect if Python-based INBM installation exists
+detect_python_installation() {
+  # Check for Python-based services
+  for service in inbm-configuration inbm-dispatcher inbm-telemetry inbm-diagnostic inbm-cloudadapter; do
+      if systemctl list-unit-files | grep -q "${service}.service" || \
+         systemctl list-units --all | grep -q "${service}.service" || \
+         systemctl status "${service}.service" >/dev/null 2>&1; then
+          return 0  # Found Python installation
+      fi
+  done
+  
+  # Check for Python-based packages
+  for package in inbm-configuration-agent inbm-dispatcher-agent inbm-telemetry-agent inbm-diagnostic-agent inbm-cloudadapter-agent; do
+      if dpkg -l | grep -q "^ii.*${package}" >/dev/null 2>&1; then
+          return 0  # Found Python installation
+      fi
+  done
+  
+  # Check for Python-based executables
+  if [ -x "/usr/bin/inbm-configuration" ] || [ -x "/usr/bin/inbm-dispatcher" ] || \
+     [ -x "/usr/bin/inbm-telemetry" ] || [ -x "/usr/bin/inbm-diagnostic" ] || \
+     [ -x "/usr/bin/inbm-cloudadapter" ]; then
+      return 0  # Found Python installation
+  fi
+  
+  # Check for Python-based configuration directories
+  if [ -d "/etc/intel-manageability/dispatcher" ] || [ -d "/etc/intel-manageability/telemetry" ] || \
+     [ -d "/etc/intel-manageability/configuration" ] || [ -d "/etc/intel-manageability/diagnostic" ] || \
+     [ -d "/etc/intel-manageability/cloudadapter" ]; then
+      return 0  # Found Python installation
+  fi
+  
+  return 1  # No Python installation found
+}
+
+# If cleanup argument is provided, only run cleanup and exit
+if [ "$1" == "cleanup" ]; then
+    if [ "$EUID" -ne 0 ]; then
+        echo "Please run cleanup as root"
+        exit 1
+    fi
+    
+    if detect_python_installation; then
+        echo "Python-based INBM installation detected. Running uninstaller..."
+        if [ -x "$DIR/uninstall-python-tc.sh" ]; then
+            "$DIR/uninstall-python-tc.sh"
+        else
+            echo "Error: uninstall-python-tc.sh not found or not executable"
+            exit 1
+        fi
+    else
+        echo "No Python-based INBM installation detected."
+    fi
+    
+    echo "Cleanup completed. You can now run the installer normally."
+    exit 0
+fi
 
 # Function will print an error and exit with code 1 if a user exists
 # and has a password set.
@@ -95,6 +154,20 @@ if [ "$OS_TYPE" == "Debian" ]; then
   apt-get install -y lxc
 fi
 
+# Check and cleanup previous Python-based installations
+echo "Checking for previous Python-based Turtle Creek installations..."
+if detect_python_installation; then
+    echo "Python-based INBM installation detected. Removing before installing Go-based version..."
+    if [ -x "$DIR/uninstall-python-tc.sh" ]; then
+        "$DIR/uninstall-python-tc.sh"
+        echo "Python-based installation cleanup completed."
+    else
+        echo "Warning: uninstall-python-tc.sh not found. Some Python components may remain."
+    fi
+else
+    echo "No Python-based INBM installation detected."
+fi
+
 if [ "$(findmnt -lo source,target,fstype,label,options,used -t btrfs)" ]; then
 echo "BTRFS filesystem detected. Ensuring snapper is installed to enable Rollback capability..."
 apt-get install -y -f snapper
@@ -159,13 +232,39 @@ fi
 # install INBC
 echo "Will install INBC executable"
 
-if ! dpkg -i intel-inbm*.deb ; then
-  echo "Issue with INBM installation. Will force."
-  apt-get install -f
-  if ! dpkg -i intel-inbm*.deb ; then
-    echo "Failed to install INBM after resolving dependencies."
-    exit 1
-  fi
+# Handle potential file conflicts from old Python installation
+if [ -f /etc/firmware_tool_info.conf ]; then
+    echo "Found existing firmware_tool_info.conf from previous installation. Removing..."
+    rm -f /etc/firmware_tool_info.conf || true
+fi
+
+# Remove any conflicting binaries that should have been removed by uninstaller
+if [ -f /usr/bin/inbc ]; then
+    echo "Found existing /usr/bin/inbc from previous installation. Removing..."
+    rm -f /usr/bin/inbc || true
+fi
+
+# Double-check and forcibly remove any remaining conflicting packages
+echo "Ensuring no conflicting packages remain..."
+dpkg --force-depends --purge inbc-program 2>/dev/null || true
+
+# Set non-interactive mode for dpkg to avoid prompts and force config file replacement
+export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_PRIORITY=critical
+export DEBCONF_NONINTERACTIVE_SEEN=true
+
+# Try installation with most aggressive force options from the start
+if ! dpkg --force-overwrite --force-confnew --force-confdef --force-confmiss --force-depends --force-conflicts -i intel-inbm*.deb ; then
+  echo "Issue with INBM installation. Will force with even more aggressive options."
+  # Use all available force options to handle any conflicts
+  dpkg --force-all -i intel-inbm*.deb || {
+    echo "Force installation failed. Trying dependency resolution..."
+    apt-get install -f -y
+    if ! dpkg --force-all -i intel-inbm*.deb ; then
+      echo "Failed to install INBM after resolving dependencies and forcing all options."
+      exit 1
+    fi
+  }
 else
   echo "INBM Installation Complete"
 fi
