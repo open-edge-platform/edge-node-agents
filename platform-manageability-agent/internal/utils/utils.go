@@ -34,11 +34,12 @@ func ExecuteCommand(command string, args []string) ([]byte, error) {
 func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 	maxRetries := 3
 	retryInterval := 5 * time.Second
+	var output []byte
 
 	var err error
 	for i := 1; i <= maxRetries; i++ {
 		cmd := exec.Command("sudo", "/usr/bin/rpc", "amtinfo")
-		output, err := cmd.Output()
+		output, err = cmd.CombinedOutput()
 		if err == nil {
 			return output, nil
 		}
@@ -47,7 +48,7 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 			time.Sleep(retryInterval)
 		}
 	}
-	return nil, fmt.Errorf("amtInfo command failed after %d retries: %v", maxRetries, err)
+	return output, fmt.Errorf("amtInfo command failed after %d retries: %v", maxRetries, err)
 }
 
 // ExecuteAMTActivate executes the AMT activate command.

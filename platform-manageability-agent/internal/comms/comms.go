@@ -132,6 +132,10 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 		}
 		_, reportErr := cli.DMMgrClient.ReportAMTStatus(ctx, req)
 		if reportErr != nil {
+			if strings.Contains(string(output), "HECIDriverNotDetected") {
+				log.Logger.Warnf("HECIDriver not detected. vPRO is not enabled on host")
+				return defaultStatus, nil
+			}
 			return defaultStatus, fmt.Errorf("failed to report AMTStatus to DM Manager: %w", reportErr)
 		}
 		return defaultStatus, fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)

@@ -27,6 +27,7 @@ type mockDeviceManagementServer struct {
 	pb.UnimplementedDeviceManagementServer
 	operationType             pb.OperationType
 	onReportActivationResults func(context.Context, *pb.ActivationResultRequest) (*pb.ActivationResultResponse, error)
+	reportAMTStatusError      error
 }
 
 type mockCommandExecutor struct {
@@ -46,6 +47,9 @@ func (m *mockCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, passwo
 
 func (m *mockDeviceManagementServer) ReportAMTStatus(ctx context.Context, req *pb.AMTStatusRequest) (*pb.AMTStatusResponse, error) {
 	log.Logger.Infof("Received ReportAMTStatus request: HostID=%s, Status=%v, Version=%s", req.HostId, req.Status, req.Version)
+	if m.reportAMTStatusError != nil {
+		return nil, m.reportAMTStatusError
+	}
 	return &pb.AMTStatusResponse{}, nil
 }
 
@@ -295,6 +299,38 @@ func TestReportAMTStatus_Success(t *testing.T) {
 
 	_, err = client.ReportAMTStatus(context.Background(), "host-id")
 	assert.NoError(t, err, "ReportAMTStatus should succeed")
+}
+
+func TestReportAMTStatus_ErrorMessageInOutput(t *testing.T) {
+	lis, server := runMockServer(&mockDeviceManagementServer{
+		reportAMTStatusError: fmt.Errorf("simulated gRPC error"),
+	})
+	defer func() {
+		server.GracefulStop()
+		lis.Close()
+	}()
+
+	// Simulate amtinfo output containing an error message
+	mockExecutor := &mockCommandExecutor{
+		amtInfoOutput: []byte(`ERRO[0000] AMT not found: MEI/driver is missing or the call to the HECI driver failed
+ERRO[0000] Failed to execute due to access issues. Please ensure that Intel ME is present, the MEI driver is installed, and the runtime has administrator or root privileges.
+ERRO[0000] Error 2: HECIDriverNotDetected
+`),
+		amtInfoError: fmt.Errorf("command failed"),
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig,
+		WithBufconnDialer(lis),
+		WithMockExecutor(mockExecutor),
+	)
+
+	err := client.Connect(context.Background())
+	assert.NoError(t, err, "Client should connect successfully")
+
+	status, err := client.ReportAMTStatus(context.Background(), "host-id")
+	assert.NoError(t, err, "ReportAMTStatus should not return error for error message in output")
+	assert.Equal(t, pb.AMTStatus_DISABLED, status, "AMT should be disabled if output contains error message")
 }
 
 func TestReportAMTStatus_CommandFailure(t *testing.T) {
