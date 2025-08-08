@@ -158,7 +158,7 @@ build-deb:
 
     # Set ownership and permissions for the firmware tool info file
     RUN chown root:root etc/firmware_tool_info.conf
-    RUN chmod 640 etc/firmware_tool_info.conf
+    RUN chmod 644 etc/firmware_tool_info.conf
     
     # Set ownership and permissions for the JWT token file and directory
     RUN chown -R root:root etc/intel_edge_node
@@ -171,9 +171,9 @@ build-deb:
 
     # Set ownership and permissions for the schema files
     RUN chown root:root usr/share/inbd_schema.json
-    RUN chmod 640 usr/share/inbd_schema.json
+    RUN chmod 644 usr/share/inbd_schema.json
     RUN chown root:root usr/share/firmware_tool_config_schema.json
-    RUN chmod 640 usr/share/firmware_tool_config_schema.json
+    RUN chmod 644 usr/share/firmware_tool_config_schema.json
 
     # Copy the postinst script to the DEBIAN directory
     COPY fpm-templates/DEBIAN/postinst DEBIAN/postinst

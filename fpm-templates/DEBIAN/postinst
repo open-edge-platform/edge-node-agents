@@ -12,10 +12,10 @@ fi
 # Create the directories and set permissions
 mkdir -p /var/intel-manageability
 chown root:root /var/intel-manageability
-chmod 750 /var/intel-manageability
+chmod 755 /var/intel-manageability
 
 mkdir -p /var/cache/manageability/repository-tool/sota
-chmod 750 /var/cache/manageability/repository-tool/sota
+chmod 755 /var/cache/manageability/repository-tool/sota
 mkdir -p /var/cache/manageability/repository-tool/sota/metadata
 
 # Load AppArmor profile if AppArmor is available and on Ubuntu
