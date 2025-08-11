@@ -32,6 +32,7 @@ include <tunables/global>
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/platform_2dobservability_2dlogging_2eservice,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/platform_2dobservability_2dmetrics_2eservice,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/platform_2dobservability_2dcollector_2eservice,
+  dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/platform_2dmanageability_2dagent_2eservice,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/inbm_2eservice,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/inbm_2ddispatcher_2eservice,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/inbm_2dconfiguration_2eservice,
