@@ -17,6 +17,7 @@ include <tunables/global>
 
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=GetAll path=/org/freedesktop/hostname1,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=GetAll path=/org/freedesktop/systemd1,
+  dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/caddy_2eservice,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/install_2dprofile_2dpkgs_2dand_2dnode_2dagent_2eservice,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/lpke_2eservice,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=Get path=/org/freedesktop/systemd1/unit/hardware_2ddiscovery_2dagent_2eservice,
