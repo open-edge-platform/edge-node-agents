@@ -204,6 +204,10 @@ func main() {
 			if err != nil {
 				if errors.Is(err, comms.ErrActivationSkipped) {
 					log.Logger.Debugf("AMT activation skipped for host %s - reason: %v", hostID, err)
+					atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix())
+					// FIXME: In future if we set dynamic status of desired_amt_state after onboarding.
+					// we need to revisit this logic.
+					// To report Agent healthy if AMT enabled
 					return nil
 				}
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
