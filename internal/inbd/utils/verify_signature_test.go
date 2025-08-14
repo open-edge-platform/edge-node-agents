@@ -21,6 +21,7 @@ import (
 	"math"
 	"math/big"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -105,29 +106,6 @@ func createTestTarFile(fs afero.Fs, tarPath string, files map[string][]byte) err
 }
 
 // Test cases
-func TestGetFileExtension(t *testing.T) {
-	tests := []struct {
-		filename string
-		expected string
-	}{
-		{"test.txt", "txt"},
-		{"archive.tar.gz", "gz"},
-		{"package.rpm", "rpm"},
-		{"config.conf", "conf"},
-		{"noextension", ""},
-		{"", ""},
-		{".hidden", "hidden"},
-		{"file.with.multiple.dots.bin", "bin"},
-	}
-
-	for _, test := range tests {
-		t.Run(test.filename, func(t *testing.T) {
-			result := getFileExtension(test.filename)
-			assert.Equal(t, test.expected, result)
-		})
-	}
-}
-
 func TestIsValidPackageFile(t *testing.T) {
 	tests := []struct {
 		filename string
@@ -141,11 +119,13 @@ func TestIsValidPackageFile(t *testing.T) {
 		{"binary.bin", true},
 		{"config.conf", true},
 		{"update.mender", true},
-		{"PACKAGE.RPM", true}, // Case insensitive
+		{"intel_manageability.conf", true}, // Exact match
+		{"PACKAGE.RPM", true},              // Case insensitive
 		{"invalid.txt", false},
 		{"malicious.exe", false},
 		{"", false},
 		{"no-extension", false},
+		{"my_intel_manageability.conf", false}, // Should be blocked
 	}
 
 	for _, test := range tests {
@@ -332,6 +312,20 @@ func TestValidateTarFile(t *testing.T) {
 		err = validateTarFile(fs, tarPath)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid file in tarball: 'malicious.exe'. only valid configuration files, PEM certificates, and package files are allowed")
+	})
+
+	t.Run("Path traversal attack", func(t *testing.T) {
+		tarPath := "/tmp/traversal.tar"
+		files := map[string][]byte{
+			"../../../etc/passwd": []byte("hacked"),
+		}
+
+		err := createTestTarFile(fs, tarPath, files)
+		require.NoError(t, err)
+
+		err = validateTarFile(fs, tarPath)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "path traversal detected")
 	})
 }
 
@@ -698,4 +692,229 @@ func TestSignatureGeneration(t *testing.T) {
 
 	_, err = hex.DecodeString(signature2)
 	assert.NoError(t, err, "Signature 2 should be valid hex")
+}
+
+func TestParseHashAlgorithm(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected HashAlgorithm
+	}{
+		{"sha256", SHA256},
+		{"SHA256", SHA256},
+		{"sha512", SHA512},
+		{"SHA512", SHA512},
+		{"sha384", SHA384},
+		{"SHA384", SHA384},
+		{"unknown", SHA384}, // Default
+		{"", SHA384},        // Default
+	}
+
+	for _, test := range tests {
+		t.Run(test.input, func(t *testing.T) {
+			result := ParseHashAlgorithm(test.input)
+			assert.Equal(t, test.expected, *result)
+		})
+	}
+}
+
+func TestIsPEMFile(t *testing.T) {
+	tests := []struct {
+		filename string
+		expected bool
+	}{
+		{"cert.pem", true},
+		{"certificate.crt", true},
+		{"public.cert", true},
+		{"CERT.PEM", true}, // Case insensitive
+		{"config.conf", false},
+		{"package.rpm", false},
+		{"", false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.filename, func(t *testing.T) {
+			result := isPEMFile(test.filename)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestValidateTarFilename(t *testing.T) {
+	tests := []struct {
+		name     string
+		filename string
+		wantErr  bool
+		errMsg   string
+	}{
+		{"valid filename", "config.conf", false, ""},
+		{"empty filename", "", true, "empty filename"},
+		{"null bytes", "bad\x00file.conf", true, "filename contains null bytes"},
+		{"too long filename", strings.Repeat("a", 256) + ".conf", true, "filename too long"},
+		{"carriage return", "bad\rfile.conf", true, "filename contains dangerous character"},
+		{"newline", "bad\nfile.conf", true, "filename contains dangerous character"},
+		{"tab", "bad\tfile.conf", true, "filename contains dangerous character"},
+		{"normal path", "subdir/file.conf", false, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateTarFilename(tt.filename)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateTarPath(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	safeDir := "/safe/dir"
+
+	tests := []struct {
+		name     string
+		filename string
+		wantErr  bool
+		errMsg   string
+	}{
+		{"valid relative path", "config.conf", false, ""},
+		{"valid subdirectory", "subdir/config.conf", false, ""},
+		{"absolute path", "/etc/passwd", true, "absolute paths not allowed"},
+		{"path traversal dots", "../../../etc/passwd", true, "path traversal detected"},
+		{"path traversal mixed", "good/../../../bad", true, "path traversal detected"},
+		{"current directory", "./config.conf", false, ""},
+		{"empty filename", "", false, ""}, // Empty gets cleaned to "."
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateTarPath(fs, tt.filename, safeDir)
+			if tt.wantErr {
+				assert.Error(t, err)
+				if err != nil {
+					assert.Contains(t, err.Error(), tt.errMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateTarFileSize(t *testing.T) {
+	tests := []struct {
+		name    string
+		header  *tar.Header
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			"valid size",
+			&tar.Header{Name: "file.conf", Size: 1024},
+			false, "",
+		},
+		{
+			"negative size",
+			&tar.Header{Name: "file.conf", Size: -1},
+			true, "invalid file size",
+		},
+		{
+			"too large file",
+			&tar.Header{Name: "huge.bin", Size: 200 * 1024 * 1024}, // 200MB
+			true, "file too large",
+		},
+		{
+			"large PEM file",
+			&tar.Header{Name: "huge.pem", Size: 128 * 1024}, // 128KB PEM
+			true, "PEM file too large",
+		},
+		{
+			"valid PEM file",
+			&tar.Header{Name: "cert.pem", Size: 4096}, // 4KB PEM
+			false, "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateTarFileSize(tt.header)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidatePEMContent(t *testing.T) {
+	_, validPEM := generateTestCertAndKey(t)
+
+	// Create a valid PEM structure but with invalid certificate data
+	invalidCertPEM := `-----BEGIN CERTIFICATE-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAinvalidcertificatedata==
+-----END CERTIFICATE-----`
+
+	tests := []struct {
+		name    string
+		content string
+		wantErr bool
+		errMsg  string
+	}{
+		{"valid PEM", string(validPEM), false, ""},
+		{"empty content", "", true, "empty PEM content"},
+		{"invalid PEM structure", "not a pem certificate", true, "failed to decode PEM content"},
+		{"invalid certificate data", invalidCertPEM, true, "failed to parse X.509 certificate"},
+		{"missing BEGIN block", "-----END CERTIFICATE-----\n", true, "failed to decode PEM content"},
+		{"missing END block", "-----BEGIN CERTIFICATE-----\ndata\n", true, "failed to decode PEM content"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validatePEMContent(tt.content)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestReadTarContentWithLimit(t *testing.T) {
+	// Create a tar with content to test reading limits
+	fs := afero.NewMemMapFs()
+
+	t.Run("content within limit", func(t *testing.T) {
+		content := []byte("small content")
+		tarPath := "/tmp/small.tar"
+		files := map[string][]byte{"file.txt": content}
+
+		err := createTestTarFile(fs, tarPath, files)
+		require.NoError(t, err)
+
+		tarFile, err := fs.Open(tarPath)
+		require.NoError(t, err)
+		defer tarFile.Close()
+
+		tarReader := tar.NewReader(tarFile)
+		header, err := tarReader.Next()
+		require.NoError(t, err)
+
+		result, err := readTarContentWithLimit(tarReader, header.Size, 1024)
+		assert.NoError(t, err)
+		assert.Equal(t, content, result)
+	})
+
+	t.Run("declared size exceeds limit", func(t *testing.T) {
+		// Test when declared size is larger than limit
+		var mockReader tar.Reader // Won't actually read, just test validation
+		_, err := readTarContentWithLimit(&mockReader, 2048, 1024)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "declared size 2048 exceeds limit 1024")
+	})
 }

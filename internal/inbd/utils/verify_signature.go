@@ -33,6 +33,13 @@ const (
 	SHA256 HashAlgorithm = 256
 	SHA384 HashAlgorithm = 384
 	SHA512 HashAlgorithm = 512
+	// File size limits to prevent integer overflow and resource exhaustion
+	MaxAllowedFileSize    = 100 * 1024 * 1024 // 100 MB for general files
+	MaxAllowedPEMSize     = 64 * 1024         // 64 KB for PEM certificates
+	MaxAllowedTarSize     = 500 * 1024 * 1024 // 500 MB for entire tar archive
+	MaxAllowedContentSize = 10 * 1024 * 1024  // 10 MB for in-memory content processing
+	MaxFilenameLength     = 255               // Maximum filename length
+	MaxTarEntries         = 1000              // Maximum number of entries in tar
 )
 
 // TarContents holds extracted tar file contents
@@ -58,7 +65,7 @@ func VerifySignature(signature, pathToFile string, hashAlgorithm *HashAlgorithm)
 	}
 
 	// Get file extension
-	extension := getFileExtension(pathToFile)
+	extension := strings.TrimPrefix(filepath.Ext(pathToFile), ".")
 	var certPath string
 
 	// Handle tar files (FOTA/config packages)
@@ -128,6 +135,14 @@ func shouldRequireSignature(fs afero.Fs) bool {
 
 // extractAndValidateTarContents extracts and validates tar contents
 func extractAndValidateTarContents(fs afero.Fs, tarPath string) (*TarContents, error) {
+	if err := isFilePathAbsolute(tarPath); err != nil {
+		return nil, fmt.Errorf("tar path validation failed: invalid path: %w", err)
+	}
+
+	if err := isFilePathSymLink(tarPath); err != nil {
+		return nil, fmt.Errorf("tar path validation failed: path is symlink: %w", err)
+	}
+
 	if !IsFileExist(fs, tarPath) {
 		return nil, fmt.Errorf("tar file does not exist: %s", tarPath)
 	}
@@ -153,12 +168,38 @@ func extractAndValidateTarContents(fs afero.Fs, tarPath string) (*TarContents, e
 			return nil, fmt.Errorf("error reading tar file: %w", err)
 		}
 
-		// Only process regular files
-		if header.Typeflag != tar.TypeReg {
+		// Only process regular files, reject symlinks and hardlinks
+		switch header.Typeflag {
+		case tar.TypeReg:
+			// Regular file - safe to process
+		case tar.TypeSymlink, tar.TypeLink:
+			return nil, fmt.Errorf("tar contains symlink/hardlink: %s", header.Name)
+		case tar.TypeXHeader, tar.TypeXGlobalHeader:
+			// Skip header entries
 			continue
+		default:
+			return nil, fmt.Errorf("tar contains unsupported file type %d: %s", header.Typeflag, header.Name)
 		}
 
 		filename := header.Name
+
+		if err := validateTarFilename(filename); err != nil {
+			return nil, fmt.Errorf("invalid TarFilename '%s': %w", filename, err)
+		}
+
+		// Get safe directory for path validation
+		tarDir := filepath.Dir(tarPath)
+
+		// Validate path to prevent path traversal attacks
+		if err := validateTarPath(fs, filename, tarDir); err != nil {
+			return nil, fmt.Errorf("path traversal detected in '%s': %w", filename, err)
+		}
+
+		// Validate file size
+		if err := validateTarFileSize(header); err != nil {
+			return nil, fmt.Errorf("file too large '%s': %w", filename, err)
+		}
+
 		basename := filepath.Base(filename)
 
 		// Check file types (currently config focused)
@@ -166,7 +207,7 @@ func extractAndValidateTarContents(fs afero.Fs, tarPath string) (*TarContents, e
 		case isPEMFile(basename):
 			if !contents.HasPEM {
 				// Read PEM content
-				pemContent, err := io.ReadAll(tarReader)
+				pemContent, err := readTarContentWithLimit(tarReader, header.Size, 64*1024)
 				if err != nil {
 					return nil, fmt.Errorf("could not read PEM file from tar: %w", err)
 				}
@@ -203,7 +244,7 @@ func extractAndValidateTarContents(fs afero.Fs, tarPath string) (*TarContents, e
 
 // isPEMFile checks if file is a PEM certificate
 func isPEMFile(filename string) bool {
-	ext := strings.ToLower(getFileExtension(filename))
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(filename), "."))
 	return ext == "pem" || ext == "crt" || ext == "cert"
 }
 
@@ -226,17 +267,6 @@ func validatePEMContent(pemContent string) error {
 	return nil
 }
 
-// getFileExtension returns the file extension
-func getFileExtension(filename string) string {
-	if filename == "" {
-		return ""
-	}
-	if idx := strings.LastIndex(filename, "."); idx != -1 {
-		return filename[idx+1:]
-	}
-	return ""
-}
-
 // isValidPackageFile checks if the file is a valid package file
 func isValidPackageFile(filename string) bool {
 	basename := filepath.Base(filename)
@@ -248,7 +278,7 @@ func isValidPackageFile(filename string) bool {
 		return false
 	}
 	validExtensions := []string{"rpm", "deb", "fv", "cap", "bio", "bin", "conf", "mender"}
-	ext := strings.ToLower(getFileExtension(basename))
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(basename), "."))
 	for _, validExt := range validExtensions {
 		if ext == validExt {
 			return true
@@ -395,4 +425,126 @@ func ParseHashAlgorithm(algo string) *HashAlgorithm {
 		a := SHA384
 		return &a
 	}
+}
+
+// validateTarFilename - validates filename safety
+func validateTarFilename(filename string) error {
+	if filename == "" {
+		return fmt.Errorf("empty filename")
+	}
+	if strings.Contains(filename, "\x00") {
+		return fmt.Errorf("filename contains null bytes")
+	}
+	if len(filename) > 255 {
+		return fmt.Errorf("filename too long: %d characters", len(filename))
+	}
+	dangerousChars := []string{"\r", "\n", "\t"}
+	for _, char := range dangerousChars {
+		if strings.Contains(filename, char) {
+			return fmt.Errorf("filename contains dangerous character: %q", char)
+		}
+	}
+	return nil
+}
+
+// validateTarPath checks for path traversal attacks
+func validateTarPath(fs afero.Fs, filename, safeDir string) error {
+	// Clean the path to resolve any . and .. elements
+	cleanPath := filepath.Clean(filename)
+
+	// Check for absolute paths (should be relative)
+	if filepath.IsAbs(cleanPath) {
+		return fmt.Errorf("absolute paths not allowed in tar entries: %s", cleanPath)
+	}
+
+	// Check for path traversal patterns
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path traversal detected: %s", cleanPath)
+	}
+
+	// ensure resolved path would be within safe directory
+	fullPath := filepath.Join(safeDir, cleanPath)
+
+	absFullPath, err := filepath.Abs(fullPath)
+	if err != nil {
+		return fmt.Errorf("could not resolve absolute path: %w", err)
+	}
+
+	absSafeDir, err := filepath.Abs(safeDir)
+	if err != nil {
+		return fmt.Errorf("could not resolve safe directory absolute path: %w", err)
+	}
+
+	// Ensure the resolved path is still within the safe directory
+	if !strings.HasPrefix(absFullPath, absSafeDir+string(filepath.Separator)) && absFullPath != absSafeDir {
+		return fmt.Errorf("path would escape safe directory: %s", filename)
+	}
+
+	return nil
+}
+
+// validateTarFileSize - prevents resource exhaustion
+func validateTarFileSize(header *tar.Header) error {
+	// Prevent negative sizes (potential integer underflow)
+	if header.Size < 0 {
+		return fmt.Errorf("invalid file size: %d (negative sizes not allowed)", header.Size)
+	}
+	// Prevent integer overflow by checking against max int64
+	if header.Size > MaxAllowedFileSize {
+		return fmt.Errorf("file too large: %d bytes (max %d bytes)", header.Size, MaxAllowedFileSize)
+	}
+	// Special limits for PEM files
+	basename := filepath.Base(header.Name)
+	if isPEMFile(basename) && header.Size > MaxAllowedPEMSize {
+		return fmt.Errorf("PEM file too large: %d bytes (max %d bytes)", header.Size, MaxAllowedPEMSize)
+	}
+	return nil
+}
+
+// readTarContentWithLimit - safe content reading with size validation
+func readTarContentWithLimit(reader *tar.Reader, declaredSize int64, maxSize int64) ([]byte, error) {
+	// Validate declared size is within limits
+	if declaredSize < 0 {
+		return nil, fmt.Errorf("invalid declared size: %d (cannot be negative)", declaredSize)
+	}
+
+	// Ensure maxSize is reasonable
+	if maxSize > MaxAllowedContentSize {
+		return nil, fmt.Errorf("max size limit too large: %d bytes (max allowed %d bytes)", maxSize, MaxAllowedContentSize)
+	}
+
+	if declaredSize > maxSize {
+		return nil, fmt.Errorf("declared size %d exceeds limit %d", declaredSize, maxSize)
+	}
+
+	// Prevent overflow in LimitReader calculation
+	readerLimit := maxSize + 1 // Always safe due to prior validation
+	limitedReader := io.LimitReader(reader, readerLimit)
+	content, err := io.ReadAll(limitedReader)
+	if err != nil {
+		return nil, fmt.Errorf("error reading content: %w", err)
+	}
+
+	actualSize := int64(len(content))
+
+	// Verify content length doesn't exceed safe bounds
+	if actualSize > MaxAllowedContentSize {
+		return nil, fmt.Errorf("content size exceeds maximum allowed: %d > %d bytes", actualSize, MaxAllowedContentSize)
+	}
+
+	// Prevent oversized content attacks
+	if actualSize > maxSize {
+		return nil, fmt.Errorf("content exceeds size limit: got %d bytes, max allowed %d bytes", actualSize, maxSize)
+	}
+
+	// Validate actual size matches declared size
+	if actualSize != declaredSize {
+		// This could indicate:
+		// - Corrupt archive
+		// - Malicious content designed to bypass size checks
+		// - Archive manipulation attack
+		return nil, fmt.Errorf("size mismatch: declared size %d but actual size %d (possible corruption or malicious content)", declaredSize, actualSize)
+	}
+
+	return content, nil
 }
