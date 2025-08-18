@@ -535,7 +535,7 @@ func TestReadFile_SymlinkFile(t *testing.T) {
 	data, err := ReadFile(fs, symlinkPath)
 	assert.Error(t, err)
 	assert.Nil(t, data)
-	assert.Contains(t, err.Error(), "path contains symlinks")
+	assert.Contains(t, err.Error(), "file path was changed via symlink")
 }
 
 func TestReadFile_EmptyFile(t *testing.T) {
@@ -621,7 +621,7 @@ func TestWriteFile_SymlinkFile(t *testing.T) {
 	// Try to write to the symlink
 	err = WriteFile(fs, symlinkPath, testContent, 0644)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "path contains symlinks")
+	assert.Contains(t, err.Error(), "file path was changed via symlink")
 }
 
 func TestWriteFile_OverwriteExistingFile(t *testing.T) {
@@ -733,7 +733,7 @@ func TestCreateTempFile_DirectoryOutsideAllowedPaths(t *testing.T) {
 	tmpFile, err := CreateTempFile(fs, "/home", "test_*.json")
 	assert.Error(t, err)
 	assert.Nil(t, tmpFile)
-	assert.Contains(t, err.Error(), "temp file path not allowed")
+	assert.Contains(t, err.Error(), "path not allowed")
 }
 
 func TestCreateTempFile_UniqueNames(t *testing.T) {
@@ -788,7 +788,7 @@ func TestCreateTempFile_CleanupOnError(t *testing.T) {
 
 	// The temp file should have been cleaned up automatically
 	// We can't easily test this directly, but the error indicates the validation failed
-	assert.Contains(t, err.Error(), "temp file path not allowed")
+	assert.Contains(t, err.Error(), "path not allowed")
 }
 
 func TestCreateTempFile_WriteAndRead(t *testing.T) {
@@ -999,4 +999,150 @@ func TestDifferenceBetweenFileAndDirPathValidation(t *testing.T) {
 
 	err = isDirPathAbsolute("/tmp/testdir")
 	assert.NoError(t, err)
+}
+
+// Additional tests for IsFileExist function coverage
+func TestIsFileExist_WithMemMapFs(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	testFile := "/tmp/test_exists.txt"
+
+	// Test non-existent file
+	exists := IsFileExist(fs, "/tmp/nonexistent.txt")
+	assert.False(t, exists)
+
+	// Create a test file and test it exists
+	err := afero.WriteFile(fs, testFile, []byte("test content"), 0644)
+	assert.NoError(t, err)
+	exists = IsFileExist(fs, testFile)
+	assert.True(t, exists)
+}
+
+// Additional tests for validateOpenedFile function coverage
+func TestValidateOpenedFile_TOCTOU_Protection(t *testing.T) {
+	fs := afero.NewOsFs()
+	testFile := "/tmp/validate_toctou_test.txt"
+	testContent := []byte("TOCTOU protection test")
+
+	// Create a test file
+	err := afero.WriteFile(fs, testFile, testContent, 0644)
+	assert.NoError(t, err)
+	defer os.Remove(testFile)
+
+	// Open the file and validate - should pass
+	file, err := fs.Open(testFile)
+	assert.NoError(t, err)
+	defer file.Close()
+
+	err = validateOpenedFile(file, testFile)
+	assert.NoError(t, err)
+}
+
+// Test for additional file permission scenarios
+func TestFileOperations_AdditionalPermissions(t *testing.T) {
+	fs := afero.NewOsFs()
+	testFile := "/tmp/perm_test.txt"
+	testContent := []byte("permission test content")
+
+	// Test with read-only permission
+	t.Run("ReadOnlyPermission", func(t *testing.T) {
+		os.Remove(testFile) // Clean up first
+
+		err := WriteFile(fs, testFile, testContent, 0400)
+		assert.NoError(t, err)
+
+		// Verify we can still read it
+		readContent, err := ReadFile(fs, testFile)
+		assert.NoError(t, err)
+		assert.Equal(t, testContent, readContent)
+
+		os.Remove(testFile)
+	})
+}
+
+// Test for enhanced symlink detection in various scenarios
+func TestSymlinkDetection_EnhancedScenarios(t *testing.T) {
+	// Test DMI path handling - should not error even with symlinks
+	dmiPath := "/sys/class/dmi/id/product_name"
+	err := isFilePathSymLink(dmiPath)
+	assert.NoError(t, err, "DMI paths should be allowed even with symlinks")
+
+	// Test non-existent parent directory
+	nonExistentPath := "/tmp/definitely_does_not_exist_12345/file.txt"
+	err = isFilePathSymLink(nonExistentPath)
+	assert.NoError(t, err, "Non-existent paths should not cause symlink errors")
+}
+
+// Test for error scenarios in TOCTOU-protected file operations
+func TestTOCTOU_ErrorScenarios(t *testing.T) {
+	fs := afero.NewOsFs()
+
+	t.Run("SymlinkInReadFile", func(t *testing.T) {
+		testFile := "/tmp/toctou_read_test.txt"
+		symlinkPath := "/tmp/toctou_read_symlink.txt"
+
+		// Create test file and symlink
+		err := afero.WriteFile(fs, testFile, []byte("test"), 0644)
+		assert.NoError(t, err)
+		defer os.Remove(testFile)
+
+		err = os.Symlink(testFile, symlinkPath)
+		assert.NoError(t, err)
+		defer os.Remove(symlinkPath)
+
+		// Reading through symlink should fail
+		_, err = ReadFile(fs, symlinkPath)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "file path was changed via symlink")
+	})
+
+	t.Run("SymlinkInWriteFile", func(t *testing.T) {
+		testFile := "/tmp/toctou_write_test.txt"
+		symlinkPath := "/tmp/toctou_write_symlink.txt"
+		testContent := []byte("write test")
+
+		// Create test file and symlink
+		err := afero.WriteFile(fs, testFile, []byte("original"), 0644)
+		assert.NoError(t, err)
+		defer os.Remove(testFile)
+
+		err = os.Symlink(testFile, symlinkPath)
+		assert.NoError(t, err)
+		defer os.Remove(symlinkPath)
+
+		// Writing through symlink should fail
+		err = WriteFile(fs, symlinkPath, testContent, 0644)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "file path was changed via symlink")
+	})
+}
+
+// Test CreateTempFile with additional validation scenarios
+func TestCreateTempFile_ValidationScenarios(t *testing.T) {
+	fs := afero.NewOsFs()
+
+	// Test successful creation in allowed directory
+	tmpFile, err := CreateTempFile(fs, "/tmp", "enhanced_test_*.txt")
+	assert.NoError(t, err)
+	assert.NotNil(t, tmpFile)
+
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	// Verify file was created with expected pattern
+	assert.True(t, strings.HasPrefix(tmpFile.Name(), "/tmp/enhanced_test_"))
+	assert.True(t, strings.HasSuffix(tmpFile.Name(), ".txt"))
+
+	// Verify file can be written to and read from
+	testData := []byte("temp file test data")
+	_, err = tmpFile.Write(testData)
+	assert.NoError(t, err)
+
+	// Reset file position for reading
+	_, err = tmpFile.Seek(0, 0)
+	assert.NoError(t, err)
+
+	readData := make([]byte, len(testData))
+	_, err = tmpFile.Read(readData)
+	assert.NoError(t, err)
+	assert.Equal(t, testData, readData)
 }

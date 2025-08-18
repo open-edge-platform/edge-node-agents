@@ -30,6 +30,7 @@ var allowedBaseDirs = []string{
 	"/var/intel-manageability",
 	"/var/log",
 	"/sys/class/dmi/id/",
+	"/sys/devices/virtual/dmi/id/",
 	"/proc",
 }
 
@@ -179,7 +180,11 @@ func isFilePathAbsolute(path string) error {
 			return fmt.Errorf("error checking relative path: %w", err)
 		}
 		// Check if the resolved path is within the base directory
-		if !strings.HasPrefix(relPath, "..") && relPath != "." {
+		// Allow DMI paths to be directly in the base directory (relPath == ".")
+		isDMIPath := strings.HasPrefix(baseDir, "/sys/class/dmi/id/") ||
+			strings.HasPrefix(baseDir, "/sys/devices/virtual/dmi/id/")
+
+		if !strings.HasPrefix(relPath, "..") && (relPath != "." || isDMIPath) {
 			isAllowed = true
 			break
 		}
@@ -223,7 +228,7 @@ func isFilePathSymLink(path string) error {
 	}
 
 	// Allow DMI paths even if they contain symlinks - these are system-controlled and safe
-	if strings.HasPrefix(path, "/sys/class/dmi/id/") {
+	if strings.HasPrefix(path, "/sys/class/dmi/id/") || strings.HasPrefix(path, "/sys/devices/virtual/dmi/id/") {
 		return nil
 	}
 
@@ -260,26 +265,60 @@ func isFilePathSymLink(path string) error {
 	return nil
 }
 
-// ReadFile reads a file at the given path using afero and checks for symlinks and canonical paths.
+// ReadFile reads a file at the given path using afero with TOCTOU protection.
+// It opens the file first, then performs security checks on the file descriptor.
 func ReadFile(fs afero.Fs, filePath string) ([]byte, error) {
 	if err := isFilePathAbsolute(filePath); err != nil {
 		return nil, err
 	}
-	if err := isFilePathSymLink(filePath); err != nil {
+
+	// Open the file first to get a file descriptor
+	file, err := fs.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file: %w", err)
+	}
+	defer file.Close()
+
+	// Perform security checks on the opened file descriptor
+	if err := validateOpenedFile(file, filePath); err != nil {
 		return nil, err
 	}
-	return afero.ReadFile(fs, filePath)
+
+	// Read from the validated file descriptor
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file: %w", err)
+	}
+
+	return data, nil
 }
 
-// WriteFile writes data to a file at the given path using afero and checks for symlinks and canonical paths.
+// WriteFile writes data to a file at the given path using afero with TOCTOU protection.
+// It opens the file first, then performs security checks on the file descriptor.
 func WriteFile(fs afero.Fs, filePath string, data []byte, perm os.FileMode) error {
 	if err := isFilePathAbsolute(filePath); err != nil {
 		return err
 	}
-	if err := isFilePathSymLink(filePath); err != nil {
+
+	// Open/create the file first to get a file descriptor
+	file, err := fs.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		return fmt.Errorf("error opening file for writing: %w", err)
+	}
+	defer file.Close()
+
+	// Perform security checks on the opened file descriptor
+	if err := validateOpenedFile(file, filePath); err != nil {
 		return err
 	}
-	return afero.WriteFile(fs, filePath, data, perm)
+
+	// Write to the validated file descriptor
+	_, err = file.Write(data)
+	if err != nil {
+		return fmt.Errorf("error writing to file: %w", err)
+	}
+
+	return nil
 }
 
 // CreateTempFile creates a temp file, checks for canonical path and symlinks, and returns the file handle.
@@ -317,4 +356,63 @@ func CreateTempFile(fs afero.Fs, dir, pattern string) (*os.File, error) {
 	// Success - disable cleanup since we're returning the file
 	cleanupNeeded = false
 	return tmpFile, nil
+}
+
+// validateOpenedFile performs security checks on an already opened file descriptor
+// to prevent TOCTOU vulnerabilities. It verifies the file is not a symlink and
+// is within allowed directories using the file descriptor's actual path.
+func validateOpenedFile(file afero.File, originalPath string) error {
+	// Get the real path of the opened file descriptor
+	// This works by getting the file info and checking its actual location
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to get file info: %w", err)
+	}
+
+	// For files that support it, get the actual path from the file descriptor
+	if osFile, ok := file.(*os.File); ok {
+		// Get the real path that the file descriptor points to
+		fdPath := fmt.Sprintf("/proc/self/fd/%d", osFile.Fd())
+		realPath, err := os.Readlink(fdPath)
+
+		if err != nil {
+			// Fallback: if we can't read the symlink, use the original path
+			// but still perform the mode check
+			realPath = originalPath
+		}
+
+		// Check if the real path is still within allowed directories
+		if err := isFilePathAbsolute(realPath); err != nil {
+			return fmt.Errorf("opened file is outside allowed directories: %w", err)
+		}
+
+		// Special handling for DMI paths - allow both symlink and real device paths
+		isDMIPath := strings.HasPrefix(originalPath, "/sys/class/dmi/id/") ||
+			strings.HasPrefix(realPath, "/sys/devices/virtual/dmi/id/")
+
+		if !isDMIPath {
+			// Verify the real path matches what we expected (no symlink substitution)
+			absOriginal, err := filepath.Abs(originalPath)
+			if err != nil {
+				return fmt.Errorf("failed to resolve original path: %w", err)
+			}
+
+			absReal, err := filepath.Abs(realPath)
+			if err != nil {
+				return fmt.Errorf("failed to resolve real path: %w", err)
+			}
+
+			if absOriginal != absReal {
+				return fmt.Errorf("file path was changed via symlink: expected %s, got %s", absOriginal, absReal)
+			}
+		}
+	}
+
+	// Check file mode to ensure it's a regular file (not a device, pipe, etc.)
+	mode := fileInfo.Mode()
+	if !mode.IsRegular() {
+		return fmt.Errorf("file is not a regular file: %s (mode: %s)", originalPath, mode)
+	}
+
+	return nil
 }

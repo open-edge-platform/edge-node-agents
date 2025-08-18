@@ -15,6 +15,7 @@ import (
 	"net/http"
 	neturl "net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -22,6 +23,9 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/sys/unix"
 )
+
+// Compiled regex pattern for TLS certificate error detection (case-insensitive)
+var tlsCertErrorPattern = regexp.MustCompile(`(?i)(tls|certificate|handshake|ssl|x509|crypto|verify|signature|algorithm)`)
 
 // GetFreeDiskSpaceInBytes returns the amount of free disk space in bytes for the given path.
 // It uses the unix.Statfs function to retrieve filesystem statistics.
@@ -242,6 +246,8 @@ func CreateSecureHTTPClient(fs afero.Fs, url string) (*http.Client, error) {
 	// Use strict TLS configuration with optional custom CA support
 	tlsConfig := &tls.Config{
 		ServerName: hostname,
+		MinVersion: tls.VersionTLS12, // Enforce minimum TLS 1.2
+		MaxVersion: tls.VersionTLS13, // Prefer TLS 1.3 when available
 	}
 
 	// Check for custom CA certificate file for development scenarios
@@ -319,10 +325,7 @@ func DoSecureHTTPRequest(client *http.Client, req *http.Request, url string) (*h
 
 // isTLSCertificateError checks if the error is specifically a TLS certificate verification error
 func isTLSCertificateError(err error) bool {
-	errStr := err.Error()
-	return strings.Contains(errStr, "tls: failed to verify certificate") ||
-		strings.Contains(errStr, "x509: certificate") ||
-		strings.Contains(errStr, "certificate verify failed")
+	return tlsCertErrorPattern.MatchString(err.Error())
 }
 
 // DiagnoseJWTToken provides diagnostic information about a JWT token without exposing sensitive data
