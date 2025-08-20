@@ -113,6 +113,9 @@
 
 ## Platform Manageability Agent Changelog
 
+### 0.1.7
+- Fix status reporting when vPRO disabled
+
 ### 0.1.6
 - Add fuzz tests
 

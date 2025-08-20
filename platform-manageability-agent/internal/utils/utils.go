@@ -34,11 +34,12 @@ func ExecuteCommand(command string, args []string) ([]byte, error) {
 func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 	maxRetries := 3
 	retryInterval := 5 * time.Second
+	var output []byte
 
 	var err error
 	for i := 1; i <= maxRetries; i++ {
 		cmd := exec.Command("sudo", "/usr/bin/rpc", "amtinfo")
-		output, err := cmd.Output()
+		output, err = cmd.CombinedOutput()
 		if err == nil {
 			return output, nil
 		}
@@ -47,11 +48,13 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 			time.Sleep(retryInterval)
 		}
 	}
-	return nil, fmt.Errorf("amtInfo command failed after %d retries: %v", maxRetries, err)
+	return output, fmt.Errorf("amtInfo command failed after %d retries: %v", maxRetries, err)
 }
 
 // ExecuteAMTActivate executes the AMT activate command.
 func (r *RealCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, password string) ([]byte, error) {
-	cmd := exec.Command("sudo", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-profile", profileName, "-password", password, "-n")
+	cmd := exec.Command("sudo", "-E", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-n")
+	cmd.Env = append(cmd.Environ(), fmt.Sprintf("AMT_PASSWORD=%s", password))
+	cmd.Env = append(cmd.Environ(), fmt.Sprintf("PROFILE=%s", profileName))
 	return cmd.CombinedOutput()
 }
