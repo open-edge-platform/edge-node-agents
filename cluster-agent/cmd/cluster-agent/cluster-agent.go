@@ -41,7 +41,7 @@ func main() {
 		fmt.Printf("%v v%v\n", info.Component, info.Version)
 		os.Exit(0)
 	}
-	log.Infof("Starting Cluster Agent. Args: %v\n", os.Args[1:])
+	log.Infof("Test Starting Cluster Agent. Args: %v\n", os.Args[1:])
 
 	ctx, cancel := context.WithCancel(context.Background())
 

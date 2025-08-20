@@ -53,7 +53,7 @@ func init() {
 
 func main() {
 	log.Infof("Args: %v\n", os.Args[1:])
-	log.Infof("Starting %s - %s\n", info.Component, info.Version)
+	log.Infof("Test Starting %s - %s\n", info.Component, info.Version)
 
 	flag.Parse()
 	configPath := flag.Lookup("config").Value.String()
