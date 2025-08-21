@@ -202,6 +202,8 @@ build-deb:
 package:
     RUN mkdir -p dist/inbm
     COPY LICENSE dist/inbm/LICENSE
+    COPY retain-3rd-party-notices dist/inbm/retain-3rd-party-notices
+    COPY third-party-programs.txt dist/inbm/third-party-programs.txt
     COPY installer/install-tc.sh dist/inbm/install-tc.sh
     COPY installer/uninstall-tc.sh dist/inbm/uninstall-tc.sh
     COPY installer/uninstall-python-tc.sh dist/inbm/uninstall-python-tc.sh

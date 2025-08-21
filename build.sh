@@ -8,8 +8,10 @@ cat >"$DIR"/dist/README.txt <<EOF
 Build output files
 ==================
 
-inbm/install-tc.sh             Installs inbm for Ubuntu
-inbm/uninstall-tc.sh           Uninstalls inbm for Ubuntu
-inbm/intel-inbm.deb            Intel In-Band Manageability package
-inbm/LICENSE                   INBM license
+inbm/install-tc.sh              Installs inbm for Ubuntu
+inbm/uninstall-tc.sh            Uninstalls inbm for Ubuntu
+inbm/intel-inbm.deb             Intel In-Band Manageability package
+inbm/LICENSE                    INBM license
+inbm/retain-3rd-party-notices   Retained 3rd party notices
+inbm/third-party-programs.txt   3rd party licenses and notices
 EOF
