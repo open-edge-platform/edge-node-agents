@@ -33,6 +33,15 @@ build:
     BUILD +generate-proto
     BUILD +build-inbc
     BUILD +build-inbd
+    BUILD +copy-licenses
+
+copy-licenses:
+    COPY retain-3rd-party-notices ./build/retain-3rd-party-notices
+    COPY third-party-programs.txt ./build/third-party-programs.txt
+    COPY LICENSE ./build/LICENSE
+    SAVE ARTIFACT ./build/retain-3rd-party-notices AS LOCAL ./build/retain-3rd-party-notices
+    SAVE ARTIFACT ./build/third-party-programs.txt AS LOCAL ./build/third-party-programs.txt
+    SAVE ARTIFACT ./build/LICENSE AS LOCAL ./build/LICENSE
 
 golang-base:
     # Force fresh installation without cache
