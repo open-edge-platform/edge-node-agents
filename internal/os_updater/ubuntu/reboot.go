@@ -9,6 +9,7 @@ package ubuntu
 import (
 	"log"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 )
@@ -16,7 +17,7 @@ import (
 // Rebooter is the concrete implementation of the Updater interface
 // for the Ubuntu OS.
 type Rebooter struct {
-	CommandExecutor utils.Executor
+	CommandExecutor common.Executor
 	Request         *pb.UpdateSystemSoftwareRequest
 }
 

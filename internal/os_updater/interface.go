@@ -9,6 +9,7 @@ package osupdater
 import (
 	"fmt"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	emt "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/emt"
 	ubuntu "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu"
@@ -19,10 +20,10 @@ import (
 // UpdaterFactory is an interface that contains the methods to create the concrete classes for the OS updater.
 type UpdaterFactory interface {
 	CreateDownloader(*pb.UpdateSystemSoftwareRequest) Downloader
-	CreateUpdater(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater
-	CreateSnapshotter(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter
-	CreateCleaner(utils.Executor, string) Cleaner
-	CreateRebooter(utils.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter
+	CreateUpdater(common.Executor, *pb.UpdateSystemSoftwareRequest) Updater
+	CreateSnapshotter(common.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter
+	CreateCleaner(common.Executor, string) Cleaner
+	CreateRebooter(common.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter
 }
 
 // GetOSUpdaterFactory returns the correct concrete classes for the OS updater based on the OS type.
@@ -45,22 +46,22 @@ func (f *EMTFactory) CreateDownloader(req *pb.UpdateSystemSoftwareRequest) Downl
 }
 
 // CreateUpdater creates an OS updater concrete class for EMT OS.
-func (f *EMTFactory) CreateUpdater(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Updater {
+func (f *EMTFactory) CreateUpdater(commandExecutor common.Executor, req *pb.UpdateSystemSoftwareRequest) Updater {
 	return emt.NewUpdater(commandExecutor, req)
 }
 
 // CreateSnapshotter creates a snapshotter concrete class for EMT OS.
-func (f *EMTFactory) CreateSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
+func (f *EMTFactory) CreateSnapshotter(commandExecutor common.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
 	return emt.NewSnapshotter(commandExecutor, req)
 }
 
 // CreateCleaner creates a cleaner concrete class for EMT OS.
-func (f *EMTFactory) CreateCleaner(commandExecutor utils.Executor, path string) Cleaner {
+func (f *EMTFactory) CreateCleaner(commandExecutor common.Executor, path string) Cleaner {
 	return emt.NewCleaner(commandExecutor, path)
 }
 
 // CreateRebooter creates a rebooter concrete class for EMT OS.
-func (f *EMTFactory) CreateRebooter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
+func (f *EMTFactory) CreateRebooter(commandExecutor common.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
 	return emt.NewRebooter(commandExecutor, req)
 }
 
@@ -73,7 +74,7 @@ func (f *UbuntuFactory) CreateDownloader(req *pb.UpdateSystemSoftwareRequest) Do
 }
 
 // CreateUpdater creates an OS updater concrete class for Ubuntu OS.
-func (f *UbuntuFactory) CreateUpdater(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Updater {
+func (f *UbuntuFactory) CreateUpdater(commandExecutor common.Executor, req *pb.UpdateSystemSoftwareRequest) Updater {
 	return &ubuntu.Updater{
 		CommandExecutor:         commandExecutor,
 		Request:                 req,
@@ -83,7 +84,7 @@ func (f *UbuntuFactory) CreateUpdater(commandExecutor utils.Executor, req *pb.Up
 }
 
 // CreateSnapshotter creates a snapshotter concrete class for Ubuntu OS.
-func (f *UbuntuFactory) CreateSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
+func (f *UbuntuFactory) CreateSnapshotter(commandExecutor common.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
 	return &ubuntu.Snapshotter{
 		CommandExecutor:         commandExecutor,
 		IsBTRFSFileSystemFunc:   utils.IsBTRFSFileSystem,
@@ -96,7 +97,7 @@ func (f *UbuntuFactory) CreateSnapshotter(commandExecutor utils.Executor, req *p
 }
 
 // CreateCleaner creates a cleaner concrete class for Ubuntu OS.
-func (f *UbuntuFactory) CreateCleaner(commandExecutor utils.Executor, path string) Cleaner {
+func (f *UbuntuFactory) CreateCleaner(commandExecutor common.Executor, path string) Cleaner {
 	return &ubuntu.Cleaner{
 		CommandExecutor: commandExecutor,
 		Path:            path,
@@ -104,7 +105,7 @@ func (f *UbuntuFactory) CreateCleaner(commandExecutor utils.Executor, path strin
 }
 
 // CreateRebooter creates a rebooter concrete class for Ubuntu OS.
-func (f *UbuntuFactory) CreateRebooter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
+func (f *UbuntuFactory) CreateRebooter(commandExecutor common.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
 	return &ubuntu.Rebooter{
 		CommandExecutor: commandExecutor,
 		Request:         req,

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/sys/unix"
 )
 
-// MockExecutor is a mock implementation of utils.Executor
+// MockExecutor is a mock implementation of common.Executor
 type MockExecutor struct {
 	mock.Mock
 }
@@ -44,13 +44,13 @@ func TestSnapshot_Success(t *testing.T) {
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
 		},
-		IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
 			return true, nil
 		},
-		EnsureSnapperConfigFunc: func(cmdExecutor utils.Executor, configName string) error {
+		EnsureSnapperConfigFunc: func(cmdExecutor common.Executor, configName string) error {
 			return nil
 		},
-		ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+		ClearStateFileFunc: func(cmdExecutor common.Executor, stateFilePath string) error {
 			return nil
 		},
 		WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
@@ -91,7 +91,7 @@ func TestSnapshot_SnapperNotInstalled(t *testing.T) {
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
 		},
-		IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
 			return false, nil
 		},
 	}
@@ -119,13 +119,13 @@ func TestSnapshot_SnapshotIDNotValidInteger(t *testing.T) {
 	snapshotter := Snapshotter{
 		CommandExecutor:       mockExecutor,
 		IsBTRFSFileSystemFunc: isBtrfsFunc,
-		IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
 			return true, nil
 		},
-		ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+		ClearStateFileFunc: func(cmdExecutor common.Executor, stateFilePath string) error {
 			return nil
 		},
-		EnsureSnapperConfigFunc: func(cmdExecutor utils.Executor, configName string) error {
+		EnsureSnapperConfigFunc: func(cmdExecutor common.Executor, configName string) error {
 			return nil
 		},
 		WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
@@ -154,10 +154,10 @@ func TestSnapshot_ClearStateFileError(t *testing.T) {
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
 		},
-		IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
 			return true, nil
 		},
-		ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+		ClearStateFileFunc: func(cmdExecutor common.Executor, stateFilePath string) error {
 			return fmt.Errorf("mock clear state file error")
 		},
 		Fs: afero.NewMemMapFs(),
@@ -184,13 +184,13 @@ func TestSnapshot_EnsureSnapperConfigError(t *testing.T) {
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
 		},
-		IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
 			return true, nil
 		},
-		ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+		ClearStateFileFunc: func(cmdExecutor common.Executor, stateFilePath string) error {
 			return nil
 		},
-		EnsureSnapperConfigFunc: func(cmdExecutor utils.Executor, configName string) error {
+		EnsureSnapperConfigFunc: func(cmdExecutor common.Executor, configName string) error {
 			return fmt.Errorf("mock ensure snapper config error")
 		},
 		Fs: afero.NewMemMapFs(),
@@ -428,13 +428,13 @@ func TestSnapshot_WriteToStateFileError(t *testing.T) {
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
 		},
-		IsSnapperInstalledFunc: func(cmdExecutor utils.Executor) (bool, error) {
+		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
 			return true, nil
 		},
-		EnsureSnapperConfigFunc: func(cmdExecutor utils.Executor, configName string) error {
+		EnsureSnapperConfigFunc: func(cmdExecutor common.Executor, configName string) error {
 			return nil
 		},
-		ClearStateFileFunc: func(cmdExecutor utils.Executor, stateFilePath string) error {
+		ClearStateFileFunc: func(cmdExecutor common.Executor, stateFilePath string) error {
 			return nil
 		},
 		WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {

@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Package utils provides utility functions.
-package utils
+// Package common provides utilities used by multiple packages
+package common
 
 import (
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 )
 
@@ -30,7 +31,29 @@ type executor[C any] struct {
 	commandExecutor         func(*C) ([]byte, []byte, error)
 }
 
+var allowedCommands = []string{
+	RebootCmd,
+	ShutdownCmd,
+	TruncateCmd,
+	OsUpdateToolCmd,
+	GPGCmd,
+	IPCmd,
+	SnapperCmd,
+	AptGetCmd,
+	DpkgCmd,
+}
+
+func isAllowedCommand(cmd string) bool {
+	return slices.Contains(allowedCommands, cmd)
+}
+
 func (i *executor[C]) Execute(args []string) ([]byte, []byte, error) {
+	if len(args) == 0 {
+		return nil, nil, fmt.Errorf("command '' is not allowed")
+	}
+	if !isAllowedCommand(args[0]) {
+		return nil, nil, fmt.Errorf("command '%s' is not allowed", args[0])
+	}
 	executableCommand := i.createExecutableCommand(args[0], args[1:]...)
 	return i.commandExecutor(executableCommand)
 }

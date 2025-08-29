@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -16,16 +17,16 @@ func newTestVerifier(
 	return &Verifier{
 		CommandExecutor: &mockExecutor{},
 		fs:              afero.NewMemMapFs(),
-		CheckNetworkConnectionFunc: func(_ utils.Executor) bool {
+		CheckNetworkConnectionFunc: func(_ common.Executor) bool {
 			return networkOK
 		},
-		UndoChangeFunc: func(_ utils.Executor, _ int) error {
+		UndoChangeFunc: func(_ common.Executor, _ int) error {
 			return undoErr
 		},
-		DeleteSnapshotFunc: func(_ utils.Executor, _ int) error {
+		DeleteSnapshotFunc: func(_ common.Executor, _ int) error {
 			return deleteSnapErr
 		},
-		rebootSystemFunc: func(_ utils.Executor) error {
+		rebootSystemFunc: func(_ common.Executor) error {
 			return rebootErr
 		},
 		RemoveFileFunc: func(_ afero.Fs, _ string) error {

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
@@ -31,7 +32,7 @@ func TestAdd(t *testing.T) {
 				openFileFunc: func(fs afero.Fs, name string, flag int, perm os.FileMode) (afero.File, error) {
 					return fs.OpenFile(name, flag, perm)
 				},
-				loadConfigFunc: func(fs afero.Fs, path string) (*utils.Configurations, error) {
+				loadConfigFunc: func(afero.Fs, string) (*utils.Configurations, error) {
 					return &utils.Configurations{
 						OSUpdater: struct {
 							TrustedRepositories    []string `json:"trustedRepositories"`
@@ -44,10 +45,10 @@ func TestAdd(t *testing.T) {
 						},
 					}, nil
 				},
-				isTrustedRepoFunc: func(uri string, config *utils.Configurations) bool {
+				isTrustedRepoFunc: func(string, *utils.Configurations) bool {
 					return true
 				},
-				addGpgKeyFunc: func(uri, name string, requestCreator func(string, string, io.Reader) (*http.Request, error), client *http.Client, executor utils.Executor) error {
+				addGpgKeyFunc: func(string, string, func(string, string, io.Reader) (*http.Request, error), *http.Client, common.Executor) error {
 					return nil
 				},
 				fs: fs,
@@ -64,7 +65,7 @@ func TestAdd(t *testing.T) {
 		{
 			name: "ConfigurationLoadFailure",
 			adder: &Adder{
-				loadConfigFunc: func(fs afero.Fs, path string) (*utils.Configurations, error) {
+				loadConfigFunc: func(afero.Fs, string) (*utils.Configurations, error) {
 					return nil, os.ErrNotExist
 				},
 				fs: fs,
@@ -80,7 +81,7 @@ func TestAdd(t *testing.T) {
 		{
 			name: "GpgKeyVerificationFailure",
 			adder: &Adder{
-				loadConfigFunc: func(fs afero.Fs, path string) (*utils.Configurations, error) {
+				loadConfigFunc: func(afero.Fs, string) (*utils.Configurations, error) {
 					return &utils.Configurations{
 						OSUpdater: struct {
 							TrustedRepositories    []string `json:"trustedRepositories"`
@@ -93,7 +94,7 @@ func TestAdd(t *testing.T) {
 						},
 					}, nil
 				},
-				isTrustedRepoFunc: func(uri string, config *utils.Configurations) bool {
+				isTrustedRepoFunc: func(string, *utils.Configurations) bool {
 					return false
 				},
 				fs: fs,
@@ -109,7 +110,7 @@ func TestAdd(t *testing.T) {
 		{
 			name: "GpgKeyAdditionFailure",
 			adder: &Adder{
-				loadConfigFunc: func(fs afero.Fs, path string) (*utils.Configurations, error) {
+				loadConfigFunc: func(afero.Fs, string) (*utils.Configurations, error) {
 					return &utils.Configurations{
 						OSUpdater: struct {
 							TrustedRepositories    []string `json:"trustedRepositories"`
@@ -122,10 +123,10 @@ func TestAdd(t *testing.T) {
 						},
 					}, nil
 				},
-				isTrustedRepoFunc: func(uri string, config *utils.Configurations) bool {
+				isTrustedRepoFunc: func(string, *utils.Configurations) bool {
 					return true
 				},
-				addGpgKeyFunc: func(uri, name string, requestCreator func(string, string, io.Reader) (*http.Request, error), client *http.Client, executor utils.Executor) error {
+				addGpgKeyFunc: func(string, string, func(string, string, io.Reader) (*http.Request, error), *http.Client, common.Executor) error {
 					return os.ErrPermission
 				},
 				fs: fs,
@@ -157,10 +158,10 @@ func TestAdd(t *testing.T) {
 						},
 					}, nil
 				},
-				isTrustedRepoFunc: func(uri string, config *utils.Configurations) bool {
+				isTrustedRepoFunc: func(string, *utils.Configurations) bool {
 					return true
 				},
-				addGpgKeyFunc: func(uri, name string, requestCreator func(string, string, io.Reader) (*http.Request, error), client *http.Client, executor utils.Executor) error {
+				addGpgKeyFunc: func(string, string, func(string, string, io.Reader) (*http.Request, error), *http.Client, common.Executor) error {
 					return nil
 				},
 				fs: fs,

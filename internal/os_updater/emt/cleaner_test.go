@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +31,7 @@ func TestClean_Success(t *testing.T) {
 	_ = os.WriteFile(file1, []byte("test"), fs.ModePerm)
 	_ = os.WriteFile(file2, []byte("test"), fs.ModePerm)
 
-	cleaner := NewCleaner(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), tempDir)
+	cleaner := NewCleaner(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), tempDir)
 
 	err := cleaner.Clean()
 	assert.NoError(t, err)
@@ -46,7 +46,7 @@ func TestClean_Success(t *testing.T) {
 func TestClean_NonExistentPath(t *testing.T) {
 	nonExistentPath := "nonexistent/path"
 
-	cleaner := NewCleaner(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), nonExistentPath)
+	cleaner := NewCleaner(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), nonExistentPath)
 
 	err := cleaner.Clean()
 	assert.Error(t, err)

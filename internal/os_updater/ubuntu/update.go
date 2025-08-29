@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"golang.org/x/sys/unix"
 )
@@ -22,9 +22,9 @@ import (
 // Updater is the concrete implementation of the Updater interface
 // for the Ubuntu OS.
 type Updater struct {
-	CommandExecutor         utils.Executor
+	CommandExecutor         common.Executor
 	Request                 *pb.UpdateSystemSoftwareRequest
-	GetEstimatedSize        func(cmdExec utils.Executor) (bool, uint64, error)
+	GetEstimatedSize        func(cmdExec common.Executor) (bool, uint64, error)
 	GetFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
 }
 
@@ -89,8 +89,8 @@ func (u *Updater) Update() (bool, error) {
 
 // GetEstimatedSize returns the estimated size of the update
 // and whether an update is available.
-func GetEstimatedSize(cmdExec utils.Executor) (bool, uint64, error) {
-	cmd := []string{"/usr/bin/apt-get", "-o", "Dpkg::Options::='--force-confdef'", "-o",
+func GetEstimatedSize(cmdExec common.Executor) (bool, uint64, error) {
+	cmd := []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o",
 		"Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}
 
 	// Ignore the error as the command will return a non-zero exit code
@@ -133,7 +133,7 @@ const noUpdateAvailable = "0 upgraded, 0 newly installed, 0 to remove"
 func getEstimatedSizeInBytesFromAptGetUpgrade(upgradeOutput string) (bool, uint64, error) {
 	log.Printf("Apt-get upgrade output: %s", upgradeOutput)
 	var outputLines []string
-	for _, line := range strings.Split(upgradeOutput, "\n") {
+	for line := range strings.SplitSeq(upgradeOutput, "\n") {
 		if strings.Contains(line, "After this operation,") {
 			outputLines = append(outputLines, line)
 		} else if strings.Contains(line, noUpdateAvailable) {
@@ -154,7 +154,7 @@ func getEstimatedSizeInBytesFromAptGetUpgrade(upgradeOutput string) (bool, uint6
 	freedOrUsed := matches[5]
 
 	if freedOrUsed == "used" {
-		sizeString := strings.Replace(matches[1], ",", "", -1)
+		sizeString := strings.ReplaceAll(matches[1], ",", "", )
 		return true, sizeToBytes(sizeString, matches[4]), nil
 	}
 
@@ -165,18 +165,18 @@ func getEstimatedSizeInBytesFromAptGetUpgrade(upgradeOutput string) (bool, uint6
 func noDownload(packages []string) [][]string {
 	log.Println("No download mode")
 	cmds := [][]string{
-		{"dpkg", "--configure", "-a", "--force-confdef", "--force-confold"},
-		{"apt-get", "-o", "Dpkg::Options::=--force-confdef", "-o",
+		{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
+		{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold", "-yq", "-f", "install"},
 	}
 
 	if len(packages) == 0 {
-		cmds = append(cmds, []string{"apt-get", "-o",
+		cmds = append(cmds, []string{common.AptGetCmd, "-o",
 			"Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold",
 			"--with-new-pkgs", "--fix-missing", "-yq", "upgrade"})
 	} else {
-		cmds = append(cmds, [][]string{append([]string{"apt-get", "-o",
+		cmds = append(cmds, [][]string{append([]string{common.AptGetCmd, "-o",
 			"Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold",
 			"--fix-missing", "-yq",
@@ -190,18 +190,18 @@ func downloadOnly(packages []string) [][]string {
 	log.Println("Download only mode")
 
 	cmds := [][]string{
-		{"dpkg", "--configure", "-a", "--force-confdef", "--force-confold"},
-		{"apt-get", "update"},
+		{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
+		{common.AptGetCmd, "update"},
 	}
 
 	if len(packages) == 0 {
-		cmds = append(cmds, []string{"apt-get", "-o",
+		cmds = append(cmds, []string{common.AptGetCmd, "-o",
 			"Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold",
 			"--with-new-pkgs", "--download-only",
 			"--fix-missing", "-yq", "upgrade"})
 	} else {
-		cmds = append(cmds, [][]string{append([]string{"apt-get", "-o",
+		cmds = append(cmds, [][]string{append([]string{common.AptGetCmd, "-o",
 			"Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold", "--download-only",
 			"--fix-missing", "-yq", "install"}, packages...)}...)
@@ -214,15 +214,15 @@ func fullInstall(packages []string) [][]string {
 	log.Println("Download and install mode")
 
 	cmds := [][]string{
-		{"/usr/bin/apt-get", "update"},
-		{"apt-get", "-yq", "-f", "install"}, // Fix broken dependencies
-		{"dpkg", "--configure", "-a", "--force-confdef", "--force-confold"},
+		{common.AptGetCmd, "update"},
+		{common.AptGetCmd, "-yq", "-f", "install"}, // Fix broken dependencies
+		{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
 	}
 
 	if len(packages) == 0 {
-		cmds = append(cmds, []string{"apt-get", "-yq", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "upgrade"})
+		cmds = append(cmds, []string{common.AptGetCmd, "-yq", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "upgrade"})
 	} else {
-		cmds = append(cmds, []string{"apt-get", "-yq", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "install"})
+		cmds = append(cmds, []string{common.AptGetCmd, "-yq", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "install"})
 		cmds = append(cmds, packages)
 	}
 

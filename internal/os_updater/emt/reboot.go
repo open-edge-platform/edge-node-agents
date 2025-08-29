@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
@@ -20,7 +21,7 @@ import (
 // Rebooter is the concrete implementation of the IUpdater interface
 // for the EMT OS.
 type Rebooter struct {
-	commandExecutor   utils.Executor
+	commandExecutor   common.Executor
 	request           *pb.UpdateSystemSoftwareRequest
 	writeUpdateStatus func(afero.Fs, string, string, string)
 	writeGranularLog  func(afero.Fs, string, string)
@@ -28,7 +29,7 @@ type Rebooter struct {
 }
 
 // NewRebooter creates a new EMTRebooter.
-func NewRebooter(commandExecutor utils.Executor, request *pb.UpdateSystemSoftwareRequest) *Rebooter {
+func NewRebooter(commandExecutor common.Executor, request *pb.UpdateSystemSoftwareRequest) *Rebooter {
 	return &Rebooter{
 		commandExecutor:   commandExecutor,
 		request:           request,
@@ -51,7 +52,7 @@ func (t *Rebooter) Reboot() error {
 	if err = utils.RebootSystem(t.commandExecutor); err != nil {
 		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), err.Error())
 		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_UNSPECIFIED)
-		return fmt.Errorf("failed to execute shell command(%v)- %v", utils.RebootCmd, err)
+		return fmt.Errorf("failed to execute shell command(%v)- %v", common.RebootCmd, err)
 	}
 	return nil
 }

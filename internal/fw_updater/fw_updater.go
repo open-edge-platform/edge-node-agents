@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	telemetry "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
@@ -175,7 +176,7 @@ func (u *FWUpdater) UpdateFirmware() (*pb.UpdateResponse, error) {
 	// Check if reboot is requested
 	if !u.req.DoNotReboot {
 		log.Println("Firmware update completed successfully. Rebooting system...")
-		executor := utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput)
+		executor := common.NewExecutor(exec.Command, common.ExecuteAndReadOutput)
 		if err := utils.RebootSystem(executor); err != nil {
 			log.Printf("Warning: Failed to reboot system: %v", err)
 			// Don't return error here as firmware update was successful

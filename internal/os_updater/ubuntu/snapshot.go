@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	"github.com/spf13/afero"
 	"golang.org/x/sys/unix"
@@ -22,11 +23,11 @@ import (
 // Snapshotter is the concrete implementation of the Updater interface
 // for the Ubuntu OS.
 type Snapshotter struct {
-	CommandExecutor         utils.Executor
+	CommandExecutor         common.Executor
 	IsBTRFSFileSystemFunc   func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error)
-	IsSnapperInstalledFunc  func(cmdExecutor utils.Executor) (bool, error)
-	EnsureSnapperConfigFunc func(cmdExecutor utils.Executor, configName string) error
-	ClearStateFileFunc      func(cmdExecutor utils.Executor, stateFilePath string) error
+	IsSnapperInstalledFunc  func(cmdExecutor common.Executor) (bool, error)
+	EnsureSnapperConfigFunc func(cmdExecutor common.Executor, configName string) error
+	ClearStateFileFunc      func(cmdExecutor common.Executor, stateFilePath string) error
 	WriteToStateFileFunc    func(fs afero.Fs, stateFilePath string, content string) error
 	Fs                      afero.Fs
 }
@@ -61,7 +62,7 @@ func (u *Snapshotter) Snapshot() error {
 
 		// Create a snapshot using snapper
 		snapshotCmd := []string{
-			"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update",
+			common.SnapperCmd, "-c", "rootConfig", "create", "-p", "--description", "sota_update",
 		}
 		stdout, stderr, err := u.CommandExecutor.Execute(snapshotCmd)
 		if err != nil {
@@ -108,7 +109,7 @@ func (u *Snapshotter) Snapshot() error {
 }
 
 // UndoChange reverts the changes made after the snapshot version.
-func UndoChange(cmdExecutor utils.Executor, snapshotNumber int) error {
+func UndoChange(cmdExecutor common.Executor, snapshotNumber int) error {
 	log.Println("Undoing changes made after the snapshot version.")
 
 	if snapshotNumber == 0 {
@@ -118,7 +119,7 @@ func UndoChange(cmdExecutor utils.Executor, snapshotNumber int) error {
 
 	undoChangeRange := strconv.Itoa(snapshotNumber) + "..0"
 	revertCmd := []string{
-		"snapper", "-c", "rootConfig", "undochange", undoChangeRange,
+		common.SnapperCmd, "-c", "rootConfig", "undochange", undoChangeRange,
 	}
 	stdout, stderr, err := cmdExecutor.Execute(revertCmd)
 	if err != nil {
@@ -133,7 +134,7 @@ func UndoChange(cmdExecutor utils.Executor, snapshotNumber int) error {
 }
 
 // DeleteSnapshot deletes a snapshot version
-func DeleteSnapshot(cmdExecutor utils.Executor, snapshotNumber int) error {
+func DeleteSnapshot(cmdExecutor common.Executor, snapshotNumber int) error {
 	log.Println("Deleting the snapshot version.")
 
 	if snapshotNumber == 0 {
@@ -142,7 +143,7 @@ func DeleteSnapshot(cmdExecutor utils.Executor, snapshotNumber int) error {
 	}
 
 	deleteCmd := []string{
-		"snapper", "-c", "rootConfig", "delete", strconv.Itoa(snapshotNumber),
+		common.SnapperCmd, "-c", "rootConfig", "delete", strconv.Itoa(snapshotNumber),
 	}
 	stdout, stderr, err := cmdExecutor.Execute(deleteCmd)
 	if err != nil {
@@ -157,8 +158,8 @@ func DeleteSnapshot(cmdExecutor utils.Executor, snapshotNumber int) error {
 }
 
 // IsSnapperInstalled checks if the snapper package is installed on the system.
-func IsSnapperInstalled(cmdExecutor utils.Executor) (bool, error) {
-	checkSnapperCmd := []string{"snapper", "--version"}
+func IsSnapperInstalled(cmdExecutor common.Executor) (bool, error) {
+	checkSnapperCmd := []string{common.SnapperCmd, "--version"}
 	stdout, _, err := cmdExecutor.Execute(checkSnapperCmd)
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
@@ -178,16 +179,16 @@ func IsSnapperInstalled(cmdExecutor utils.Executor) (bool, error) {
 }
 
 // EnsureSnapperConfig checks if the snapper config exists and creates it if not.
-func EnsureSnapperConfig(cmdExecutor utils.Executor, configName string) error {
+func EnsureSnapperConfig(cmdExecutor common.Executor, configName string) error {
 	log.Println("Ensuring snapper config exists.")
-	checkConfigCmd := []string{"snapper", "-c", configName, "list-configs"}
+	checkConfigCmd := []string{common.SnapperCmd, "-c", configName, "list-configs"}
 	stdout, stderr, err := cmdExecutor.Execute(checkConfigCmd)
 	if err != nil {
 		return fmt.Errorf("failed to check snapper config: %s, stderr: %s, err: %w", stdout, stderr, err)
 	}
 
 	if !strings.Contains(string(stdout), configName) {
-		createConfigCmd := []string{"snapper", "-c", configName, "create-config", "/"}
+		createConfigCmd := []string{common.SnapperCmd, "-c", configName, "create-config", "/"}
 		_, stderr, err := cmdExecutor.Execute(createConfigCmd)
 		if err != nil {
 			return fmt.Errorf("failed to create snapper config: stderr: %s, err: %w", stderr, err)

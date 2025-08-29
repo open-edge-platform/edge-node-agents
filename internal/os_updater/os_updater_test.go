@@ -7,6 +7,7 @@ import (
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	"github.com/spf13/afero"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/stretchr/testify/assert"
 )
@@ -18,22 +19,22 @@ func TestUpdateOS_Success(t *testing.T) {
 				DownloadFunc: func() error { return nil },
 			}
 		},
-		CreateUpdaterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Updater {
+		CreateUpdaterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
 			return &MockUpdater{
 				UpdateFunc: func() (bool, error) { return true, nil },
 			}
 		},
-		CreateRebooterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
+		CreateRebooterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter {
 			return &MockRebooter{
 				RebootFunc: func() error { return nil },
 			}
 		},
-		CreateCleanerFunc: func(executor utils.Executor, path string) Cleaner {
+		CreateCleanerFunc: func(common.Executor, string) Cleaner {
 			return &MockCleaner{
 				CleanFunc: func() error { return nil },
 			}
 		},
-		CreateSnapshotterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
+		CreateSnapshotterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
 			return &MockSnapshotter{
 				SnapshotFunc: func() error { return nil },
 			}
@@ -93,22 +94,22 @@ func TestUpdateOS_SnapshotErrorProceedWithoutRollback(t *testing.T) {
 				DownloadFunc: func() error { return nil },
 			}
 		},
-		CreateSnapshotterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
+		CreateSnapshotterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
 			return &MockSnapshotter{
 				SnapshotFunc: func() error { return fmt.Errorf("snapshot error") },
 			}
 		},
-		CreateUpdaterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Updater {
+		CreateUpdaterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
 			return &MockUpdater{
 				UpdateFunc: func() (bool, error) { return true, nil },
 			}
 		},
-		CreateCleanerFunc: func(utils.Executor, string) Cleaner {
+		CreateCleanerFunc: func(common.Executor, string) Cleaner {
 			return &MockCleaner{
 				CleanFunc: func() error { return nil },
 			}
 		},
-		CreateRebooterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
+		CreateRebooterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter {
 			return &MockRebooter{
 				RebootFunc: func() error { return nil },
 			}
@@ -141,12 +142,12 @@ func TestUpdateOS_SnapshotErrorDoNotProceedWithoutRollback(t *testing.T) {
 				DownloadFunc: func() error { return nil },
 			}
 		},
-		CreateSnapshotterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
+		CreateSnapshotterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
 			return &MockSnapshotter{
 				SnapshotFunc: func() error { return fmt.Errorf("snapshot error") },
 			}
 		},
-		CreateCleanerFunc: func(utils.Executor, string) Cleaner {
+		CreateCleanerFunc: func(common.Executor, string) Cleaner {
 			return &MockCleaner{
 				CleanFunc: func() error { return nil },
 			}
@@ -178,17 +179,17 @@ func TestUpdateOS_UpdateError(t *testing.T) {
 				DownloadFunc: func() error { return nil },
 			}
 		},
-		CreateSnapshotterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
+		CreateSnapshotterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
 			return &MockSnapshotter{
 				SnapshotFunc: func() error { return nil },
 			}
 		},
-		CreateUpdaterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
+		CreateUpdaterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
 			return &MockUpdater{
 				UpdateFunc: func() (bool, error) { return false, fmt.Errorf("update error") },
 			}
 		},
-		CreateCleanerFunc: func(utils.Executor, string) Cleaner {
+		CreateCleanerFunc: func(common.Executor, string) Cleaner {
 			return &MockCleaner{
 				CleanFunc: func() error { return nil },
 			}
@@ -221,22 +222,22 @@ func TestUpdateOS_RebootError(t *testing.T) {
 				DownloadFunc: func() error { return nil },
 			}
 		},
-		CreateUpdaterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
+		CreateUpdaterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Updater {
 			return &MockUpdater{
 				UpdateFunc: func() (bool, error) { return true, nil },
 			}
 		},
-		CreateSnapshotterFunc: func(utils.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
+		CreateSnapshotterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Snapshotter {
 			return &MockSnapshotter{
 				SnapshotFunc: func() error { return nil },
 			}
 		},
-		CreateCleanerFunc: func(utils.Executor, string) Cleaner {
+		CreateCleanerFunc: func(common.Executor, string) Cleaner {
 			return &MockCleaner{
 				CleanFunc: func() error { return nil },
 			}
 		},
-		CreateRebooterFunc: func(executor utils.Executor, req *pb.UpdateSystemSoftwareRequest) Rebooter {
+		CreateRebooterFunc: func(common.Executor, *pb.UpdateSystemSoftwareRequest) Rebooter {
 			return &MockRebooter{
 				RebootFunc: func() error { return fmt.Errorf("reboot error") },
 			}

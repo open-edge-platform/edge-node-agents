@@ -9,12 +9,12 @@ package ubuntu
 import (
 	"log"
 
-	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 )
 
 // CheckNetworkConnection verifies if there is an active network connection.
-func CheckNetworkConnection(cmdExecutor utils.Executor) bool {
-	cmd := []string{"ip", "route", "show", "default"}
+func CheckNetworkConnection(cmdExecutor common.Executor) bool {
+	cmd := []string{common.IPCmd, "route", "show", "default"}
 
 	stdout, _, err := cmdExecutor.Execute(cmd)
 	if err != nil {

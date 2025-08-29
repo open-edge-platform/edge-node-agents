@@ -13,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 )
 
 // RebootMockExecutor is a specific mock implementation for reboot testing.
@@ -31,7 +32,7 @@ func (m *RebootMockExecutor) Execute(args []string) ([]byte, []byte, error) {
 
 func TestRebootSystem_Success(t *testing.T) {
 	mockExecutor := new(RebootMockExecutor)
-	mockExecutor.On("Execute", []string{RebootCmd}).Return("Reboot command executed", "", nil)
+	mockExecutor.On("Execute", []string{common.RebootCmd}).Return("Reboot command executed", "", nil)
 
 	start := time.Now()
 	err := RebootSystem(mockExecutor)
@@ -48,7 +49,7 @@ func TestRebootSystem_Success(t *testing.T) {
 	}
 
 	// Verify the correct command was passed
-	expectedArgs := []string{RebootCmd}
+	expectedArgs := []string{common.RebootCmd}
 	if len(mockExecutor.lastArgs) != len(expectedArgs) || mockExecutor.lastArgs[0] != expectedArgs[0] {
 		t.Errorf("Expected args %v, but got %v", expectedArgs, mockExecutor.lastArgs)
 	}
@@ -65,7 +66,7 @@ func TestRebootSystem_Success(t *testing.T) {
 func TestRebootSystem_ExecutorError(t *testing.T) {
 	expectedError := errors.New("command execution failed")
 	mockExecutor := new(RebootMockExecutor)
-	mockExecutor.On("Execute", []string{RebootCmd}).Return("", "error output", expectedError)
+	mockExecutor.On("Execute", []string{common.RebootCmd}).Return("", "error output", expectedError)
 
 	err := RebootSystem(mockExecutor)
 
@@ -85,7 +86,7 @@ func TestRebootSystem_ExecutorError(t *testing.T) {
 	}
 
 	// Verify the correct command was passed even when it fails
-	expectedArgs := []string{RebootCmd}
+	expectedArgs := []string{common.RebootCmd}
 	if len(mockExecutor.lastArgs) != len(expectedArgs) || mockExecutor.lastArgs[0] != expectedArgs[0] {
 		t.Errorf("Expected args %v, but got %v", expectedArgs, mockExecutor.lastArgs)
 	}
@@ -96,7 +97,7 @@ func TestRebootSystem_ExecutorError(t *testing.T) {
 
 func TestRebootSystem_ExecutorReturnsStdoutAndStderr(t *testing.T) {
 	mockExecutor := new(RebootMockExecutor)
-	mockExecutor.On("Execute", []string{RebootCmd}).Return("reboot initiated", "warning: system will restart", nil)
+	mockExecutor.On("Execute", []string{common.RebootCmd}).Return("reboot initiated", "warning: system will restart", nil)
 
 	err := RebootSystem(mockExecutor)
 
@@ -116,7 +117,7 @@ func TestRebootSystem_ExecutorReturnsStdoutAndStderr(t *testing.T) {
 
 func TestRebootSystem_VerifyRebootCommand(t *testing.T) {
 	mockExecutor := new(RebootMockExecutor)
-	mockExecutor.On("Execute", []string{RebootCmd}).Return("success", "", nil)
+	mockExecutor.On("Execute", []string{common.RebootCmd}).Return("success", "", nil)
 
 	err := RebootSystem(mockExecutor)
 	assert.NoError(t, err, "Expected RebootSystem to succeed")
@@ -148,7 +149,7 @@ func TestRebootSystem_NilExecutor(t *testing.T) {
 // Benchmark to measure performance
 func BenchmarkRebootSystem(b *testing.B) {
 	mockExecutor := new(RebootMockExecutor)
-	mockExecutor.On("Execute", []string{RebootCmd}).Return("success", "", nil)
+	mockExecutor.On("Execute", []string{common.RebootCmd}).Return("success", "", nil)
 
 	for b.Loop() {
 		err := RebootSystem(mockExecutor)
@@ -160,7 +161,7 @@ func BenchmarkRebootSystem(b *testing.B) {
 func TestRebootSystem_MultipleCalls(t *testing.T) {
 	mockExecutor := new(RebootMockExecutor)
 	// Set up the mock to expect 3 calls
-	mockExecutor.On("Execute", []string{RebootCmd}).Return("success", "", nil).Times(3)
+	mockExecutor.On("Execute", []string{common.RebootCmd}).Return("success", "", nil).Times(3)
 
 	// Call RebootSystem multiple times
 	for i := range 3 {
@@ -182,7 +183,7 @@ func TestRebootSystem_MultipleCalls(t *testing.T) {
 // Test edge case with empty command slice (should not happen in practice)
 func TestRebootSystem_TimingAccuracy(t *testing.T) {
 	mockExecutor := new(RebootMockExecutor)
-	mockExecutor.On("Execute", []string{RebootCmd}).Return("success", "", nil)
+	mockExecutor.On("Execute", []string{common.RebootCmd}).Return("success", "", nil)
 
 	// Test multiple times to ensure timing is consistent
 	for i := 0; i < 3; i++ {
@@ -204,7 +205,7 @@ func TestRebootSystem_TimingAccuracy(t *testing.T) {
 // Test to verify that the function properly handles command formatting
 func TestRebootSystem_CommandFormat(t *testing.T) {
 	mockExecutor := new(RebootMockExecutor)
-	mockExecutor.On("Execute", []string{RebootCmd}).Return("success", "", nil)
+	mockExecutor.On("Execute", []string{common.RebootCmd}).Return("success", "", nil)
 
 	err := RebootSystem(mockExecutor)
 	assert.NoError(t, err, "Expected RebootSystem to succeed")
@@ -213,8 +214,8 @@ func TestRebootSystem_CommandFormat(t *testing.T) {
 	assert.Equal(t, 1, len(mockExecutor.lastArgs), "Expected command slice to have exactly 1 element")
 
 	// Verify the command string is exactly the RebootCmd constant
-	if mockExecutor.lastArgs[0] != RebootCmd {
-		t.Errorf("Expected command to be '%s', got '%s'", RebootCmd, mockExecutor.lastArgs[0])
+	if mockExecutor.lastArgs[0] != common.RebootCmd {
+		t.Errorf("Expected command to be '%s', got '%s'", common.RebootCmd, mockExecutor.lastArgs[0])
 	}
 
 	// Verify mock expectations
@@ -253,7 +254,7 @@ func TestRebootSystem_ErrorMessage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockExecutor := &RebootMockExecutor{}
-			mockExecutor.On("Execute", []string{RebootCmd}).Return("", "", tc.executorError)
+			mockExecutor.On("Execute", []string{common.RebootCmd}).Return("", "", tc.executorError)
 
 			err := RebootSystem(mockExecutor)
 			if err == nil {
@@ -264,7 +265,7 @@ func TestRebootSystem_ErrorMessage(t *testing.T) {
 				t.Errorf("Expected error message '%s', got '%s'", tc.expectedMsg, err.Error())
 			}
 
-			mockExecutor.AssertCalled(t, "Execute", []string{RebootCmd})
+			mockExecutor.AssertCalled(t, "Execute", []string{common.RebootCmd})
 		})
 	}
 }
@@ -272,21 +273,21 @@ func TestRebootSystem_ErrorMessage(t *testing.T) {
 // TestShutdownSystem_Success tests successful shutdown execution
 func TestShutdownSystem_Success(t *testing.T) {
 	mockExecutor := &RebootMockExecutor{}
-	mockExecutor.On("Execute", []string{ShutdownCmd, "now"}).Return("Shutdown command executed", "", nil)
+	mockExecutor.On("Execute", []string{common.ShutdownCmd, "now"}).Return("Shutdown command executed", "", nil)
 
 	err := ShutdownSystem(mockExecutor)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	mockExecutor.AssertCalled(t, "Execute", []string{ShutdownCmd, "now"})
+	mockExecutor.AssertCalled(t, "Execute", []string{common.ShutdownCmd, "now"})
 }
 
 // TestShutdownSystem_Failure tests shutdown execution failure
 func TestShutdownSystem_Failure(t *testing.T) {
 	mockExecutor := &RebootMockExecutor{}
 	expectedError := errors.New("shutdown command failed")
-	mockExecutor.On("Execute", []string{ShutdownCmd, "now"}).Return("", "error output", expectedError)
+	mockExecutor.On("Execute", []string{common.ShutdownCmd, "now"}).Return("", "error output", expectedError)
 
 	err := ShutdownSystem(mockExecutor)
 	if err == nil {
@@ -298,13 +299,13 @@ func TestShutdownSystem_Failure(t *testing.T) {
 		t.Errorf("Expected error message '%s', got '%s'", expectedErrorMsg, err.Error())
 	}
 
-	mockExecutor.AssertCalled(t, "Execute", []string{ShutdownCmd, "now"})
+	mockExecutor.AssertCalled(t, "Execute", []string{common.ShutdownCmd, "now"})
 }
 
 // TestShutdownSystem_TimingAccuracy tests that ShutdownSystem respects the 2-second delay
 func TestShutdownSystem_TimingAccuracy(t *testing.T) {
 	mockExecutor := &RebootMockExecutor{}
-	mockExecutor.On("Execute", []string{ShutdownCmd, "now"}).Return("success", "", nil)
+	mockExecutor.On("Execute", []string{common.ShutdownCmd, "now"}).Return("success", "", nil)
 
 	start := time.Now()
 	err := ShutdownSystem(mockExecutor)
@@ -319,13 +320,13 @@ func TestShutdownSystem_TimingAccuracy(t *testing.T) {
 		t.Errorf("Expected function to take approximately 2 seconds, but took %v", elapsed)
 	}
 
-	mockExecutor.AssertCalled(t, "Execute", []string{ShutdownCmd, "now"})
+	mockExecutor.AssertCalled(t, "Execute", []string{common.ShutdownCmd, "now"})
 }
 
 // TestShutdownSystem_CommandFormat tests the exact command format being executed
 func TestShutdownSystem_CommandFormat(t *testing.T) {
 	mockExecutor := &RebootMockExecutor{}
-	mockExecutor.On("Execute", []string{ShutdownCmd, "now"}).Return("success", "", nil)
+	mockExecutor.On("Execute", []string{common.ShutdownCmd, "now"}).Return("success", "", nil)
 
 	err := ShutdownSystem(mockExecutor)
 	if err != nil {
@@ -333,7 +334,7 @@ func TestShutdownSystem_CommandFormat(t *testing.T) {
 	}
 
 	// Verify the exact command format
-	expectedArgs := []string{ShutdownCmd, "now"}
+	expectedArgs := []string{common.ShutdownCmd, "now"}
 	if len(mockExecutor.lastArgs) != len(expectedArgs) {
 		t.Errorf("Expected %d arguments, got %d", len(expectedArgs), len(mockExecutor.lastArgs))
 	}
@@ -344,13 +345,13 @@ func TestShutdownSystem_CommandFormat(t *testing.T) {
 		}
 	}
 
-	mockExecutor.AssertCalled(t, "Execute", []string{ShutdownCmd, "now"})
+	mockExecutor.AssertCalled(t, "Execute", []string{common.ShutdownCmd, "now"})
 }
 
 // TestShutdownSystem_ExecutorReturnsStdoutAndStderr tests handling of command output
 func TestShutdownSystem_ExecutorReturnsStdoutAndStderr(t *testing.T) {
 	mockExecutor := &RebootMockExecutor{}
-	mockExecutor.On("Execute", []string{ShutdownCmd, "now"}).Return("shutdown initiated", "warning: system will power off", nil)
+	mockExecutor.On("Execute", []string{common.ShutdownCmd, "now"}).Return("shutdown initiated", "warning: system will power off", nil)
 
 	err := ShutdownSystem(mockExecutor)
 	if err != nil {
@@ -358,7 +359,7 @@ func TestShutdownSystem_ExecutorReturnsStdoutAndStderr(t *testing.T) {
 	}
 
 	// Verify the executor was called
-	mockExecutor.AssertCalled(t, "Execute", []string{ShutdownCmd, "now"})
+	mockExecutor.AssertCalled(t, "Execute", []string{common.ShutdownCmd, "now"})
 }
 
 // TestShutdownSystem_NilExecutor tests behavior with nil executor
@@ -379,7 +380,7 @@ func TestShutdownSystem_NilExecutor(t *testing.T) {
 // TestShutdownSystem_MultipleCalls tests multiple consecutive calls
 func TestShutdownSystem_MultipleCalls(t *testing.T) {
 	mockExecutor := &RebootMockExecutor{}
-	mockExecutor.On("Execute", []string{ShutdownCmd, "now"}).Return("success", "", nil).Times(3)
+	mockExecutor.On("Execute", []string{common.ShutdownCmd, "now"}).Return("success", "", nil).Times(3)
 
 	// Call shutdown multiple times
 	for i := 0; i < 3; i++ {
@@ -424,7 +425,7 @@ func TestShutdownSystem_ErrorMessage(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockExecutor := &RebootMockExecutor{}
-			mockExecutor.On("Execute", []string{ShutdownCmd, "now"}).Return("", "", tc.executorError)
+			mockExecutor.On("Execute", []string{common.ShutdownCmd, "now"}).Return("", "", tc.executorError)
 
 			err := ShutdownSystem(mockExecutor)
 			if err == nil {
@@ -435,7 +436,7 @@ func TestShutdownSystem_ErrorMessage(t *testing.T) {
 				t.Errorf("Expected error message '%s', got '%s'", tc.expectedMsg, err.Error())
 			}
 
-			mockExecutor.AssertCalled(t, "Execute", []string{ShutdownCmd, "now"})
+			mockExecutor.AssertCalled(t, "Execute", []string{common.ShutdownCmd, "now"})
 		})
 	}
 }
@@ -443,7 +444,7 @@ func TestShutdownSystem_ErrorMessage(t *testing.T) {
 // TestShutdownSystem_VerifyShutdownCommand tests that the correct shutdown command constant is used
 func TestShutdownSystem_VerifyShutdownCommand(t *testing.T) {
 	mockExecutor := &RebootMockExecutor{}
-	mockExecutor.On("Execute", []string{ShutdownCmd, "now"}).Return("success", "", nil)
+	mockExecutor.On("Execute", []string{common.ShutdownCmd, "now"}).Return("success", "", nil)
 
 	err := ShutdownSystem(mockExecutor)
 	if err != nil {
@@ -451,8 +452,8 @@ func TestShutdownSystem_VerifyShutdownCommand(t *testing.T) {
 	}
 
 	// Verify the first argument is the correct shutdown command
-	if len(mockExecutor.lastArgs) == 0 || mockExecutor.lastArgs[0] != ShutdownCmd {
-		t.Errorf("Expected first argument to be '%s', got '%s'", ShutdownCmd, mockExecutor.lastArgs[0])
+	if len(mockExecutor.lastArgs) == 0 || mockExecutor.lastArgs[0] != common.ShutdownCmd {
+		t.Errorf("Expected first argument to be '%s', got '%s'", common.ShutdownCmd, mockExecutor.lastArgs[0])
 	}
 
 	// Verify the second argument is "now"
@@ -460,5 +461,5 @@ func TestShutdownSystem_VerifyShutdownCommand(t *testing.T) {
 		t.Errorf("Expected second argument to be 'now', got '%s'", mockExecutor.lastArgs[1])
 	}
 
-	mockExecutor.AssertCalled(t, "Execute", []string{ShutdownCmd, "now"})
+	mockExecutor.AssertCalled(t, "Execute", []string{common.ShutdownCmd, "now"})
 }

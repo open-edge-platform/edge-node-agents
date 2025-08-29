@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	emt "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/emt"
 	ubuntu "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
@@ -49,17 +49,17 @@ func TestEMTUpdater(t *testing.T) {
 	})
 
 	t.Run("createUpdater returns EMTUpdater", func(t *testing.T) {
-		updater := emtUpdater.CreateUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
+		updater := emtUpdater.CreateUpdater(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), req)
 		assert.IsType(t, &emt.Updater{}, updater)
 	})
 
 	t.Run("createSnapshotter returns EMTUpdater", func(t *testing.T) {
-		snapshotter := emtUpdater.CreateSnapshotter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
+		snapshotter := emtUpdater.CreateSnapshotter(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), req)
 		assert.IsType(t, &emt.Snapshotter{}, snapshotter)
 	})
 
 	t.Run("createRebooter returns EMTRebooter", func(t *testing.T) {
-		rebooter := emtUpdater.CreateRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), req)
+		rebooter := emtUpdater.CreateRebooter(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), req)
 		assert.IsType(t, &emt.Rebooter{}, rebooter)
 	})
 }
@@ -78,17 +78,17 @@ func TestUbuntuUpdater(t *testing.T) {
 	})
 
 	t.Run("createUpdater returns UbuntuUpdater", func(t *testing.T) {
-		updater := ubuntuUpdater.CreateUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &req)
+		updater := ubuntuUpdater.CreateUpdater(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), &req)
 		assert.IsType(t, &ubuntu.Updater{}, updater)
 	})
 
 	t.Run("createSnapshotter returns UbuntuSnapshotter", func(t *testing.T) {
-		snapshotter := ubuntuUpdater.CreateSnapshotter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &req)
+		snapshotter := ubuntuUpdater.CreateSnapshotter(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), &req)
 		assert.IsType(t, &ubuntu.Snapshotter{}, snapshotter)
 	})
 
 	t.Run("createRebooter returns UbuntuRebooter", func(t *testing.T) {
-		rebooter := ubuntuUpdater.CreateRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &req)
+		rebooter := ubuntuUpdater.CreateRebooter(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), &req)
 		assert.IsType(t, &ubuntu.Rebooter{}, rebooter)
 	})
 }

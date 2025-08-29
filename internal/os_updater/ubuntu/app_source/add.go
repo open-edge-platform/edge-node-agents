@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
@@ -24,11 +25,11 @@ import (
 type Adder struct {
 	httpClient        *http.Client
 	requestCreator    func(string, string, io.Reader) (*http.Request, error)
-	CommandExecutor   utils.Executor
+	CommandExecutor   common.Executor
 	openFileFunc      func(afero.Fs, string, int, os.FileMode) (afero.File, error)
 	loadConfigFunc    func(afero.Fs, string) (*utils.Configurations, error)
 	isTrustedRepoFunc func(string, *utils.Configurations) bool
-	addGpgKeyFunc     func(string, string, func(string, string, io.Reader) (*http.Request, error), *http.Client, utils.Executor) error
+	addGpgKeyFunc     func(string, string, func(string, string, io.Reader) (*http.Request, error), *http.Client, common.Executor) error
 	fs                afero.Fs
 }
 
@@ -37,7 +38,7 @@ func NewAdder() *Adder {
 	return &Adder{
 		httpClient:        &http.Client{},
 		requestCreator:    http.NewRequest,
-		CommandExecutor:   utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput),
+		CommandExecutor:   common.NewExecutor(exec.Command, common.ExecuteAndReadOutput),
 		openFileFunc:      utils.OpenFile,
 		loadConfigFunc:    utils.LoadConfig,
 		isTrustedRepoFunc: utils.IsTrustedRepository,
@@ -96,7 +97,7 @@ func addGpgKey(gpgKeyURI string,
 	gpgKeyName string,
 	requestCreator func(string, string, io.Reader) (*http.Request, error),
 	client *http.Client,
-	cmdExec utils.Executor) error {
+	cmdExec common.Executor) error {
 
 	// Create a new HTTP request
 	req, err := requestCreator("GET", gpgKeyURI, nil)
@@ -133,7 +134,7 @@ func addGpgKey(gpgKeyURI string,
 	gpgKeyPath := filepath.Join(linuxGPGKeyPath, gpgKeyName)
 
 	dearmorGpgKeyCommand := []string{
-		"/usr/bin/gpg", "--dearmor", "--output", gpgKeyPath, tempFile.Name(),
+		common.GPGCmd, "--dearmor", "--output", gpgKeyPath, tempFile.Name(),
 	}
 	_, _, err = cmdExec.Execute(dearmorGpgKeyCommand)
 	if err != nil {

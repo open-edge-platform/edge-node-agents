@@ -3,17 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Package telemetry gathers data about the operating system, firmware, and hardware.
 package telemetry
 
 import (
-	"github.com/spf13/afero"
 	"os"
 	"runtime"
 	"strings"
 	"time"
 
+	"github.com/spf13/afero"
+
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -46,7 +48,7 @@ func getOSInformation() string {
 	}
 
 	// Get OS type using existing DetectOS function
-	osType, err := osUpdater.DetectOS()
+	osType, err := common.DetectOS()
 	if err != nil {
 		osType = "Unknown"
 	}

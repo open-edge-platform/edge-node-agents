@@ -14,21 +14,17 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
 )
 
-var (
-	// OsUpdateTool will be changed in 3.1 release. Have to change the name and API call.
-	// Check https://github.com/intel-sandbox/os.linux.tiberos.ab-update.go/blob/main/README.md
-	osUpdateToolPath = "/usr/bin/os-update-tool.sh"
-)
 
 // Updater is the concrete implementation of the IUpdater interface
 // for the EMT OS.
 type Updater struct {
-	commandExecutor   utils.Executor
+	commandExecutor   common.Executor
 	request           *pb.UpdateSystemSoftwareRequest
 	writeUpdateStatus func(afero.Fs, string, string, string)
 	writeGranularLog  func(afero.Fs, string, string)
@@ -36,7 +32,7 @@ type Updater struct {
 }
 
 // NewUpdater creates a new Updater.
-func NewUpdater(commandExecutor utils.Executor, request *pb.UpdateSystemSoftwareRequest) *Updater {
+func NewUpdater(commandExecutor common.Executor, request *pb.UpdateSystemSoftwareRequest) *Updater {
 	return &Updater{
 		commandExecutor:   commandExecutor,
 		request:           request,
@@ -84,7 +80,7 @@ func (t *Updater) Update() (bool, error) {
 		filePath := utils.SOTADownloadDir + "/" + fileName
 
 		updateToolWriteCommand := []string{
-			osUpdateToolPath, "-w", "-u", filePath, "-s", t.request.Signature,
+			common.OsUpdateToolCmd, "-w", "-u", filePath, "-s", t.request.Signature,
 		}
 
 		if _, _, err := t.commandExecutor.Execute(updateToolWriteCommand); err != nil {
@@ -113,7 +109,7 @@ func (t *Updater) Update() (bool, error) {
 
 		log.Println("Execute update tool apply command.")
 		updateToolApplyCommand := []string{
-			osUpdateToolPath, "-a",
+			common.OsUpdateToolCmd, "-a",
 		}
 
 		if _, _, err := t.commandExecutor.Execute(updateToolApplyCommand); err != nil {
@@ -140,7 +136,7 @@ func (t *Updater) commitUpdate() error {
 	}
 
 	updateToolCommitCommand := []string{
-		osUpdateToolPath, "-c",
+		common.OsUpdateToolCmd, "-c",
 	}
 
 	if _, _, err := t.commandExecutor.Execute(updateToolCommitCommand); err != nil {

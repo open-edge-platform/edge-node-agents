@@ -11,9 +11,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/emt"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/spf13/afero"
 )
 
@@ -30,7 +31,7 @@ func VerifyUpdateAfterReboot(fs afero.Fs) error {
 		}
 
 		log.Println("Perform post update verification.")
-		osType, err := DetectOS()
+		osType, err := common.DetectOS()
 		if err != nil {
 			return fmt.Errorf("error detecting OS: %w", err)
 		}

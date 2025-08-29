@@ -10,7 +10,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sys/unix"
@@ -48,10 +48,10 @@ func TestUbuntuDownloader_Download(t *testing.T) {
 func TestNoDownload(t *testing.T) {
 	t.Run("no packages", func(t *testing.T) {
 		expectedCmds := [][]string{
-			{"dpkg", "--configure", "-a", "--force-confdef", "--force-confold"},
-			{"apt-get", "-o", "Dpkg::Options::=--force-confdef", "-o",
+			{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
+			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
 				"Dpkg::Options::=--force-confold", "-yq", "-f", "install"},
-			{"apt-get", "-o", "Dpkg::Options::=--force-confdef",
+			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--with-new-pkgs",
 				"--fix-missing", "-yq", "upgrade"},
@@ -65,10 +65,10 @@ func TestNoDownload(t *testing.T) {
 	t.Run("with packages", func(t *testing.T) {
 		packages := []string{"package1", "package2"}
 		expectedCmds := [][]string{
-			{"dpkg", "--configure", "-a", "--force-confdef", "--force-confold"},
-			{"apt-get", "-o", "Dpkg::Options::=--force-confdef", "-o",
+			{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
+			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
 				"Dpkg::Options::=--force-confold", "-yq", "-f", "install"},
-			{"apt-get", "-o", "Dpkg::Options::=--force-confdef",
+			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--fix-missing", "-yq",
 				"install", "package1", "package2"},
@@ -83,9 +83,9 @@ func TestNoDownload(t *testing.T) {
 func TestDownloadOnly(t *testing.T) {
 	t.Run("no packages", func(t *testing.T) {
 		expectedCmds := [][]string{
-			{"dpkg", "--configure", "-a", "--force-confdef", "--force-confold"},
-			{"apt-get", "update"},
-			{"apt-get", "-o", "Dpkg::Options::=--force-confdef",
+			{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
+			{common.AptGetCmd, "update"},
+			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--with-new-pkgs", "--download-only", "--fix-missing",
 				"-yq", "upgrade"},
@@ -99,9 +99,9 @@ func TestDownloadOnly(t *testing.T) {
 	t.Run("with packages", func(t *testing.T) {
 		packages := []string{"package1", "package2"}
 		expectedCmds := [][]string{
-			{"dpkg", "--configure", "-a", "--force-confdef", "--force-confold"},
-			{"apt-get", "update"},
-			{"apt-get", "-o", "Dpkg::Options::=--force-confdef",
+			{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
+			{common.AptGetCmd, "update"},
+			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--download-only", "--fix-missing",
 				"-yq", "install", "package1", "package2"},
@@ -124,7 +124,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{"/usr/bin/apt-get", "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("successful size estimation", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.True(t, isUpdateAvail)
 		assert.Equal(t, uint64(524288000), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{"/usr/bin/apt-get", "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("failed to get size estimation", func(t *testing.T) {
@@ -154,7 +154,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.False(t, isUpdateAvail)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{"/usr/bin/apt-get", "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("no size information in output", func(t *testing.T) {
@@ -168,7 +168,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.False(t, isUpdateAvail)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{"/usr/bin/apt-get", "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("command execution error but valid output", func(t *testing.T) {
@@ -183,7 +183,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.True(t, isUpdateAvail)
 		assert.Equal(t, uint64(524288000), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{"/usr/bin/apt-get", "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 }
 
@@ -199,7 +199,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			Request: &pb.UpdateSystemSoftwareRequest{
 				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD,
 			},
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error) {
+			GetEstimatedSize: func(cmdExec common.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
@@ -240,7 +240,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 		updater := &Updater{
 			CommandExecutor: mockExec,
 			Request:         &pb.UpdateSystemSoftwareRequest{},
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error) {
+			GetEstimatedSize: func(cmdExec common.Executor) (bool, uint64, error) {
 				return false, 0, nil
 			},
 		}
@@ -260,7 +260,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 		updater := &Updater{
 			CommandExecutor: mockExec,
 			Request:         &pb.UpdateSystemSoftwareRequest{},
-			GetEstimatedSize: func(utils.Executor) (bool, uint64, error) {
+			GetEstimatedSize: func(common.Executor) (bool, uint64, error) {
 				return true, 500 * 1024 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
@@ -285,7 +285,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			Request: &pb.UpdateSystemSoftwareRequest{
 				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL,
 			},
-			GetEstimatedSize: func(utils.Executor) (bool, uint64, error) {
+			GetEstimatedSize: func(common.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
@@ -310,7 +310,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			Request: &pb.UpdateSystemSoftwareRequest{
 				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD,
 			},
-			GetEstimatedSize: func(utils.Executor) (bool, uint64, error) {
+			GetEstimatedSize: func(common.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
@@ -335,7 +335,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			Request: &pb.UpdateSystemSoftwareRequest{
 				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_DOWNLOAD_ONLY,
 			},
-			GetEstimatedSize: func(utils.Executor) (bool, uint64, error) {
+			GetEstimatedSize: func(common.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
@@ -356,7 +356,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			Request: &pb.UpdateSystemSoftwareRequest{
 				Mode: pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_UNSPECIFIED, // Invalid mode
 			},
-			GetEstimatedSize: func(cmdExec utils.Executor) (bool, uint64, error) {
+			GetEstimatedSize: func(cmdExec common.Executor) (bool, uint64, error) {
 				return true, 500 * 1024, nil
 			},
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {

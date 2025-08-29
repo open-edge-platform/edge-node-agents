@@ -6,12 +6,14 @@
 // Package ubuntu updates the Ubuntu OS.
 package ubuntu
 
-import utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+import (
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
+)
 
 // Cleaner is the concrete implementation of the Cleaner interface
 // for the Ubuntu OS.
 type Cleaner struct {
-	CommandExecutor utils.Executor
+	CommandExecutor common.Executor
 	Path            string
 }
 

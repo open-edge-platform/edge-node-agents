@@ -7,14 +7,15 @@ package telemetry
 
 import (
 	"fmt"
-	"github.com/spf13/afero"
 	"os/exec"
 	"runtime"
 	"strings"
 	"time"
 
+	"github.com/spf13/afero"
+
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -44,7 +45,7 @@ func GetSoftwareBOM() (*pb.SWBOMInfo, error) {
 
 // getSoftwareBOMList returns the software BOM list based on OS type
 func getSoftwareBOMList() ([]*pb.SoftwarePackage, error) {
-	osType, err := osUpdater.DetectOS()
+	osType, err := common.DetectOS()
 	if err != nil {
 		return nil, fmt.Errorf("failed to detect OS: %w", err)
 	}
@@ -210,7 +211,7 @@ func readMenderFile(path, notFoundDefault string) string {
 
 // getCollectionMethod returns the method used to collect software BOM
 func getCollectionMethod() string {
-	osType, err := osUpdater.DetectOS()
+	osType, err := common.DetectOS()
 	if err != nil {
 		return "unknown"
 	}
@@ -269,7 +270,7 @@ func GetSoftwareBOMSummaryInfo() (map[string]interface{}, error) {
 
 // getOSType returns the OS type for the summary
 func getOSType() string {
-	osType, err := osUpdater.DetectOS()
+	osType, err := common.DetectOS()
 	if err != nil {
 		return runtime.GOOS
 	}

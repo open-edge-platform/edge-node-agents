@@ -11,6 +11,7 @@ import (
 	"log"
 	"os/exec"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
@@ -37,7 +38,7 @@ func VerifyUpdateAfterReboot(fs afero.Fs, state utils.INBDState) error {
 	// Compare the versions
 	if currentVersion != previousVersion {
 		log.Printf("Update Success. Previous image: %v, Current image: %v", previousVersion, currentVersion)
-		emtUpdater := NewUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
+		emtUpdater := NewUpdater(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
 		err = emtUpdater.commitUpdate()
 		if err != nil {
 			return fmt.Errorf("error committing update: %w", err)
@@ -57,7 +58,7 @@ func VerifyUpdateAfterReboot(fs afero.Fs, state utils.INBDState) error {
 
 		log.Println("Rebooting...")
 		// Reboot the system without commit.
-		emtRebooter := NewRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
+		emtRebooter := NewRebooter(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), &pb.UpdateSystemSoftwareRequest{})
 		err = emtRebooter.Reboot()
 		if err != nil {
 			return fmt.Errorf("error rebooting system: %w", err)

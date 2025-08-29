@@ -10,25 +10,26 @@ import (
 	"log"
 	"os/exec"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	"github.com/spf13/afero"
 )
 
 // Verifier is the concrete implementation of the Verifier interface
 type Verifier struct {
-	CommandExecutor            utils.Executor
+	CommandExecutor            common.Executor
 	fs                         afero.Fs
-	CheckNetworkConnectionFunc func(utils.Executor) bool
-	UndoChangeFunc             func(utils.Executor, int) error
-	DeleteSnapshotFunc         func(utils.Executor, int) error
-	rebootSystemFunc           func(utils.Executor) error
+	CheckNetworkConnectionFunc func(common.Executor) bool
+	UndoChangeFunc             func(common.Executor, int) error
+	DeleteSnapshotFunc         func(common.Executor, int) error
+	rebootSystemFunc           func(common.Executor) error
 	RemoveFileFunc             func(afero.Fs, string) error
 }
 
 // NewVerifier creates a new instance of Verifier with a command executor and file system.
 func NewVerifier() *Verifier {
 	return &Verifier{
-		CommandExecutor:            utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput),
+		CommandExecutor:            common.NewExecutor(exec.Command, common.ExecuteAndReadOutput),
 		fs:                         afero.NewOsFs(),
 		CheckNetworkConnectionFunc: CheckNetworkConnection,
 		UndoChangeFunc:             UndoChange,

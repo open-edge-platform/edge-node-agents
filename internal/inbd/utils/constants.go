@@ -21,13 +21,6 @@ const SOTADownloadDir = IntelManageabilityCachePathPrefix + "/repository-tool/so
 // JWTTokenPath is the path to the JWT token file used for accessing the release service.
 const JWTTokenPath = "/etc/intel_edge_node/tokens/release-service/access_token"
 
-// RebootCmd is the command used to reboot the system.
-// This is used by the EMT and Ubuntu OS updaters.
-const RebootCmd = "/usr/sbin/reboot"
-
-// ShutdownCmd is the command used to shutdown the system.
-const ShutdownCmd = "/usr/sbin/shutdown"
-
 // OTAPackageCertPath is the path to the OTA package certificate.
 const OTAPackageCertPath = "/etc/intel-manageability/public/ota_package_cert.pem"
 

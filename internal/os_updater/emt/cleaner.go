@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	"github.com/spf13/afero"
 )
@@ -22,13 +23,13 @@ type CleanerInterface interface {
 
 // Cleaner is the concrete implementation of the CleanerInterface
 type Cleaner struct {
-	commandExecutor utils.Executor
+	commandExecutor common.Executor
 	path            string
 	fs              afero.Fs
 }
 
 // NewCleaner creates a new Cleaner instance
-func NewCleaner(commandExecutor utils.Executor, path string) *Cleaner {
+func NewCleaner(commandExecutor common.Executor, path string) *Cleaner {
 	return &Cleaner{
 		commandExecutor: commandExecutor,
 		path:            path,

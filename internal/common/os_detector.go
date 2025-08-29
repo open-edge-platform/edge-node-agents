@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Package utils provides utility functions
-package utils
+// Package common provides utilities used by multiple packages
+package common
 
 import (
 	"bytes"

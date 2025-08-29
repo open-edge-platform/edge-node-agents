@@ -11,6 +11,7 @@ import (
 	"log"
 	"os/exec"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
@@ -44,7 +45,7 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 			return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
 		}
 	}
-	execCmd := utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput)
+	execCmd := common.NewExecutor(exec.Command, common.ExecuteAndReadOutput)
 	cleaner := factory.CreateCleaner(execCmd, utils.SOTADownloadDir+"/")
 
 	snapshot := factory.CreateSnapshotter(execCmd, u.req)
@@ -66,7 +67,7 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 	}
 
 	// Update the OS
-	updater := factory.CreateUpdater(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), u.req)
+	updater := factory.CreateUpdater(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), u.req)
 	proceedWithReboot, err := updater.Update()
 	if err != nil {
 		// Remove the artifacts if failure happens.
@@ -82,7 +83,7 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 	if proceedWithReboot {
 		if u.req.Mode != pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_DOWNLOAD_ONLY {
 			// Reboot the system
-			rebooter := factory.CreateRebooter(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput), u.req)
+			rebooter := factory.CreateRebooter(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), u.req)
 			if err = rebooter.Reboot(); err != nil {
 				return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
 			}

@@ -9,15 +9,17 @@ package utils
 import (
 	"fmt"
 	"time"
+
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 )
 
 // RebootSystem reboots the system using the provided command executor.
-func RebootSystem(cmdExecutor Executor) error {
+func RebootSystem(cmdExecutor common.Executor) error {
 	fmt.Println("Rebooting ")
 
 	time.Sleep(2 * time.Second)
 
-	_, _, err := cmdExecutor.Execute([]string{RebootCmd})
+	_, _, err := cmdExecutor.Execute([]string{common.RebootCmd})
 	if err != nil {
 		return fmt.Errorf("reboot failed: %s", err)
 	}
@@ -26,12 +28,12 @@ func RebootSystem(cmdExecutor Executor) error {
 }
 
 // ShutdownSystem shuts down the system using the provided command executor.
-func ShutdownSystem(cmdExecutor Executor) error {
+func ShutdownSystem(cmdExecutor common.Executor) error {
 	fmt.Print("Shutting down ")
 
 	time.Sleep(2 * time.Second)
 
-	_, _, err := cmdExecutor.Execute([]string{ShutdownCmd, "now"}) // Shutdown immediately
+	_, _, err := cmdExecutor.Execute([]string{common.ShutdownCmd, "now"}) // Shutdown immediately
 	if err != nil {
 		return fmt.Errorf("shutdown failed: %s", err)
 	}

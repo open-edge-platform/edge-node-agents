@@ -13,6 +13,7 @@ import (
 	"log"
 	"strings"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
 	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
@@ -25,13 +26,13 @@ var (
 // Snapshotter is the concrete implementation of the IUpdater interface
 // for the EMT OS.
 type Snapshotter struct {
-	commandExecutor utils.Executor
+	commandExecutor common.Executor
 	fs              afero.Fs
 	stateFilePath   string
 }
 
 // NewSnapshotter creates a new EMTSnapshotter.
-func NewSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftwareRequest) *Snapshotter {
+func NewSnapshotter(commandExecutor common.Executor, req *pb.UpdateSystemSoftwareRequest) *Snapshotter {
 	return &Snapshotter{
 		commandExecutor: commandExecutor,
 		fs:              afero.NewOsFs(),
@@ -41,7 +42,7 @@ func NewSnapshotter(commandExecutor utils.Executor, req *pb.UpdateSystemSoftware
 
 // NewSnapshotterWithConfig creates a new EMTSnapshotter with custom configuration.
 // This is primarily for testing purposes.
-func NewSnapshotterWithConfig(commandExecutor utils.Executor, fs afero.Fs, stateFilePath string) *Snapshotter {
+func NewSnapshotterWithConfig(commandExecutor common.Executor, fs afero.Fs, stateFilePath string) *Snapshotter {
 	return &Snapshotter{
 		commandExecutor: commandExecutor,
 		fs:              fs,

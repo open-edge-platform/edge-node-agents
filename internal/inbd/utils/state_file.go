@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"github.com/spf13/afero"
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 )
 
 // StateFilePath is the path to the inbd state file.
@@ -20,14 +21,14 @@ import (
 const StateFilePath = "/var/intel-manageability/inbd_state"
 
 // ClearStateFile clears the inbd state file by truncating it to zero size.
-func ClearStateFile(cmdExecutor Executor, stateFilePath string) error {
+func ClearStateFile(cmdExecutor common.Executor, stateFilePath string) error {
 	log.Println("Clearing inbd state file.")
 
 	// Clear the inbd state file before writing it.
 	// We use truncate rather than remove here as some OSes like EMT require files that need to persist
 	// between reboots to not be removed.
 	stateFileTruncateCommand := []string{
-		"truncate", "-s", "0", stateFilePath,
+		common.TruncateCmd, "-s", "0", stateFilePath,
 	}
 
 	if _, _, err := cmdExecutor.Execute(stateFileTruncateCommand); err != nil {

@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"strings"
 
+	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
 	fwUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/fw_updater"
 	telemetry "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry"
 	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
@@ -35,11 +36,11 @@ type PowerManager interface {
 type DefaultPowerManager struct{}
 
 func (dpm *DefaultPowerManager) Reboot() error {
-	return utils.RebootSystem(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput))
+	return utils.RebootSystem(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput))
 }
 
 func (dpm *DefaultPowerManager) Shutdown() error {
-	return utils.ShutdownSystem(utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput))
+	return utils.ShutdownSystem(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput))
 }
 
 // InbdServer implements the InbServiceServer interface
@@ -142,7 +143,7 @@ func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareR
 func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest) (*pb.UpdateResponse, error) {
 
 	log.Printf("Received UpdateSystemSoftware request")
-	os, err := osUpdater.DetectOS()
+	os, err := common.DetectOS()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
 	}
@@ -169,7 +170,7 @@ func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSys
 func (s *InbdServer) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceRequest) (*pb.UpdateResponse, error) {
 	log.Printf("Received UpdateOSSource request")
 
-	os, err := osUpdater.DetectOS()
+	os, err := common.DetectOS()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
 	}
@@ -189,7 +190,7 @@ func (s *InbdServer) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceR
 // AddApplicationSource adds the source file under /etc/apt/sources.list.d/.
 // It optionally adds the GPG key under /usr/share/keyrings/ if the GPG key name is provided.
 func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplicationSourceRequest) (*pb.UpdateResponse, error) {
-	os, err := osUpdater.DetectOS()
+	os, err := common.DetectOS()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
 	}
@@ -217,7 +218,7 @@ func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplic
 // RemoveApplicationSource removes the source file from under /etc/apt/sources.list.d/.
 // It optionally removes the GPG key under /usr/share/keyrings/ if the GPG key name is provided.
 func (s *InbdServer) RemoveApplicationSource(ctx context.Context, req *pb.RemoveApplicationSourceRequest) (*pb.UpdateResponse, error) {
-	os, err := osUpdater.DetectOS()
+	os, err := common.DetectOS()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
 	}
@@ -235,6 +236,7 @@ func (s *InbdServer) RemoveApplicationSource(ctx context.Context, req *pb.Remove
 
 }
 
+// LoadConfig loads the configuration from the specified URI.
 func (s *InbdServer) LoadConfig(ctx context.Context, req *pb.LoadConfigRequest) (*pb.ConfigResponse, error) {
 	log.Printf("Received LoadConfig request")
 	if req.Uri == "" {
@@ -267,6 +269,7 @@ func (s *InbdServer) LoadConfig(ctx context.Context, req *pb.LoadConfigRequest) 
 	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
 }
 
+// GetConfig retrieves configuration values from the configuration file
 func (s *InbdServer) GetConfig(ctx context.Context, req *pb.GetConfigRequest) (*pb.GetConfigResponse, error) {
 	log.Printf("Received GetConfig request")
 	if strings.TrimSpace(req.Path) == "" {
