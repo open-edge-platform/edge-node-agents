@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbc/commands"
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/inbc/commands"
 )
 
 // Version is set with linker flags at build time.

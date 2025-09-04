@@ -9,7 +9,7 @@ package ubuntu
 import (
 	"log"
 
-	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	utils "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/inbd/utils"
 )
 
 // CheckNetworkConnection verifies if there is an active network connection.

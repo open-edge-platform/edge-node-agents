@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	pb "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/pkg/api/inbd/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

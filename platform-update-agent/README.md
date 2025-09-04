@@ -152,3 +152,35 @@ sudo journalctl -u platform-update-agent -f
 ## License
 
 Apache-2.0
+
+## INBM Framework Integration
+
+The Intel In-Band Manageability (INBM) framework has been integrated into this platform-update-agent. The INBM framework provides:
+
+- **inbc**: CLI client for manageability commands (SOTA, FOTA, configuration)
+- **inbd**: Daemon service for system management and updates
+- **Comprehensive**: Firmware updates, OS updates, configuration management, telemetry
+
+### Building with INBM
+
+```bash
+# Build INBM
+make inbm-build
+
+# Test INBM
+make inbm-test
+```
+
+### INBM Binaries
+
+After building, the following artifacts are available:
+- `build/artifacts/inbc`                       - INBM CLI client
+- `build/artifacts/inbd`                       - INBM daemon service
+- `build/artifacts/install-tc.sh`              - Installs inbm for Ubuntu
+- `build/artifacts/uninstall-tc.sh`            - Uninstalls inbm for Ubuntu
+- `build/artifacts/intel-inbm.deb`             - Intel In-Band Manageability package
+- `build/artifacts/LICENSE`                    - INBM license
+- `build/artifacts/retain-3rd-party-notices`   - Retained 3rd party notices
+- `build/artifacts/third-party-programs.txt`   - 3rd party licenses and notices
+
+For detailed INBM documentation, see [inbm/README.md](inbm/README.md).

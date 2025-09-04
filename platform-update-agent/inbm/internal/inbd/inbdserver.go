@@ -16,13 +16,13 @@ import (
 	"os/exec"
 	"strings"
 
-	fwUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/fw_updater"
-	telemetry "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry"
-	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	osUpdater "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater"
-	appSource "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu/app_source"
-	osSource "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu/os_source"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	fwUpdater "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/fw_updater"
+	telemetry "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/inbd/telemetry"
+	utils "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/inbd/utils"
+	osUpdater "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/os_updater"
+	appSource "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/os_updater/ubuntu/app_source"
+	osSource "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/os_updater/ubuntu/os_source"
+	pb "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/pkg/api/inbd/v1"
 )
 
 // PowerManager interface for power management operations

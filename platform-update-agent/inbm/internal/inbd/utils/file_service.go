@@ -323,6 +323,18 @@ func WriteFile(fs afero.Fs, filePath string, data []byte, perm os.FileMode) erro
 
 // CreateTempFile creates a temp file, checks for canonical path and symlinks, and returns the file handle.
 func CreateTempFile(fs afero.Fs, dir, pattern string) (*os.File, error) {
+	// If dir is empty, os.CreateTemp will use the system temp directory
+	// We need to validate against "/tmp" in this case
+	validateDir := dir
+	if validateDir == "" {
+		validateDir = "/tmp"
+	}
+
+	// Validate the directory path before trying to create the temp file
+	if err := isDirPathAbsolute(validateDir); err != nil {
+		return nil, fmt.Errorf("path not allowed: %w", err)
+	}
+
 	tmpFile, err := os.CreateTemp(dir, pattern)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
@@ -344,7 +356,7 @@ func CreateTempFile(fs afero.Fs, dir, pattern string) (*os.File, error) {
 		}
 	}()
 
-	// Validate the temp file path
+	// Validate the temp file path (additional safety check)
 	if err := isFilePathAbsolute(tmpFile.Name()); err != nil {
 		return nil, fmt.Errorf("temp file path not allowed: %w", err)
 	}

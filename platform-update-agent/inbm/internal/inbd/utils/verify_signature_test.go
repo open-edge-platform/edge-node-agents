@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -386,6 +387,11 @@ func TestVerifyChecksumWithKey(t *testing.T) {
 }
 
 func TestVerifySignature_DirectFile(t *testing.T) {
+	// Skip test if we can't create system directories (running without root)
+	if os.Getuid() != 0 {
+		t.Skip("Skipping test that requires root access to create /etc/intel-manageability")
+	}
+
 	// Use the real OS filesystem because VerifySignature uses afero.NewOsFs()
 	fs := afero.NewOsFs()
 	priv, certPEM := generateTestCertAndKey(t)
@@ -442,6 +448,11 @@ func TestVerifySignature_TarWithPEM(t *testing.T) {
 }
 
 func TestVerifySignature_TarWithSystemPEM(t *testing.T) {
+	// Skip test if we can't create system directories (running without root)
+	if os.Getuid() != 0 {
+		t.Skip("Skipping test that requires root access to create /etc/intel-manageability")
+	}
+
 	fs := afero.NewOsFs()
 	priv, certPEM := generateTestCertAndKey(t)
 
@@ -477,6 +488,11 @@ func TestVerifySignature_TarWithSystemPEM(t *testing.T) {
 }
 
 func TestVerifySignature_InvalidSignature(t *testing.T) {
+	// Skip test if we can't create system directories (running without root)
+	if os.Getuid() != 0 {
+		t.Skip("Skipping test that requires root access to create /etc/intel-manageability")
+	}
+
 	fs := afero.NewOsFs()
 	_, certPEM := generateTestCertAndKey(t)
 
@@ -499,6 +515,11 @@ func TestVerifySignature_InvalidSignature(t *testing.T) {
 }
 
 func TestVerifySignature_EmptySignatureWhenRequired(t *testing.T) {
+	// Skip test if we can't create system directories (running without root)
+	if os.Getuid() != 0 {
+		t.Skip("Skipping test that requires root access to create /etc/intel-manageability")
+	}
+
 	fs := afero.NewOsFs()
 	_, certPEM := generateTestCertAndKey(t)
 	err := MkdirAll(fs, "/etc/intel-manageability/public", 0755)

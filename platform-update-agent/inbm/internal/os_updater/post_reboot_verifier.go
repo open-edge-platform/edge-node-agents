@@ -11,9 +11,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/emt"
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu"
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/inbd/utils"
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/os_updater/emt"
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/internal/os_updater/ubuntu"
 	"github.com/spf13/afero"
 )
 
