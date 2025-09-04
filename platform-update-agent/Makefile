@@ -3,8 +3,8 @@
 
 NAME ?= platform-update-agent
 BUILD_DIR ?= build/artifacts
-INBM_VERSION ?= 4.2.8.6
-INBM_DIR_NAME ?= inbm
+INBM_DIR := inbm
+INBM_VERSION := $(shell if grep -q dev $(INBM_DIR)/VERSION; then echo $$(cat $(INBM_DIR)/VERSION)-$$(git rev-parse --short HEAD); else cat $(INBM_DIR)/VERSION; fi)
 INBM_OUTPUT_DIR_NAME ?= output
 PUA_PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
 GO_MOD_MODE ?= readonly
@@ -34,17 +34,6 @@ lint: golint
 puainstall:
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install $(BUILD_DIR)/$(NAME) $(DESTDIR)$(PREFIX)/bin
-
-inbmdownload:
-	@echo "---MAKEFILE INBM DOWNLOAD---"
-	mkdir -p ${BUILD_DIR}
-	rm -rf intel-inb-manageability
-	git clone https://github.com/intel/intel-inb-manageability.git
-	(cd intel-inb-manageability && git checkout tags/v$(INBM_VERSION))
-	intel-inb-manageability/build.sh --build-windows=false --build-check=false
-	cp intel-inb-manageability/dist/inbm/* ./$(BUILD_DIR)
-	tar zxvf ./$(BUILD_DIR)/Intel-Manageability.preview.tar.gz --directory ./$(BUILD_DIR)
-	@echo "---END MAKEFILE INBM DOWNLOAD---"
 
 puabuild:
 	@echo "---MAKEFILE PUA BUILD---"
@@ -76,7 +65,7 @@ mmbuild:
 	-o $(BUILD_DIR)/maintenance-mngr-mock cmd/mock-server/mock-server.go
 	@echo "---END MAKEFILE Build---"
 
-build: puabuild mmbuild
+build: puabuild mmbuild inbm-build
 
 # In fuzzing test, we have observed the OOM issues that appear to be caused by the fuzzer.
 # A WA is to add "-parallel=1" to the fuzzing test. Please note that this WA may slow down the test.
@@ -109,7 +98,7 @@ cover: cover_unit cover_integration
 	sed -i "s#$(shell pwd)#github.com/open-edge-platform/edge-node-agents/platform-update-agent#g" build/artifacts/coverage/profile 
 	gocover-cobertura < $(BUILD_DIR)/coverage/profile > build/artifacts/coverage.xml
 
-package: inbmdownload
+package: inbm-package-dist
 	mkdir -p $(PUA_PACKAGE_BUILD_DIR)
 	cp -r $(shell ls . | grep -v build*) $(PUA_PACKAGE_BUILD_DIR)
 	cp ../.golangci.yml $(PUA_PACKAGE_BUILD_DIR)
@@ -134,3 +123,88 @@ package_test:
 tarball: common-tarball
 
 deb-push: common-deb-push
+
+# INBM Framework Integration
+PROTOC := protoc
+INBM_PACKAGE_DIR := $(BUILD_DIR)/inbm-package
+
+.PHONY: inbm-build inbm-test inbm-clean inbm-build-deb inbm-package-dist
+
+inbm-build:
+	@echo "---MAKEFILE INBM BUILD---"
+	cd $(INBM_DIR) && $(PROTOC) --proto_path=proto --go_out=pkg/api --go_opt=paths=source_relative --go-grpc_out=pkg/api --go-grpc_opt=paths=source_relative proto/inbd/v1/inbd.proto
+	cd $(INBM_DIR) && CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -buildmode=pie -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w" -o ../$(BUILD_DIR)/inbc cmd/inbc/main.go
+	cd $(INBM_DIR) && CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -buildmode=pie -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w" -o ../$(BUILD_DIR)/inbd cmd/inbd/main.go
+	@echo "---END MAKEFILE INBM BUILD---"
+
+inbm-test:
+	@echo "---MAKEFILE INBM TEST---"
+	cd $(INBM_DIR) && go test ./... -v
+	@echo "---END MAKEFILE INBM TEST---"
+
+inbm-clean:
+	cd $(INBM_DIR) && go clean -cache -modcache
+
+inbm-build-deb: inbm-build
+	@echo "---MAKEFILE INBM BUILD DEB---"
+	rm -rf $(INBM_PACKAGE_DIR)
+	mkdir -p $(INBM_PACKAGE_DIR)/DEBIAN
+	mkdir -p $(INBM_PACKAGE_DIR)/usr/bin
+	mkdir -p $(INBM_PACKAGE_DIR)/etc/intel_manageability/public
+	mkdir -p $(INBM_PACKAGE_DIR)/etc/apparmor.d
+	mkdir -p $(INBM_PACKAGE_DIR)/etc/intel_edge_node/tokens/release-service
+	mkdir -p $(INBM_PACKAGE_DIR)/usr/lib/systemd/system
+	mkdir -p $(INBM_PACKAGE_DIR)/usr/share
+	# Copy binaries
+	cp $(BUILD_DIR)/inbc $(INBM_PACKAGE_DIR)/usr/bin/inbc
+	cp $(BUILD_DIR)/inbd $(INBM_PACKAGE_DIR)/usr/bin/inbd
+	# Create JWT token directory and empty token file
+	touch $(INBM_PACKAGE_DIR)/etc/intel_edge_node/tokens/release-service/access_token
+	# Copy configuration files from INBM fpm-templates
+	cp $(INBM_DIR)/fpm-templates/etc/intel_manageability.conf $(INBM_PACKAGE_DIR)/etc/intel_manageability.conf || true
+	cp $(INBM_DIR)/fpm-templates/etc/firmware_tool_info.conf $(INBM_PACKAGE_DIR)/etc/firmware_tool_info.conf || true
+	# Copy other template files
+	cp $(INBM_DIR)/fpm-templates/etc/apparmor.d/usr.bin.inbd $(INBM_PACKAGE_DIR)/etc/apparmor.d/usr.bin.inbd || true
+	cp $(INBM_DIR)/fpm-templates/usr/bin/UpdateFirmwareBlobFwupdtool.sh $(INBM_PACKAGE_DIR)/usr/bin/UpdateFirmwareBlobFwupdtool.sh || true
+	cp $(INBM_DIR)/fpm-templates/usr/bin/provision-tc $(INBM_PACKAGE_DIR)/usr/bin/provision-tc || true
+	cp $(INBM_DIR)/fpm-templates/usr/lib/systemd/system/inbd.service $(INBM_PACKAGE_DIR)/usr/lib/systemd/system/inbd.service || true
+	# Copy schema files
+	cp $(INBM_DIR)/fpm-templates/usr/share/inbd_schema.json $(INBM_PACKAGE_DIR)/usr/share/inbd_schema.json || true
+	cp $(INBM_DIR)/fpm-templates/usr/share/firmware_tool_config_schema.json $(INBM_PACKAGE_DIR)/usr/share/firmware_tool_config_schema.json || true
+	# Copy postinst script
+	cp $(INBM_DIR)/fpm-templates/DEBIAN/postinst $(INBM_PACKAGE_DIR)/DEBIAN/postinst || true
+	# Create conffiles
+	echo "/etc/intel_manageability.conf" > $(INBM_PACKAGE_DIR)/DEBIAN/conffiles
+	echo "/etc/firmware_tool_info.conf" >> $(INBM_PACKAGE_DIR)/DEBIAN/conffiles
+	echo "/etc/intel_edge_node/tokens/release-service/access_token" >> $(INBM_PACKAGE_DIR)/DEBIAN/conffiles
+	# Set permissions
+	chmod 755 $(INBM_PACKAGE_DIR)/usr/bin/inbc
+	chmod 755 $(INBM_PACKAGE_DIR)/usr/bin/inbd
+	chmod 640 $(INBM_PACKAGE_DIR)/etc/intel_manageability.conf || true
+	chmod 644 $(INBM_PACKAGE_DIR)/etc/firmware_tool_info.conf || true
+	chmod 750 $(INBM_PACKAGE_DIR)/etc/intel_edge_node || true
+	chmod 750 $(INBM_PACKAGE_DIR)/etc/intel_edge_node/tokens || true
+	chmod 750 $(INBM_PACKAGE_DIR)/etc/intel_edge_node/tokens/release-service || true
+	chmod 640 $(INBM_PACKAGE_DIR)/etc/intel_edge_node/tokens/release-service/access_token || true
+	chmod 644 $(INBM_PACKAGE_DIR)/usr/share/inbd_schema.json || true
+	chmod 644 $(INBM_PACKAGE_DIR)/usr/share/firmware_tool_config_schema.json || true
+	chmod 755 $(INBM_PACKAGE_DIR)/usr/bin/UpdateFirmwareBlobFwupdtool.sh || true
+	chmod 700 $(INBM_PACKAGE_DIR)/usr/bin/provision-tc || true
+	chmod 755 $(INBM_PACKAGE_DIR)/DEBIAN/postinst || true
+	# Create control file
+	printf "Package: intel-inbm\nVersion: $(INBM_VERSION)\nArchitecture: amd64\nMaintainer: Intel Corporation\nDescription: Intel In-Band Manageability Tools\n This package contains the inbc CLI and inbd daemon for Intel In-Band Manageability.\n" > $(INBM_PACKAGE_DIR)/DEBIAN/control
+	# Build the Debian package
+	dpkg-deb --build $(INBM_PACKAGE_DIR) $(BUILD_DIR)/intel-inbm.deb
+	@echo "---END MAKEFILE INBM BUILD DEB---"
+
+inbm-package-dist: inbm-build-deb
+	@echo "---MAKEFILE INBM PACKAGE DIST---"
+	# Copy license and legal files from INBM directory
+	cp $(INBM_DIR)/LICENSE $(BUILD_DIR)/LICENSE || true
+	cp -r $(INBM_DIR)/retain-3rd-party-notices $(BUILD_DIR)/retain-3rd-party-notices || true
+	cp $(INBM_DIR)/third-party-programs.txt $(BUILD_DIR)/third-party-programs.txt || true
+	# Copy installer scripts from INBM directory
+	cp $(INBM_DIR)/installer/install-tc.sh $(BUILD_DIR)/install-tc.sh || true
+	cp $(INBM_DIR)/installer/uninstall-tc.sh $(BUILD_DIR)/uninstall-tc.sh || true
+	cp $(INBM_DIR)/installer/uninstall-python-tc.sh $(BUILD_DIR)/uninstall-python-tc.sh || true
+	@echo "---END MAKEFILE INBM PACKAGE DIST---"
