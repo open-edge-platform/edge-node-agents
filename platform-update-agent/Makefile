@@ -29,7 +29,7 @@ clean:
 	rm -rf build
 	@echo "---END MAKEFILE CLEAN---"
 
-lint: golint
+lint: golint inbm-buf-lint
 
 puainstall:
 	install -d $(DESTDIR)$(PREFIX)/bin
@@ -125,16 +125,28 @@ tarball: common-tarball
 deb-push: common-deb-push
 
 # INBM Framework Integration
-PROTOC := protoc
 INBM_PACKAGE_DIR := $(BUILD_DIR)/inbm-package
 
-.PHONY: inbm-build inbm-test inbm-clean inbm-build-deb inbm-package-dist
+.PHONY: inbm-build inbm-test inbm-clean inbm-build-deb inbm-package-dist inbm-buf-gen inbm-buf-lint
 
-inbm-build:
+# INBM protobuf generation using buf (consistent with common module)
+inbm-buf-lint:
+	@echo "---MAKEFILE INBM BUF LINT---"
+	cd $(INBM_DIR) && buf --version
+	cd $(INBM_DIR) && buf format -w
+	cd $(INBM_DIR) && buf lint
+	@echo "---END MAKEFILE INBM BUF LINT---"
+
+inbm-buf-gen:
+	@echo "---MAKEFILE INBM BUF GENERATE---"
+	cd $(INBM_DIR) && buf --version
+	cd $(INBM_DIR) && buf generate --path proto/inbd/v1/inbd.proto
+	@echo "---END MAKEFILE INBM BUF GENERATE---"
+
+inbm-build: inbm-buf-gen
 	@echo "---MAKEFILE INBM BUILD---"
-	cd $(INBM_DIR) && $(PROTOC) --proto_path=proto --go_out=pkg/api --go_opt=paths=source_relative --go-grpc_out=pkg/api --go-grpc_opt=paths=source_relative proto/inbd/v1/inbd.proto
 	cd $(INBM_DIR) && CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -buildmode=pie -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w" -o ../$(BUILD_DIR)/inbc cmd/inbc/main.go
-	cd $(INBM_DIR) && CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -buildmode=pie -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w" -o ../$(BUILD_DIR)/inbd cmd/inbd/main.go
+	cd $(INBM_DIR) && CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -buildmode=pie -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all" -asmflags="all=-spectre=all" -ldflags="all=-s -w" -o ../$(BUILD_DIR)/inbd cmd/inbd/main.go
 	@echo "---END MAKEFILE INBM BUILD---"
 
 inbm-test:

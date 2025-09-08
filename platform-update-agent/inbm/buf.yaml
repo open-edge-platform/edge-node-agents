@@ -1,9 +1,17 @@
-version: v2
-modules:
-  - path: proto
-lint:
-  use:
-    - DEFAULT
+---
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+name: buf.build/inbm/api
+deps:
+  - buf.build/bufbuild/protovalidate
 breaking:
   use:
     - FILE
+lint:
+  use:
+    - BASIC
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+  allow_comment_ignores: true

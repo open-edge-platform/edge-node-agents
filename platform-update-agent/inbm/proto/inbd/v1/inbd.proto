@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package inbd.v1;
 
-import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1";
+option go_package = "github.com/open-edge-platform/edge-node-agents/platform-update-agent/inbm/pkg/api/inbd/v1";
 
 service InbService {
   rpc UpdateSystemSoftware(UpdateSystemSoftwareRequest) returns (UpdateResponse);
@@ -25,94 +25,97 @@ service InbService {
 message SetPowerStateRequest {
   enum PowerAction {
     POWER_ACTION_UNSPECIFIED = 0;
-    POWER_ACTION_OFF = 1;   // Power off the node
+    POWER_ACTION_OFF = 1; // Power off the node
     POWER_ACTION_CYCLE = 2; // Cycle power to the node
   }
-  
+
   PowerAction action = 1 [
-      (buf.validate.field).enum = {
-          defined_only: true
-      },
-      (buf.validate.field).required = true
+    (buf.validate.field).enum = {defined_only: true},
+    (buf.validate.field).required = true
   ]; // Action to perform on the node's power state
 }
 
 message UpdateFirmwareRequest {
-  string url = 1 [(buf.validate.field).cel = {
-    id: "valid_url"
-    message: "url must be a valid URL."
-    expression: "this == '' || this.isUri()"
-  },
-  (buf.validate.field).required = true]; // URL from which to remotely retrieve the package
+  string url = 1 [
+    (buf.validate.field).cel = {
+      id: "valid_url"
+      message: "url must be a valid URL."
+      expression: "this == '' || this.isUri()"
+    },
+    (buf.validate.field).required = true
+  ]; // URL from which to remotely retrieve the package
   google.protobuf.Timestamp release_date = 2 [(buf.validate.field).required = true]; // Release date of the new firmware update.
-  bool do_not_reboot = 3;  // Whether to reboot the node after the firmware update attempt
+  bool do_not_reboot = 3; // Whether to reboot the node after the firmware update attempt
   string username = 4 [(buf.validate.field).required = false]; // Username if authentication is required for the package source
   string signature = 5 [(buf.validate.field).required = false]; // Signature of the package
   string hash_algorithm = 6 [(buf.validate.field).required = false]; // "sha256", "sha384", "sha512"
 }
 
 message UpdateSystemSoftwareRequest {
-  string url = 1 [(buf.validate.field).cel = {
-    id: "valid_url"
-    message: "url must be a valid URL."
-    expression: "this == '' || this.isUri()"
-  },
-  (buf.validate.field).required = false]; // URL from which to remotely retrieve the package
+  string url = 1 [
+    (buf.validate.field).cel = {
+      id: "valid_url"
+      message: "url must be a valid URL."
+      expression: "this == '' || this.isUri()"
+    },
+    (buf.validate.field).required = false
+  ]; // URL from which to remotely retrieve the package
   google.protobuf.Timestamp release_date = 2 [(buf.validate.field).required = false]; // Release date of the new SW update.
   enum DownloadMode {
-      DOWNLOAD_MODE_UNSPECIFIED = 0;
-      DOWNLOAD_MODE_FULL = 1; // Both download the package and install the package
-      DOWNLOAD_MODE_NO_DOWNLOAD = 2; // Do not download the package.  Only install.
-      DOWNLOAD_MODE_DOWNLOAD_ONLY = 3; // Only download the package.  Do not install.
+    DOWNLOAD_MODE_UNSPECIFIED = 0;
+    DOWNLOAD_MODE_FULL = 1; // Both download the package and install the package
+    DOWNLOAD_MODE_NO_DOWNLOAD = 2; // Do not download the package.  Only install.
+    DOWNLOAD_MODE_DOWNLOAD_ONLY = 3; // Only download the package.  Do not install.
   }
   DownloadMode mode = 3 [
-      (buf.validate.field).enum = {
-          defined_only: true
-      },
-  (buf.validate.field).required = true]; // Mode for installing the software update regarding download and install steps.
-  bool do_not_reboot = 4;  // Whether to reboot the node after the software update attempt
+    (buf.validate.field).enum = {defined_only: true},
+    (buf.validate.field).required = true
+  ]; // Mode for installing the software update regarding download and install steps.
+  bool do_not_reboot = 4; // Whether to reboot the node after the software update attempt
   repeated string package_list = 5 [(buf.validate.field).repeated = {
-      unique: true,
-      items: {
-          string: {
-              pattern: "^[a-zA-Z0-9_-]+$" // Adjust the pattern as needed
-          }
+    unique: true
+    items: {
+      string: {
+        pattern: "^[a-zA-Z0-9_-]+$" // Adjust the pattern as needed
       }
+    }
   }]; // List of packages to install if whole package update isn't desired.
   string signature = 6 [(buf.validate.field).required = false]; // Signature of the package
 }
 
 message UpdateOSSourceRequest {
   repeated string source_list = 1 [(buf.validate.field).repeated = {
-      unique: true,
-      items: {
-          string: {
-              pattern: "^[a-zA-Z0-9_-]+$:/" // Adjust the pattern as needed
-              min_len: 1
-              max_len: 500
-          }
+    unique: true
+    items: {
+      string: {
+        pattern: "^[a-zA-Z0-9_-]+$:/" // Adjust the pattern as needed
+        min_len: 1
+        max_len: 500
       }
+    }
   }]; // List of sources to update.
 }
 
 message AddApplicationSourceRequest {
   repeated string source = 1 [(buf.validate.field).repeated = {
-    unique: true,
+    unique: true
     items: {
-        string: {
-            pattern: "^[a-zA-Z0-9_-]+$:/" // Adjust the pattern as needed
-            min_len: 1
-            max_len: 500
-        }
+      string: {
+        pattern: "^[a-zA-Z0-9_-]+$:/" // Adjust the pattern as needed
+        min_len: 1
+        max_len: 500
+      }
     }
   }];
   string filename = 2 [(buf.validate.field).required = true];
-  string gpg_key_uri = 3 [(buf.validate.field).cel = {
-    id: "valid_uri"
-    message: "url must be a valid URL."
-    expression: "this == '' || this.isUri()"
-  },
-  (buf.validate.field).required = false]; // URL from which to remotely retrieve the package
+  string gpg_key_uri = 3 [
+    (buf.validate.field).cel = {
+      id: "valid_uri"
+      message: "url must be a valid URL."
+      expression: "this == '' || this.isUri()"
+    },
+    (buf.validate.field).required = false
+  ]; // URL from which to remotely retrieve the package
   string gpg_key_name = 4 [(buf.validate.field).required = false];
 }
 
@@ -190,7 +193,7 @@ message RemoveConfigRequest {
 
 message ConfigResponse {
   int32 status_code = 1; // Status code of the operation
-  string error = 2;      // set if there is an error
+  string error = 2; // set if there is an error
   bool success = 3;
   string message = 4;
 }
@@ -207,87 +210,87 @@ message QueryRequest {
   QueryOption option = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).enum = {
-      defined_only: true,
-      not_in: [0] // Don't allow UNSPECIFIED
+      defined_only: true
+      not_in: [0] /* Don't allow UNSPECIFIED */
     }
   ];
 }
 
 enum QueryOption {
   QUERY_OPTION_UNSPECIFIED = 0;
-  QUERY_OPTION_HARDWARE = 1;    // hw - Hardware information
-  QUERY_OPTION_FIRMWARE = 2;    // fw - Firmware information
-  QUERY_OPTION_OS = 3;          // os - Operating System information
-  QUERY_OPTION_SWBOM = 4;       // swbom - Software BOM information
-  QUERY_OPTION_VERSION = 5;     // version - Version information
-  QUERY_OPTION_ALL = 6;         // all - All available information
+  QUERY_OPTION_HARDWARE = 1; // hw - Hardware information
+  QUERY_OPTION_FIRMWARE = 2; // fw - Firmware information
+  QUERY_OPTION_OS = 3; // os - Operating System information
+  QUERY_OPTION_SWBOM = 4; // swbom - Software BOM information
+  QUERY_OPTION_VERSION = 5; // version - Version information
+  QUERY_OPTION_ALL = 6; // all - All available information
 }
 
 message QueryResponse {
-  int32 status_code = 1;                    // HTTP-style status code
-  string error = 2;                         // Error message if any
-  bool success = 3;                         // Success indicator
-  QueryData data = 4;                       // Query result data
+  int32 status_code = 1; // HTTP-style status code
+  string error = 2; // Error message if any
+  bool success = 3; // Success indicator
+  QueryData data = 4; // Query result data
 }
 
 message QueryData {
   google.protobuf.Timestamp timestamp = 1; // Timestamp when data was collected
-  string type = 2;                          // Type of telemetry data
+  string type = 2; // Type of telemetry data
   oneof values {
-    HardwareInfo hardware = 3;              // Hardware information
-    FirmwareInfo firmware = 4;              // Firmware information
-    OSInfo os_info = 5;                     // Operating system information
-    SWBOMInfo swbom = 6;                    // Software BOM information
-    VersionInfo version = 7;                // Version information
-    AllInfo all_info = 8;                   // All information combined
+    HardwareInfo hardware = 3; // Hardware information
+    FirmwareInfo firmware = 4; // Firmware information
+    OSInfo os_info = 5; // Operating system information
+    SWBOMInfo swbom = 6; // Software BOM information
+    VersionInfo version = 7; // Version information
+    AllInfo all_info = 8; // All information combined
   }
 }
 
 // Hardware information structure
 message HardwareInfo {
-  string cpu_id = 1;                       // cpuId
-  string total_physical_memory = 2;        // totalPhysicalMemory
-  string disk_information = 3;             // diskInformation
-  string system_manufacturer = 4;          // systemManufacturer
-  string system_product_name = 5;          // systemProductName
+  string cpu_id = 1; // cpuId
+  string total_physical_memory = 2; // totalPhysicalMemory
+  string disk_information = 3; // diskInformation
+  string system_manufacturer = 4; // systemManufacturer
+  string system_product_name = 5; // systemProductName
 }
 
 // Firmware information structure
 message FirmwareInfo {
-  string bios_vendor = 1;                     // biosVendor
-  string bios_version = 2;                    // biosVersion
+  string bios_vendor = 1; // biosVendor
+  string bios_version = 2; // biosVersion
   google.protobuf.Timestamp bios_release_date = 3; // biosReleaseDate
 }
 
 // Operating system information structure
 message OSInfo {
-  string os_information = 1;               // OS information
+  string os_information = 1; // OS information
 }
 
 // Software BOM information structure
 message SWBOMInfo {
-  repeated SoftwarePackage packages = 1;    // List of installed software packages
+  repeated SoftwarePackage packages = 1; // List of installed software packages
   google.protobuf.Timestamp collection_timestamp = 2; // When SWBOM was collected
-  string collection_method = 3;             // How SWBOM was collected
+  string collection_method = 3; // How SWBOM was collected
 }
 
 message SoftwarePackage {
   string name = 1 [(buf.validate.field).string.min_len = 1]; // Package name
-  string version = 2;                       // Package version
-  string vendor = 3;                        // Package vendor/publisher
+  string version = 2; // Package version
+  string vendor = 3; // Package vendor/publisher
   google.protobuf.Timestamp install_date = 4; // Installation date
-  string license = 5;                       // License information
-  string description = 6;                   // Package description
-  string type = 7;                          // Package type (deb, rpm, mender, etc.)
-  string architecture = 8;                  // Package architecture
+  string license = 5; // License information
+  string description = 6; // Package description
+  string type = 7; // Package type (deb, rpm, mender, etc.)
+  string architecture = 8; // Package architecture
 }
 
 // Version information structure
 message VersionInfo {
-  string version = 1;                       // Version number
-  string inbm_version_commit = 2;           // INBM version commit
+  string version = 1; // Version number
+  string inbm_version_commit = 2; // INBM version commit
   google.protobuf.Timestamp build_date = 3; // Build date
-  string git_commit = 4;                    // Git commit hash
+  string git_commit = 4; // Git commit hash
 }
 
 message PowerCapabilitiesInfo {
@@ -300,11 +303,11 @@ message PowerCapabilitiesInfo {
 
 // Combined information structure (for "all" queries)
 message AllInfo {
-  HardwareInfo hardware = 1;               // Hardware information
-  FirmwareInfo firmware = 2;               // Firmware information
-  OSInfo os_info = 3;                      // OS information
-  VersionInfo version = 4;                 // Version information
+  HardwareInfo hardware = 1; // Hardware information
+  FirmwareInfo firmware = 2; // Firmware information
+  OSInfo os_info = 3; // OS information
+  VersionInfo version = 4; // Version information
   PowerCapabilitiesInfo power_capabilities = 5; // Power capabilities (Linux only)
-  SWBOMInfo swbom = 6;                          // SWBOM info
-  repeated string additional_info = 7;     // Any additional system information
+  SWBOMInfo swbom = 6; // SWBOM info
+  repeated string additional_info = 7; // Any additional system information
 }
