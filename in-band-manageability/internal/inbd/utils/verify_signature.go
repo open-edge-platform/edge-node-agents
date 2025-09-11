@@ -54,8 +54,11 @@ type TarContents struct {
 // VerifySignature verifies that the signed checksum of the package matches the package received
 // Generic function that supports configuration, and FOTA packages with embedded PEM certificates
 func VerifySignature(signature, pathToFile string, hashAlgorithm *HashAlgorithm) error {
-	fs := afero.NewOsFs()
+	return verifySignatureWithFS(afero.NewOsFs(), signature, pathToFile, hashAlgorithm)
+}
 
+// verifySignatureWithFS is an internal function that accepts a filesystem for testing
+func verifySignatureWithFS(fs afero.Fs, signature, pathToFile string, hashAlgorithm *HashAlgorithm) error {
 	if err := isFilePathAbsolute(pathToFile); err != nil {
 		return fmt.Errorf("signature check failed: invalid path: %w", err)
 	}

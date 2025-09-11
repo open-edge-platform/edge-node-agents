@@ -14,8 +14,8 @@ import (
 	"strconv"
 	"strings"
 
-	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"golang.org/x/sys/unix"
 )
 

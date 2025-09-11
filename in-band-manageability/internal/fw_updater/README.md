@@ -1,3 +1,7 @@
+<!---
+  SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+  SPDX-License-Identifier: Apache-2.0
+-->
 # Interface-Based Dependency Injection for Firmware Configuration
 
 This package now supports a modern interface-based approach for handling firmware configuration, which eliminates reliance on the file system's state and enables comprehensive mocking for unit tests.

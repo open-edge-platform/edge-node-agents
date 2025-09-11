@@ -323,6 +323,23 @@ func WriteFile(fs afero.Fs, filePath string, data []byte, perm os.FileMode) erro
 
 // CreateTempFile creates a temp file, checks for canonical path and symlinks, and returns the file handle.
 func CreateTempFile(fs afero.Fs, dir, pattern string) (*os.File, error) {
+	// Handle empty directory (uses system default temp dir)
+	if dir == "" {
+		dir = os.TempDir() // This resolves to /tmp on most systems
+	}
+
+	// Validate the directory is within allowed base directories first
+	isAllowed := false
+	for _, baseDir := range allowedBaseDirs {
+		if strings.HasPrefix(dir, baseDir) {
+			isAllowed = true
+			break
+		}
+	}
+	if !isAllowed {
+		return nil, fmt.Errorf("path not allowed: directory %s is outside allowed directories", dir)
+	}
+
 	tmpFile, err := os.CreateTemp(dir, pattern)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)

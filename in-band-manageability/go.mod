@@ -1,4 +1,4 @@
-module github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm
+module github.com/open-edge-platform/edge-node-agents/in-band-manageability
 
 go 1.24.1
 
