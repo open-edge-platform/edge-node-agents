@@ -8,10 +8,10 @@ import (
 	"os/exec"
 	"testing"
 
-	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
-	emt "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/emt"
-	ubuntu "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/os_updater/ubuntu"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	emt "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/os_updater/emt"
+	ubuntu "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/os_updater/ubuntu"
+	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"github.com/stretchr/testify/assert"
 )
 

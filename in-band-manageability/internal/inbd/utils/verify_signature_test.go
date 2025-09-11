@@ -386,45 +386,53 @@ func TestVerifyChecksumWithKey(t *testing.T) {
 }
 
 func TestVerifySignature_DirectFile(t *testing.T) {
-	// Use the real OS filesystem because VerifySignature uses afero.NewOsFs()
-	fs := afero.NewOsFs()
+	// Use memory filesystem to avoid requiring root privileges
+	fs := afero.NewMemMapFs()
 	priv, certPEM := generateTestCertAndKey(t)
+
+	// Create the directory structure and certificate file
 	err := MkdirAll(fs, "/etc/intel-manageability/public", 0755)
 	require.NoError(t, err)
 	err = WriteFile(fs, OTAPackageCertPath, certPEM, 0644)
 	require.NoError(t, err)
+
+	// Create test content and config file
 	content := []byte("test config content")
 	confPath := "/tmp/intel_manageability.conf"
+	err = MkdirAll(fs, "/tmp", 0755)
+	require.NoError(t, err)
 	err = WriteFile(fs, confPath, content, 0644)
 	require.NoError(t, err)
 	sig := generateSignature(t, priv, content)
 
-	err = VerifySignature(sig, confPath, nil)
+	// Test using the internal function that accepts filesystem
+	err = verifySignatureWithFS(fs, sig, confPath, nil)
 	assert.NoError(t, err)
-	// Cleanup
-	_ = fs.Remove(confPath)
-	_ = fs.Remove(OTAPackageCertPath)
 }
 
 func TestVerifySignature_TarWithPEM(t *testing.T) {
-	fs := afero.NewOsFs()
+	// Use memory filesystem to avoid requiring root privileges
+	fs := afero.NewMemMapFs()
 	priv, certPEM := generateTestCertAndKey(t)
 
 	content := []byte("tar config content")
 	confName := ConfigFileName
 
 	tarPath := "/tmp/test_package.tar"
+	err := MkdirAll(fs, "/tmp", 0755)
+	require.NoError(t, err)
+
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 
 	require.NoError(t, tw.WriteHeader(&tar.Header{
 		Name: confName, Mode: 0644, Size: int64(len(content)),
 	}))
-	_, err := tw.Write(content)
+	_, err = tw.Write(content)
 	require.NoError(t, err)
 
 	require.NoError(t, tw.WriteHeader(&tar.Header{
-		Name: "testcert.pem", Mode: 0644, Size: int64(len(certPEM)),
+		Name: "certificate.pem", Mode: 0644, Size: int64(len(certPEM)),
 	}))
 	_, err = tw.Write(certPEM)
 	require.NoError(t, err)
@@ -435,14 +443,14 @@ func TestVerifySignature_TarWithPEM(t *testing.T) {
 
 	require.NoError(t, WriteFile(fs, tarPath, buf.Bytes(), 0644))
 
-	err = VerifySignature(sig, tarPath, nil)
+	// Use the internal function that accepts filesystem
+	err = verifySignatureWithFS(fs, sig, tarPath, nil)
 	assert.NoError(t, err)
-	// Cleanup
-	_ = fs.Remove(tarPath)
 }
 
 func TestVerifySignature_TarWithSystemPEM(t *testing.T) {
-	fs := afero.NewOsFs()
+	// Use memory filesystem to avoid requiring root privileges
+	fs := afero.NewMemMapFs()
 	priv, certPEM := generateTestCertAndKey(t)
 
 	// Write OTA cert to system path
@@ -455,6 +463,9 @@ func TestVerifySignature_TarWithSystemPEM(t *testing.T) {
 	confName := ConfigFileName
 
 	tarPath := "/tmp/test_package2.tar"
+	err = MkdirAll(fs, "/tmp", 0755)
+	require.NoError(t, err)
+
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 	require.NoError(t, tw.WriteHeader(&tar.Header{
@@ -469,15 +480,14 @@ func TestVerifySignature_TarWithSystemPEM(t *testing.T) {
 
 	require.NoError(t, WriteFile(fs, tarPath, buf.Bytes(), 0644))
 
-	err = VerifySignature(sig, tarPath, nil)
+	// Use the internal function that accepts filesystem
+	err = verifySignatureWithFS(fs, sig, tarPath, nil)
 	assert.NoError(t, err)
-	// Cleanup
-	_ = fs.Remove(tarPath)
-	_ = fs.Remove(OTAPackageCertPath)
 }
 
 func TestVerifySignature_InvalidSignature(t *testing.T) {
-	fs := afero.NewOsFs()
+	// Use memory filesystem to avoid requiring root privileges
+	fs := afero.NewMemMapFs()
 	_, certPEM := generateTestCertAndKey(t)
 
 	err := MkdirAll(fs, "/etc/intel-manageability/public", 0755)
@@ -487,19 +497,20 @@ func TestVerifySignature_InvalidSignature(t *testing.T) {
 
 	content := []byte("test config content")
 	confPath := "/tmp/intel_manageability.conf"
+	err = MkdirAll(fs, "/tmp", 0755)
+	require.NoError(t, err)
 	err = WriteFile(fs, confPath, content, 0644)
 	require.NoError(t, err)
 
 	badSig := "deadbeef"
-	err = VerifySignature(badSig, confPath, nil)
+	// Use the internal function that accepts filesystem
+	err = verifySignatureWithFS(fs, badSig, confPath, nil)
 	assert.Error(t, err)
-	// Cleanup
-	_ = fs.Remove(confPath)
-	_ = fs.Remove(OTAPackageCertPath)
 }
 
 func TestVerifySignature_EmptySignatureWhenRequired(t *testing.T) {
-	fs := afero.NewOsFs()
+	// Use memory filesystem to avoid requiring root privileges
+	fs := afero.NewMemMapFs()
 	_, certPEM := generateTestCertAndKey(t)
 	err := MkdirAll(fs, "/etc/intel-manageability/public", 0755)
 	require.NoError(t, err)
@@ -507,16 +518,16 @@ func TestVerifySignature_EmptySignatureWhenRequired(t *testing.T) {
 	require.NoError(t, err)
 	content := []byte("test config content")
 	confPath := "/tmp/intel_manageability.conf"
+	err = MkdirAll(fs, "/tmp", 0755)
+	require.NoError(t, err)
 	err = WriteFile(fs, confPath, content, 0644)
 	require.NoError(t, err)
 
 	// Empty signature, but cert exists, so signature is required
-	err = VerifySignature("", confPath, nil)
+	// Use the internal function that accepts filesystem
+	err = verifySignatureWithFS(fs, "", confPath, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "signature is required")
-	// Cleanup
-	_ = fs.Remove(confPath)
-	_ = fs.Remove(OTAPackageCertPath)
 }
 
 func TestVerifySignature_EmptySignatureWhenNotRequired(t *testing.T) {

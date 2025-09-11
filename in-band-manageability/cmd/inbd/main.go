@@ -13,9 +13,9 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd"
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd"
+	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
+	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
 )
 

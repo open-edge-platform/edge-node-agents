@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
 	"github.com/spf13/afero"
 )
 

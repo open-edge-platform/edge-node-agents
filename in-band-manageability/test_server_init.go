@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -5,8 +8,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd"
+	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 )
 
 func main() {

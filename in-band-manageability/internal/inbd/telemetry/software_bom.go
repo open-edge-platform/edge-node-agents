@@ -14,9 +14,9 @@ import (
 
 	"github.com/spf13/afero"
 
-	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	utils "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

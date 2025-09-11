@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -292,6 +292,12 @@ func TestGetGitCommit(t *testing.T) {
 	})
 
 	t.Run("environment variable format", func(t *testing.T) {
+		// Store original directory and change to a temporary non-git directory
+		originalDir, _ := os.Getwd()
+		tempDir := t.TempDir()
+		os.Chdir(tempDir)
+		defer os.Chdir(originalDir)
+
 		// Test that environment variables are accepted as-is
 		testEnvValues := []string{
 			"env-commit-123",
@@ -302,12 +308,14 @@ func TestGetGitCommit(t *testing.T) {
 
 		for _, envValue := range testEnvValues {
 			t.Run(envValue, func(t *testing.T) {
+				originalEnv := os.Getenv("GIT_COMMIT")
 				os.Setenv("GIT_COMMIT", envValue)
+				defer os.Setenv("GIT_COMMIT", originalEnv)
 
 				commit := getGitCommit()
 				assert.NotEmpty(t, commit)
-				// Environment variables should be accepted as-is
-				assert.True(t, strings.Contains(commit, envValue) || commit == envValue)
+				// Environment variables should be accepted as-is when git is not available
+				assert.Equal(t, envValue, commit)
 			})
 		}
 	})

@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
-	utils "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	utils "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
+	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Build-time variables (set via ldflags during build)
 var (
-	Version   = "dev"     // Set via -ldflags "-X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.Version=x.x.x"
-	GitCommit = "unknown" // Set via -ldflags "-X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.GitCommit=commit_hash"
-	BuildDate = "unknown" // Set via -ldflags "-X github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/telemetry.BuildDate=build_date"
+	Version   = "dev"     // Set via -ldflags "-X github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/telemetry.Version=x.x.x"
+	GitCommit = "unknown" // Set via -ldflags "-X github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/telemetry.GitCommit=commit_hash"
+	BuildDate = "unknown" // Set via -ldflags "-X github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/telemetry.BuildDate=build_date"
 )
 
 // GetVersionInfo retrieves version information

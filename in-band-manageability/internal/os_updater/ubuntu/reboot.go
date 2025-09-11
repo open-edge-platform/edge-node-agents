@@ -9,9 +9,9 @@ package ubuntu
 import (
 	"log"
 
-	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
+	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 )
 
 // Rebooter is the concrete implementation of the Updater interface

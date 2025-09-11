@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 set -eo pipefail
 # Shell script that installs Intel Manageability framework after confirming dependencies are met.
 # Usage:

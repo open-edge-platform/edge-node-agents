@@ -1,14 +1,17 @@
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 package osupdater
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/inbd/utils"
+	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
 	"github.com/spf13/afero"
 
-	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
-	pb "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/pkg/api/inbd/v1"
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"github.com/stretchr/testify/assert"
 )
 

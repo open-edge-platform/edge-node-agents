@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/spf13/afero"
-	common "github.com/intel-innersource/frameworks.edge.one-intel-edge.maestro-infra.inbm/internal/common"
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 )
 
 // StateFilePath is the path to the inbd state file.
