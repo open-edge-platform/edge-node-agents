@@ -3,9 +3,6 @@
 
 NAME ?= platform-update-agent
 BUILD_DIR ?= build/artifacts
-INBM_VERSION ?= 4.2.8.6
-INBM_DIR_NAME ?= inbm
-INBM_OUTPUT_DIR_NAME ?= output
 PUA_PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
 GO_MOD_MODE ?= readonly
 FUZZTIME ?= 1s
@@ -34,17 +31,6 @@ lint: golint
 puainstall:
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install $(BUILD_DIR)/$(NAME) $(DESTDIR)$(PREFIX)/bin
-
-inbmdownload:
-	@echo "---MAKEFILE INBM DOWNLOAD---"
-	mkdir -p ${BUILD_DIR}
-	rm -rf intel-inb-manageability
-	git clone https://github.com/intel/intel-inb-manageability.git
-	(cd intel-inb-manageability && git checkout tags/v$(INBM_VERSION))
-	intel-inb-manageability/build.sh --build-windows=false --build-check=false
-	cp intel-inb-manageability/dist/inbm/* ./$(BUILD_DIR)
-	tar zxvf ./$(BUILD_DIR)/Intel-Manageability.preview.tar.gz --directory ./$(BUILD_DIR)
-	@echo "---END MAKEFILE INBM DOWNLOAD---"
 
 puabuild:
 	@echo "---MAKEFILE PUA BUILD---"
@@ -109,7 +95,7 @@ cover: cover_unit cover_integration
 	sed -i "s#$(shell pwd)#github.com/open-edge-platform/edge-node-agents/platform-update-agent#g" build/artifacts/coverage/profile 
 	gocover-cobertura < $(BUILD_DIR)/coverage/profile > build/artifacts/coverage.xml
 
-package: inbmdownload
+package:
 	mkdir -p $(PUA_PACKAGE_BUILD_DIR)
 	cp -r $(shell ls . | grep -v build*) $(PUA_PACKAGE_BUILD_DIR)
 	cp ../.golangci.yml $(PUA_PACKAGE_BUILD_DIR)
