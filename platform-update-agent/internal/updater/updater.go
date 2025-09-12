@@ -61,6 +61,10 @@ var (
 		"sudo", "update-grub",
 	}
 
+	rebootCommand = []string{
+		"sudo", "reboot",
+	}
+
 	aptCleanCommand = []string{
 		"sudo", "apt", "clean",
 	}
@@ -423,6 +427,18 @@ func (k *kernelUpdater) update() error {
 	if _, err = k.Execute(upgradeGrubCommand); err != nil {
 		return fmt.Errorf("%s: %v", _ERR_GRUB_UPDATE_FAILED, err)
 	}
+
+	// Set metadata to indicate OS update is in progress so the system continues after reboot
+	if err := k.SetMetaUpdateInProgress(metadata.OS); err != nil {
+		return fmt.Errorf("%s: %v", _ERR_CANNOT_SET_METAFILE, err)
+	}
+
+	// Reboot is required for kernel command line changes to take effect
+	log.Info("Kernel update completed. Rebooting system for changes to take effect.")
+	if _, err = k.Execute(rebootCommand); err != nil {
+		return fmt.Errorf("failed to execute reboot command: %v", err)
+	}
+
 	return nil
 }
 
@@ -439,7 +455,8 @@ func (p *packagesUpdater) update() error {
 	}
 
 	if updateSource == nil || len(updateSource.CustomRepos) == 0 {
-		return fmt.Errorf("update source or custom apt repositories are empty")
+		log.Info("No custom apt repositories configured - skipping package updates")
+		return nil
 	}
 
 	isDeprecated := p.IsDeprecatedFormat(updateSource.CustomRepos)
