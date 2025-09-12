@@ -518,7 +518,7 @@ func Test_updateKernel_shouldReturnErrorWhenMetadataFileDoesntExist(t *testing.T
 }
 
 func Test_updateKernel_happyPath(t *testing.T) {
-	var interceptedCommand []string
+	var interceptedCommands [][]string
 	kernelFile, _ := os.CreateTemp("", "kernel_temp")
 	defer kernelFile.Close()
 	defer os.Remove(kernelFile.Name())
@@ -526,7 +526,8 @@ func Test_updateKernel_happyPath(t *testing.T) {
 	kernelUpdater := kernelUpdater{
 		Executor: utils.NewExecutor[[]string](
 			func(name string, args ...string) *[]string {
-				interceptedCommand = append([]string{name}, args...)
+				command := append([]string{name}, args...)
+				interceptedCommands = append(interceptedCommands, command)
 				return new([]string)
 			}, func(in *[]string) ([]byte, error) {
 				return nil, nil
@@ -537,6 +538,9 @@ func Test_updateKernel_happyPath(t *testing.T) {
 					KernelCommand: "foo=bar",
 				}, nil
 			},
+			SetMetaUpdateInProgress: func(updateType metadata.UpdateType) error {
+				return nil
+			},
 		},
 		kernelFile: kernelFile.Name(),
 	}
@@ -544,7 +548,11 @@ func Test_updateKernel_happyPath(t *testing.T) {
 	sut := kernelUpdater.update
 
 	require.NoError(t, sut())
-	require.Equal(t, upgradeGrubCommand, interceptedCommand)
+
+	// Verify that both update-grub and reboot commands were executed
+	require.Len(t, interceptedCommands, 2)
+	require.Equal(t, upgradeGrubCommand, interceptedCommands[0])
+	require.Equal(t, rebootCommand, interceptedCommands[1])
 
 	file, err := os.ReadFile(kernelFile.Name())
 	require.NoError(t, err)
@@ -1194,7 +1202,7 @@ func Test_packagesUpdater_update_shouldFailWhenNotSignedRepo(t *testing.T) {
 	assert.ErrorContains(t, err, "deprecated custom apt repo configuration failed. Error")
 }
 
-func Test_packagesUpdater_update_shouldFailIfReposAreEmpty(t *testing.T) {
+func Test_packagesUpdater_update_shouldSkipIfReposAreEmpty(t *testing.T) {
 	metadataController := metadata.NewController()
 
 	file, err := os.CreateTemp("/tmp", "metadata-")
@@ -1215,7 +1223,7 @@ func Test_packagesUpdater_update_shouldFailIfReposAreEmpty(t *testing.T) {
 
 	err = pUpdater.update()
 
-	assert.ErrorContains(t, err, "update source or custom apt repositories are empty")
+	assert.NoError(t, err)
 }
 
 func Test_packagesUpdater_update_shouldFailIfMetadataFileDoesntExist(t *testing.T) {
