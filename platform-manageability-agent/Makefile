@@ -85,17 +85,17 @@ dmmbuild:
 build: pmabuild ssmbuild dmmbuild
 
 integration_test: pmabuild_with_race ssmbuild dmmbuild
-	sudo cp test/_dummy.crt /usr/local/share/ca-certificates/_dummy.crt
+	sudo cp test/_dummy-cert.pem /usr/local/share/ca-certificates/_dummy.crt
 	sudo update-ca-certificates
 	PMA_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/pm-agent_race \
 	DMM_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/dm-manager-mock \
 	SS_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/status-server-mock \
 	TEST_CONFIG_PATH=$(shell pwd)/test/test_config.yaml \
-	TEST_CERT_PATH=$(shell pwd)/test/_dummy.crt \
-	TEST_KEY_PATH=$(shell pwd)/test/_dummy.key \
+	TEST_CERT_PATH=$(shell pwd)/test/_dummy-cert.pem \
+	TEST_KEY_PATH=$(shell pwd)/test/_dummy-key.pem \
 	PMA_VERSION="Platform Manageability Agent v$(VERSION)-$(COMMIT)" \
 	GORACE="log_path=stdout" \
-	go test -v ./cmd/platform-manageability-agent/platform-manageability-agent.go
+	go test -v ./cmd/platform-manageability-agent/platform-manageability-agent_test.go
 
 cover_unit:
 	mkdir -p $(BUILD_DIR)/coverage/unit
@@ -118,10 +118,10 @@ cover_integration: pmabuild_with_cover ssmbuild dmmbuild
 	DMM_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/dm-manager-mock \
 	SS_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/status-server-mock \
 	TEST_CONFIG_PATH=$(shell pwd)/test/test_config.yaml \
-	TEST_CERT_PATH=$(shell pwd)/test/_dummy.crt \
-	TEST_KEY_PATH=$(shell pwd)/test/_dummy.key \
+	TEST_CERT_PATH=$(shell pwd)/test/_dummy-cert.pem \
+	TEST_KEY_PATH=$(shell pwd)/test/_dummy-key.pem \
 	PMA_VERSION="Platform Manageability Agent v$(VERSION)-$(COMMIT)" \
-	go test -v ./cmd/platform-manageability-agent/platform-manageability-agent.go | tee $(BUILD_DIR)/coverage/integration/integration.out
+	go test -v ./cmd/platform-manageability-agent/platform-manageability-agent_test.go | tee $(BUILD_DIR)/coverage/integration/integration.out
 	go tool covdata percent -i=$(BUILD_DIR)/coverage/integration
 	go tool covdata func -i=$(BUILD_DIR)/coverage/integration
 

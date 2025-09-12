@@ -11,4 +11,6 @@ manageability:
   heartbeatInterval: 10s
 rpsAddress: 'localhost:12345'
 statusEndpoint: 'unix:///tmp/status-server.sock'
+metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
+metricsInterval: 10s
 accessTokenPath: /etc/intel_edge_node/tokens/platform-manageability-agent/access_token

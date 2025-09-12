@@ -35,20 +35,10 @@ func ExecuteCommand(command string, args []string) ([]byte, error) {
 		return output, nil
 	} else {
 		if slices.Contains(args, "is-active") {
-			cmd := exec.Command("echo", "active")
-			output, err := cmd.Output()
-			if err != nil {
-				log.Logger.Errorf("Failed to execute command echo with args active: %v", err)
-				return nil, fmt.Errorf("failed to execute command echo with args active: %v", err)
-			}
+			output := []byte("active")
 			return output, nil
 		} else {
-			cmd := exec.Command("echo", "success")
-			output, err := cmd.Output()
-			if err != nil {
-				log.Logger.Errorf("failed to execute command echo with args success: %v", err)
-				return nil, fmt.Errorf("failed to execute command echo with args success: %v", err)
-			}
+			output := []byte("success")
 			return output, nil
 		}
 	}
@@ -71,16 +61,12 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 				return output, nil
 			}
 			log.Logger.Warnf("Failed to execute AMT info command (attempt %d/%d): %v", i, maxRetries, err)
-		} else {
-			cmd := exec.Command("printf", "Version: 0.1.0\nRAS Remote Status: not connected\n")
-			output, err = cmd.CombinedOutput()
-			if err == nil {
-				return output, nil
+			if i < maxRetries {
+				time.Sleep(retryInterval)
 			}
-			log.Logger.Warnf("Failed to execute printf command (attempt %d/%d): %v", i, maxRetries, err)
-		}
-		if i < maxRetries {
-			time.Sleep(retryInterval)
+		} else {
+			output = []byte("Version: 0.1.0\nRAS Remote Status: connecting")
+			return output, nil
 		}
 	}
 	return output, fmt.Errorf("amtInfo command failed after %d retries: %v", maxRetries, err)
@@ -88,15 +74,8 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 
 // ExecuteAMTActivate executes the AMT activate command.
 func (r *RealCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, password string) ([]byte, error) {
-	// Check if agent is being run with the DM manager mock and skip command if so
-	_, testCheck := os.LookupEnv("PMA_BINARY_PATH")
-	if !testCheck {
-		cmd := exec.Command("sudo", "-E", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-n")
-		cmd.Env = append(cmd.Environ(), fmt.Sprintf("AMT_PASSWORD=%s", password))
-		cmd.Env = append(cmd.Environ(), fmt.Sprintf("PROFILE=%s", profileName))
-		return cmd.CombinedOutput()
-	} else {
-		cmd := exec.Command("echo", "success")
-		return cmd.CombinedOutput()
-	}
+	cmd := exec.Command("sudo", "-E", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-n")
+	cmd.Env = append(cmd.Environ(), fmt.Sprintf("AMT_PASSWORD=%s", password))
+	cmd.Env = append(cmd.Environ(), fmt.Sprintf("PROFILE=%s", profileName))
+	return cmd.CombinedOutput()
 }

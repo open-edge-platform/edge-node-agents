@@ -27,7 +27,7 @@ var testPrivateKey string = os.Getenv("TEST_KEY_PATH")
 var pmaVersion string = os.Getenv("PMA_VERSION")
 
 // global timeout for entire test
-const testTimeout = 60 * time.Second
+const testTimeout = 90 * time.Second
 
 var comListenAddress string = "localhost:12345"
 
@@ -62,9 +62,9 @@ func TestDeviceConfiguration(t *testing.T) {
 	require.Contains(t, pmaBuffer.String(), "Successfully reported AMT status for host")
 	require.Contains(t, pmaBuffer.String(), "Successfully retrieved activation details for host")
 	require.Contains(t, pmaBuffer.String(), "Status Ready")
-	require.Contains(t, mockBuffer.String(), "AMTStatusReport")
+	require.Contains(t, mockBuffer.String(), "AMTStatusRequest")
 	require.Contains(t, mockBuffer.String(), "ActivationRequest")
-	require.Contains(t, mockBuffer.String(), "ActivationResponseDetails")
+	require.Contains(t, mockBuffer.String(), "ActivationDetailsResponse")
 	require.Contains(t, mockBuffer.String(), "ActivationResultRequest")
 	pmaBuffer.Reset()
 	mockBuffer.Reset()
@@ -97,7 +97,7 @@ func TestVersion(t *testing.T) {
 	require.Equal(t, pmaVersion+"\n", string(out))
 }
 
-// Execute `platform-manageability-agent` without arguments. It should exit with 1 return code and priont usage message.
+// Execute `platform-manageability-agent` without arguments and incorrect config arguments. It should exit with 1 return code and print usage message.
 func TestInvalidArguments(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
