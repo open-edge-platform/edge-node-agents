@@ -968,7 +968,46 @@ func Test_inbmUpdater_update_shouldReturnErrorIfUnableToAccessMetadataFile(t *te
 
 	err := iUpdater.update()
 
-	assert.ErrorContains(t, err, "cannot write metafile: open : no such file or directory")
+	assert.ErrorContains(t, err, "open : no such file or directory")
+}
+
+func Test_inbmUpdater_update_shouldSkipKernelOnlyUpdate(t *testing.T) {
+	// Set up a temporary metadata file
+	file, err := os.CreateTemp("/tmp", "metadata-")
+	assert.NoError(t, err)
+	defer os.Remove(file.Name())
+	metadata.MetaPath = file.Name()
+
+	// Initialize the metadata file first
+	err = metadata.InitMetadata()
+	assert.NoError(t, err)
+
+	// Set up metadata with kernel-only update source
+	err = metadata.SetMetaUpdateSource(&pb.UpdateSource{
+		KernelCommand: "some.kernel.param=value",
+		CustomRepos:   []string{}, // Empty repos indicates kernel-only update
+	})
+	assert.NoError(t, err)
+
+	metadataController := metadata.NewController()
+	executor := utils.NewExecutor(func(name string, args ...string) *exec.Cmd {
+		return exec.Command("true")
+	}, utils.ExecuteAndReadOutput)
+
+	iUpdater := &inbmUpdater{
+		MetaController: metadataController,
+		Executor:       executor,
+	}
+
+	err = iUpdater.update()
+
+	// Should not error and should skip INBM update
+	assert.NoError(t, err)
+
+	// Verify that INBM update was not set in progress (should still be empty)
+	updateInProgress, err := metadata.GetMetaUpdateInProgress()
+	assert.NoError(t, err)
+	assert.Equal(t, "", updateInProgress)
 }
 
 func Test_selfUpdater_update_shouldRunUpdateAndSetCorrectUpdateInMetadata(t *testing.T) {

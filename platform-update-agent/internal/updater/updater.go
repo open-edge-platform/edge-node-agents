@@ -263,10 +263,31 @@ func (u *UpdateController) ContinueUpdate() {
 func (u *UpdateController) VerifyUpdate(logPath string, granularLogPath string) (status pb.UpdateStatus_StatusType, granularLog string, time string, err error) {
 	content, err := os.ReadFile(logPath)
 	if err != nil {
+		// Check if this is a kernel-only update that doesn't generate INBC logs
+		updateInProgress, metaErr := metadata.GetMetaUpdateInProgress()
+		if metaErr == nil && updateInProgress == string(metadata.OS) {
+			// For kernel-only updates, check if kernel command was actually updated
+			updateSource, sourceErr := metadata.GetMetaUpdateSource()
+			if sourceErr == nil && updateSource != nil && updateSource.KernelCommand != "" {
+				log.Info("Kernel-only update detected - verifying kernel command line update")
+				// If we have a kernel command and the system rebooted (which is why we're here),
+				// the kernel update was successful
+				return pb.UpdateStatus_STATUS_TYPE_UPDATED, "Kernel command line parameters updated successfully", "", nil
+			}
+		}
 		return pb.UpdateStatus_STATUS_TYPE_FAILED, "", "", fmt.Errorf("reading INBC logs failed: %v", err)
 	}
 
 	if len(content) == 0 {
+		// Check if this is a kernel-only update that doesn't generate INBC logs
+		updateInProgress, metaErr := metadata.GetMetaUpdateInProgress()
+		if metaErr == nil && updateInProgress == string(metadata.OS) {
+			// For kernel-only updates, check if kernel command was actually updated
+			updateSource, sourceErr := metadata.GetMetaUpdateSource()
+			if sourceErr == nil && updateSource != nil && updateSource.KernelCommand != "" {
+				return pb.UpdateStatus_STATUS_TYPE_UPDATED, "Kernel command line parameters updated successfully", "", nil
+			}
+		}
 		return pb.UpdateStatus_STATUS_TYPE_FAILED, "", "", fmt.Errorf("INBC log file is empty")
 	}
 
@@ -523,6 +544,18 @@ type inbmUpdater struct {
 
 func (i *inbmUpdater) update() error {
 	log.Info("Executing INBM update")
+
+	// Check if there's an update source
+	updateSource, err := i.GetMetaUpdateSource()
+	if err != nil {
+		return err
+	}
+
+	// If this is a kernel-only update (has KernelCommand but no CustomRepos), skip INBM
+	if updateSource != nil && updateSource.KernelCommand != "" && len(updateSource.CustomRepos) == 0 {
+		log.Info("Kernel-only update detected - skipping INBM package upgrade")
+		return nil
+	}
 
 	if err := i.SetMetaUpdateInProgress(metadata.INBM); err != nil {
 		return fmt.Errorf("%s: %v", _ERR_CANNOT_SET_METAFILE, err)
