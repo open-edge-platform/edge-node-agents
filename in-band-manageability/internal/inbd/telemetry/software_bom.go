@@ -97,7 +97,7 @@ func getRPMPackages() ([]*pb.SoftwarePackage, error) {
 // parsePackageOutput parses dpkg-query output format "package version"
 func parsePackageOutput(output string) []*pb.SoftwarePackage {
 	lines := strings.Split(strings.TrimSpace(output), "\n")
-	var packages []*pb.SoftwarePackage
+	packages := make([]*pb.SoftwarePackage, 0)
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -121,7 +121,7 @@ func parsePackageOutput(output string) []*pb.SoftwarePackage {
 // parseRPMOutput parses rpm output format "package-version-release.arch"
 func parseRPMOutput(output string) []*pb.SoftwarePackage {
 	lines := strings.Split(strings.TrimSpace(output), "\n")
-	var packages []*pb.SoftwarePackage
+	packages := make([]*pb.SoftwarePackage, 0)
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)

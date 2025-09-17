@@ -434,12 +434,16 @@ func TestIntegrationGetRPMPackages(t *testing.T) {
 		return
 	}
 
-	assert.NotNil(t, packages)
+	// Function should always return a non-nil slice, even if empty
+	assert.NotNil(t, packages, "getRPMPackages should return a non-nil slice")
+
+	// If there are packages, verify their structure
 	if len(packages) > 0 {
-		// Verify package structure
 		pkg := packages[0]
 		assert.NotEmpty(t, pkg.Name)
 		assert.Equal(t, "rpm", pkg.Type)
+	} else {
+		t.Log("No RPM packages found on this system")
 	}
 }
 
@@ -493,4 +497,23 @@ func generateTestRPMData(count int) string {
 		lines = append(lines, fmt.Sprintf("package-%d-1.0.0-1.el9.x86_64", i))
 	}
 	return strings.Join(lines, "\n")
+}
+
+// Test to ensure empty output returns empty slice, not nil
+func TestParseRPMOutput_EmptyOutput(t *testing.T) {
+	packages := parseRPMOutput("")
+	assert.NotNil(t, packages, "parseRPMOutput should return non-nil slice for empty output")
+	assert.Equal(t, 0, len(packages), "parseRPMOutput should return empty slice for empty output")
+}
+
+func TestParsePackageOutput_EmptyOutput(t *testing.T) {
+	packages := parsePackageOutput("")
+	assert.NotNil(t, packages, "parsePackageOutput should return non-nil slice for empty output")
+	assert.Equal(t, 0, len(packages), "parsePackageOutput should return empty slice for empty output")
+}
+
+func TestParseRPMOutput_WhitespaceOnly(t *testing.T) {
+	packages := parseRPMOutput("   \n  \t  \n   ")
+	assert.NotNil(t, packages, "parseRPMOutput should return non-nil slice for whitespace-only output")
+	assert.Equal(t, 0, len(packages), "parseRPMOutput should return empty slice for whitespace-only output")
 }

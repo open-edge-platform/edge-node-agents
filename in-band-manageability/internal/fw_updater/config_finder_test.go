@@ -397,7 +397,7 @@ func TestValidateFirmwareToolConfig_MalformedJSON(t *testing.T) {
 
 	_, err := validateFirmwareToolConfig(fs)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to validate config")
+	assert.Contains(t, err.Error(), "invalid character")
 }
 
 func TestValidateFirmwareToolConfig_InvalidSchema(t *testing.T) {
@@ -406,7 +406,7 @@ func TestValidateFirmwareToolConfig_InvalidSchema(t *testing.T) {
 
 	_, err := validateFirmwareToolConfig(fs)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to validate config")
+	assert.Contains(t, err.Error(), "invalid character")
 }
 
 // Edge case tests

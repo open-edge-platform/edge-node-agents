@@ -81,6 +81,9 @@ build: generate-proto inbcbuild inbdbuild copy-licenses
 
 test: common-unit-test
 
+integration_test:
+	@echo "no integration tests to run, skipping"
+
 fuzztest: common-fuzztest
 
 cover:

@@ -217,7 +217,7 @@ func TestGetFileSizeInBytes_BothMethodsFail(t *testing.T) {
 
 	size, err := GetFileSizeInBytes(fs, server.URL, testToken)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "Basic Auth HEAD request failed with status code: 401")
+	assert.Contains(t, err.Error(), "basic Auth HEAD request failed with status code: 401")
 	assert.Equal(t, int64(0), size)
 }
 
@@ -262,7 +262,7 @@ func TestGetFileSizeInBytes_AllMethodsFail(t *testing.T) {
 
 	size, err := GetFileSizeInBytes(fs, server.URL, testToken)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "Basic Auth HEAD request failed with status code: 401")
+	assert.Contains(t, err.Error(), "basic Auth HEAD request failed with status code: 401")
 	assert.Equal(t, int64(0), size)
 }
 
