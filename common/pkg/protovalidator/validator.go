@@ -6,7 +6,7 @@ package protovalidator
 import (
 	"fmt"
 
-	protovalidate "github.com/bufbuild/protovalidate-go"
+	"buf.build/go/protovalidate"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
 
