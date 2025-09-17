@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-
 // Updater is the concrete implementation of the IUpdater interface
 // for the EMT OS.
 type Updater struct {

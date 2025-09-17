@@ -94,20 +94,20 @@ func (u *FWUpdater) UpdateFirmware() (*pb.UpdateResponse, error) {
 
 	hwInfo, err := u.hwProvider.GetHardwareInfo()
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 	log.Printf("platform name: %+v", hwInfo.GetSystemProductName())
 	// Get the firmware update tool info.
 	firmwareToolInfo, err := GetFirmwareUpdateToolInfo(u.fs, hwInfo.GetSystemProductName())
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 	log.Printf("Firmware update tool info: %+v", firmwareToolInfo)
 
 	// Get the firmware information for the release date check.
 	fwInfo, err := u.hwProvider.GetFirmwareInfo()
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	// Check if the firmware update is required.
@@ -129,7 +129,7 @@ func (u *FWUpdater) UpdateFirmware() (*pb.UpdateResponse, error) {
 	log.Printf("Downloading firmware update from URL: %s", u.req.Url)
 	downloader := NewDownloader(u.req)
 	if err := downloader.download(); err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	// Get the downloaded firmware file path
@@ -147,7 +147,7 @@ func (u *FWUpdater) UpdateFirmware() (*pb.UpdateResponse, error) {
 			if removeErr := u.fs.Remove(firmwareFilePath); removeErr != nil {
 				log.Printf("Warning: failed to remove invalid firmware file %s: %v", firmwareFilePath, removeErr)
 			}
-			return &pb.UpdateResponse{StatusCode: 400, Error: fmt.Sprintf("Signature verification failed: %v", err)}, nil
+			return &pb.UpdateResponse{StatusCode: 400, Error: fmt.Sprintf("Signature verification failed: %v", err)}, nil //nolint:nilerr // gRPC response pattern
 		}
 		log.Printf("Signature verification passed for firmware package.")
 	} else {
@@ -157,7 +157,7 @@ func (u *FWUpdater) UpdateFirmware() (*pb.UpdateResponse, error) {
 	// Extract firmware file info and unpack if needed
 	fwFile, certFile, err := u.extractFileInfo(firmwareFilePath, utils.IntelManageabilityCachePathPrefix)
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	// Perform the firmware update using the extracted firmware file and the firmware update tool info
@@ -165,7 +165,7 @@ func (u *FWUpdater) UpdateFirmware() (*pb.UpdateResponse, error) {
 	if err := u.applyFirmware(actualFirmwarePath, firmwareToolInfo); err != nil {
 		// Clean up files before returning error
 		u.deleteFiles(filepath.Base(u.req.Url), fwFile, certFile)
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	log.Println("Update completed successfully.")

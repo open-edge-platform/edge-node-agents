@@ -376,9 +376,8 @@ func TestIsNumeric(t *testing.T) {
 func TestGetFirmwareFromDMI(t *testing.T) {
 	t.Run("with empty fw struct", func(t *testing.T) {
 		fw := &pb.FirmwareInfo{}
-		err := getFirmwareFromDMI(fw)
+		getFirmwareFromDMI(fw)
 
-		assert.NoError(t, err)
 		assert.NotNil(t, fw)
 	})
 }
@@ -386,9 +385,8 @@ func TestGetFirmwareFromDMI(t *testing.T) {
 func TestGetFirmwareFromDeviceTree(t *testing.T) {
 	t.Run("with empty fw struct", func(t *testing.T) {
 		fw := &pb.FirmwareInfo{}
-		err := getFirmwareFromDeviceTree(fw)
+		getFirmwareFromDeviceTree(fw)
 
-		assert.NoError(t, err)
 		assert.NotNil(t, fw)
 	})
 }

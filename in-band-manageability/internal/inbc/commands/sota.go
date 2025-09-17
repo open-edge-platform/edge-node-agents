@@ -135,7 +135,7 @@ func handleSOTA(
 			return fmt.Errorf("error updating system software: %v", err)
 		}
 
-		fmt.Printf("SOTA Command Response: %d-%s\n", resp.GetStatusCode(), string(resp.GetError()))
+		fmt.Printf("SOTA Command Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
 
 		return nil
 	}

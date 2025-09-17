@@ -34,7 +34,7 @@ func GetOSUpdaterFactory(os string) (UpdaterFactory, error) {
 	if os == "Ubuntu" {
 		return &UbuntuFactory{}, nil
 	}
-	return nil, fmt.Errorf("Unsupported OS")
+	return nil, fmt.Errorf("unsupported OS")
 }
 
 // EMTFactory represents an EMT factory.

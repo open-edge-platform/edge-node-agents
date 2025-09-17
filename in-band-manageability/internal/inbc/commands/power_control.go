@@ -81,7 +81,7 @@ func handleRestart(
 			return fmt.Errorf("error restarting device: %v", err)
 		}
 
-		fmt.Printf("Restart Command Response: %d-%s\n", resp.GetStatusCode(), string(resp.GetError()))
+		fmt.Printf("Restart Command Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
 
 		return nil
 	}
@@ -120,7 +120,7 @@ func handleShutdown(
 			return fmt.Errorf("error shutting down device: %v", err)
 		}
 
-		fmt.Printf("Shutdown Command Response: %d-%s\n", resp.GetStatusCode(), string(resp.GetError()))
+		fmt.Printf("Shutdown Command Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
 
 		return nil
 	}

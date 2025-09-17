@@ -194,7 +194,7 @@ func extractAndValidateTarContents(fs afero.Fs, tarPath string) (*TarContents, e
 		tarDir := filepath.Dir(tarPath)
 
 		// Validate path to prevent path traversal attacks
-		if err := validateTarPath(fs, filename, tarDir); err != nil {
+		if err := validateTarPath(filename, tarDir); err != nil {
 			return nil, fmt.Errorf("path traversal detected in '%s': %w", filename, err)
 		}
 
@@ -451,7 +451,7 @@ func validateTarFilename(filename string) error {
 }
 
 // validateTarPath checks for path traversal attacks
-func validateTarPath(fs afero.Fs, filename, safeDir string) error {
+func validateTarPath(filename, safeDir string) error {
 	// Clean the path to resolve any . and .. elements
 	cleanPath := filepath.Clean(filename)
 

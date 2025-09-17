@@ -11,10 +11,10 @@ import (
 	"log"
 	"os"
 
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 	utils "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
 	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/os_updater/emt"
 	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/os_updater/ubuntu"
-	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 	"github.com/spf13/afero"
 )
 
@@ -41,19 +41,20 @@ func VerifyUpdateAfterReboot(fs afero.Fs) error {
 			return fmt.Errorf("error reading state file: %w", err)
 		}
 
-		if osType == "EMT" {
+		switch osType {
+		case "EMT":
 			err := emt.VerifyUpdateAfterReboot(fs, state)
 			if err != nil {
 				return err
 			}
-		} else if osType == "Ubuntu" {
+		case "Ubuntu":
 			v := ubuntu.NewVerifier()
 			err := v.VerifyUpdateAfterReboot(state)
 			if err != nil {
 				return err
 			}
-		} else {
-			return fmt.Errorf("Unsupported OS type: %s", osType)
+		default:
+			return fmt.Errorf("unsupported OS type: %s", osType)
 		}
 		log.Println("Post update verification completed.")
 	} else {

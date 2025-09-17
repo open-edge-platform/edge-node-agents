@@ -177,14 +177,34 @@ func ConfigSetCmd() *cobra.Command {
 	return cmd
 }
 
-// handleConfigSetCmd is a helper function to handle the ConfigSetCmd
-func handleConfigSetCmd(
+// configOperation represents the type of config operation
+type configOperation int
+
+const (
+	configSet configOperation = iota
+	configAppend
+	configRemove
+)
+
+// handleConfigCmd is a generic handler for config operations
+func handleConfigCmd(
 	socket *string,
 	path *string,
+	operation configOperation,
 	dialer func(context.Context, string) (pb.InbServiceClient, grpc.ClientConnInterface, error),
 ) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		fmt.Println("CONFIG SET command invoked.")
+		var operationName string
+		switch operation {
+		case configSet:
+			operationName = "SET"
+		case configAppend:
+			operationName = "APPEND"
+		case configRemove:
+			operationName = "REMOVE"
+		}
+
+		fmt.Printf("CONFIG %s command invoked.\n", operationName)
 
 		if path == nil || *path == "" {
 			return errors.New("path is required")
@@ -193,10 +213,6 @@ func handleConfigSetCmd(
 		// Validate the path format (e.g., key:value)
 		if !strings.Contains(*path, ":") {
 			return fmt.Errorf("path must be in the format 'key:value', got: %s", *path)
-		}
-
-		request := &pb.SetConfigRequest{
-			Path: *path,
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)
@@ -217,14 +233,32 @@ func handleConfigSetCmd(
 		ctx, cancel = context.WithTimeout(context.Background(), configTimeoutInSeconds*time.Second)
 		defer cancel()
 
-		resp, err := client.SetConfig(ctx, request)
-		if err != nil {
-			return fmt.Errorf("error performing config set: %v", err)
+		var resp *pb.ConfigResponse
+		switch operation {
+		case configSet:
+			resp, err = client.SetConfig(ctx, &pb.SetConfigRequest{Path: *path})
+		case configAppend:
+			resp, err = client.AppendConfig(ctx, &pb.AppendConfigRequest{Path: *path})
+		case configRemove:
+			resp, err = client.RemoveConfig(ctx, &pb.RemoveConfigRequest{Path: *path})
 		}
 
-		fmt.Printf("CONFIG SET Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
+		if err != nil {
+			return fmt.Errorf("error performing config %s: %v", strings.ToLower(operationName), err)
+		}
+
+		fmt.Printf("CONFIG %s Response: %d-%s\n", operationName, resp.GetStatusCode(), resp.GetError())
 		return nil
 	}
+}
+
+// handleConfigSetCmd is a helper function to handle the ConfigSetCmd
+func handleConfigSetCmd(
+	socket *string,
+	path *string,
+	dialer func(context.Context, string) (pb.InbServiceClient, grpc.ClientConnInterface, error),
+) func(*cobra.Command, []string) error {
+	return handleConfigCmd(socket, path, configSet, dialer)
 }
 
 // ConfigAppendCmd returns the 'append' subcommand.
@@ -250,48 +284,7 @@ func handleConfigAppendCmd(
 	path *string,
 	dialer func(context.Context, string) (pb.InbServiceClient, grpc.ClientConnInterface, error),
 ) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		fmt.Println("CONFIG APPEND command invoked.")
-
-		if path == nil || *path == "" {
-			return errors.New("path is required")
-		}
-
-		// Validate the path format (e.g., key:value)
-		if !strings.Contains(*path, ":") {
-			return fmt.Errorf("path must be in the format 'key:value', got: %s", *path)
-		}
-
-		request := &pb.AppendConfigRequest{
-			Path: *path,
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)
-		defer cancel()
-
-		client, conn, err := dialer(ctx, *socket)
-		if err != nil {
-			return fmt.Errorf("error setting up new gRPC client: %v", err)
-		}
-		defer func() {
-			if c, ok := conn.(*grpc.ClientConn); ok {
-				if err := c.Close(); err != nil {
-					fmt.Printf("Warning: failed to close gRPC connection: %v\n", err)
-				}
-			}
-		}()
-
-		ctx, cancel = context.WithTimeout(context.Background(), configTimeoutInSeconds*time.Second)
-		defer cancel()
-
-		resp, err := client.AppendConfig(ctx, request)
-		if err != nil {
-			return fmt.Errorf("error performing config append: %v", err)
-		}
-
-		fmt.Printf("CONFIG APPEND Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
-		return nil
-	}
+	return handleConfigCmd(socket, path, configAppend, dialer)
 }
 
 // ConfigRemoveCmd returns the 'remove' subcommand.
@@ -317,46 +310,5 @@ func handleConfigRemoveCmd(
 	path *string,
 	dialer func(context.Context, string) (pb.InbServiceClient, grpc.ClientConnInterface, error),
 ) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		fmt.Println("CONFIG REMOVE command invoked.")
-
-		if path == nil || *path == "" {
-			return errors.New("path is required")
-		}
-
-		// Validate the path format (e.g., key:value)
-		if !strings.Contains(*path, ":") {
-			return fmt.Errorf("path must be in the format 'key:value', got: %s", *path)
-		}
-
-		request := &pb.RemoveConfigRequest{
-			Path: *path,
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), clientDialTimeoutInSeconds*time.Second)
-		defer cancel()
-
-		client, conn, err := dialer(ctx, *socket)
-		if err != nil {
-			return fmt.Errorf("error setting up new gRPC client: %v", err)
-		}
-		defer func() {
-			if c, ok := conn.(*grpc.ClientConn); ok {
-				if err := c.Close(); err != nil {
-					fmt.Printf("Warning: failed to close gRPC connection: %v\n", err)
-				}
-			}
-		}()
-
-		ctx, cancel = context.WithTimeout(context.Background(), configTimeoutInSeconds*time.Second)
-		defer cancel()
-
-		resp, err := client.RemoveConfig(ctx, request)
-		if err != nil {
-			return fmt.Errorf("error performing config remove: %v", err)
-		}
-
-		fmt.Printf("CONFIG REMOVE Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
-		return nil
-	}
+	return handleConfigCmd(socket, path, configRemove, dialer)
 }

@@ -133,7 +133,7 @@ func handleFOTA(
 			return fmt.Errorf("error updating firmware: %v", err)
 		}
 
-		fmt.Printf("FOTA Command Response: %d-%s\n", resp.GetStatusCode(), string(resp.GetError()))
+		fmt.Printf("FOTA Command Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
 
 		return nil
 	}

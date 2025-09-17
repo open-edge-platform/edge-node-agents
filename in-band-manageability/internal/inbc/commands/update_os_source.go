@@ -80,7 +80,7 @@ func handleUpdateOSSource(
 			return fmt.Errorf("error updating OS sources: %v", err)
 		}
 
-		fmt.Printf("SOURCE OS UPDATE Command Response: %d-%s\n", resp.GetStatusCode(), string(resp.GetError()))
+		fmt.Printf("SOURCE OS UPDATE Command Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
 
 		return nil
 	}

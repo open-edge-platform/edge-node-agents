@@ -110,7 +110,7 @@ func OpenFile(fs afero.Fs, filePath string, flag int, perm os.FileMode) (afero.F
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	file, err := fs.OpenFile(filePath, flag, os.FileMode(perm))
+	file, err := fs.OpenFile(filePath, flag, perm)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}

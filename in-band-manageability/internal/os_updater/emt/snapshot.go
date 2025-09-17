@@ -71,7 +71,7 @@ func (t *Snapshotter) Snapshot() error {
 	// Convert the state to JSON
 	jsonData, err := json.Marshal(state)
 	if err != nil {
-		return fmt.Errorf("error marshalling JSON: %w", err)
+		return fmt.Errorf("error marshaling JSON: %w", err)
 	}
 
 	// Write the JSON to the state file

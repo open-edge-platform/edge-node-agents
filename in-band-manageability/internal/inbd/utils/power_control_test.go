@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 )
 
 // RebootMockExecutor is a specific mock implementation for reboot testing.

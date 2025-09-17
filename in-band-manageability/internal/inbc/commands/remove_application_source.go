@@ -75,7 +75,7 @@ func handleRemoveApplicationSource(
 			return fmt.Errorf("error removing application source: %v", err)
 		}
 
-		fmt.Printf("SOURCE APPLICATION REMOVE Command Response: %d-%s\n", resp.GetStatusCode(), string(resp.GetError()))
+		fmt.Printf("SOURCE APPLICATION REMOVE Command Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
 
 		return nil
 	}

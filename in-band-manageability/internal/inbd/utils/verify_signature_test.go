@@ -781,7 +781,6 @@ func TestValidateTarFilename(t *testing.T) {
 }
 
 func TestValidateTarPath(t *testing.T) {
-	fs := afero.NewMemMapFs()
 	safeDir := "/safe/dir"
 
 	tests := []struct {
@@ -801,7 +800,7 @@ func TestValidateTarPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateTarPath(fs, tt.filename, safeDir)
+			err := validateTarPath(tt.filename, safeDir)
 			if tt.wantErr {
 				assert.Error(t, err)
 				if err != nil {

@@ -146,7 +146,7 @@ func validateJSONStructure(data []byte, filePath string) error {
 	if err := json.Unmarshal(data, &obj); err != nil {
 		// For test compatibility, let malformed JSON be caught by schema validation
 		// Only check for well-formed JSON that might be malicious
-		return nil
+		return err
 	}
 
 	// Check JSON depth and complexity to prevent attacks

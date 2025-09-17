@@ -154,7 +154,7 @@ func getEstimatedSizeInBytesFromAptGetUpgrade(upgradeOutput string) (bool, uint6
 	freedOrUsed := matches[5]
 
 	if freedOrUsed == "used" {
-		sizeString := strings.ReplaceAll(matches[1], ",", "", )
+		sizeString := strings.ReplaceAll(matches[1], ",", "")
 		return true, sizeToBytes(sizeString, matches[4]), nil
 	}
 

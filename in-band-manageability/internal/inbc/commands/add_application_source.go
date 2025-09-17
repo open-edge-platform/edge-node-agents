@@ -93,7 +93,7 @@ func handleAddApplicationSource(
 			return fmt.Errorf("error adding application source: %v", err)
 		}
 
-		fmt.Printf("SOURCE APPLICATION ADD Command Response: %d-%s\n", resp.GetStatusCode(), string(resp.GetError()))
+		fmt.Printf("SOURCE APPLICATION ADD Command Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
 		return nil
 	}
 }

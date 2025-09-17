@@ -158,7 +158,7 @@ func (t *Downloader) downloadFile() error {
 
 	// Try different authentication methods
 	authMethods := t.getAuthMethods(token)
-	
+
 	var lastErr error
 	for _, method := range authMethods {
 		if err := t.tryAuthMethod(method); err != nil {

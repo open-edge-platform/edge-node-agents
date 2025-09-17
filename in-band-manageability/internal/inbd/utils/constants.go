@@ -19,7 +19,7 @@ const DownloadDir = "/var/cache/manageability/repository-tool/sota"
 const SOTADownloadDir = IntelManageabilityCachePathPrefix + "/repository-tool/sota"
 
 // JWTTokenPath is the path to the JWT token file used for accessing the release service.
-const JWTTokenPath = "/etc/intel_edge_node/tokens/release-service/access_token"
+const JWTTokenPath = "/etc/intel_edge_node/tokens/release-service/access_token" // #nosec G101 -- This is a file path, not a hardcoded credential
 
 // OTAPackageCertPath is the path to the OTA package certificate.
 const OTAPackageCertPath = "/etc/intel-manageability/public/ota_package_cert.pem"

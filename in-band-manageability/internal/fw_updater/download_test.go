@@ -310,9 +310,9 @@ func TestDownloader_download_EmptyURL(t *testing.T) {
 func TestDownloader_download_ComplexScenario(t *testing.T) {
 	// Test with a more complex scenario including multiple trusted repositories
 	request := &pb.UpdateFirmwareRequest{
-		Url:         "https://secure-repo.example.com/path/to/firmware-v2.1.bin",
-		Username:    "testuser",
-		Signature:   "abc123",
+		Url:       "https://secure-repo.example.com/path/to/firmware-v2.1.bin",
+		Username:  "testuser",
+		Signature: "abc123",
 	}
 
 	// Create memory filesystem with mock config
@@ -351,7 +351,7 @@ func TestDownloader_download_ComplexScenario(t *testing.T) {
 			assert.Equal(t, request.Url, url)
 			return true, nil
 		},
-		downloadFileFunc: func(fs afero.Fs, url string, destDir string, 
+		downloadFileFunc: func(fs afero.Fs, url string, destDir string,
 			client *http.Client,
 			requestCreator func(string, string, io.Reader) (*http.Request, error),
 			readJWTTokenFunc func(afero.Fs, string, func(string) (bool, error)) (string, error),

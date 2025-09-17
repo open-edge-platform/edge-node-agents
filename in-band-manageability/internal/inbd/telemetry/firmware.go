@@ -37,15 +37,12 @@ func GetFirmwareInfo() (*pb.FirmwareInfo, error) {
 
 	// Try device tree first (for ARM systems)
 	if isDeviceTreeAvailable() {
-		if err := getFirmwareFromDeviceTree(fw); err == nil {
-			return fw, nil
-		}
+		getFirmwareFromDeviceTree(fw)
+		return fw, nil
 	}
 
 	// Fall back to DMI (for x86 systems)
-	if err := getFirmwareFromDMI(fw); err != nil {
-		return fw, nil
-	}
+	getFirmwareFromDMI(fw)
 
 	return fw, nil
 }
@@ -57,7 +54,7 @@ func isDeviceTreeAvailable() bool {
 }
 
 // getFirmwareFromDeviceTree reads firmware info from device tree
-func getFirmwareFromDeviceTree(fw *pb.FirmwareInfo) error {
+func getFirmwareFromDeviceTree(fw *pb.FirmwareInfo) {
 	// Get BIOS vendor
 	if vendor, err := readFileContent(DEVICE_TREE_BIOS_VENDOR); err == nil {
 		fw.BiosVendor = strings.TrimSpace(vendor)
@@ -74,12 +71,10 @@ func getFirmwareFromDeviceTree(fw *pb.FirmwareInfo) error {
 			fw.BiosReleaseDate = parsedDate
 		}
 	}
-
-	return nil
 }
 
 // getFirmwareFromDMI reads firmware info from DMI
-func getFirmwareFromDMI(fw *pb.FirmwareInfo) error {
+func getFirmwareFromDMI(fw *pb.FirmwareInfo) {
 
 	// Get BIOS vendor
 	if vendor, err := readFileContent(DMI_BIOS_VENDOR); err == nil {
@@ -96,8 +91,6 @@ func getFirmwareFromDMI(fw *pb.FirmwareInfo) error {
 			fw.BiosReleaseDate = parsedDate
 		}
 	}
-
-	return nil
 }
 
 // readFileContent reads and returns the content of a file

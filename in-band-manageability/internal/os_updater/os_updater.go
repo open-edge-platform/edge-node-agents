@@ -42,7 +42,7 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 		downloader := factory.CreateDownloader(u.req)
 		err := downloader.Download()
 		if err != nil {
-			return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+			return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 		}
 	}
 	execCmd := common.NewExecutor(exec.Command, common.ExecuteAndReadOutput)
@@ -56,13 +56,13 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 		config, loadErr := u.loadConfigFunc(afero.NewOsFs(), utils.ConfigFilePath)
 		if loadErr != nil {
 			cleanFiles(cleaner)
-			return &pb.UpdateResponse{StatusCode: 500, Error: loadErr.Error()}, nil
+			return &pb.UpdateResponse{StatusCode: 500, Error: loadErr.Error()}, nil //nolint:nilerr // gRPC response pattern
 		}
 		proceedWithoutRollback := u.isProceedWithoutRollbackFunc(config)
 		if !proceedWithoutRollback {
 			// If we are not proceeding with rollback, clean up the files
 			cleanFiles(cleaner)
-			return &pb.UpdateResponse{StatusCode: 500, Error: fmt.Sprintf("proceedWithoutRollback configuration flag is false; can not proceed as snapshot failed: %v", err.Error())}, nil
+			return &pb.UpdateResponse{StatusCode: 500, Error: fmt.Sprintf("proceedWithoutRollback configuration flag is false; can not proceed as snapshot failed: %v", err.Error())}, nil //nolint:nilerr // gRPC response pattern
 		}
 	}
 
@@ -72,7 +72,7 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 	if err != nil {
 		// Remove the artifacts if failure happens.
 		cleanFiles(cleaner)
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	log.Println("Update completed successfully.")
@@ -85,12 +85,12 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 			// Reboot the system
 			rebooter := factory.CreateRebooter(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), u.req)
 			if err = rebooter.Reboot(); err != nil {
-				return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+				return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 			}
 		}
 	}
 
-	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
+	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil //nolint:nilerr // gRPC response pattern
 }
 
 func cleanFiles(cleaner Cleaner) {

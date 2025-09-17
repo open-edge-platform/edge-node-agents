@@ -11,12 +11,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/afero"
 	"io"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/spf13/afero"
 )
 
 var (
@@ -55,10 +56,7 @@ func (c *ConfigOperation) LoadConfigCommand(uri, signature, hashAlgorithm string
 	fs := afero.Afero{Fs: afero.NewOsFs()}
 
 	// Determine if the input is a tar file
-	isTar := false
-	if strings.HasSuffix(strings.ToLower(uri), ".tar") {
-		isTar = true
-	}
+	isTar := strings.HasSuffix(strings.ToLower(uri), ".tar")
 
 	var input []byte
 

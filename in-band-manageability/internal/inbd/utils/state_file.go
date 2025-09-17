@@ -12,8 +12,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/spf13/afero"
 	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	"github.com/spf13/afero"
 )
 
 // StateFilePath is the path to the inbd state file.

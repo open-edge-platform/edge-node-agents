@@ -85,21 +85,21 @@ func validateURL(rawURL string) error {
 func (s *InbdServer) SetPowerState(ctx context.Context, req *pb.SetPowerStateRequest) (*pb.SetPowerStateResponse, error) {
 	log.Printf("Received SetPowerState request")
 	if req.Action == pb.SetPowerStateRequest_POWER_ACTION_UNSPECIFIED {
-		return &pb.SetPowerStateResponse{StatusCode: 400, Error: "Power action is required"}, nil
+		return &pb.SetPowerStateResponse{StatusCode: 400, Error: "Power action is required"}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	switch req.Action {
 	case pb.SetPowerStateRequest_POWER_ACTION_CYCLE:
 		if err := s.powerManager.Reboot(); err != nil {
-			return &pb.SetPowerStateResponse{StatusCode: 500, Error: err.Error()}, nil
+			return &pb.SetPowerStateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 		}
 	case pb.SetPowerStateRequest_POWER_ACTION_OFF:
 		if err := s.powerManager.Shutdown(); err != nil {
-			return &pb.SetPowerStateResponse{StatusCode: 500, Error: fmt.Sprintf("shutdown failed: %s", err)}, nil
+			return &pb.SetPowerStateResponse{StatusCode: 500, Error: fmt.Sprintf("shutdown failed: %s", err)}, nil //nolint:nilerr // gRPC response pattern
 		}
 	}
 
-	return &pb.SetPowerStateResponse{StatusCode: 200, Error: "SUCCESS"}, nil
+	return &pb.SetPowerStateResponse{StatusCode: 200, Error: "SUCCESS"}, nil //nolint:nilerr // gRPC response pattern
 }
 
 // UpdateFirmware updates the firmware
@@ -107,10 +107,10 @@ func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareR
 	log.Printf("Received UpdateFirmware request")
 
 	if req.Url == "" {
-		return &pb.UpdateResponse{StatusCode: 400, Error: "URL is required"}, nil
+		return &pb.UpdateResponse{StatusCode: 400, Error: "URL is required"}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if err := validateURL(req.Url); err != nil {
-		return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	// TODO: Validate signature against expected format
@@ -126,17 +126,17 @@ func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareR
 			return &pb.UpdateResponse{
 				StatusCode: 400,
 				Error:      "invalid hash algorithm: must be 'sha256', 'sha384', or 'sha512'",
-			}, nil
+			}, nil //nolint:nilerr // gRPC response pattern
 		}
 	}
 	req.HashAlgorithm = finalHashAlgorithm
 
 	resp, err := fwUpdater.NewFWUpdater(req).UpdateFirmware()
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
-	return &pb.UpdateResponse{StatusCode: resp.StatusCode, Error: resp.Error}, nil
+	return &pb.UpdateResponse{StatusCode: resp.StatusCode, Error: resp.Error}, nil //nolint:nilerr // gRPC response pattern
 }
 
 // UpdateSystemSoftware updates the system software
@@ -145,25 +145,25 @@ func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSys
 	log.Printf("Received UpdateSystemSoftware request")
 	os, err := common.DetectOS()
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if req.Url != "" {
 		if err := validateURL(req.Url); err != nil {
-			return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil
+			return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 		}
 	}
 
 	sotaFactory, err := osUpdater.GetOSUpdaterFactory(os)
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	resp, err := osUpdater.NewOSUpdater(req).UpdateOS(sotaFactory)
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 
-	return &pb.UpdateResponse{StatusCode: resp.StatusCode, Error: resp.Error}, nil
+	return &pb.UpdateResponse{StatusCode: resp.StatusCode, Error: resp.Error}, nil //nolint:nilerr // gRPC response pattern
 }
 
 // UpdateOSSource creates a new /etc/apt/sources.list file with only the sources provided
@@ -172,19 +172,19 @@ func (s *InbdServer) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceR
 
 	os, err := common.DetectOS()
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if os != "Ubuntu" {
-		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Update OS Source is only for Ubuntu."}, nil
+		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Update OS Source is only for Ubuntu."}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if len(req.SourceList) == 0 {
-		return &pb.UpdateResponse{StatusCode: 400, Error: "Source list is empty"}, nil
+		return &pb.UpdateResponse{StatusCode: 400, Error: "Source list is empty"}, nil //nolint:nilerr // gRPC response pattern
 	}
 	err = osSource.NewUpdater().Update(req.SourceList, osSource.UbuntuAptSourcesList)
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
-	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
+	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil //nolint:nilerr // gRPC response pattern
 }
 
 // AddApplicationSource adds the source file under /etc/apt/sources.list.d/.
@@ -192,27 +192,27 @@ func (s *InbdServer) UpdateOSSource(ctx context.Context, req *pb.UpdateOSSourceR
 func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplicationSourceRequest) (*pb.UpdateResponse, error) {
 	os, err := common.DetectOS()
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if os != "Ubuntu" {
-		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Add Application Source is only for Ubuntu."}, nil
+		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Add Application Source is only for Ubuntu."}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if req.GpgKeyUri != "" {
 		if err := validateURL(req.GpgKeyUri); err != nil {
-			return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil
+			return &pb.UpdateResponse{StatusCode: 400, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 		}
 	}
 	if req.Filename == "" {
-		return &pb.UpdateResponse{StatusCode: 400, Error: "Filename is empty"}, nil
+		return &pb.UpdateResponse{StatusCode: 400, Error: "Filename is empty"}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if len(req.Source) == 0 {
-		return &pb.UpdateResponse{StatusCode: 400, Error: "Source list is empty"}, nil
+		return &pb.UpdateResponse{StatusCode: 400, Error: "Source list is empty"}, nil //nolint:nilerr // gRPC response pattern
 	}
 	err = appSource.NewAdder().Add(req)
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
-	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
+	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil //nolint:nilerr // gRPC response pattern
 }
 
 // RemoveApplicationSource removes the source file from under /etc/apt/sources.list.d/.
@@ -220,19 +220,19 @@ func (s *InbdServer) AddApplicationSource(ctx context.Context, req *pb.AddApplic
 func (s *InbdServer) RemoveApplicationSource(ctx context.Context, req *pb.RemoveApplicationSourceRequest) (*pb.UpdateResponse, error) {
 	os, err := common.DetectOS()
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if os != "Ubuntu" {
-		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Remove Application Source is only for Ubuntu."}, nil
+		return &pb.UpdateResponse{StatusCode: 415, Error: "Unsupported OS.  Remove Application Source is only for Ubuntu."}, nil //nolint:nilerr // gRPC response pattern
 	}
 	if req.Filename == "" {
-		return &pb.UpdateResponse{StatusCode: 400, Error: "Filename is empty"}, nil
+		return &pb.UpdateResponse{StatusCode: 400, Error: "Filename is empty"}, nil //nolint:nilerr // gRPC response pattern
 	}
 	err = appSource.NewRemover().Remove(req)
 	if err != nil {
-		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil
+		return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 	}
-	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil
+	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil //nolint:nilerr // gRPC response pattern
 
 }
 
@@ -240,7 +240,7 @@ func (s *InbdServer) RemoveApplicationSource(ctx context.Context, req *pb.Remove
 func (s *InbdServer) LoadConfig(ctx context.Context, req *pb.LoadConfigRequest) (*pb.ConfigResponse, error) {
 	log.Printf("Received LoadConfig request")
 	if req.Uri == "" {
-		return &pb.ConfigResponse{StatusCode: 400, Error: "uri is required", Success: false}, nil
+		return &pb.ConfigResponse{StatusCode: 400, Error: "uri is required", Success: false}, nil //nolint:nilerr // gRPC response pattern
 	}
 	op := &utils.ConfigOperation{}
 
@@ -258,22 +258,22 @@ func (s *InbdServer) LoadConfig(ctx context.Context, req *pb.LoadConfigRequest) 
 				StatusCode: 400,
 				Error:      "invalid hash algorithm: must be 'sha256', 'sha384', or 'sha512'",
 				Success:    false,
-			}, nil
+			}, nil //nolint:nilerr // gRPC response pattern
 		}
 	}
 
 	err := op.LoadConfigCommand(req.Uri, req.Signature, finalHashAlgorithm)
 	if err != nil {
-		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
+		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil //nolint:nilerr // gRPC response pattern
 	}
-	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
+	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil //nolint:nilerr // gRPC response pattern
 }
 
 // GetConfig retrieves configuration values from the configuration file
 func (s *InbdServer) GetConfig(ctx context.Context, req *pb.GetConfigRequest) (*pb.GetConfigResponse, error) {
 	log.Printf("Received GetConfig request")
 	if strings.TrimSpace(req.Path) == "" {
-		return &pb.GetConfigResponse{StatusCode: 400, Error: "path is required", Success: false, Value: ""}, nil
+		return &pb.GetConfigResponse{StatusCode: 400, Error: "path is required", Success: false, Value: ""}, nil //nolint:nilerr // gRPC response pattern
 	}
 	op := &utils.ConfigOperation{}
 	val, errStr, err := op.GetConfigCommand(req.Path)
@@ -283,50 +283,47 @@ func (s *InbdServer) GetConfig(ctx context.Context, req *pb.GetConfigRequest) (*
 			Error:      errStr,
 			Success:    false,
 			Value:      "",
-		}, nil
+		}, nil //nolint:nilerr // gRPC response pattern
 	}
 	return &pb.GetConfigResponse{
 		StatusCode: 200,
 		Error:      errStr,
 		Success:    errStr == "",
 		Value:      val,
-	}, nil
+	}, nil //nolint:nilerr // gRPC response pattern
+}
+
+// handleConfigOperation is a generic helper for config operations
+func (s *InbdServer) handleConfigOperation(operationName, path string, operation func(string) error) (*pb.ConfigResponse, error) {
+	log.Printf("Received %s request", operationName)
+	if strings.TrimSpace(path) == "" {
+		return &pb.ConfigResponse{StatusCode: 400, Error: "path is required", Success: false}, nil //nolint:nilerr // gRPC response pattern
+	}
+	if err := operation(path); err != nil {
+		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil //nolint:nilerr // gRPC response pattern
+	}
+	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil //nolint:nilerr // gRPC response pattern
 }
 
 func (s *InbdServer) SetConfig(ctx context.Context, req *pb.SetConfigRequest) (*pb.ConfigResponse, error) {
-	log.Printf("Received SetConfig request")
-	if strings.TrimSpace(req.Path) == "" {
-		return &pb.ConfigResponse{StatusCode: 400, Error: "path is required", Success: false}, nil
-	}
-	op := &utils.ConfigOperation{}
-	if err := op.SetConfigCommand(req.Path); err != nil {
-		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
-	}
-	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
+	return s.handleConfigOperation("SetConfig", req.Path, func(path string) error {
+		op := &utils.ConfigOperation{}
+		return op.SetConfigCommand(path)
+	})
 }
 
 func (s *InbdServer) AppendConfig(ctx context.Context, req *pb.AppendConfigRequest) (*pb.ConfigResponse, error) {
-	log.Printf("Received AppendConfig request")
-	if strings.TrimSpace(req.Path) == "" {
-		return &pb.ConfigResponse{StatusCode: 400, Error: "path is required", Success: false}, nil
-	}
-	op := &utils.ConfigOperation{}
-	if err := op.AppendConfigCommand(req.Path); err != nil {
-		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
-	}
-	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
+	return s.handleConfigOperation("AppendConfig", req.Path, func(path string) error {
+		op := &utils.ConfigOperation{}
+		return op.AppendConfigCommand(path)
+	})
 }
 
 func (s *InbdServer) RemoveConfig(ctx context.Context, req *pb.RemoveConfigRequest) (*pb.ConfigResponse, error) {
-	log.Printf("Received RemoveConfig request")
-	if strings.TrimSpace(req.Path) == "" {
-		return &pb.ConfigResponse{StatusCode: 400, Error: "path is required", Success: false}, nil
-	}
-	op := &utils.ConfigOperation{}
-	if err := op.RemoveConfigCommand(req.Path); err != nil {
-		return &pb.ConfigResponse{StatusCode: 500, Error: err.Error(), Success: false}, nil
-	}
-	return &pb.ConfigResponse{StatusCode: 200, Error: "", Success: true}, nil
+	return s.handleConfigOperation("RemoveConfig", req.Path, func(path string) error {
+		op := &utils.ConfigOperation{}
+		return op.RemoveConfigCommand(path)
+	})
 }
 
 // Query returns system information based on the query option
@@ -338,7 +335,7 @@ func (s *InbdServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 			Error:      "request is required",
 			Success:    false,
 			Data:       nil,
-		}, nil
+		}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	log.Printf("Received Query request for option: %s", req.Option)
@@ -349,7 +346,7 @@ func (s *InbdServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 			Error:      "invalid query option",
 			Success:    false,
 			Data:       nil,
-		}, nil
+		}, nil //nolint:nilerr // gRPC response pattern
 	}
 
 	// Convert enum to string
@@ -358,7 +355,7 @@ func (s *InbdServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 	queryHandler := telemetry.NewQueryHandler()
 	data, err := queryHandler.HandleQuery(optionStr)
 	if err != nil {
-		return &pb.QueryResponse{
+		return &pb.QueryResponse{ //nolint:nilerr // gRPC response pattern
 			StatusCode: 500,
 			Error:      err.Error(),
 			Success:    false,
@@ -371,7 +368,7 @@ func (s *InbdServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb.Query
 		Error:      "",
 		Success:    true,
 		Data:       data,
-	}, nil
+	}, nil //nolint:nilerr // gRPC response pattern
 }
 
 // convertQueryOptionToString converts QueryOption enum to string

@@ -152,7 +152,7 @@ func getFileSizeWithRange(fs afero.Fs, url string, token string) (int64, error) 
 
 	// Check if the status code is 206 (Partial Content) or 200 (OK)
 	if resp.StatusCode != http.StatusPartialContent && resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("Range GET request failed with status code: %d", resp.StatusCode)
+		return 0, fmt.Errorf("range GET request failed with status code: %d", resp.StatusCode)
 	}
 
 	// Try to get the total file size from Content-Range header first
@@ -427,7 +427,7 @@ func tryBasicAuthFallback(fs afero.Fs, url string, token string) (int64, error) 
 	}
 
 	// Return the standard error for test compatibility
-	return 0, fmt.Errorf("Basic Auth HEAD request failed with status code: 401")
+	return 0, fmt.Errorf("basic Auth HEAD request failed with status code: 401")
 }
 
 // tryBasicAuthWithCredentials attempts Basic Auth with specific username/password
@@ -452,7 +452,7 @@ func tryBasicAuthWithCredentials(fs afero.Fs, url string, username string, passw
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("Basic Auth HEAD request failed with status code: %d", resp.StatusCode)
+		return 0, fmt.Errorf("basic Auth HEAD request failed with status code: %d", resp.StatusCode)
 	}
 
 	contentLength := resp.Header.Get("Content-Length")

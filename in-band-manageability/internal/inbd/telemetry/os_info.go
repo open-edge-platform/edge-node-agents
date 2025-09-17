@@ -14,8 +14,8 @@ import (
 
 	"github.com/spf13/afero"
 
-	utils "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
 	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	utils "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
 	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
