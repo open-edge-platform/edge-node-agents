@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-SUBPROJECTS := common cluster-agent hardware-discovery-agent node-agent platform-observability-agent platform-manageability-agent platform-telemetry-agent platform-update-agent reporting-agent
+SUBPROJECTS := common cluster-agent hardware-discovery-agent in-band-manageability node-agent platform-observability-agent platform-manageability-agent platform-telemetry-agent platform-update-agent reporting-agent
 NO_BUILD := common platform-observability-agent
 NO_FUZZ := common platform-observability-agent
 NO_LINT := platform-observability-agent
