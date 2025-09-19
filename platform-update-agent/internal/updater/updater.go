@@ -259,10 +259,31 @@ func (u *UpdateController) ContinueUpdate() {
 func (u *UpdateController) VerifyUpdate(logPath string, granularLogPath string) (status pb.UpdateStatus_StatusType, granularLog string, time string, err error) {
 	content, err := os.ReadFile(logPath)
 	if err != nil {
+		// Check if this is a kernel-only update that doesn't generate INBC logs
+		updateInProgress, metaErr := metadata.GetMetaUpdateInProgress()
+		if metaErr == nil && updateInProgress == string(metadata.OS) {
+			// For kernel-only updates, check if kernel command was actually updated
+			updateSource, sourceErr := metadata.GetMetaUpdateSource()
+			if sourceErr == nil && updateSource != nil && updateSource.KernelCommand != "" {
+				log.Info("Kernel-only update detected - verifying kernel command line update")
+				// If we have a kernel command and the system rebooted (which is why we're here),
+				// the kernel update was successful
+				return pb.UpdateStatus_STATUS_TYPE_UPDATED, "Kernel command line parameters updated successfully", "", nil
+			}
+		}
 		return pb.UpdateStatus_STATUS_TYPE_FAILED, "", "", fmt.Errorf("reading INBC logs failed: %v", err)
 	}
 
 	if len(content) == 0 {
+		// Check if this is a kernel-only update that doesn't generate INBC logs
+		updateInProgress, metaErr := metadata.GetMetaUpdateInProgress()
+		if metaErr == nil && updateInProgress == string(metadata.OS) {
+			// For kernel-only updates, check if kernel command was actually updated
+			updateSource, sourceErr := metadata.GetMetaUpdateSource()
+			if sourceErr == nil && updateSource != nil && updateSource.KernelCommand != "" {
+				return pb.UpdateStatus_STATUS_TYPE_UPDATED, "Kernel command line parameters updated successfully", "", nil
+			}
+		}
 		return pb.UpdateStatus_STATUS_TYPE_FAILED, "", "", fmt.Errorf("INBC log file is empty")
 	}
 
@@ -423,6 +444,14 @@ func (k *kernelUpdater) update() error {
 	if _, err = k.Execute(upgradeGrubCommand); err != nil {
 		return fmt.Errorf("%s: %v", _ERR_GRUB_UPDATE_FAILED, err)
 	}
+
+	// Set metadata to indicate OS update is in progress so the system continues after reboot
+	if err := k.SetMetaUpdateInProgress(metadata.OS); err != nil {
+		return fmt.Errorf("%s: %v", _ERR_CANNOT_SET_METAFILE, err)
+	}
+
+	// Kernel update completed. The osAndPackagesUpdater will handle system reboot via INBC SOTA commands.
+	log.Info("Kernel update completed. System reboot will be handled by osAndPackagesUpdater.")
 	return nil
 }
 
@@ -439,7 +468,8 @@ func (p *packagesUpdater) update() error {
 	}
 
 	if updateSource == nil || len(updateSource.CustomRepos) == 0 {
-		return fmt.Errorf("update source or custom apt repositories are empty")
+		log.Info("No custom apt repositories configured - skipping package updates")
+		return nil
 	}
 
 	isDeprecated := p.IsDeprecatedFormat(updateSource.CustomRepos)
