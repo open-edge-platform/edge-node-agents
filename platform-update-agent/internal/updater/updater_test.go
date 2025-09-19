@@ -541,6 +541,9 @@ func Test_updateKernel_happyPath(t *testing.T) {
 			SetMetaUpdateInProgress: func(updateType metadata.UpdateType) error {
 				return nil
 			},
+			GetInstallPackageList: func() (string, error) {
+				return "", nil // No additional packages to install
+			},
 		},
 		kernelFile: kernelFile.Name(),
 	}
@@ -557,6 +560,159 @@ func Test_updateKernel_happyPath(t *testing.T) {
 	file, err := os.ReadFile(kernelFile.Name())
 	require.NoError(t, err)
 	require.Equal(t, `GRUB_CMDLINE_LINUX_DEFAULT="foo=bar"`, string(file))
+}
+
+func Test_updateKernel_skipsRebootWhenCustomReposConfigured(t *testing.T) {
+	var interceptedCommands [][]string
+	kernelFile, _ := os.CreateTemp("", "kernel_temp")
+	defer kernelFile.Close()
+	defer os.Remove(kernelFile.Name())
+
+	kernelUpdater := kernelUpdater{
+		Executor: utils.NewExecutor[[]string](
+			func(name string, args ...string) *[]string {
+				command := append([]string{name}, args...)
+				interceptedCommands = append(interceptedCommands, command)
+				return new([]string)
+			}, func(in *[]string) ([]byte, error) {
+				return nil, nil
+			}),
+		MetaController: &metadata.MetaController{
+			GetMetaUpdateSource: func() (*pb.UpdateSource, error) {
+				return &pb.UpdateSource{
+					KernelCommand: "foo=bar",
+					CustomRepos:   []string{"Types: deb\nURIs: https://test.repo.com\nSuites: example\nComponents: release"}, // Package installation will happen
+				}, nil
+			},
+			SetMetaUpdateInProgress: func(updateType metadata.UpdateType) error {
+				return nil
+			},
+			GetInstallPackageList: func() (string, error) {
+				return "", nil
+			},
+		},
+		kernelFile: kernelFile.Name(),
+	}
+
+	sut := kernelUpdater.update
+
+	require.NoError(t, sut())
+
+	// Verify that only update-grub command was executed (no reboot command)
+	require.Len(t, interceptedCommands, 1)
+	require.Equal(t, upgradeGrubCommand, interceptedCommands[0])
+
+	file, err := os.ReadFile(kernelFile.Name())
+	require.NoError(t, err)
+	require.Equal(t, `GRUB_CMDLINE_LINUX_DEFAULT="foo=bar"`, string(file))
+}
+
+func Test_updateKernel_skipsRebootWhenAdditionalPackagesConfigured(t *testing.T) {
+	var interceptedCommands [][]string
+	kernelFile, _ := os.CreateTemp("", "kernel_temp")
+	defer kernelFile.Close()
+	defer os.Remove(kernelFile.Name())
+
+	kernelUpdater := kernelUpdater{
+		Executor: utils.NewExecutor[[]string](
+			func(name string, args ...string) *[]string {
+				command := append([]string{name}, args...)
+				interceptedCommands = append(interceptedCommands, command)
+				return new([]string)
+			}, func(in *[]string) ([]byte, error) {
+				return nil, nil
+			}),
+		MetaController: &metadata.MetaController{
+			GetMetaUpdateSource: func() (*pb.UpdateSource, error) {
+				return &pb.UpdateSource{
+					KernelCommand: "foo=bar",
+					// No custom repos, but additional packages to install
+				}, nil
+			},
+			SetMetaUpdateInProgress: func(updateType metadata.UpdateType) error {
+				return nil
+			},
+			GetInstallPackageList: func() (string, error) {
+				return "package1 package2", nil // Additional packages will be installed
+			},
+		},
+		kernelFile: kernelFile.Name(),
+	}
+
+	sut := kernelUpdater.update
+
+	require.NoError(t, sut())
+
+	// Verify that only update-grub command was executed (no reboot command)
+	require.Len(t, interceptedCommands, 1)
+	require.Equal(t, upgradeGrubCommand, interceptedCommands[0])
+
+	file, err := os.ReadFile(kernelFile.Name())
+	require.NoError(t, err)
+	require.Equal(t, `GRUB_CMDLINE_LINUX_DEFAULT="foo=bar"`, string(file))
+}
+
+func Test_kernelUpdater_willPackageInstallationHappen(t *testing.T) {
+	tests := []struct {
+		name               string
+		updateSource       *pb.UpdateSource
+		installPackageList string
+		installPackageErr  error
+		expected           bool
+	}{
+		{
+			name: "returns true when custom repos configured",
+			updateSource: &pb.UpdateSource{
+				KernelCommand: "foo=bar",
+				CustomRepos:   []string{"Types: deb\nURIs: https://test.com\nSuites: test\nComponents: main"},
+			},
+			installPackageList: "",
+			installPackageErr:  nil,
+			expected:           true,
+		},
+		{
+			name: "returns true when additional packages to install",
+			updateSource: &pb.UpdateSource{
+				KernelCommand: "foo=bar",
+			},
+			installPackageList: "package1 package2",
+			installPackageErr:  nil,
+			expected:           true,
+		},
+		{
+			name: "returns false for kernel-only update",
+			updateSource: &pb.UpdateSource{
+				KernelCommand: "foo=bar",
+			},
+			installPackageList: "",
+			installPackageErr:  nil,
+			expected:           false,
+		},
+		{
+			name: "returns false when GetInstallPackageList returns error",
+			updateSource: &pb.UpdateSource{
+				KernelCommand: "foo=bar",
+			},
+			installPackageList: "",
+			installPackageErr:  fmt.Errorf("metadata read error"),
+			expected:           false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kernelUpdater := &kernelUpdater{
+				MetaController: &metadata.MetaController{
+					GetInstallPackageList: func() (string, error) {
+						return tt.installPackageList, tt.installPackageErr
+					},
+				},
+			}
+
+			result := kernelUpdater.willPackageInstallationHappen(tt.updateSource)
+			require.Equal(t, tt.expected, result)
+		})
+	}
 }
 
 func Test_updateKernel_handleUpdateGrubCommandExecutionError(t *testing.T) {

@@ -454,13 +454,43 @@ func (k *kernelUpdater) update() error {
 		return fmt.Errorf("%s: %v", _ERR_CANNOT_SET_METAFILE, err)
 	}
 
-	// Reboot is required for kernel command line changes to take effect
+	// Check if package installations will happen that include automatic reboot
+	willPackageInstallationHappen := k.willPackageInstallationHappen(metadataUpdateSource)
+
+	if willPackageInstallationHappen {
+		log.Info("Kernel update completed. Package installations will handle system reboot.")
+		return nil
+	}
+
+	// Reboot is required for kernel command line changes to take effect (kernel-only update)
 	log.Info("Kernel update completed. Rebooting system for changes to take effect.")
 	if _, err = k.Execute(rebootCommand); err != nil {
 		return fmt.Errorf("failed to execute reboot command: %v", err)
 	}
 
 	return nil
+}
+
+// willPackageInstallationHappen checks if any package installation updaters will run
+// that include automatic system reboot, making the explicit reboot unnecessary
+func (k *kernelUpdater) willPackageInstallationHappen(updateSource *pb.UpdateSource) bool {
+	// Check if custom repos are configured (triggers packagesUpdater and osAndAgentsUpdater)
+	if updateSource != nil && len(updateSource.CustomRepos) > 0 {
+		log.Debug("Custom repositories configured - package installation will handle reboot")
+		return true
+	}
+
+	// Check if additional packages need to be installed (triggers newPackageInstaller)
+	// Only check if the method is available (to avoid nil pointer in tests)
+	if k.GetInstallPackageList != nil {
+		packages, err := k.GetInstallPackageList()
+		if err == nil && len(packages) > 0 {
+			log.Debug("Additional packages to install - package installation will handle reboot")
+			return true
+		}
+	}
+
+	return false
 }
 
 type packagesUpdater struct {
