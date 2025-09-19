@@ -552,17 +552,16 @@ func Test_updateKernel_happyPath(t *testing.T) {
 
 	require.NoError(t, sut())
 
-	// Verify that both update-grub and reboot commands were executed
-	require.Len(t, interceptedCommands, 2)
+	// Verify that only update-grub command was executed (no reboot command)
+	require.Len(t, interceptedCommands, 1)
 	require.Equal(t, upgradeGrubCommand, interceptedCommands[0])
-	require.Equal(t, rebootCommand, interceptedCommands[1])
 
 	file, err := os.ReadFile(kernelFile.Name())
 	require.NoError(t, err)
 	require.Equal(t, `GRUB_CMDLINE_LINUX_DEFAULT="foo=bar"`, string(file))
 }
 
-func Test_updateKernel_skipsRebootWhenCustomReposConfigured(t *testing.T) {
+func Test_updateKernel_withCustomReposConfigured(t *testing.T) {
 	var interceptedCommands [][]string
 	kernelFile, _ := os.CreateTemp("", "kernel_temp")
 	defer kernelFile.Close()
@@ -598,7 +597,7 @@ func Test_updateKernel_skipsRebootWhenCustomReposConfigured(t *testing.T) {
 
 	require.NoError(t, sut())
 
-	// Verify that only update-grub command was executed (no reboot command)
+	// Verify that only update-grub command was executed (reboot handled by osAndPackagesUpdater)
 	require.Len(t, interceptedCommands, 1)
 	require.Equal(t, upgradeGrubCommand, interceptedCommands[0])
 
@@ -607,7 +606,7 @@ func Test_updateKernel_skipsRebootWhenCustomReposConfigured(t *testing.T) {
 	require.Equal(t, `GRUB_CMDLINE_LINUX_DEFAULT="foo=bar"`, string(file))
 }
 
-func Test_updateKernel_skipsRebootWhenAdditionalPackagesConfigured(t *testing.T) {
+func Test_updateKernel_withAdditionalPackagesConfigured(t *testing.T) {
 	var interceptedCommands [][]string
 	kernelFile, _ := os.CreateTemp("", "kernel_temp")
 	defer kernelFile.Close()
@@ -643,76 +642,13 @@ func Test_updateKernel_skipsRebootWhenAdditionalPackagesConfigured(t *testing.T)
 
 	require.NoError(t, sut())
 
-	// Verify that only update-grub command was executed (no reboot command)
+	// Verify that only update-grub command was executed (reboot handled by osAndPackagesUpdater)
 	require.Len(t, interceptedCommands, 1)
 	require.Equal(t, upgradeGrubCommand, interceptedCommands[0])
 
 	file, err := os.ReadFile(kernelFile.Name())
 	require.NoError(t, err)
 	require.Equal(t, `GRUB_CMDLINE_LINUX_DEFAULT="foo=bar"`, string(file))
-}
-
-func Test_kernelUpdater_willPackageInstallationHappen(t *testing.T) {
-	tests := []struct {
-		name               string
-		updateSource       *pb.UpdateSource
-		installPackageList string
-		installPackageErr  error
-		expected           bool
-	}{
-		{
-			name: "returns true when custom repos configured",
-			updateSource: &pb.UpdateSource{
-				KernelCommand: "foo=bar",
-				CustomRepos:   []string{"Types: deb\nURIs: https://test.com\nSuites: test\nComponents: main"},
-			},
-			installPackageList: "",
-			installPackageErr:  nil,
-			expected:           true,
-		},
-		{
-			name: "returns true when additional packages to install",
-			updateSource: &pb.UpdateSource{
-				KernelCommand: "foo=bar",
-			},
-			installPackageList: "package1 package2",
-			installPackageErr:  nil,
-			expected:           true,
-		},
-		{
-			name: "returns false for kernel-only update",
-			updateSource: &pb.UpdateSource{
-				KernelCommand: "foo=bar",
-			},
-			installPackageList: "",
-			installPackageErr:  nil,
-			expected:           false,
-		},
-		{
-			name: "returns false when GetInstallPackageList returns error",
-			updateSource: &pb.UpdateSource{
-				KernelCommand: "foo=bar",
-			},
-			installPackageList: "",
-			installPackageErr:  fmt.Errorf("metadata read error"),
-			expected:           false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kernelUpdater := &kernelUpdater{
-				MetaController: &metadata.MetaController{
-					GetInstallPackageList: func() (string, error) {
-						return tt.installPackageList, tt.installPackageErr
-					},
-				},
-			}
-
-			result := kernelUpdater.willPackageInstallationHappen(tt.updateSource)
-			require.Equal(t, tt.expected, result)
-		})
-	}
 }
 
 func Test_updateKernel_handleUpdateGrubCommandExecutionError(t *testing.T) {
@@ -1127,7 +1063,7 @@ func Test_inbmUpdater_update_shouldReturnErrorIfUnableToAccessMetadataFile(t *te
 	assert.ErrorContains(t, err, "open : no such file or directory")
 }
 
-func Test_inbmUpdater_update_shouldSkipKernelOnlyUpdate(t *testing.T) {
+func Test_inbmUpdater_update_shouldRunEvenForKernelOnlyUpdate(t *testing.T) {
 	// Set up a temporary metadata file
 	file, err := os.CreateTemp("/tmp", "metadata-")
 	assert.NoError(t, err)
@@ -1157,13 +1093,13 @@ func Test_inbmUpdater_update_shouldSkipKernelOnlyUpdate(t *testing.T) {
 
 	err = iUpdater.update()
 
-	// Should not error and should skip INBM update
+	// Should not error and should run INBM update even for kernel-only updates
 	assert.NoError(t, err)
 
-	// Verify that INBM update was not set in progress (should still be empty)
+	// Verify that INBM update was set in progress (should be "INBM")
 	updateInProgress, err := metadata.GetMetaUpdateInProgress()
 	assert.NoError(t, err)
-	assert.Equal(t, "", updateInProgress)
+	assert.Equal(t, "INBM", updateInProgress)
 }
 
 func Test_selfUpdater_update_shouldRunUpdateAndSetCorrectUpdateInMetadata(t *testing.T) {
