@@ -72,7 +72,8 @@ func new(serverUrl string, hostGUID string, tlsConfig *tls.Config, timeout time.
 func GetAuthCli(idpURL string, guid string, caCertPool *x509.CertPool) (*Client, error) {
 	baseEndpoint := fmt.Sprintf("https://%s", idpURL)
 	tlsConfig := tls.Config{
-		RootCAs: caCertPool,
+		RootCAs:    caCertPool,
+		MinVersion: tls.VersionTLS13,
 	}
 	authCli, err := new(baseEndpoint, guid, &tlsConfig, TIMEOUT)
 	return authCli, err
