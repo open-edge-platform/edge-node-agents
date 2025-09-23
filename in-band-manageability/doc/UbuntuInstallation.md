@@ -58,15 +58,15 @@ Before starting the installation process the user should ensure that:
 A typical installation package will consist of the below shell scripts.  It also consists of all the frameworks executable
 packages (.deb files in the case of Ubuntu/Debian).
 
-#### Build Output
+#### Manual installation
 
-The location of the installation scripts will be different depending on whether the source is being used from the GitHub location or if a build package is used from distribution.
+The location of the installation scripts will be as per below table.
 
 | Description                          | From GitHub Clone File Location                  | From Distribution File Location           |
 |:-------------------------------------|:-------------------------------------------------|:------------------------------------------|
-| Installs INBM for Ubuntu  | `inbm/output/install-tc.sh`                      | `inbm/install-tc.sh`                      |
-| Uninstalls INBM for Ubuntu or Debian | `inbm/output/uninstall-tc.sh`                    | `inbm/uninstall-tc.sh`                    |
-| Uninstalls Python version of Turtle Creek if it exists on the host | `inbm/output/uninstall-python-tc.sh | `inbm/uninstall-python-tc.sh` |
+| Installs INBM for Ubuntu  | `in-band-manageability/installer/install-tc.sh`                      | `inbm/install-tc.sh`                      |
+| Uninstalls INBM for Ubuntu or Debian | `in-band-manageability/installer/uninstall-tc.sh`         | `inbm/uninstall-tc.sh`                    |
+| Uninstalls Python version of Turtle Creek if it exists on the host | `in-band-manageability/installer/uninstall-python-tc.sh` | `inbm/uninstall-python-tc.sh` |
 
 #### Install options
 

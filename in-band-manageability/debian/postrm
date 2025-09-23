@@ -1,0 +1,23 @@
+#!/bin/sh -e
+
+#DEBHELPER#
+
+if [ "$1" = purge ]; then
+    # Remove group
+    groupdel inbd 2>/dev/null || true
+    
+    # Remove configuration files and directories
+    rm -f /etc/intel_manageability.conf
+    rm -f /etc/firmware_tool_info.conf
+    rm -rf /etc/intel_edge_node
+    rm -f /usr/share/inbd_schema.json
+    rm -f /usr/share/firmware_tool_config_schema.json
+    
+    # Remove AppArmor profile
+    rm -f /etc/apparmor.d/usr.bin.inbd
+    
+    # Remove runtime directories
+    rm -rf /var/edge-node/inbd
+    
+    echo "Successfully purged in-band-manageability"
+fi

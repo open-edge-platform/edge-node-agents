@@ -1,0 +1,6 @@
+configs/intel_manageability.conf etc/
+configs/firmware_tool_info.conf etc/
+configs/apparmor.d/usr.bin.inbd etc/apparmor.d/
+configs/inbd_schema.json usr/share/
+configs/firmware_tool_config_schema.json usr/share/
+scripts/UpdateFirmwareBlobFwupdtool.sh usr/bin/

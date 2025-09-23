@@ -1,9 +1,7 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-version: v2
-modules:
-  - path: proto
+version: v1
 deps:
   - buf.build/bufbuild/protovalidate
 lint:

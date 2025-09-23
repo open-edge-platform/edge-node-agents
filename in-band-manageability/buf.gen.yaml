@@ -1,14 +1,14 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-version: v2
-clean: true
+version: v1
+
 plugins:
-  - local: protoc-gen-go
+  - plugin: go
     out: pkg/api
-    opt: paths=source_relative
-  - local: protoc-gen-go-grpc
+    opt:
+      - paths=source_relative
+  - plugin: go-grpc
     out: pkg/api
-    opt: paths=source_relative
-inputs:
-  - directory: proto
+    opt:
+      - paths=source_relative

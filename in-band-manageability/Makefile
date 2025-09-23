@@ -102,87 +102,34 @@ cover:
 
 package: build
 	@echo "---MAKEFILE DEBIAN PACKAGE---"
-	@# Help: Build Debian package using fpm-templates
-	mkdir -p $(INBM_PACKAGE_BUILD_DIR)/DEBIAN $(INBM_PACKAGE_BUILD_DIR)/usr/bin $(INBM_PACKAGE_BUILD_DIR)/etc $(INBM_PACKAGE_BUILD_DIR)/etc/apparmor.d $(INBM_PACKAGE_BUILD_DIR)/etc/intel_manageability/public $(INBM_PACKAGE_BUILD_DIR)/usr/lib/systemd/system $(INBM_PACKAGE_BUILD_DIR)/usr/share
-	
-	# Copy the binaries
-	cp $(BUILD_DIR)/inbc $(INBM_PACKAGE_BUILD_DIR)/usr/bin/inbc
-	cp $(BUILD_DIR)/inbd $(INBM_PACKAGE_BUILD_DIR)/usr/bin/inbd
-	
-	# Create JWT token directory structure and empty access_token file
-	mkdir -p $(INBM_PACKAGE_BUILD_DIR)/etc/intel_edge_node/tokens/release-service
-	touch $(INBM_PACKAGE_BUILD_DIR)/etc/intel_edge_node/tokens/release-service/access_token
-	
-	# Copy configuration files
-	if [ -f fpm-templates/etc/intel_manageability.conf ]; then \
-		cp fpm-templates/etc/intel_manageability.conf $(INBM_PACKAGE_BUILD_DIR)/etc/intel_manageability.conf; \
-	fi
-	if [ -f fpm-templates/etc/firmware_tool_info.conf ]; then \
-		cp fpm-templates/etc/firmware_tool_info.conf $(INBM_PACKAGE_BUILD_DIR)/etc/firmware_tool_info.conf; \
-	fi
-	
-	# Copy schema files
-	if [ -f fpm-templates/usr/share/inbd_schema.json ]; then \
-		cp fpm-templates/usr/share/inbd_schema.json $(INBM_PACKAGE_BUILD_DIR)/usr/share/inbd_schema.json; \
-	fi
-	if [ -f fpm-templates/usr/share/firmware_tool_config_schema.json ]; then \
-		cp fpm-templates/usr/share/firmware_tool_config_schema.json $(INBM_PACKAGE_BUILD_DIR)/usr/share/firmware_tool_config_schema.json; \
-	fi
-	
-	# Copy other files
-	if [ -f fpm-templates/etc/apparmor.d/usr.bin.inbd ]; then \
-		cp fpm-templates/etc/apparmor.d/usr.bin.inbd $(INBM_PACKAGE_BUILD_DIR)/etc/apparmor.d/usr.bin.inbd; \
-	fi
-	if [ -f fpm-templates/usr/bin/UpdateFirmwareBlobFwupdtool.sh ]; then \
-		cp fpm-templates/usr/bin/UpdateFirmwareBlobFwupdtool.sh $(INBM_PACKAGE_BUILD_DIR)/usr/bin/UpdateFirmwareBlobFwupdtool.sh; \
-		chmod 755 $(INBM_PACKAGE_BUILD_DIR)/usr/bin/UpdateFirmwareBlobFwupdtool.sh; \
-	fi
-	if [ -f fpm-templates/usr/bin/provision-tc ]; then \
-		cp fpm-templates/usr/bin/provision-tc $(INBM_PACKAGE_BUILD_DIR)/usr/bin/provision-tc; \
-		chmod 700 $(INBM_PACKAGE_BUILD_DIR)/usr/bin/provision-tc; \
-	fi
-	if [ -f fpm-templates/usr/lib/systemd/system/inbd.service ]; then \
-		cp fpm-templates/usr/lib/systemd/system/inbd.service $(INBM_PACKAGE_BUILD_DIR)/usr/lib/systemd/system/inbd.service; \
-	fi
-	
-	# Copy postinst script
-	if [ -f fpm-templates/DEBIAN/postinst ]; then \
-		cp fpm-templates/DEBIAN/postinst $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/postinst; \
-		chmod 755 $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/postinst; \
-	fi
-	
-	# Create conffiles
-	echo "/etc/intel_manageability.conf" > $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/conffiles
-	echo "/etc/firmware_tool_info.conf" >> $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/conffiles
-	echo "/etc/intel_edge_node/tokens/release-service/access_token" >> $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/conffiles
-	
-	# Set proper permissions
-	chmod 640 $(INBM_PACKAGE_BUILD_DIR)/etc/intel_manageability.conf 2>/dev/null || true
-	chmod 644 $(INBM_PACKAGE_BUILD_DIR)/etc/firmware_tool_info.conf 2>/dev/null || true
-	chmod 750 $(INBM_PACKAGE_BUILD_DIR)/etc/intel_edge_node 2>/dev/null || true
-	chmod 750 $(INBM_PACKAGE_BUILD_DIR)/etc/intel_edge_node/tokens 2>/dev/null || true
-	chmod 750 $(INBM_PACKAGE_BUILD_DIR)/etc/intel_edge_node/tokens/release-service 2>/dev/null || true
-	chmod 640 $(INBM_PACKAGE_BUILD_DIR)/etc/intel_edge_node/tokens/release-service/access_token 2>/dev/null || true
-	chmod 644 $(INBM_PACKAGE_BUILD_DIR)/usr/share/inbd_schema.json 2>/dev/null || true
-	chmod 644 $(INBM_PACKAGE_BUILD_DIR)/usr/share/firmware_tool_config_schema.json 2>/dev/null || true
-	
-	# Create control file
-	echo "Package: intel-inbm" > $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/control
-	echo "Version: $(PKG_VERSION)" >> $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/control
-	echo "Architecture: amd64" >> $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/control
-	echo "Maintainer: Intel In-Band Manageability Team <team@intel.com>" >> $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/control
-	echo "Description: Intel In-Band Manageability Tools" >> $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/control
-	echo " This package contains the inbc CLI and inbd daemon for Intel In-Band Manageability." >> $(INBM_PACKAGE_BUILD_DIR)/DEBIAN/control
-	
-	# Build the package
-	dpkg-deb --build $(INBM_PACKAGE_BUILD_DIR) $(BUILD_DIR)/intel-inbm.deb
+	@# Help: Build Debian package using debian packaging system
+	mkdir -p $(INBM_PACKAGE_BUILD_DIR)
+	cp -r $(shell ls . | grep -v build*) $(INBM_PACKAGE_BUILD_DIR)
+	cp ../.golangci.yml $(INBM_PACKAGE_BUILD_DIR)
+	cp -r ../LICENSES $(INBM_PACKAGE_BUILD_DIR)
+	cp ../common.mk $(INBM_PACKAGE_BUILD_DIR)
+	sed -i "s#../.golangci.yml#.golangci.yml#" $(INBM_PACKAGE_BUILD_DIR)/common.mk
+	sed -i "s#VERSION#$(PKG_VERSION)#" $(INBM_PACKAGE_BUILD_DIR)/debian/changelog
+	sed -i "s#../common.mk#common.mk#" $(INBM_PACKAGE_BUILD_DIR)/Makefile
+	cd $(INBM_PACKAGE_BUILD_DIR); debuild --preserve-env --preserve-envvar PATH -us -uc -b
 	@echo "---END MAKEFILE DEBIAN PACKAGE---"
+
+package_test: package
+	@echo "---MAKEFILE PACKAGE TEST---"
+	sudo apt-get install -y ./$(BUILD_DIR)/in-band-manageability_$(PKG_VERSION)_amd64.deb
+	sudo systemctl enable inbd
+	@echo "Package installed and service enabled successfully"
+	sudo apt-get remove -y in-band-manageability
+	@echo "---END MAKEFILE PACKAGE TEST---"
+	sudo systemctl disable inbd
+	sudo apt-get purge -y in-band-manageability
+	@echo "---END MAKEFILE PACKAGE TEST---"
 
 tarball:
 	@echo "---MAKEFILE TARBALL---"
 	@# Help: Create source tarball
 	mkdir -p $(TARBALL_DIR)
-	cp -r cmd/ pkg/ proto/ internal/ fpm-templates/ Makefile go.mod go.sum ../common.mk $(TARBALL_DIR)
+	cp -r cmd/ pkg/ proto/ internal/ debian/ configs/ scripts/ Makefile go.mod go.sum ../common.mk $(TARBALL_DIR)
 	if [ -f VERSION ]; then cp VERSION $(TARBALL_DIR); fi
 	cp *.yaml *.md *.txt LICENSE $(TARBALL_DIR)
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile

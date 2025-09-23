@@ -43,7 +43,7 @@ The FOTA (Firmware Over-The-Air) update process uses the `firmware_tool_info.con
 1. **Identify the New Platform**: Determine the unique identifier (e.g., platform name or code) for the new hardware or device type.
 2. **Add a New Section**: In the `/etc/firmware_tool_info.conf` file, add a new section or entry for the new platform. Use the appropriate syntax (e.g., INI section headers or key-value pairs).
 3. **Specify Required Parameters**:
-Add the following required parameters for the new platform, using the structure and fields from `fpm-templates/etc/firmware_tool_info.conf`:
+Add the following required parameters for the new platform, using the structure and fields from `configs/firmware_tool_info.conf`:
 
     * **name**: Name of the firmware product (e.g., "Alder Lake Client Platform").
     * **guid**: (Optional) Set to `true` if a GUID is required for the product.

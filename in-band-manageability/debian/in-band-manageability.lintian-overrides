@@ -1,0 +1,6 @@
+in-band-manageability binary: dir-or-file-in-opt opt/edge-node/
+in-band-manageability binary: dir-or-file-in-opt opt/edge-node/bin/
+in-band-manageability binary: dir-or-file-in-opt opt/edge-node/bin/inbc
+in-band-manageability binary: dir-or-file-in-opt opt/edge-node/bin/inbd
+in-band-manageability binary: statically-linked-binary opt/edge-node/bin/inbc
+in-band-manageability binary: statically-linked-binary opt/edge-node/bin/inbd
