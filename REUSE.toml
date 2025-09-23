@@ -34,12 +34,11 @@ path = [
     "ci/**",
     "ci/scripts/**",
     "in-band-manageability/buf.lock",
-    "in-band-manageability/fpm-templates/etc/apparmor.d/usr.bin.inbd",
-    "in-band-manageability/fpm-templates/etc/firmware_tool_info.conf",
-    "in-band-manageability/fpm-templates/etc/intel_manageability.conf",
-    "in-band-manageability/fpm-templates/usr/lib/systemd/system/inbd.service",
-    "in-band-manageability/fpm-templates/usr/share/firmware_tool_config_schema.json",
-    "in-band-manageability/fpm-templates/usr/share/inbd_schema.json",
+    "in-band-manageability/configs/apparmor.d/usr.bin.inbd",
+    "in-band-manageability/configs/firmware_tool_info.conf",
+    "in-band-manageability/configs/intel_manageability.conf",
+    "in-band-manageability/configs/firmware_tool_config_schema.json",
+    "in-band-manageability/configs/inbd_schema.json",
     "in-band-manageability/retain-3rd-party-notices/**"
 ]
 precedence = "aggregate"

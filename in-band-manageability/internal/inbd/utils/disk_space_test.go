@@ -175,8 +175,11 @@ func TestGetFileSizeInBytes_InvalidContentLength(t *testing.T) {
 
 	size, err := GetFileSizeInBytes(fs, server.URL, "")
 	assert.Error(t, err)
-	// The error will be from the HTTP request failing due to invalid Content-Length
-	assert.Contains(t, err.Error(), "error performing HEAD request")
+	// The error can be either from HTTP transport level or parsing level depending on Go version/environment
+	errorMessage := err.Error()
+	hasExpectedError := strings.Contains(errorMessage, "error performing HEAD request") ||
+		strings.Contains(errorMessage, "neither Content-Range nor Content-Length header available")
+	assert.True(t, hasExpectedError, "Expected error to contain either HEAD request error or content header error, got: %s", errorMessage)
 	assert.Equal(t, int64(0), size)
 }
 
