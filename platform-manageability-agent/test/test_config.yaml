@@ -1,1 +1,16 @@
-# TODO: Update this file once config is fixed
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: v0.1.0
+logLevel: info
+GUID: 'aaaaaaaa-0000-1111-2222-bbbbbbbbcccc'
+manageability:
+  enabled: true
+  serviceURL: 'localhost:12345'
+  heartbeatInterval: 10s
+rpsAddress: 'localhost:12345'
+statusEndpoint: 'unix:///tmp/status-server.sock'
+metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
+metricsInterval: 10s
+accessTokenPath: /etc/intel_edge_node/tokens/platform-manageability-agent/access_token
