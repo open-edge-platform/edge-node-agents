@@ -66,7 +66,7 @@ Example:
 $ cd in-band-manageability/
 $ make package
 $ ls build/artifacts/
-intel-inbm.deb  package
+in-band-manageability_<VERSION>_amd64.deb  package
 ```
 
 ### Source Tarball
@@ -127,7 +127,7 @@ sudo ./build/artifacts/inbc --socket /tmp/inbd.sock query --option all
 The In-Band Manageability Debian package can be installed using `apt`:
 
 ```bash
-sudo apt install -y ./build/artifacts/intel-inbm.deb
+sudo apt install -y ./build/artifacts/in-band-manageability_<VERSION>_amd64.deb
 ```
 
 ## Uninstalling the In-Band Manageability Package

@@ -6,7 +6,7 @@ GO_MOD ?= readonly
 BUILD_DIR ?= build/artifacts
 INBM_PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
 PREFIX ?= /usr/local
-VERSION := $(shell if [ -f VERSION ]; then cat VERSION; else echo "5.0.0"; fi)
+VERSION := $(shell if [ -f VERSION ]; then cat VERSION; else echo "1.0.0"; fi)
 COMMIT := $(shell git rev-parse --short HEAD)
 ifneq (,$(findstring dev,$(VERSION)))
 	PKG_VERSION = $(VERSION)-$(COMMIT)

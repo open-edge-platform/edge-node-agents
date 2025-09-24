@@ -34,11 +34,7 @@ path = [
     "ci/**",
     "ci/scripts/**",
     "in-band-manageability/buf.lock",
-    "in-band-manageability/configs/apparmor.d/usr.bin.inbd",
-    "in-band-manageability/configs/firmware_tool_info.conf",
-    "in-band-manageability/configs/intel_manageability.conf",
-    "in-band-manageability/configs/firmware_tool_config_schema.json",
-    "in-band-manageability/configs/inbd_schema.json",
+    "in-band-manageability/configs/**",
     "in-band-manageability/retain-3rd-party-notices/**"
 ]
 precedence = "aggregate"
