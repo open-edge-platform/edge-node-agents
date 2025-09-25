@@ -95,6 +95,9 @@
 
 ## Platform Update Agent Changelog
 
+### 1.6.0
+- Fix kernel parameter update
+
 ### 1.5.2
 - Add retry/backoff to status call
 
