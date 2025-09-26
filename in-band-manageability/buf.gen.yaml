@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+
+plugins:
+  - plugin: go
+    out: pkg/api
+    opt:
+      - paths=source_relative
+  - plugin: go-grpc
+    out: pkg/api
+    opt:
+      - paths=source_relative

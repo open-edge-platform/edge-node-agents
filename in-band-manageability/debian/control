@@ -1,0 +1,14 @@
+Source: in-band-manageability
+Maintainer: In-Band Manageability Team <team@example.com>
+Section: misc
+Priority: optional
+Standards-Version: 1.0.0
+Build-Depends: debhelper-compat (= 12)
+
+Package: in-band-manageability
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, apparmor-utils
+Description: Intel In-Band Manageability Tools
+ This package contains the inbc CLI and inbd daemon for Intel In-Band Manageability.
+ The tools provide firmware updates, OS updates, configuration management, and
+ power control capabilities for Intel-based edge devices.

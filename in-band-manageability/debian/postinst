@@ -1,0 +1,50 @@
+#!/bin/sh -e
+
+# Create the inbd group if it doesn't exist
+groupadd -f inbd --system
+
+# Create necessary directories with proper permissions
+mkdir -p /var/edge-node/inbd
+chown root:inbd /var/edge-node/inbd
+chmod 750 /var/edge-node/inbd
+
+# Create tokens directory only if it doesn't exist
+if [ ! -d "/etc/intel_edge_node/tokens/release-service" ]; then
+    mkdir -p /etc/intel_edge_node/tokens/release-service
+    chown root:inbd /etc/intel_edge_node/tokens/release-service
+    chmod 750 /etc/intel_edge_node/tokens/release-service
+fi
+
+# Create access_token file only if it doesn't exist
+if [ ! -f "/etc/intel_edge_node/tokens/release-service/access_token" ]; then
+    touch /etc/intel_edge_node/tokens/release-service/access_token
+    chown root:inbd /etc/intel_edge_node/tokens/release-service/access_token
+    chmod 640 /etc/intel_edge_node/tokens/release-service/access_token
+fi
+
+# Set proper permissions on configuration files
+if [ -f /etc/intel_manageability.conf ]; then
+    chown root:inbd /etc/intel_manageability.conf
+    chmod 640 /etc/intel_manageability.conf
+fi
+
+if [ -f /etc/firmware_tool_info.conf ]; then
+    chown root:inbd /etc/firmware_tool_info.conf
+    chmod 644 /etc/firmware_tool_info.conf
+fi
+
+# Set proper permissions on schema files
+if [ -f /usr/share/inbd_schema.json ]; then
+    chmod 644 /usr/share/inbd_schema.json
+fi
+
+if [ -f /usr/share/firmware_tool_config_schema.json ]; then
+    chmod 644 /usr/share/firmware_tool_config_schema.json
+fi
+
+# Load AppArmor profile if it exists
+if [ -f /etc/apparmor.d/usr.bin.inbd ]; then
+    apparmor_parser -rK /etc/apparmor.d/usr.bin.inbd 2>/dev/null || true
+fi
+
+#DEBHELPER#

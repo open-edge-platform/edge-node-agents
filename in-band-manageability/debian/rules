@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	$(MAKE) DESTDIR=$$(pwd)/debian/in-band-manageability PREFIX=/usr install
+
+override_dh_builddeb:
+	dh_builddeb -- -Zxz
+
+override_dh_installsystemd:
+	dh_installsystemd --name=inbd
+
+override_dh_auto_build:
+	$(MAKE) generate-proto
+	$(MAKE) inbcbuild inbdbuild copy-licenses
+
+override_dh_auto_test:
+	# Skip tests during package build due to timeout issues
+	@echo "Skipping tests during package build"
