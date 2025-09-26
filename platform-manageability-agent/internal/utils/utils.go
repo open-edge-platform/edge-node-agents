@@ -5,7 +5,9 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"slices"
 	"time"
 
 	log "github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/internal/logger"
@@ -21,13 +23,25 @@ type CommandExecutor interface {
 type RealCommandExecutor struct{}
 
 func ExecuteCommand(command string, args []string) ([]byte, error) {
-	cmd := exec.Command(command, args...)
-	output, err := cmd.Output()
-	if err != nil {
-		log.Logger.Errorf("Failed to execute command %s with args %v: %v", command, args, err)
-		return nil, fmt.Errorf("failed to execute command %s with args %v: %w", command, args, err)
+	// Check if agent is being run with the DM manager mock and skip command if so
+	_, testCheck := os.LookupEnv("PMA_BINARY_PATH")
+	if !testCheck {
+		cmd := exec.Command(command, args...)
+		output, err := cmd.Output()
+		if err != nil {
+			log.Logger.Errorf("Failed to execute command %s with args %v: %v", command, args, err)
+			return nil, fmt.Errorf("failed to execute command %s with args %v: %w", command, args, err)
+		}
+		return output, nil
+	} else {
+		if slices.Contains(args, "is-active") {
+			output := []byte("active")
+			return output, nil
+		} else {
+			output := []byte("success")
+			return output, nil
+		}
 	}
-	return output, nil
 }
 
 // ExecuteAMTInfo executes the AMT info command with retries.
@@ -38,14 +52,21 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 
 	var err error
 	for i := 1; i <= maxRetries; i++ {
-		cmd := exec.Command("sudo", "/usr/bin/rpc", "amtinfo")
-		output, err = cmd.CombinedOutput()
-		if err == nil {
+		// Check if agent is being run with the DM manager mock and skip command if so
+		_, testCheck := os.LookupEnv("PMA_BINARY_PATH")
+		if !testCheck {
+			cmd := exec.Command("sudo", "/usr/bin/rpc", "amtinfo")
+			output, err = cmd.CombinedOutput()
+			if err == nil {
+				return output, nil
+			}
+			log.Logger.Warnf("Failed to execute AMT info command (attempt %d/%d): %v", i, maxRetries, err)
+			if i < maxRetries {
+				time.Sleep(retryInterval)
+			}
+		} else {
+			output = []byte("Version: 0.1.0\nRAS Remote Status: connecting")
 			return output, nil
-		}
-		log.Logger.Warnf("Failed to execute AMT info command (attempt %d/%d): %v", i, maxRetries, err)
-		if i < maxRetries {
-			time.Sleep(retryInterval)
 		}
 	}
 	return output, fmt.Errorf("amtInfo command failed after %d retries: %v", maxRetries, err)
