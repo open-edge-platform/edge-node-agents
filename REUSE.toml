@@ -32,7 +32,10 @@ path = [
     "**/.tool-versions",
     "**/copyright",
     "ci/**",
-    "ci/scripts/**"
+    "ci/scripts/**",
+    "in-band-manageability/buf.lock",
+    "in-band-manageability/configs/**",
+    "in-band-manageability/retain-3rd-party-notices/**"
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2025 Intel Corporation"
