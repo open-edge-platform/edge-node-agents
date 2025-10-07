@@ -28,21 +28,23 @@ import (
 )
 
 const (
-	retryInterval  = 10 * time.Second
-	tickerInterval = 500 * time.Millisecond
-	connTimeout    = 5 * time.Second
+	retryInterval          = 10 * time.Second
+	tickerInterval         = 500 * time.Millisecond
+	connTimeout            = 5 * time.Second
+	connectingStateTimeout = 3 * time.Minute // Timeout for AMT stuck in "connecting" state
 )
 
 var ErrActivationSkipped = errors.New("activation skipped")
 
 type Client struct {
-	DMMgrServiceAddr string
-	Dialer           grpc.DialOption
-	Transport        grpc.DialOption
-	GrpcConn         *grpc.ClientConn
-	DMMgrClient      pb.DeviceManagementClient
-	RetryInterval    time.Duration
-	Executor         utils.CommandExecutor
+	DMMgrServiceAddr         string
+	Dialer                   grpc.DialOption
+	Transport                grpc.DialOption
+	GrpcConn                 *grpc.ClientConn
+	DMMgrClient              pb.DeviceManagementClient
+	RetryInterval            time.Duration
+	Executor                 utils.CommandExecutor
+	connectingStateStartTime *time.Time // Track when AMT entered "connecting" state
 }
 
 func WithNetworkDialer(serviceAddr string) func(*Client) {
@@ -210,34 +212,93 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	var activationStatus pb.ActivationStatus
 	switch normalizedStatus {
 	case "not connected":
+		// Clear connecting state timer (ensures clean state for both first-time
+		// and retry activation)
+		cli.connectingStateStartTime = nil
+
 		// Execute activation command
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
 		password := resp.ActionPassword
 		activationOutput, activationErr := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
-		ok := cli.isProvisioned(ctx, string(activationOutput), hostID)
+
+		// handles intermittent activation failures
+		// and allows the main periodic timer to retry activation in the next cycle
+		outputStr := string(activationOutput)
+		if strings.Contains(outputStr, `msg="interrupted system call"`) ||
+			strings.Contains(outputStr, "exit code: 10") {
+			log.Logger.Warnf("Interrupted system call detected for host %s - retrying next cycle", hostID)
+		}
+		if activationErr != nil {
+			log.Logger.Errorf("Failed to execute activation command for host %s: %v", hostID, activationErr)
+		}
+
+		// Check provisioning status
+		ok := cli.isProvisioned(ctx, outputStr, hostID)
 		if !ok {
 			log.Logger.Errorf("Failed to execute activation command for host %s: %v, Output: %s",
 				hostID, activationErr, string(activationOutput))
 			activationStatus = pb.ActivationStatus_ACTIVATION_FAILED
 		} else {
-			log.Logger.Debugf("Activation command output for host %s: %s", hostID, string(activationOutput))
-			// Check if activation was successful by looking for success indicators in output
+			log.Logger.Debugf("Activation command output for host %s: %s", hostID, outputStr)
 			activationStatus = pb.ActivationStatus_ACTIVATING
 			log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
 		}
 	case "connecting":
-		activationStatus = pb.ActivationStatus_ACTIVATING
-		log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
+		activationStatus = cli.handleConnectingState(ctx, hostID)
+
 	case "connected":
+		// Reset connecting state timestamp since we're connected
+		cli.connectingStateStartTime = nil
 		activationStatus = pb.ActivationStatus_ACTIVATED
-		log.Logger.Debugf("setting activation status to  %s: %s", activationStatus, hostID)
+		log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
+
 	default:
 		log.Logger.Warnf("Unknown RAS Remote Status for host %s: %s", hostID, rasStatus)
 		activationStatus = pb.ActivationStatus_UNSPECIFIED
-		log.Logger.Debugf("setting activation status to  %s: %s", activationStatus, hostID)
+		log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
 	}
 
 	return cli.reportActivationResult(ctx, hostID, activationStatus)
+}
+
+// handleConnectingState manages the connecting state with timeout and deactivation
+// triggering deactivation after 3 minutes to retry activation.
+func (cli *Client) handleConnectingState(_ context.Context, hostID string) pb.ActivationStatus {
+	now := time.Now()
+
+	// Track when first entered connecting state
+	if cli.connectingStateStartTime == nil {
+		cli.connectingStateStartTime = &now
+		log.Logger.Infof("Detected 'connecting' state for host %s at %v", hostID, now)
+	}
+
+	// Check if been in connecting state too long
+	timeInConnecting := now.Sub(*cli.connectingStateStartTime)
+	log.Logger.Debugf("Host %s has been in 'connecting' state for %v", hostID, timeInConnecting)
+
+	if timeInConnecting > connectingStateTimeout {
+		log.Logger.Warnf("Host %s stuck in 'connecting' state for %v (>%v), triggering deactivation",
+			hostID, timeInConnecting, connectingStateTimeout)
+
+		// Execute deactivation command
+		deactivateOutput, deactivateErr := cli.Executor.ExecuteAMTDeactivate()
+		if deactivateErr != nil {
+			log.Logger.Errorf("Failed to deactivate stuck connecting state on host %s: %v, Output: %s",
+				hostID, deactivateErr, string(deactivateOutput))
+			// Reset timestamp to try deactivation again in next cycle
+			cli.connectingStateStartTime = &now
+		} else {
+			log.Logger.Infof("Successfully deactivated stuck connecting state on host %s: %s",
+				hostID, string(deactivateOutput))
+			// Reset connecting state timestamp after deactivation
+			cli.connectingStateStartTime = nil
+			// Return activation failed to trigger re-activation in next cycle
+			return pb.ActivationStatus_ACTIVATION_FAILED
+		}
+	}
+
+	// Still in connecting state within timeout
+	return pb.ActivationStatus_ACTIVATING
 }
 
 // reportActivationResult reports the activation result to the DM Manager
@@ -290,4 +351,11 @@ func (cli *Client) isProvisioned(ctx context.Context, output string, hostID stri
 	}
 	log.Logger.Debugf("is Provisioning failed %s", hostID)
 	return false
+}
+
+// SetConnectingStateStartTime sets the connecting state start
+// time for testing purposes.
+// This method should only be used in test environments.
+func (cli *Client) SetConnectingStateStartTime(t time.Time) {
+	cli.connectingStateStartTime = &t
 }
