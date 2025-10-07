@@ -369,13 +369,13 @@ jobs:
         working-directory: virtual-edge-node
         run: |
           enic_version=$(head -n1 edge-node-container/VERSION)
-          check_if_dev_version=$(echo "${enic_version}" | grep '-dev')
+          check_if_dev_version=$(echo "${enic_version}" | grep "dev")
           if [ -z ${check_if_dev_version} ]; then
             major_version=$(echo "${enic_version}" | cut -d '.' -f1)
             minor_version=$(echo "${enic_version}" | cut -d '.' -f2)
             patch_version=$(echo "${enic_version}" | cut -d '.' -f3)
             new_patch_version=$(( patch_version + 1 ))
-            new_enic_version="${major_version}.${minor_version}.${new_patch_version}"
+            new_enic_version="${major_version}.${minor_version}.${new_patch_version}-dev"
             echo "${new_enic_version}" > edge-node-container/VERSION
           fi
 
