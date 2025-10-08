@@ -35,6 +35,26 @@ const (
 
 var ErrActivationSkipped = errors.New("activation skipped")
 
+// TO DO: Implement proper parsing of AMT info json output
+// AMTInfo represents the JSON structure returned by "rpc amtinfo -json"
+/*
+type AMTInfo struct {
+    Version     string `json:"version"`
+    BuildNumber string `json:"buildNumber"`
+    ControlMode string `json:"controlMode"`
+    DNSSuffix   string `json:"dnsSuffix"`
+    Features    string `json:"features"`
+    RAS         struct {
+        NetworkStatus string `json:"networkStatus"`
+        RemoteStatus  string `json:"remoteStatus"`
+        RemoteTrigger string `json:"remoteTrigger"`
+        MPSHostname   string `json:"mpsHostname"`
+    } `json:"ras"`
+    SKU  string `json:"sku"`
+    UUID string `json:"uuid"`
+}
+*/
+
 type Client struct {
 	DMMgrServiceAddr string
 	Dialer           grpc.DialOption
@@ -123,12 +143,14 @@ func parseAMTInfoField(output []byte, parseKey string) (string, bool) {
 func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTStatus, error) {
 	defaultStatus := pb.AMTStatus_DISABLED
 	var req *pb.AMTStatusRequest
+
+	// TODO: Implement proper parsing of AMT info json output
 	output, err := cli.Executor.ExecuteAMTInfo()
 	if err != nil {
 		req = &pb.AMTStatusRequest{
 			HostId:  hostID,
 			Status:  defaultStatus,
-			Version: "",
+			Feature: "",
 		}
 		_, reportErr := cli.DMMgrClient.ReportAMTStatus(ctx, req)
 		if reportErr != nil {
@@ -141,14 +163,39 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 		return defaultStatus, fmt.Errorf("failed to execute `rpc amtinfo` command: %w", err)
 	}
 
-	value, ok := parseAMTInfoField(output, "Version")
+	// Parse Features field to determine if AMT or ISM is enabled
+	// TODO : Use json parser to fetch filed directly from json output
+	value, ok := parseAMTInfoField(output, "Features")
 	if ok {
+		if strings.Contains(value, "AMT Pro Corporate") {
+			req = &pb.AMTStatusRequest{
+				HostId:  hostID,
+				Status:  pb.AMTStatus_ENABLED,
+				Feature: "AMT",
+			}
+		} else if strings.Contains(value, "Intel Standard Manageability Corporate") {
+			req = &pb.AMTStatusRequest{
+				HostId:  hostID,
+				Status:  pb.AMTStatus_ENABLED,
+				Feature: "ISM",
+			}
+		} else {
+			// If features field contains other values, send empty string
+			req = &pb.AMTStatusRequest{
+				HostId:  hostID,
+				Status:  pb.AMTStatus_ENABLED,
+				Feature: "",
+			}
+		}
+	} else {
+		// If we can't parse the Features field, send empty string
 		req = &pb.AMTStatusRequest{
 			HostId:  hostID,
 			Status:  pb.AMTStatus_ENABLED,
-			Version: value,
+			Feature: "",
 		}
 	}
+
 	_, err = cli.DMMgrClient.ReportAMTStatus(ctx, req)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
@@ -161,8 +208,8 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 		return defaultStatus, fmt.Errorf("failed to report AMT status: %w", err)
 	}
 
-	log.Logger.Infof("Reported AMT status: HostID=%s, Status=%v, Version=%s",
-		req.HostId, req.Status, req.Version)
+	log.Logger.Infof("Reported AMT status: HostID=%s, Status=%v, Feature=%s",
+		req.HostId, req.Status, req.Feature)
 	return req.Status, nil
 }
 
