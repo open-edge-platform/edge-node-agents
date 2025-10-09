@@ -31,6 +31,11 @@ const (
 	retryInterval  = 10 * time.Second
 	tickerInterval = 500 * time.Millisecond
 	connTimeout    = 5 * time.Second
+
+	// AMT feature constants
+	AMTFeature                = "AMT"
+	ISMFeature                = "ISM"
+	ISMFeatureDetectionString = "Intel Standard Manageability Corporate"
 )
 
 var ErrActivationSkipped = errors.New("activation skipped")
@@ -164,22 +169,26 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 	}
 
 	// Parse Features field to determine if AMT or ISM is enabled
-	// TODO : Use json parser to fetch filed directly from json output
+	// TODO : Use json parser to fetch fields directly from json output
 	value, ok := parseAMTInfoField(output, "Features")
 	if ok {
-		if strings.Contains(value, "AMT Pro Corporate") {
+		log.Logger.Infof("Parsed Features field value: '%s' for host %s", value, hostID)
+		if strings.Contains(strings.ToUpper(value), AMTFeature) {
+			log.Logger.Debugf("AMT detected in features for host %s", hostID)
 			req = &pb.AMTStatusRequest{
 				HostId:  hostID,
 				Status:  pb.AMTStatus_ENABLED,
-				Feature: "AMT",
+				Feature: AMTFeature,
 			}
-		} else if strings.Contains(value, "Intel Standard Manageability Corporate") {
+		} else if strings.Contains(value, ISMFeatureDetectionString) {
+			log.Logger.Debugf("ISM detected in features for host %s", hostID)
 			req = &pb.AMTStatusRequest{
 				HostId:  hostID,
 				Status:  pb.AMTStatus_ENABLED,
-				Feature: "ISM",
+				Feature: ISMFeature,
 			}
 		} else {
+			log.Logger.Debugf("Unknown feature detected: '%s' for host %s", value, hostID)
 			// If features field contains other values, send empty string
 			req = &pb.AMTStatusRequest{
 				HostId:  hostID,
@@ -188,6 +197,7 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 			}
 		}
 	} else {
+		log.Logger.Debugf("Features field not found or empty for host %s", hostID)
 		// If we can't parse the Features field, send empty string
 		req = &pb.AMTStatusRequest{
 			HostId:  hostID,
@@ -195,7 +205,7 @@ func (cli *Client) ReportAMTStatus(ctx context.Context, hostID string) (pb.AMTSt
 			Feature: "",
 		}
 	}
-
+	// Send the AMT status to the device manager
 	_, err = cli.DMMgrClient.ReportAMTStatus(ctx, req)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
