@@ -32,7 +32,7 @@ const (
 	tickerInterval = 500 * time.Millisecond
 	connTimeout    = 5 * time.Second
 
-	// AMT feature constants
+	// AMT and ISM feature constants - replaces hardcoded strings
 	AMTFeature                = "AMT"
 	ISMFeature                = "ISM"
 	ISMFeatureDetectionString = "Intel Standard Manageability Corporate"
