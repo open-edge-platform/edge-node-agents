@@ -46,7 +46,7 @@ func (m *mockCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, passwo
 }
 
 func (m *mockDeviceManagementServer) ReportAMTStatus(ctx context.Context, req *pb.AMTStatusRequest) (*pb.AMTStatusResponse, error) {
-	log.Logger.Infof("Received ReportAMTStatus request: HostID=%s, Status=%v, Version=%s", req.HostId, req.Status, req.Version)
+	log.Logger.Infof("Received ReportAMTStatus request: HostID=%s, Status=%v, Feature=%s", req.HostId, req.Status, req.Feature)
 	if m.reportAMTStatusError != nil {
 		return nil, m.reportAMTStatusError
 	}
@@ -284,7 +284,7 @@ func TestReportAMTStatus_Success(t *testing.T) {
 	}()
 
 	mockExecutor := &mockCommandExecutor{
-		amtInfoOutput: []byte("Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424"),
+		amtInfoOutput: []byte("Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nFeatures: "),
 		amtInfoError:  nil,
 	}
 
@@ -299,6 +299,110 @@ func TestReportAMTStatus_Success(t *testing.T) {
 
 	_, err = client.ReportAMTStatus(context.Background(), "host-id")
 	assert.NoError(t, err, "ReportAMTStatus should succeed")
+}
+
+func TestReportAMTStatus_AMT_Feature(t *testing.T) {
+	lis, server := runMockServer(&mockDeviceManagementServer{})
+	defer func() {
+		server.GracefulStop()
+		lis.Close()
+	}()
+
+	mockExecutor := &mockCommandExecutor{
+		amtInfoOutput: []byte("Version: 16.1.25.1424\nBuild Number: 3425\nFeatures: AMT Pro Corporate"),
+		amtInfoError:  nil,
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig,
+		WithBufconnDialer(lis),
+		WithMockExecutor(mockExecutor),
+	)
+
+	err := client.Connect(context.Background())
+	assert.NoError(t, err, "Client should connect successfully")
+
+	status, err := client.ReportAMTStatus(context.Background(), "host-id")
+	assert.NoError(t, err, "ReportAMTStatus should succeed")
+	assert.Equal(t, pb.AMTStatus_ENABLED, status, "AMT should be enabled for AMT Pro features")
+}
+
+func TestReportAMTStatus_AMT_Pro_Corporate_Exact(t *testing.T) {
+	lis, server := runMockServer(&mockDeviceManagementServer{})
+	defer func() {
+		server.GracefulStop()
+		lis.Close()
+	}()
+
+	mockExecutor := &mockCommandExecutor{
+		amtInfoOutput: []byte("Version: 16.1.25.1424\nBuild Number: 3425\nFeatures: AMT Pro Corporate"),
+		amtInfoError:  nil,
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig,
+		WithBufconnDialer(lis),
+		WithMockExecutor(mockExecutor),
+	)
+
+	err := client.Connect(context.Background())
+	assert.NoError(t, err, "Client should connect successfully")
+
+	status, err := client.ReportAMTStatus(context.Background(), "host-id")
+	assert.NoError(t, err, "ReportAMTStatus should succeed")
+	assert.Equal(t, pb.AMTStatus_ENABLED, status, "AMT should be enabled for exact 'AMT Pro Corporate' features")
+}
+
+func TestReportAMTStatus_ISM_Feature(t *testing.T) {
+	lis, server := runMockServer(&mockDeviceManagementServer{})
+	defer func() {
+		server.GracefulStop()
+		lis.Close()
+	}()
+
+	mockExecutor := &mockCommandExecutor{
+		amtInfoOutput: []byte("Version: 16.1.25.1424\nBuild Number: 3425\nFeatures: Intel Standard Manageability Corporate SKU"),
+		amtInfoError:  nil,
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig,
+		WithBufconnDialer(lis),
+		WithMockExecutor(mockExecutor),
+	)
+
+	err := client.Connect(context.Background())
+	assert.NoError(t, err, "Client should connect successfully")
+
+	status, err := client.ReportAMTStatus(context.Background(), "host-id")
+	assert.NoError(t, err, "ReportAMTStatus should succeed")
+	assert.Equal(t, pb.AMTStatus_ENABLED, status, "AMT should be enabled for ISM features")
+}
+
+func TestReportAMTStatus_Unknown_Feature(t *testing.T) {
+	lis, server := runMockServer(&mockDeviceManagementServer{})
+	defer func() {
+		server.GracefulStop()
+		lis.Close()
+	}()
+
+	mockExecutor := &mockCommandExecutor{
+		amtInfoOutput: []byte("Version: 16.1.25.1424\nBuild Number: 3425\nFeatures: Some Unknown Feature"),
+		amtInfoError:  nil,
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig,
+		WithBufconnDialer(lis),
+		WithMockExecutor(mockExecutor),
+	)
+
+	err := client.Connect(context.Background())
+	assert.NoError(t, err, "Client should connect successfully")
+
+	status, err := client.ReportAMTStatus(context.Background(), "host-id")
+	assert.NoError(t, err, "ReportAMTStatus should succeed")
+	assert.Equal(t, pb.AMTStatus_ENABLED, status, "AMT should be enabled but with empty feature string for unknown features")
 }
 
 func TestReportAMTStatus_ErrorMessageInOutput(t *testing.T) {
