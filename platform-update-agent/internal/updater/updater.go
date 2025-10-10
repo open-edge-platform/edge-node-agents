@@ -23,8 +23,14 @@ import (
 
 const (
 	// more update types to be added later
-	kernelPath      = "/etc/default/grub.d/90-platform-update-agent.cfg"
-	kernelParamName = "GRUB_CMDLINE_LINUX_DEFAULT"
+	kernelPath                   = "/etc/default/grub.d/90-platform-update-agent.cfg"
+	kernelParamName              = "GRUB_CMDLINE_LINUX_DEFAULT"
+	emtKernelParamDir            = "/boot/efi/loader/entries"
+	emtKernelParamFile           = "/boot/efi/loader/entries/emt_debug_entry.conf"
+	emtKernelParamFileDefContent = `title   Edge Microvisor Toolkit Kernel Parameters`
+	emtKernelDefCfgPath          = "/boot/efi/loader"
+	emtKernelDefCfgFile          = "/boot/efi/loader/loader.conf"
+	emtKernelDefCfgContent       = "default emt_debug_entry.conf"
 )
 
 type UpdateStatus struct {
@@ -115,6 +121,7 @@ func NewUpdateController(granularPath string, osType string, downloadChecker fun
 			Executor:       executor,
 			MetaController: metadataController,
 			kernelFile:     kernelPath,
+			osType:         osType,
 		}
 
 		newPackageInstaller := &newPackageInstaller{
@@ -140,9 +147,16 @@ func NewUpdateController(granularPath string, osType string, downloadChecker fun
 			DownloadChecker: downloadChecker,
 		}
 
+		emtkernelUpdater := &kernelUpdater{
+			Executor:       executor,
+			MetaController: metadataController,
+			kernelFile:     emtKernelParamFile,
+			osType:         osType,
+		}
+
 		enUpdater = &edgeNodeUpdater{
 			MetaController:    metadata.NewController(),
-			subsystemUpdaters: []SubsystemUpdater{emtUpdater},
+			subsystemUpdaters: []SubsystemUpdater{emtUpdater, emtkernelUpdater},
 			timeNow:           time.Now,
 		}
 	}
@@ -417,6 +431,7 @@ type kernelUpdater struct {
 	utils.Executor
 	*metadata.MetaController
 	kernelFile string
+	osType     string // "ubuntu" or "emt"
 }
 
 func (k *kernelUpdater) update() error {
@@ -426,6 +441,99 @@ func (k *kernelUpdater) update() error {
 		return err
 	}
 
+	if k.osType == "emt" {
+		log.Info("Configuring EMT kernel parameters")
+
+		// Check if directory exists, create if not
+		if _, err := os.Stat(emtKernelParamDir); os.IsNotExist(err) {
+			log.Infof("Creating directory: %s", emtKernelParamDir)
+			if err := os.MkdirAll(emtKernelParamDir, 0755); err != nil {
+				return fmt.Errorf("failed to create directory %s: %v", emtKernelParamDir, err)
+			}
+		}
+
+		// Get current kernel command line
+		currentCmdlineOutput, err := k.Execute([]string{"sudo", "cat", "/proc/cmdline"})
+		if err != nil {
+			return fmt.Errorf("failed to read /proc/cmdline: %v", err)
+		}
+		currentCmdline := strings.TrimSpace(string(currentCmdlineOutput))
+
+		// Get EFI file path
+		efiFilesOutput, err := k.Execute([]string{"sudo", "ls", "/boot/efi/EFI/Linux/"})
+		if err != nil {
+			return fmt.Errorf("failed to list EFI files: %v", err)
+		}
+
+		var efiFile string
+		for _, line := range strings.Split(strings.TrimSpace(string(efiFilesOutput)), "\n") {
+			if strings.HasPrefix(line, "linux-") && strings.HasSuffix(line, ".efi") {
+				efiFile = line
+				break
+			}
+		}
+		if efiFile == "" {
+			return fmt.Errorf("no EFI kernel file found in /boot/efi/EFI/Linux/")
+		}
+
+		var fileContent string
+
+		// Check if file exists
+		if _, err := os.Stat(emtKernelParamFile); os.IsNotExist(err) {
+			// Create new file
+			log.Infof("Creating new kernel parameter file: %s", emtKernelParamFile)
+			newOptions := currentCmdline + " " + metadataUpdateSource.KernelCommand
+			fileContent = fmt.Sprintf("%s\nlinux   /EFI/Linux/%s\noptions %s\n# %s\n",
+				emtKernelParamFileDefContent,
+				efiFile,
+				newOptions,
+				currentCmdline)
+		} else {
+			// File exists - update it
+			log.Infof("Updating existing kernel parameter file: %s", emtKernelParamFile)
+			existingContent, err := os.ReadFile(emtKernelParamFile)
+			if err != nil {
+				return fmt.Errorf("failed to read %s: %v", emtKernelParamFile, err)
+			}
+
+			lines := strings.Split(string(existingContent), "\n")
+			if len(lines) < 4 {
+				return fmt.Errorf("unexpected format in %s", emtKernelParamFile)
+			}
+
+			// Extract original cmdline from 4th line (comment)
+			originalCmdline := strings.TrimPrefix(strings.TrimSpace(lines[3]), "# ")
+
+			// Update 3rd line with original cmdline + new kernel command
+			newOptions := originalCmdline + " " + metadataUpdateSource.KernelCommand
+			lines[2] = "options " + newOptions
+
+			fileContent = strings.Join(lines, "\n")
+		}
+
+		// Write the file
+		if err := os.WriteFile(emtKernelParamFile, []byte(fileContent), 0600); err != nil {
+			return fmt.Errorf("failed to write %s: %v", emtKernelParamFile, err)
+		}
+
+		// Configure default boot entry
+		if _, err := os.Stat(emtKernelDefCfgPath); os.IsNotExist(err) {
+			log.Infof("Creating directory: %s", emtKernelDefCfgPath)
+			if err := os.MkdirAll(emtKernelDefCfgPath, 0755); err != nil {
+				return fmt.Errorf("failed to create directory %s: %v", emtKernelDefCfgPath, err)
+			}
+		}
+
+		if _, err := os.Stat(emtKernelDefCfgFile); os.IsNotExist(err) {
+			log.Infof("Creating default boot configuration: %s", emtKernelDefCfgFile)
+			if err := os.WriteFile(emtKernelDefCfgFile, []byte(emtKernelDefCfgContent+"\n"), 0600); err != nil {
+				return fmt.Errorf("failed to write %s: %v", emtKernelDefCfgFile, err)
+			}
+		}
+
+		log.Info("EMT kernel parameters configured successfully")
+		return nil
+	}
 	if metadataUpdateSource == nil || metadataUpdateSource.KernelCommand == "" {
 		log.Infof("update source or provided kernel is empty - skipping kernel update")
 		return nil
