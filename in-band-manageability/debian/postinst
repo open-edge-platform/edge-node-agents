@@ -3,6 +3,15 @@
 # Create the inbd group if it doesn't exist
 groupadd -f inbd --system
 
+# Create inbc user if it doesn't exist
+if ! id "inbc" &>/dev/null; then
+    if getent group inbc > /dev/null; then
+        useradd --system --no-create-home --shell /usr/sbin/nologin -g inbc inbc
+    else
+        useradd --system --no-create-home --shell /usr/sbin/nologin inbc
+    fi
+fi
+
 # Create necessary directories with proper permissions
 mkdir -p /var/edge-node/inbd
 chown root:inbd /var/edge-node/inbd
