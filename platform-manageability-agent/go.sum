@@ -40,8 +40,8 @@ github.com/lufia/plan9stats v0.0.0-20250827001030-24949be3fa54 h1:mFWunSatvkQQDh
 github.com/lufia/plan9stats v0.0.0-20250827001030-24949be3fa54/go.mod h1:autxFIvghDt3jPTLoqZ9OZ7s9qTGNAWmYCjVFWPX/zg=
 github.com/open-edge-platform/edge-node-agents/common v1.8.0 h1:VhVhdftyDLQWbSeEDMXnzzP8jqDhJzph8B42IWQ6fFo=
 github.com/open-edge-platform/edge-node-agents/common v1.8.0/go.mod h1:zTswftFqpDz/VE/RB5cUQMPLwKWbohjlNtbOgG6X0n8=
-github.com/open-edge-platform/infra-external/dm-manager v0.0.0-20251008080329-cf386899a03b h1:w/H+mQ3wawrjSTJ2DpvdR6JbdhfOzupbDWNgozprE60=
-github.com/open-edge-platform/infra-external/dm-manager v0.0.0-20251008080329-cf386899a03b/go.mod h1:/UCvMWa+yxR/zslsV5UP+4ib64oENkUWEXiiy8YJ/iA=
+github.com/open-edge-platform/infra-external/dm-manager v0.5.0 h1:bpMsyznc8Ys515PhcKy9jngTsDCdL+ZgVZuOQijiHfc=
+github.com/open-edge-platform/infra-external/dm-manager v0.5.0/go.mod h1:/UCvMWa+yxR/zslsV5UP+4ib64oENkUWEXiiy8YJ/iA=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

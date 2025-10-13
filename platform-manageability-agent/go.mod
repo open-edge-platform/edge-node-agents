@@ -8,7 +8,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/open-edge-platform/edge-node-agents/common v1.8.0
-	github.com/open-edge-platform/infra-external/dm-manager v0.0.0-20251008080329-cf386899a03b
+	github.com/open-edge-platform/infra-external/dm-manager v0.5.0
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0
