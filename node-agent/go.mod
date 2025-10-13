@@ -8,7 +8,7 @@ require (
 	github.com/open-edge-platform/edge-node-agents/common v1.8.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/oauth2 v0.31.0
+	golang.org/x/oauth2 v0.32.0
 	gopkg.in/yaml.v3 v3.0.1
 	oras.land/oras-go/v2 v2.6.0
 )
@@ -66,5 +66,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0
 	golang.org/x/sys v0.35.0 // indirect
-	google.golang.org/grpc v1.75.1
+	google.golang.org/grpc v1.76.0
 )
