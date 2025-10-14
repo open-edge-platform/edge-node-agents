@@ -43,9 +43,6 @@ func (srv *Server) ReportAMTStatus(ctx context.Context, req *proto.AMTStatusRequ
 	if req.Status != proto.AMTStatus_ENABLED && req.Status != proto.AMTStatus_DISABLED {
 		return nil, fmt.Errorf("incorrect status provided")
 	}
-	if req.Status == proto.AMTStatus_ENABLED && req.Version == "" {
-		return nil, fmt.Errorf("failed to send version when AMT enabled")
-	}
 	log.Printf("AMTStatusRequest: %v/n", req)
 	return &proto.AMTStatusResponse{}, nil
 }
