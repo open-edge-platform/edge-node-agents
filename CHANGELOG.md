@@ -51,6 +51,9 @@
 
 ## Node Agent Changelog
 
+### 1.8.0
+- Send no error during initial 5 minutes for agent status
+
 ### 1.7.2
 - Drop TLS on caddy internal endpoint
 
