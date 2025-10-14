@@ -75,6 +75,9 @@
 
 ## Platform Observability Agent Changelog
 
+### 1.10.0
+- Fix syslog parsing for health check
+
 ### 1.9.0
 - Add collection of cloud-init service logs
 
