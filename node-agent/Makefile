@@ -25,7 +25,7 @@ endif
 
 .PHONY: all build clean help lint package test fuzztest tarball
 
-all: build test
+all: build lint test
 
 lint: golint
 
