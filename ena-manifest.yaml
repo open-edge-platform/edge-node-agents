@@ -22,7 +22,7 @@ packages:
     version: 0.2.0
     ociArtifact: edge-orch/en/deb/platform-manageability-agent
   - name: platform-observability-agent
-    version: 1.9.0
+    version: 1.10.0
     ociArtifact: edge-orch/en/deb/platform-observability-agent
   - name: platform-telemetry-agent
     version: 1.4.0
