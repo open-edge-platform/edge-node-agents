@@ -5,10 +5,10 @@ version: v1
 
 plugins:
   - plugin: go
-    out: pkg/api
+    out: .
     opt:
-      - paths=source_relative
+      - module=github.com/open-edge-platform/edge-node-agents/in-band-manageability
   - plugin: go-grpc
-    out: pkg/api
+    out: .
     opt:
-      - paths=source_relative
+      - module=github.com/open-edge-platform/edge-node-agents/in-band-manageability
