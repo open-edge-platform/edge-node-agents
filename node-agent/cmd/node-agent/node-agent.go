@@ -329,7 +329,10 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 	if uptimeErr != nil {
 		log.Warnf("Failed to get system uptime: %v", uptimeErr)
 	} else {
-		isSystemBootingUp = systemUptime < COMPONENTS_INIT_WAIT_INTERVAL.Seconds()
+		// Booting up can be time consuming especially on Ubuntu post-install as installer
+		// carries out several updates/upgrades. Hence consider system to be booting up
+		// if uptime is less than 3 times COMPONENTS_INIT_WAIT_INTERVAL
+		isSystemBootingUp = systemUptime < 3*COMPONENTS_INIT_WAIT_INTERVAL.Seconds()
 	}
 
 	// If all components are healthy, send running status
