@@ -5,13 +5,12 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: inbd/v1/inbd.proto
+// source: pkg/api/inbd/v1/inbd.proto
 
 package v1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -501,5 +500,5 @@ var InbService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "inbd/v1/inbd.proto",
+	Metadata: "pkg/api/inbd/v1/inbd.proto",
 }

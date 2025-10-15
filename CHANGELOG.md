@@ -51,6 +51,9 @@
 
 ## Node Agent Changelog
 
+### 1.8.1
+- Relax system boot detection
+
 ### 1.8.0
 - Send no error during initial 5 minutes for agent status
 
