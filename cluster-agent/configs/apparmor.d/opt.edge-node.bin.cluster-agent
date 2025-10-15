@@ -257,6 +257,9 @@ profile ca_dash {
   /usr/sbin/xtables-nft-multi ix,
   /proc/cgroups r,
   /sys/fs/cgroup/cgroup.controllers r,
+  /etc/systemd/network/10-cluster.netdev rw,
+  /etc/systemd/network/20-cluster.network rw,
+  /etc/systemd/network/ r,
   # ends here
 
   /usr/local/bin/k3s-killall.sh ix,
