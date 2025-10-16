@@ -222,18 +222,12 @@ func TestInbm_ProvisionInbm_IfAlreadyProvisionedShouldDoNothing(t *testing.T) {
 }
 
 func TestInbm_ProvisionInbm_HappyPath(t *testing.T) {
-	var provisionTcCommandCalled bool
-
 	inbmConfigSuccessPath = "testdata/.notconfigured"
 	defer os.Remove(inbmConfigSuccessPath)
 	executor := utils.NewExecutor[[]string](
 		asStringArray,
 		func(args *[]string) (out []byte, e error) {
-			switch {
-			case reflect.DeepEqual(*args, provisionTcCommand):
-				provisionTcCommandCalled = true
-				return nil, nil
-			}
+			// No commands should be executed for debian package provisioning
 			return nil, nil
 		})
 
@@ -242,7 +236,7 @@ func TestInbm_ProvisionInbm_HappyPath(t *testing.T) {
 	sut := installer.ProvisionInbm
 
 	require.NoError(t, sut(context.TODO()))
-	require.Truef(t, provisionTcCommandCalled, "provisionTcCommand function shall be called")
+	// Verify that the config success file was created
 	_, err := os.Stat(inbmConfigSuccessPath)
 	require.NoError(t, err)
 }
@@ -263,7 +257,6 @@ func TestInbm_UpdatePackages_ZeroUpgradedHappyPath(t *testing.T) {
 
 func TestInbm_UpdatePackages_NonZeroUpgradedHappyPath(t *testing.T) {
 	upgardeDependenciesCommandExecuted := false
-	provisionTcCommandExecuted := false
 	removeDockerCommandExecuted := false
 	restartInbmConfigurationCommandExecuted := false
 
@@ -272,8 +265,6 @@ func TestInbm_UpdatePackages_NonZeroUpgradedHappyPath(t *testing.T) {
 		case reflect.DeepEqual(upgradeDependenciesCommand, *command):
 			upgardeDependenciesCommandExecuted = true
 			return []byte{}, nil
-		case reflect.DeepEqual(provisionTcCommand, *command):
-			provisionTcCommandExecuted = true
 		case reflect.DeepEqual(removeDockerCommand, *command):
 			removeDockerCommandExecuted = true
 		case reflect.DeepEqual(restartInbmConfigurationCommand, *command):
@@ -288,7 +279,6 @@ func TestInbm_UpdatePackages_NonZeroUpgradedHappyPath(t *testing.T) {
 	sut := installer.UpgradeInbmPackages
 	require.NoError(t, sut(context.TODO()))
 	require.True(t, upgardeDependenciesCommandExecuted)
-	require.True(t, provisionTcCommandExecuted)
 	require.True(t, removeDockerCommandExecuted)
 	require.True(t, restartInbmConfigurationCommandExecuted)
 }

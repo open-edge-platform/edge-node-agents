@@ -57,17 +57,6 @@ profile pua-inbc {
   /usr/bin/inbc mr,
 
 }
-profile pua-provision-tc {
-  include <abstractions/base>
-  include <abstractions/bash>
-  include <abstractions/lxc/container-base>
-
-  ptrace read peer=unconfined,
-
-  /usr/bin/bash ix,
-  /usr/bin/provision-tc r,
-
-}
 profile pua-sudo {
   include <abstractions/base>
   include <abstractions/consoles>
@@ -85,7 +74,6 @@ profile pua-sudo {
   /usr/bin/truncate rUx,
   /usr/sbin/reboot rUx,
   /usr/bin/inbc rPx -> pua-inbc,
-  /usr/bin/provision-tc rPx -> pua-provision-tc,
   /usr/bin/sudo mr,
   /usr/bin/systemctl rUx,
   /usr/libexec/sudo/libsudo_util.so.* mr,
