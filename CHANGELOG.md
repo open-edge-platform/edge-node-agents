@@ -71,6 +71,8 @@
 - Dependency import updates
 
 ## Platform Observability Agent Changelog
+### 1.9.1
+- Fix platform observability health check OOM
 
 ### 1.9.0
 - Add collection of cloud-init service logs
