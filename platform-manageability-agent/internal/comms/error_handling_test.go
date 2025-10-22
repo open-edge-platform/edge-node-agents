@@ -391,7 +391,7 @@ func TestSuccessFlowNotAffected(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 
-			err = client.RetrieveActivationDetails(ctx, "test-host", &config.Config{
+			_ = client.RetrieveActivationDetails(ctx, "test-host", &config.Config{
 				RPSAddress: "mock-service",
 			})
 

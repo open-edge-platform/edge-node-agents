@@ -349,7 +349,7 @@ func (cli *Client) handleConnectingState(hostID string, currentState string) pb.
 		// 2. Previous state was anything other than "not connected"
 		previousState := cli.previousState
 		cli.mu.Unlock()
-		
+
 		if previousState == "" || previousState != "not connected" {
 			log.Logger.Infof("Host %s: direct transition to 'connecting' from '%s', triggering deactivation",
 				hostID, previousState)
@@ -395,7 +395,7 @@ func (cli *Client) triggerDeactivationAsync(hostID string) pb.ActivationStatus {
 	// Reset connecting state timer but DON'T change previousState yet
 	cli.connectingStateStartTime = nil
 	cli.mu.Unlock()
-	
+
 	// Launch goroutine for deactivation
 	go cli.performDeactivationAsync(hostID)
 	// Return ACTIVATION_FAILED to stop current activation attempts
