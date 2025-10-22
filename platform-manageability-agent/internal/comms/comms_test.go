@@ -747,7 +747,7 @@ func TestPerformDeactivationAsync_Success(t *testing.T) {
 	client.SetDeactivationInProgress(false)
 
 	// Perform deactivation
-	done := make(chan bool)
+	done := make(chan bool, 1) // Buffered channel to prevent goroutine leak
 	go func() {
 		client.PerformDeactivationAsync("host-id")
 		done <- true
@@ -782,7 +782,7 @@ func TestPerformDeactivationAsync_DeactivationCommandFails(t *testing.T) {
 	client.SetDeactivationInProgress(false)
 
 	// Perform async deactivation
-	done := make(chan bool)
+	done := make(chan bool, 1) // Buffered channel to prevent goroutine leak
 	go func() {
 		client.PerformDeactivationAsync("host-id")
 		done <- true
@@ -826,7 +826,7 @@ func TestPerformDeactivationAsync_AMTInfoFailures(t *testing.T) {
 	client.SetDeactivationInProgress(false)
 
 	// Perform deactivation
-	done := make(chan bool)
+	done := make(chan bool, 1) // Buffered channel to prevent goroutine leak
 	go func() {
 		client.PerformDeactivationAsync("host-id")
 		done <- true
