@@ -37,9 +37,13 @@ type mockCommandExecutor struct {
 	activationError    error
 	deactivationOutput []byte
 	deactivationError  error
+	amtInfoFunc        func() ([]byte, error) // Custom function for dynamic behavior
 }
 
 func (m *mockCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
+	if m.amtInfoFunc != nil {
+		return m.amtInfoFunc()
+	}
 	return m.amtInfoOutput, m.amtInfoError
 }
 
@@ -238,12 +242,15 @@ func TestRetrieveActivationDetails_Connecting_Timeout(t *testing.T) {
 		lis.Close()
 	}()
 
-	// Create mock executor with connecting status that never changes to connected.
+	// Create mock executor with connecting status that triggers immediate deactivation.
+	// This tests the new behavior where direct transition to "connecting" triggers deactivation.
 	mockExecutor := &mockCommandExecutor{
-		activationOutput: []byte(`msg="CIRA: Configured"`),
-		activationError:  nil,
-		amtInfoOutput:    []byte("Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: connecting"),
-		amtInfoError:     nil,
+		activationOutput:   []byte(`msg="CIRA: Configured"`),
+		activationError:    nil,
+		amtInfoOutput:      []byte("Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: connecting"),
+		amtInfoError:       nil,
+		deactivationOutput: []byte("Deactivated successfully"),
+		deactivationError:  nil,
 	}
 
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
@@ -262,24 +269,21 @@ func TestRetrieveActivationDetails_Connecting_Timeout(t *testing.T) {
 		RPSAddress: "mock-service",
 	})
 
-	// The function should return an error due to the test context timeout, but that's expected
-	// since we're testing the timeout scenario
-	if err != nil {
-		t.Logf("Expected error due to context timeout: %v", err)
-	}
+	// Should succeed with the new async deactivation logic
+	assert.NoError(t, err, "RetrieveActivationDetails should succeed with new async deactivation logic")
 
-	// Verify that at least one ACTIVATING status was reported during monitoring
+	// Verify that at least one activation result was reported
 	assert.NotEmpty(t, capturedRequests, "At least one activation result should have been reported")
 
-	// Check that we received ACTIVATING status reports
-	hasActivatingStatus := false
+	// With new logic, device going directly to "connecting" should trigger ACTIVATION_FAILED (for deactivation)
+	hasActivationFailedStatus := false
 	for _, req := range capturedRequests {
-		if req.ActivationStatus == pb.ActivationStatus_ACTIVATING {
-			hasActivatingStatus = true
+		if req.ActivationStatus == pb.ActivationStatus_ACTIVATION_FAILED {
+			hasActivationFailedStatus = true
 			break
 		}
 	}
-	assert.True(t, hasActivatingStatus, "Should have received at least one ACTIVATING status report")
+	assert.True(t, hasActivationFailedStatus, "Should have received ACTIVATION_FAILED status due to immediate deactivation")
 }
 
 func TestReportAMTStatus_Success(t *testing.T) {
@@ -607,7 +611,7 @@ func TestRetrieveActivationDetails_ConnectingStateTimeout(t *testing.T) {
 		"Should report ACTIVATION_FAILED when connecting state times out")
 }
 
-// TestRetrieveActivationDetails_ConnectingStateWithinTimeout tests normal connecting state behavior
+// TestRetrieveActivationDetails_ConnectingStateWithinTimeout tests normal connecting state
 func TestRetrieveActivationDetails_ConnectingStateWithinTimeout(t *testing.T) {
 	var capturedRequest *pb.ActivationResultRequest
 
@@ -625,10 +629,12 @@ func TestRetrieveActivationDetails_ConnectingStateWithinTimeout(t *testing.T) {
 		lis.Close()
 	}()
 
-	// Mock executor that returns connecting state (within timeout)
+	// Mock executor that returns connecting state (immediate deactivation will be triggered)
 	mockExecutor := &mockCommandExecutor{
-		amtInfoOutput: []byte("RAS Remote Status: connecting"),
-		amtInfoError:  nil,
+		amtInfoOutput:      []byte("RAS Remote Status: connecting"),
+		amtInfoError:       nil,
+		deactivationOutput: []byte("Deactivated successfully"),
+		deactivationError:  nil,
 	}
 
 	tlsConfig := &tls.Config{InsecureSkipVerify: true}
@@ -644,10 +650,10 @@ func TestRetrieveActivationDetails_ConnectingStateWithinTimeout(t *testing.T) {
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
-	// Verify that connecting state is reported as ACTIVATING (no timeout)
+	// With new logic, direct transition to "connecting" triggers immediate deactivation (ACTIVATION_FAILED)
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
-	assert.Equal(t, pb.ActivationStatus_ACTIVATING, capturedRequest.ActivationStatus,
-		"Should report ACTIVATING when in connecting state within timeout")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
+		"Should report ACTIVATION_FAILED when in connecting state triggers immediate deactivation")
 }
 
 // TestRetrieveActivationDetails_DeactivationFailure tests failed deactivation during timeout
@@ -692,8 +698,150 @@ func TestRetrieveActivationDetails_DeactivationFailure(t *testing.T) {
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
-	// Verify that failed deactivation still reports ACTIVATING (timestamp reset for retry)
+	// Verify that failed deactivation still reports ACTIVATION_FAILED (timestamp reset for retry)
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
-	assert.Equal(t, pb.ActivationStatus_ACTIVATING, capturedRequest.ActivationStatus,
-		"Should report ACTIVATING when deactivation fails (retry in next cycle)")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
+		"Should report ACTIVATION_FAILED when deactivation fails (retry in next cycle)")
+}
+
+// TestTriggerDeactivationAsync_AlreadyInProgress tests that concurrent deactivation attempts are blocked
+func TestTriggerDeactivationAsync_AlreadyInProgress(t *testing.T) {
+	mockExecutor := &mockCommandExecutor{
+		amtInfoOutput: []byte("RAS Remote Status: connecting"),
+		amtInfoError:  nil,
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig, WithMockExecutor(mockExecutor))
+
+	// Manually set deactivation in progress
+	client.SetDeactivationInProgress(true)
+
+	// Trigger deactivation - should be blocked
+	status := client.TriggerDeactivationAsync("host-id")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATING, status, "Should return ACTIVATING when deactivation already in progress")
+}
+
+// TestPerformDeactivationAsync_Success tests successful deactivation with polling
+func TestPerformDeactivationAsync_Success(t *testing.T) {
+	callCount := 0
+	mockExecutor := &mockCommandExecutor{
+		deactivationOutput: []byte("Deactivation successful"),
+		deactivationError:  nil,
+	}
+
+	// Mock AMT info to return "connecting" first, then "not connected"
+	mockExecutor.amtInfoFunc = func() ([]byte, error) {
+		callCount++
+		if callCount <= 2 {
+			return []byte("RAS Remote Status: connecting"), nil
+		}
+		return []byte("RAS Remote Status: not connected"), nil
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig, WithMockExecutor(mockExecutor))
+
+	// Set initial state
+	client.SetPreviousState("connecting")
+	client.SetDeactivationInProgress(false)
+
+	// Perform deactivation
+	done := make(chan bool)
+	go func() {
+		client.PerformDeactivationAsync("host-id")
+		done <- true
+	}()
+
+	// Wait for completion with timeout
+	select {
+	case <-done:
+		// Success - deactivation completed
+	case <-time.After(5 * time.Second):
+		t.Fatal("Deactivation should have completed within 5 seconds")
+	}
+
+	// Verify final state
+	assert.Equal(t, "not connected", client.GetPreviousState(), "Previous state should be updated to 'not connected'")
+	assert.False(t, client.GetDeactivationInProgress(), "Deactivation in progress flag should be cleared")
+	assert.True(t, callCount >= 3, "Should have polled multiple times before success")
+}
+
+// TestPerformDeactivationAsync_DeactivationCommandFails tests failed deactivation command
+func TestPerformDeactivationAsync_DeactivationCommandFails(t *testing.T) {
+	mockExecutor := &mockCommandExecutor{
+		deactivationOutput: []byte("Command failed"),
+		deactivationError:  fmt.Errorf("deactivation command failed"),
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig, WithMockExecutor(mockExecutor))
+
+	// Set initial state
+	client.SetPreviousState("connecting")
+	client.SetDeactivationInProgress(false)
+
+	// Perform async deactivation
+	done := make(chan bool)
+	go func() {
+		client.PerformDeactivationAsync("host-id")
+		done <- true
+	}()
+
+	// Wait for completion
+	select {
+	case <-done:
+		// Expected - should exit quickly on command failure
+	case <-time.After(2 * time.Second):
+		t.Fatal("Deactivation should have failed quickly")
+	}
+
+	// Verify state unchanged (command failed, no polling)
+	assert.Equal(t, "connecting", client.GetPreviousState(), "Previous state should remain unchanged on command failure")
+	assert.False(t, client.GetDeactivationInProgress(), "Deactivation in progress flag should be cleared")
+}
+
+// TestPerformDeactivationAsync_AMTInfoFailures tests handling of AMT info command failures during polling
+func TestPerformDeactivationAsync_AMTInfoFailures(t *testing.T) {
+	callCount := 0
+	mockExecutor := &mockCommandExecutor{
+		deactivationOutput: []byte("Deactivation successful"),
+		deactivationError:  nil,
+	}
+
+	// Mock AMT info to fail a few times, then succeed
+	mockExecutor.amtInfoFunc = func() ([]byte, error) {
+		callCount++
+		if callCount <= 3 {
+			return []byte(""), fmt.Errorf("AMT info failed")
+		}
+		return []byte("RAS Remote Status: not connected"), nil
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig, WithMockExecutor(mockExecutor))
+
+	// Set initial state
+	client.SetPreviousState("connecting")
+	client.SetDeactivationInProgress(false)
+
+	// Perform deactivation
+	done := make(chan bool)
+	go func() {
+		client.PerformDeactivationAsync("host-id")
+		done <- true
+	}()
+
+	// Wait for completion
+	select {
+	case <-done:
+		// Success - should eventually succeed despite initial failures
+	case <-time.After(10 * time.Second):
+		t.Fatal("Deactivation should have completed within 10 seconds")
+	}
+
+	// Verify final state
+	assert.Equal(t, "not connected", client.GetPreviousState(), "Previous state should be updated to 'not connected'")
+	assert.False(t, client.GetDeactivationInProgress(), "Deactivation in progress flag should be cleared")
+	assert.True(t, callCount >= 4, "Should have retried AMT info multiple times")
 }
