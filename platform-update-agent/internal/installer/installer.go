@@ -29,29 +29,23 @@ var (
 	inbmConfigSuccessPath = "/var/edge-node/pua/.inbm-config-success"
 
 	restartInbmConfigurationCommand = []string{
-		"sudo", "systemctl", "restart", "inbm-configuration",
+		"sudo", "systemctl", "restart", "inbd",
 	}
 
 	removeDockerCommand = []string{
 		"sudo", "inbc", "remove", "--path", "sotaSW:docker",
 	}
 
-	provisionTcCommand = []string{
-		"sudo", "SKIP_DOCKER_CONFIGURATION=x", "NO_CLOUD=x", "NO_OTA_CERT=x", "PROVISION_TPM=auto", "provision-tc",
-	}
-
 	upgradeDependenciesCommand = []string{
-		"sudo", "apt", "install", "--only-upgrade", "-y", "inbc-program", "trtl", "inbm-cloudadapter-agent",
-		"inbm-dispatcher-agent", "inbm-configuration-agent", "inbm-telemetry-agent", "inbm-diagnostic-agent",
-		"mqtt", "tpm-provision",
+		"sudo", "apt", "install", "--only-upgrade", "-y", "in-band-manageability",
 	}
 
 	inbcSotaDownloadOnlyInstallPackagesCommand = []string{
-		"sudo", "inbc", "sota", "--mode", "download-only", "-rb", "no", "--package-list",
+		"sudo", "inbc", "sota", "--mode", "download-only", "-reboot", "no", "--package-list",
 	}
 
 	inbcSotaNoDownloadInstallPackagesCommand = []string{
-		"sudo", "inbc", "sota", "--mode", "no-download", "-rb", "no", "--package-list",
+		"sudo", "inbc", "sota", "--mode", "no-download", "-reboot", "no", "--package-list",
 	}
 )
 
@@ -90,10 +84,7 @@ func (i *Installer) ProvisionInbm(_ context.Context) error {
 		return nil
 	}
 
-	log.Info("running `provision-tc` script - it may take a while")
-	if _, err := i.execute(provisionTcCommand); err != nil {
-		return fmt.Errorf("failed to execute shell command - %v", err)
-	}
+	log.Info("INBM provisioning with debian package - no additional setup needed")
 
 	file, err := os.Create(inbmConfigSuccessPath)
 	if err != nil {
@@ -115,11 +106,7 @@ func (i *Installer) UpgradeInbmPackages(ctx context.Context) error {
 	log.Info("Ran `apt install` command")
 
 	if isUpdated(string(out)) {
-		log.Info("running `provision-tc` script - it may take a while")
-
-		if _, err = i.execute(provisionTcCommand); err != nil {
-			return fmt.Errorf("failed to execute shell command - %v", err)
-		}
+		log.Info("packages updated - applying configuration changes")
 
 		if err := i.modifyConfiguration(ctx); err != nil {
 			return fmt.Errorf("failed to modify INBC configuration - %v", err)
