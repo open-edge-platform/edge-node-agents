@@ -25,21 +25,21 @@ jobs:
     outputs:
       filtered_projects: ${{ steps.filter-changes.outputs.filtered_projects }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8   # v5.0.0
         with:
           persist-credentials: false
       - name: "Verify Branch Name"
-        uses: open-edge-platform/orch-ci/verify-branch-name@76700c2fb6d547733b9218d9638dca43f5296399  # 0.1.52
+        uses: open-edge-platform/orch-ci/verify-branch-name@e4fa54613527cfaad83ba8b625fd845a4ab8409d  # 0.1.53
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@76700c2fb6d547733b9218d9638dca43f5296399  # 0.1.52
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@e4fa54613527cfaad83ba8b625fd845a4ab8409d  # 0.1.53
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
           changed_projects: ${{ steps.discover-changes.outputs.changed_projects }}
         run: |
           folders_to_remove='[".github",".reuse","LICENSES"]'
-          
+
           filtered_projects=$(echo "$changed_projects" | jq -cr --argjson folders_to_remove "$folders_to_remove" 'map(select(. as $item | $folders_to_remove | index($item) | not))')
           echo "filtered_projects=${filtered_projects}" >> ${GITHUB_OUTPUT}
   pre-merge-pipeline:
@@ -50,11 +50,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        #runner_version: [ubuntu-24.04, ubuntu-22.04]
+        # runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@76700c2fb6d547733b9218d9638dca43f5296399  # 0.1.52
+    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@e4fa54613527cfaad83ba8b625fd845a4ab8409d  # 0.1.53
     with:
-      #runner_version: ${{ matrix.runner_version }}
+      # runner_version: ${{ matrix.runner_version }}
       runs_on: ubuntu-22.04
       run_security_scans: true
       run_version_check: true
@@ -63,11 +63,11 @@ jobs:
       run_lint: true
       run_test: true
       run_integration_test: true
-      #run_fuzz_test: true  ## gets executed when run_integration_test: true
+      # run_fuzz_test: true  ## gets executed when run_integration_test: true
       run_package_build: true
-      #run_package_test: true  ## deosn't seem to do anything aparth from an echo
-      #run_shellcheck_common: true  ## should be part of make lint
-      #run_shellcheck_agent: true  ## should be part of make lint
+      # run_package_test: true  ## deosn't seem to do anything aparth from an echo
+      # run_shellcheck_common: true  ## should be part of make lint
+      # run_shellcheck_agent: true  ## should be part of make lint
       prefix_tag_separator: "/"
       project_folder: ${{ matrix.project_folder }}
       remove_cache_go: true
@@ -89,7 +89,7 @@ jobs:
           pre_merge_pipeline_result: ${{ needs.pre-merge-pipeline.result }}
         run: |
           echo "Pre-merge pipeline result: $pre_merge_pipeline_result"
-  
+
           if [ "$pre_merge_pipeline_result" == "success" ] || [ "$pre_merge_pipeline_result" == "skipped" ]; then
             echo "Pre-merge check passed successfully."
           else
