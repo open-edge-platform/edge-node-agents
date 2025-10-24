@@ -4,186 +4,69 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # preinst script for in-band-manageability
-# This script is executed before the package is unpacked
+# This script detects existing Python-based INBM installations and provides removal instructions
 
-set +e  # Don't exit on errors to ensure cleanup continues
+set +e  # Don't exit on errors to ensure detection continues
 
-echo "=== INBM preinst: Starting cleanup of Python-based INBM packages ==="
+# Function to detect if Python-based INBM installation exists
+detect_python_installation() {
+  # Check for Python-based services
+  for service in inbm-configuration inbm-dispatcher inbm-telemetry inbm-diagnostic inbm-cloudadapter; do
+      if systemctl list-unit-files | grep -q "${service}.service" || \
+         systemctl list-units --all | grep -q "${service}.service" || \
+         systemctl status "${service}.service" >/dev/null 2>&1; then
+          return 0  # Found Python installation
+      fi
+  done
+  
+  # Check for Python-based packages
+  for package in inbm-configuration-agent inbm-dispatcher-agent inbm-telemetry-agent inbm-diagnostic-agent inbm-cloudadapter-agent; do
+      if dpkg -l | grep -q "^ii.*${package}" >/dev/null 2>&1; then
+          return 0  # Found Python installation
+      fi
+  done
+  
+  # Check for Python-based executables
+  if [ -x "/usr/bin/inbm-configuration" ] || [ -x "/usr/bin/inbm-dispatcher" ] || \
+     [ -x "/usr/bin/inbm-telemetry" ] || [ -x "/usr/bin/inbm-diagnostic" ] || \
+     [ -x "/usr/bin/inbm-cloudadapter" ]; then
+      return 0  # Found Python installation
+  fi
+  
+  # Check for Python-based configuration directories
+  if [ -d "/etc/intel-manageability/dispatcher" ] || [ -d "/etc/intel-manageability/telemetry" ] || \
+     [ -d "/etc/intel-manageability/configuration" ] || [ -d "/etc/intel-manageability/diagnostic" ] || \
+     [ -d "/etc/intel-manageability/cloudadapter" ]; then
+      return 0  # Found Python installation
+  fi
+  
+  return 1  # No Python installation found
+}
 
-# Check what INBM packages are currently installed
-echo "Checking currently installed INBM packages..."
-EXISTING_PACKAGES=$(dpkg -l 2>/dev/null | grep -E "(inbm|inbc)" | awk '{print $2}' | tr '\n' ' ' || echo "")
-if [ -n "$EXISTING_PACKAGES" ]; then
-    echo "Found existing INBM/INBC packages: $EXISTING_PACKAGES"
-else
-    echo "No INBM packages found in dpkg -l"
-fi
-
-# Stop any running INBM services first
-echo "Stopping any running INBM services..."
-systemctl stop inbm-* 2>/dev/null || true
-systemctl disable inbm-* 2>/dev/null || true
-
-# First, remove all conflicting files to avoid file conflicts
-echo "Removing all conflicting files first..."
-conflicting_files="/usr/bin/inbc /etc/firmware_tool_info.conf /etc/intel_manageability.conf /etc/intel-manageability.conf /var/log/inbm.log"
-for file in $conflicting_files; do
-    if [ -f "$file" ]; then
-        echo "Removing conflicting file: $file"
-        chmod 777 "$file" 2>/dev/null || true
-        rm -f "$file" 2>/dev/null || true
-    fi
-done
-
-# Remove backup files
-rm -f /etc/firmware_tool_info.conf.dpkg-old /etc/intel_manageability.conf.dpkg-old /etc/intel-manageability.conf.dpkg-old /usr/bin/inbc.dpkg-old 2>/dev/null || true
-
-# Now remove ALL conflicting INBM packages - try simple removal first, then force if needed
-echo "Removing all conflicting INBM packages..."
-all_packages=$(dpkg -l 2>/dev/null | grep -E "^ii.*(inbm|inbc)" | awk '{print $2}' | tr '\n' ' ' || true)
-if [ -n "$all_packages" ]; then
-    echo "Found packages to remove: $all_packages"
-    for package in $all_packages; do
-        echo "Removing package: $package"
-        
-        # Check if package has missing files list (broken state)
-        if [ ! -f "/var/lib/dpkg/info/$package.list" ]; then
-            echo "Package $package has missing files list - fixing broken state"
-            # Create empty files list to fix broken package state
-            touch "/var/lib/dpkg/info/$package.list" 2>/dev/null || true
-            touch "/var/lib/dpkg/info/$package.prerm" 2>/dev/null || true
-            touch "/var/lib/dpkg/info/$package.postrm" 2>/dev/null || true
-        fi
-        
-        # Try simple removal first (should work since files are already deleted)
-        if dpkg --remove "$package" 2>/dev/null; then
-            echo "Successfully removed $package with simple method"
-            dpkg --purge "$package" 2>/dev/null || true
-        else
-            echo "Simple removal failed, using force method for $package"
-            # Fallback to force removal and dpkg database cleanup
-            dpkg --remove --force-all --force-depends --force-conflicts --force-overwrite --force-remove-reinstreq "$package" 2>/dev/null || true
-            dpkg --purge --force-all --force-depends --force-conflicts --force-overwrite --force-remove-reinstreq "$package" 2>/dev/null || true
-            # Complete database cleanup for stubborn packages
-            sed -i "/^Package: $package$/,/^$/d" /var/lib/dpkg/status 2>/dev/null || true
-            rm -f /var/lib/dpkg/info/$package.* 2>/dev/null || true
-        fi
-    done
-else
-    echo "No conflicting packages found"
-fi
-
-# Clean up Python INBM directories that might be left behind
-echo "Cleaning up Python INBM directories..."
-python_dirs="/etc/intel-manageability/dispatcher /etc/intel-manageability/dispatcher-agent /etc/intel-manageability/configuration /etc/intel-manageability/configuration-agent /etc/intel-manageability/telemetry /etc/intel-manageability/telemetry-agent /etc/intel-manageability/diagnostic /etc/intel-manageability/diagnostic-agent /etc/intel-manageability/cloudadapter /etc/intel-manageability/cloudadapter-agent /etc/intel-manageability/public/dispatcher-agent /etc/intel-manageability/public/configuration-agent /etc/intel-manageability/public/telemetry-agent /etc/intel-manageability/public/diagnostic-agent /etc/intel-manageability/public/cloudadapter-agent"
-
-for dir in $python_dirs; do
-    if [ -d "$dir" ]; then
-        echo "Removing Python INBM directory: $dir"
-        rm -rf "$dir" || true
-    fi
-done
-
-# Also remove any remaining INBM-related directories
-echo "Removing any remaining INBM directories..."
-find /etc -name "*inbm*" -type d -exec rm -rf {} + 2>/dev/null || true
-find /var -name "*inbm*" -type d -exec rm -rf {} + 2>/dev/null || true
-find /usr/share -name "*inbm*" -type d -exec rm -rf {} + 2>/dev/null || true
-
-# Clean up empty parent directories
-echo "Cleaning up empty parent directories..."
-rmdir /etc/intel-manageability/public 2>/dev/null || true
-rmdir /etc/intel-manageability 2>/dev/null || true
-
-# Clean up any broken dpkg states
-echo "Cleaning up broken dpkg states..."
-dpkg --configure -a 2>/dev/null || true
-apt-get -f install -y 2>/dev/null || true
-
-# Final verification and NUCLEAR cleanup if needed
-echo "Final check - listing any remaining INBM packages..."
-final_check=$(dpkg -l 2>/dev/null | grep -E "^ii.*inbm" | awk '{print $2}' || true)
-if [ -n "$final_check" ]; then
-    echo "ERROR: INBM packages still present: $final_check"
-    echo "NUCLEAR OPTION: Manually removing from dpkg database..."
-    for stubborn_package in $final_check; do
-        echo "NUCLEAR: Removing $stubborn_package from dpkg database"
-        # Remove package info from all dpkg files
-        sed -i "/^Package: $stubborn_package$/,/^$/d" /var/lib/dpkg/status 2>/dev/null || true
-        rm -f "/var/lib/dpkg/info/$stubborn_package.*" 2>/dev/null || true
-        # Remove from available packages
-        sed -i "/^Package: $stubborn_package$/,/^$/d" /var/lib/dpkg/available 2>/dev/null || true
-    done
+# Check for Python-based INBM installation and provide removal instructions
+if detect_python_installation; then
+    echo ""
+    echo "==========================================================================="
+    echo "WARNING: Python-based Intel In-Band Manageability installation detected!"
+    echo "==========================================================================="
+    echo ""
+    echo "Before installing the new Go-based version, you must remove the existing"
+    echo "Python-based installation to avoid file conflicts."
+    echo ""
+    echo "Please run the following command to remove Python-based INBM:"
+    echo ""
+    echo "  wget -O uninstall-python-tc.sh https://github.com/open-edge-platform/edge-node-agents/raw/main/in-band-manageability/installer/uninstall-python-tc.sh"
+    echo "  chmod +x uninstall-python-tc.sh"
+    echo "  sudo ./uninstall-python-tc.sh"
+    echo ""
+    echo "After running the uninstaller, retry the Go-based INBM installation."
+    echo "==========================================================================="
+    echo ""
     
-    # Force remove the problematic files one more time
-    echo "NUCLEAR: Force removing all conflicting files..."
-    rm -f "/etc/firmware_tool_info.conf" "/etc/intel_manageability.conf" "/etc/intel-manageability.conf" "/usr/bin/inbc" 2>/dev/null || true
-    chmod 777 "/etc/firmware_tool_info.conf" "/etc/intel_manageability.conf" "/etc/intel-manageability.conf" "/usr/bin/inbc" 2>/dev/null || true
-    rm -rf "/etc/firmware_tool_info.conf" "/etc/intel_manageability.conf" "/etc/intel-manageability.conf" "/usr/bin/inbc" 2>/dev/null || true
-    
-    # Final check after nuclear option
-    final_final_check=$(dpkg -l 2>/dev/null | grep -E "^ii.*inbm" | awk '{print $2}' || true)
-    if [ -n "$final_final_check" ]; then
-        echo "WARNING: Some INBM packages still remain even after nuclear cleanup: $final_final_check"
-    else
-        echo "SUCCESS: All INBM packages removed after nuclear cleanup"
-    fi
+    # Exit with error to prevent installation
+    exit 1
 else
-    echo "SUCCESS: All INBM packages removed"
+    echo "No Python-based INBM installation detected. Proceeding with Go-based installation."
 fi
-
-# Final verification and cleanup of any remaining packages
-echo "=== Final verification ==="
-remaining_packages=$(dpkg -l 2>/dev/null | grep -E "^ii.*(inbm|inbc)" | awk '{print $2}' || true)
-if [ -n "$remaining_packages" ]; then
-    echo "WARNING: Some packages still remain: $remaining_packages"
-    echo "Performing final cleanup..."
-    
-    for remaining_pkg in $remaining_packages; do
-        echo "Final removal attempt for: $remaining_pkg"
-        # Create missing dpkg files if needed
-        touch "/var/lib/dpkg/info/$remaining_pkg.list" 2>/dev/null || true
-        touch "/var/lib/dpkg/info/$remaining_pkg.prerm" 2>/dev/null || true
-        touch "/var/lib/dpkg/info/$remaining_pkg.postrm" 2>/dev/null || true
-        
-        # Try removal again
-        dpkg --remove "$remaining_pkg" 2>/dev/null || dpkg --remove --force-all "$remaining_pkg" 2>/dev/null || true
-        dpkg --purge "$remaining_pkg" 2>/dev/null || dpkg --purge --force-all "$remaining_pkg" 2>/dev/null || true
-        
-        # Nuclear option - remove from database completely
-        sed -i "/^Package: $remaining_pkg$/,/^$/d" /var/lib/dpkg/status 2>/dev/null || true
-        rm -f /var/lib/dpkg/info/$remaining_pkg.* 2>/dev/null || true
-    done
-    
-    # Final check after nuclear cleanup
-    final_remaining=$(dpkg -l 2>/dev/null | grep -E "^ii.*(inbm|inbc)" | awk '{print $2}' || true)
-    if [ -n "$final_remaining" ]; then
-        echo "ERROR: Packages still remain after all cleanup attempts: $final_remaining"
-    else
-        echo "✓ All conflicting packages finally removed"
-    fi
-else
-    echo "✓ All conflicting packages removed successfully"
-fi
-
-remaining_files=""
-for file in /usr/bin/inbc /etc/firmware_tool_info.conf /etc/intel_manageability.conf; do
-    if [ -f "$file" ]; then
-        remaining_files="$remaining_files $file"
-    fi
-done
-
-if [ -n "$remaining_files" ]; then
-    echo "WARNING: Some conflicting files still exist:$remaining_files"
-    # Final file cleanup
-    for remaining_file in $remaining_files; do
-        chmod 777 "$remaining_file" 2>/dev/null || true
-        rm -rf "$remaining_file" 2>/dev/null || true
-    done
-else
-    echo "✓ All conflicting files removed successfully"
-fi
-
-echo "=== INBM preinst: Python INBM cleanup completed ==="
 
 exit 0
