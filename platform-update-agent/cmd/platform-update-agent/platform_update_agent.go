@@ -380,6 +380,12 @@ func handleUpdateRes(updateRes *pb.PlatformUpdateStatusResponse, puaScheduler *s
 			nextRunTime = time.Time{} // this means 'no time'; we should NOT download. See Notify docstring
 		}
 
+		// If kernel parameter is provided in the update source, return early as we don't support downloads for kernel updates
+		if updateRes.GetUpdateSource() != nil && updateRes.GetUpdateSource().GetKernelCommand() != "" {
+			log.Debug("Kernel parameter provided, skipping download notification")
+			return
+		}
+		
 		actualOSSource, err := metadata.GetMetaOSProfileUpdateSourceActual()
 		if err != nil {
 			log.Errorf("Cannot retrieve OS source already on system; skipping download schedule")

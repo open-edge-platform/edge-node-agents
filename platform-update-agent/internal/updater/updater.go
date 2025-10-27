@@ -26,11 +26,11 @@ const (
 	kernelPath                   = "/etc/default/grub.d/90-platform-update-agent.cfg"
 	kernelParamName              = "GRUB_CMDLINE_LINUX_DEFAULT"
 	emtKernelParamDir            = "/boot/efi/loader/entries"
-	emtKernelParamFile           = "/boot/efi/loader/entries/emt_debug_entry.conf"
+	emtKernelParamFile           = "/boot/efi/loader/entries/emt_user_kernel_param.conf"
 	emtKernelParamFileDefContent = `title   Edge Microvisor Toolkit Kernel Parameters`
 	emtKernelDefCfgPath          = "/boot/efi/loader"
 	emtKernelDefCfgFile          = "/boot/efi/loader/loader.conf"
-	emtKernelDefCfgContent       = "default emt_debug_entry.conf"
+	emtKernelDefCfgContent       = "default emt_user_kernel_param.conf"
 )
 
 type UpdateStatus struct {
@@ -75,6 +75,18 @@ var (
 	// between reboots to not be removed
 	granularLogTruncateCommand = []string{
 		"sudo", "truncate", "-s", "0", "/var/log/inbm-update-log.log",
+	}
+
+	cmdlineCommand = []string{
+		"cat", "/proc/cmdline",
+	}
+
+	cmdlineListEfiCommand = []string{
+		"sudo", "ls", "/boot/efi/EFI/Linux/",
+	}
+
+	cmdlineRebootCommand = []string{
+		"sudo", "reboot",
 	}
 )
 
@@ -409,17 +421,24 @@ type emtUpdater struct {
 }
 
 func (o *emtUpdater) update() error {
-	log.Info("Executing Edge Microvisor Toolkit A/B update")
 
+	// Check if this is a kernel-only update
+	updateSource, err := o.MetaController.GetMetaUpdateSource()
+	if err == nil && updateSource != nil && updateSource.KernelCommand != "" {
+		log.Info("Kernel parameter provided - Skip OS update step")
+		return nil
+	}
+
+	log.Info("Executing Edge Microvisor Toolkit A/B update")
 	if !o.DownloadChecker() {
 		return fmt.Errorf("cannot execute Edge Microvisor Toolkit update as download has not taken place")
 	}
 
-	if err := o.SetMetaUpdateInProgress(metadata.OS); err != nil {
+	if err = o.SetMetaUpdateInProgress(metadata.OS); err != nil {
 		return fmt.Errorf("%s", fmt.Sprintf("%s: %v", _ERR_CANNOT_SET_METAFILE, err))
 	}
 
-	_, err := o.Execute(inbcEmtUpdateCommand)
+	_, err = o.Execute(inbcEmtUpdateCommand)
 	if err != nil {
 		return fmt.Errorf("failed to execute shell command(%v)- %v", inbcEmtUpdateCommand, err)
 	}
@@ -444,23 +463,19 @@ func (k *kernelUpdater) update() error {
 	if k.osType == "emt" {
 		log.Info("Configuring EMT kernel parameters")
 
-		// Check if directory exists, create if not
-		if _, err := os.Stat(emtKernelParamDir); os.IsNotExist(err) {
-			log.Infof("Creating directory: %s", emtKernelParamDir)
-			if err := os.MkdirAll(emtKernelParamDir, 0755); err != nil {
-				return fmt.Errorf("failed to create directory %s: %v", emtKernelParamDir, err)
-			}
-		}
-
+		//cmdlineCommand
 		// Get current kernel command line
-		currentCmdlineOutput, err := k.Execute([]string{"sudo", "cat", "/proc/cmdline"})
+		currentCmdlineOutput, err := k.Execute(cmdlineCommand)
 		if err != nil {
 			return fmt.Errorf("failed to read /proc/cmdline: %v", err)
 		}
+
 		currentCmdline := strings.TrimSpace(string(currentCmdlineOutput))
 
+		log.Info("Existing kernel parameters", currentCmdline)
+
 		// Get EFI file path
-		efiFilesOutput, err := k.Execute([]string{"sudo", "ls", "/boot/efi/EFI/Linux/"})
+		efiFilesOutput, err := k.Execute(cmdlineListEfiCommand)
 		if err != nil {
 			return fmt.Errorf("failed to list EFI files: %v", err)
 		}
@@ -476,12 +491,27 @@ func (k *kernelUpdater) update() error {
 			return fmt.Errorf("no EFI kernel file found in /boot/efi/EFI/Linux/")
 		}
 
-		var fileContent string
+		log.Info("efi file name", efiFile)
 
-		// Check if file exists
-		if _, err := os.Stat(emtKernelParamFile); os.IsNotExist(err) {
-			// Create new file
+		var fileContent string
+		// Check if file exists using stat command with sudo
+		_, err = k.Execute([]string{"sudo", "stat", emtKernelParamFile})
+		if err != nil {
+			// File doesn't exist - create directory if needed and create new file
 			log.Infof("Creating new kernel parameter file: %s", emtKernelParamFile)
+
+			// Check if directory exists, create if it doesn't
+			_, dirErr := k.Execute([]string{"sudo", "stat", emtKernelParamDir})
+			if dirErr != nil {
+				log.Infof("Creating directory: %s", emtKernelParamDir)
+				if _, mkdirErr := k.Execute([]string{"sudo", "mkdir", "-p", emtKernelParamDir}); mkdirErr != nil {
+					return fmt.Errorf("failed to create directory %s: %v", emtKernelParamDir, mkdirErr)
+				}
+				if _, chmodErr := k.Execute([]string{"sudo", "chmod", "0755", emtKernelParamDir}); chmodErr != nil {
+					return fmt.Errorf("failed to set permissions on %s: %v", emtKernelParamDir, chmodErr)
+				}
+			}
+
 			newOptions := currentCmdline + " " + metadataUpdateSource.KernelCommand
 			fileContent = fmt.Sprintf("%s\nlinux   /EFI/Linux/%s\noptions %s\n# %s\n",
 				emtKernelParamFileDefContent,
@@ -489,14 +519,15 @@ func (k *kernelUpdater) update() error {
 				newOptions,
 				currentCmdline)
 		} else {
+
 			// File exists - update it
 			log.Infof("Updating existing kernel parameter file: %s", emtKernelParamFile)
-			existingContent, err := os.ReadFile(emtKernelParamFile)
+			existingContentBytes, err := k.Execute([]string{"sudo", "cat", emtKernelParamFile})
 			if err != nil {
 				return fmt.Errorf("failed to read %s: %v", emtKernelParamFile, err)
 			}
 
-			lines := strings.Split(string(existingContent), "\n")
+			lines := strings.Split(string(existingContentBytes), "\n")
 			if len(lines) < 4 {
 				return fmt.Errorf("unexpected format in %s", emtKernelParamFile)
 			}
@@ -511,29 +542,50 @@ func (k *kernelUpdater) update() error {
 			fileContent = strings.Join(lines, "\n")
 		}
 
-		// Write the file
-		if err := os.WriteFile(emtKernelParamFile, []byte(fileContent), 0600); err != nil {
-			return fmt.Errorf("failed to write %s: %v", emtKernelParamFile, err)
+		// Write the file using sudo
+		tmpFile := "/tmp/emt_debug_entry.conf.tmp"
+		writeCmd := []string{"sh", "-c", fmt.Sprintf("echo '%s' > %s", fileContent, tmpFile)}
+		if _, err := k.Execute(writeCmd); err != nil {
+			return fmt.Errorf("failed to write temporary file: %v", err)
+		}
+		defer os.Remove(tmpFile)
+
+		if _, err := k.Execute([]string{"sudo", "cp", tmpFile, emtKernelParamFile}); err != nil {
+			return fmt.Errorf("failed to copy %s to %s: %v", tmpFile, emtKernelParamFile, err)
 		}
 
-		// Configure default boot entry
-		if _, err := os.Stat(emtKernelDefCfgPath); os.IsNotExist(err) {
-			log.Infof("Creating directory: %s", emtKernelDefCfgPath)
-			if err := os.MkdirAll(emtKernelDefCfgPath, 0755); err != nil {
-				return fmt.Errorf("failed to create directory %s: %v", emtKernelDefCfgPath, err)
-			}
+		if _, err := k.Execute([]string{"sudo", "chmod", "0600", emtKernelParamFile}); err != nil {
+			return fmt.Errorf("failed to set permissions on %s: %v", emtKernelParamFile, err)
 		}
 
-		if _, err := os.Stat(emtKernelDefCfgFile); os.IsNotExist(err) {
+		_, err = k.Execute([]string{"sudo", "stat", emtKernelDefCfgFile})
+		if err != nil {
 			log.Infof("Creating default boot configuration: %s", emtKernelDefCfgFile)
-			if err := os.WriteFile(emtKernelDefCfgFile, []byte(emtKernelDefCfgContent+"\n"), 0600); err != nil {
-				return fmt.Errorf("failed to write %s: %v", emtKernelDefCfgFile, err)
+			tmpDefFile := "/tmp/loader.conf.tmp"
+			if err := os.WriteFile(tmpDefFile, []byte(emtKernelDefCfgContent+"\n"), 0600); err != nil {
+				return fmt.Errorf("failed to write temporary file: %v", err)
+			}
+			defer os.Remove(tmpDefFile)
+
+			if _, err := k.Execute([]string{"sudo", "cp", tmpDefFile, emtKernelDefCfgFile}); err != nil {
+				return fmt.Errorf("failed to copy %s to %s: %v", tmpDefFile, emtKernelDefCfgFile, err)
+			}
+
+			if _, err := k.Execute([]string{"sudo", "chmod", "0600", emtKernelDefCfgFile}); err != nil {
+				return fmt.Errorf("failed to set permissions on %s: %v", emtKernelDefCfgFile, err)
 			}
 		}
 
 		log.Info("EMT kernel parameters configured successfully")
+
+		_, err = k.Execute(cmdlineRebootCommand)
+		if err != nil {
+			return fmt.Errorf("failed to execute shell command(%v)- %v", cmdlineRebootCommand, err)
+		}
+
 		return nil
 	}
+
 	if metadataUpdateSource == nil || metadataUpdateSource.KernelCommand == "" {
 		log.Infof("update source or provided kernel is empty - skipping kernel update")
 		return nil
