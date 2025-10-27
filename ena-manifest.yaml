@@ -4,7 +4,7 @@
 ---
 metadata:
   schemaVersion: 2.0.0
-  release: 1.3.1
+  release: 1.3.4
 repository:
   codename: 3.1
   component: main
@@ -16,13 +16,13 @@ packages:
     version: 1.7.1
     ociArtifact: edge-orch/en/deb/hardware-discovery-agent
   - name: node-agent
-    version: 1.7.3
+    version: 1.8.1
     ociArtifact: edge-orch/en/deb/node-agent
   - name: platform-manageability-agent
-    version: 0.1.8
+    version: 0.2.0
     ociArtifact: edge-orch/en/deb/platform-manageability-agent
   - name: platform-observability-agent
-    version: 1.9.0
+    version: 1.10.0
     ociArtifact: edge-orch/en/deb/platform-observability-agent
   - name: platform-telemetry-agent
     version: 1.4.0
@@ -36,3 +36,30 @@ packages:
   - name: in-band-manageability
     version: 1.0.0
     ociArtifact: edge-orch/en/deb/in-band-manageability
+  - name: inbc-program
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/inbc-program
+  - name: inbm-configuration-agent
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/inbm-configuration-agent
+  - name: inbm-cloudadapter-agent
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/inbm-cloudadapter-agent
+  - name: inbm-diagnostic-agent
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/inbm-diagnostic-agent
+  - name: inbm-dispatcher-agent
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/inbm-dispatcher-agent
+  - name: inbm-telemetry-agent
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/inbm-telemetry-agent
+  - name: mqtt
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/mqtt
+  - name: tpm-provision
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/tpm-provision
+  - name: trtl
+    version: 4.2.8.6-1
+    ociArtifact: edge-orch/en/deb/trtl
