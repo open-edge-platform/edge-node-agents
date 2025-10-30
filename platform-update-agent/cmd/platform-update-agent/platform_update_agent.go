@@ -385,7 +385,7 @@ func handleUpdateRes(updateRes *pb.PlatformUpdateStatusResponse, puaScheduler *s
 			log.Debug("Kernel parameter provided, skipping download notification")
 			return
 		}
-		
+
 		actualOSSource, err := metadata.GetMetaOSProfileUpdateSourceActual()
 		if err != nil {
 			log.Errorf("Cannot retrieve OS source already on system; skipping download schedule")
