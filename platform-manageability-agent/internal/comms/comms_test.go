@@ -757,8 +757,8 @@ func TestPerformDeactivationAsync_Success(t *testing.T) {
 	select {
 	case <-done:
 		// Success - deactivation completed
-	case <-time.After(5 * time.Second):
-		t.Fatal("Deactivation should have completed within 5 seconds")
+	case <-time.After(60 * time.Second):
+		t.Fatal("Deactivation should have completed within 60 seconds")
 	}
 
 	// Verify final state
@@ -836,8 +836,8 @@ func TestPerformDeactivationAsync_AMTInfoFailures(t *testing.T) {
 	select {
 	case <-done:
 		// Success - should eventually succeed despite initial failures
-	case <-time.After(10 * time.Second):
-		t.Fatal("Deactivation should have completed within 10 seconds")
+	case <-time.After(60 * time.Second):
+		t.Fatal("Deactivation should have completed within 60 seconds")
 	}
 
 	// Verify final state

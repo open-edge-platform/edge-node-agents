@@ -299,7 +299,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		ok := cli.isProvisioned(ctx, outputStr, hostID)
 		if !ok {
 			log.Logger.Errorf("Failed to execute activation command for host %s: %v, Output: %s",
-				hostID, activationErr, string(activationOutput))
+				hostID, activationErr, outputStr)
 			activationStatus = pb.ActivationStatus_ACTIVATION_FAILED
 		} else {
 			log.Logger.Debugf("Activation command output for host %s: %s", hostID, outputStr)
@@ -307,6 +307,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 			log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
 		}
 	case "connecting":
+		log.Logger.Infof("host %s is in 'connecting' state", hostID)
 		activationStatus = cli.handleConnectingState(hostID, normalizedStatus)
 
 	case "connected":
@@ -424,9 +425,9 @@ func (cli *Client) performDeactivationAsync(hostID string) {
 
 	log.Logger.Infof("Deactivation command executed for host %s, now polling RAS status...", hostID)
 
-	// Poll RAS status for up to 1 minute to confirm deactivation
-	const pollTimeout = 1 * time.Minute
-	const pollInterval = 2 * time.Second
+	// Poll RAS status for up to 60 to confirm deactivation
+	const pollTimeout = 60 * time.Second
+	const pollInterval = 10 * time.Second
 	startTime := time.Now()
 
 	for {

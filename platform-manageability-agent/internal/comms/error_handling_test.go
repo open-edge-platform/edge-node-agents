@@ -166,22 +166,25 @@ func TestErrorHandlingScenarios(t *testing.T) {
 
 			// Setup mock executor with controlled AMT info responses
 			mockExecutor := &mockCommandExecutorForErrorHandling{
-				amtInfoCallCount: 0,
-				amtInfoFunc: func(callCount int) ([]byte, error) {
-					// Return different responses based on call sequence
-					if callCount < len(tt.amtStatusSequence) {
-						status := tt.amtStatusSequence[callCount]
-						output := "Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: " + status
-						return []byte(output), nil
-					}
-					// Default to "not connected" after deactivation for subsequent calls
-					output := "Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: not connected"
-					return []byte(output), nil
-				},
+				amtInfoCallCount:    0,
 				amtActivateOutput:   []byte("Activated Successfully"),
 				amtActivateError:    nil,
 				amtDeactivateOutput: []byte("Deactivated Successfully"),
 				amtDeactivateError:  nil,
+			}
+			mockExecutor.amtInfoFunc = func(callCount int) ([]byte, error) {
+				// Immediately return 'not connected' once deactivation is triggered
+				if mockExecutor.deactivationTriggered {
+					output := "Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: not connected"
+					return []byte(output), nil
+				}
+				if callCount < len(tt.amtStatusSequence) {
+					status := tt.amtStatusSequence[callCount]
+					output := "Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: " + status
+					return []byte(output), nil
+				}
+				output := "Version: 16.1.25.1424\nBuild Number: 3425\nRecovery Version: 16.1.25.1424\nRAS Remote Status: not connected"
+				return []byte(output), nil
 			}
 
 			// Create client with mock dependencies
@@ -196,7 +199,7 @@ func TestErrorHandlingScenarios(t *testing.T) {
 			err := client.Connect(context.Background())
 			require.NoError(t, err, "Client should connect successfully")
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
 
 			// For 3-minute timeout scenario, simulate time passing
@@ -233,8 +236,8 @@ func TestErrorHandlingScenarios(t *testing.T) {
 				// Should have triggered deactivation
 				assert.True(t, mockExecutor.deactivationTriggered, "Deactivation should have been triggered for scenario: %s", tt.description)
 
-				// Wait a moment for async deactivation to complete
-				time.Sleep(100 * time.Millisecond)
+				// Wait up for deactivation to complete
+				time.Sleep(60 * time.Second)
 
 				// Verify that deactivation was executed
 				assert.True(t, mockExecutor.deactivateCallCount > 0, "Deactivate command should have been called for scenario: %s", tt.description)
@@ -301,7 +304,7 @@ func TestAutomaticRecoveryE2E(t *testing.T) {
 	err := client.Connect(context.Background())
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	// device goes directly to "connecting"
@@ -315,7 +318,7 @@ func TestAutomaticRecoveryE2E(t *testing.T) {
 	assert.True(t, mockExecutor.deactivationTriggered, "Should automatically trigger deactivation")
 
 	// Wait for deactivation to complete
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	assert.True(t, mockExecutor.deactivateCallCount > 0, "Should execute deactivate command")
 	t.Log("Automatic deactivation executed")
