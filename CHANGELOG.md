@@ -6,6 +6,10 @@
 
 ## Cluster Agent Changelog
 
+### 1.8.0
+- Update AppArmor profile to allow netdev creation
+- Update AppArmor and sudoers to allow k3s uninstallation
+
 ### 1.7.4
 - Update AppArmor profile for K3s applications
 
