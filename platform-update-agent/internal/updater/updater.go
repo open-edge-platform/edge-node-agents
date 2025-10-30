@@ -423,7 +423,7 @@ type emtUpdater struct {
 func (o *emtUpdater) update() error {
 
 	// Check if this is a kernel-only update
-	updateSource, err := o.GetMetaUpdateSource()
+	updateSource, err := metadata.GetMetaUpdateSource()
 
 	if err == nil && updateSource != nil && updateSource.KernelCommand != "" {
 		log.Info("Kernel parameter provided - Skip OS update step")
