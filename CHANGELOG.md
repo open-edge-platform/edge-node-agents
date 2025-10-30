@@ -51,6 +51,12 @@
 
 ## Node Agent Changelog
 
+### 1.8.1
+- Relax system boot detection
+
+### 1.8.0
+- Send no error during initial 5 minutes for agent status
+
 ### 1.7.2
 - Drop TLS on caddy internal endpoint
 
@@ -71,6 +77,9 @@
 - Dependency import updates
 
 ## Platform Observability Agent Changelog
+
+### 1.10.0
+- Fix syslog parsing for health check
 
 ### 1.9.0
 - Add collection of cloud-init service logs

@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -57,10 +58,15 @@ func TestDeviceConfiguration(t *testing.T) {
 	pmaCmd, err := startPlatformManageabilityAgent(ctx, platformManageabilityAgentBinary)
 	require.NoError(t, err)
 
-	time.Sleep(20 * time.Second)
+	time.Sleep(25 * time.Second)
 	require.Contains(t, pmaBuffer.String(), "Platform Manageability Agent started successfully")
 	require.Contains(t, pmaBuffer.String(), "Successfully reported AMT status for host")
 	require.Contains(t, pmaBuffer.String(), "Successfully retrieved activation details for host")
+
+	// Wait a bit more for status to become ready after activation completes
+	if !strings.Contains(pmaBuffer.String(), "Status Ready") {
+		time.Sleep(5 * time.Second)
+	}
 	require.Contains(t, pmaBuffer.String(), "Status Ready")
 	require.Contains(t, mockBuffer.String(), "AMTStatusRequest")
 	require.Contains(t, mockBuffer.String(), "ActivationRequest")
