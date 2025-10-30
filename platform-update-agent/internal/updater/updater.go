@@ -578,6 +578,16 @@ func (k *kernelUpdater) update() error {
 
 		log.Info("EMT kernel parameters configured successfully")
 
+		err = k.SetMetaUpdateStatus(pb.UpdateStatus_STATUS_TYPE_UPDATED)
+		if err != nil {
+			return fmt.Errorf("failed to set metadata - %v", err)
+		}
+
+		// Clear the update source after successful configuration
+		err = metadata.SetMetaUpdateSource(nil)
+		if err != nil {
+			log.Warnf("Failed to clear update source: %v", err)
+		}
 		_, err = k.Execute(cmdlineRebootCommand)
 		if err != nil {
 			return fmt.Errorf("failed to execute shell command(%v)- %v", cmdlineRebootCommand, err)
