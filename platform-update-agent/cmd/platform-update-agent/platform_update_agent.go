@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"os"
@@ -200,6 +201,54 @@ func setLogLevel(logLevel string) {
 	}
 }
 
+// PackageInfo represents simplified package information for JSON encoding
+type PackageInfo struct {
+	Name             string `json:"name"`
+	AvailableVersion string `json:"available_version"`
+	Architecture     string `json:"architecture"`
+}
+
+// getUpgradablePackagesJSON retrieves upgradable packages and returns them as a JSON string
+// Returns an empty string if there are no upgradable packages or if an error occurs
+func getUpgradablePackagesJSON(osType string) string {
+	// Only check for Ubuntu/Debian (mutable OS types)
+	if osType != "ubuntu" && osType != "debian" {
+		return ""
+	}
+
+	upgradablePackages, err := aptmirror.ListUpgradablePackages()
+	if err != nil {
+		log.Warnf("Failed to get upgradable packages: %v", err)
+		return ""
+	}
+
+	if upgradablePackages.TotalCount == 0 {
+		log.Debug("No upgradable packages found")
+		return ""
+	}
+
+	// Create simplified package info list
+	packageInfoList := make([]PackageInfo, 0, len(upgradablePackages.Packages))
+	for _, pkg := range upgradablePackages.Packages {
+		packageInfoList = append(packageInfoList, PackageInfo{
+			Name:             pkg.Name,
+			AvailableVersion: pkg.AvailableVersion,
+			Architecture:     pkg.Architecture,
+		})
+	}
+
+	// Encode to JSON
+	jsonData, err := json.Marshal(packageInfoList)
+	if err != nil {
+		log.Warnf("Failed to encode upgradable packages to JSON: %v", err)
+		return ""
+	}
+
+	log.Infof("Found %d upgradable packages", upgradablePackages.TotalCount)
+	log.Debugf("Upgradable packages JSON: %s", string(jsonData))
+	return string(jsonData)
+}
+
 func handleEdgeInfrastructureManagerRequest(wg *sync.WaitGroup,
 	puaConfig *config.Config,
 	ctx context.Context,
@@ -238,25 +287,8 @@ func handleEdgeInfrastructureManagerRequest(wg *sync.WaitGroup,
 				osProfileUpdateSourceActual = &pb.OSProfileUpdateSource{}
 			}
 
-			// Check for upgradable packages (only for Ubuntu/Debian - mutable OS)
-			var osUpdateAvailable string
-			if osType == "ubuntu" || osType == "debian" {
-				upgradableNames, upgradeErr := aptmirror.GetUpgradablePackageNames()
-				if upgradeErr != nil {
-					log.Warnf("Failed to get upgradable packages: %v", upgradeErr)
-					// Continue with empty list - don't block the status update
-					osUpdateAvailable = ""
-				} else {
-					// Join package names with newline separator
-					osUpdateAvailable = strings.Join(upgradableNames, "\n")
-					if len(upgradableNames) > 0 {
-						log.Infof("Found %d upgradable packages", len(upgradableNames))
-						log.Debugf("Upgradable packages: %v", upgradableNames)
-					} else {
-						log.Debug("No upgradable packages found")
-					}
-				}
-			}
+			// Check for upgradable packages
+			osUpdateAvailable := getUpgradablePackagesJSON(osType)
 
 			status := &pb.UpdateStatus{
 				StatusType:        updateStatusType,
