@@ -21,6 +21,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/status"
 	auth "github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/info"
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/aptmirror"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/comms"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/downloader"
@@ -237,12 +238,33 @@ func handleEdgeInfrastructureManagerRequest(wg *sync.WaitGroup,
 				osProfileUpdateSourceActual = &pb.OSProfileUpdateSource{}
 			}
 
+			// Check for upgradable packages (only for Ubuntu/Debian - mutable OS)
+			var osUpdateAvailable string
+			if osType == "ubuntu" || osType == "debian" {
+				upgradableNames, upgradeErr := aptmirror.GetUpgradablePackageNames()
+				if upgradeErr != nil {
+					log.Warnf("Failed to get upgradable packages: %v", upgradeErr)
+					// Continue with empty list - don't block the status update
+					osUpdateAvailable = ""
+				} else {
+					// Join package names with newline separator
+					osUpdateAvailable = strings.Join(upgradableNames, "\n")
+					if len(upgradableNames) > 0 {
+						log.Infof("Found %d upgradable packages", len(upgradableNames))
+						log.Debugf("Upgradable packages: %v", upgradableNames)
+					} else {
+						log.Debug("No upgradable packages found")
+					}
+				}
+			}
+
 			status := &pb.UpdateStatus{
-				StatusType:     updateStatusType,
-				StatusDetail:   updateLog,
-				ProfileName:    osProfileUpdateSourceActual.ProfileName,
-				ProfileVersion: osProfileUpdateSourceActual.ProfileVersion,
-				OsImageId:      osProfileUpdateSourceActual.OsImageId,
+				StatusType:        updateStatusType,
+				StatusDetail:      updateLog,
+				ProfileName:       osProfileUpdateSourceActual.ProfileName,
+				ProfileVersion:    osProfileUpdateSourceActual.ProfileVersion,
+				OsImageId:         osProfileUpdateSourceActual.OsImageId,
+				OsUpdateAvailable: osUpdateAvailable,
 			}
 
 			var resp *pb.PlatformUpdateStatusResponse
