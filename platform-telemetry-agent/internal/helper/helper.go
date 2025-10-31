@@ -15,7 +15,7 @@ import (
 
 var log = logger.Logger
 var AgentId string = "N/A"
-var Kubeconfig string = "XKUBECONFIG=/etc/rancher/rke2/rke2.yaml"
+var Kubeconfig string = "KUBECONFIG=/etc/rancher/k3s/k3s.yaml"
 var Kubectl = "kubectl"
 
 func RunExec(ctx context.Context, asyncFlg bool, args ...string) (bool, string, error) {

@@ -20,9 +20,11 @@ sed -i "s/nodeid: aaaaaaaa-0000-1111-2222-bbbbbbbbcccc/nodeid: $GUID/" /etc/edge
 groupadd -f bm-agents --system
 id -u platform-telemetry-agent >/dev/null 2>&1 || useradd --system --shell /sbin/nologin -g bm-agents platform-telemetry-agent
 
-if ! grep -q "KUBECONFIG=/etc/rancher/rke2/rke2.yaml" /etc/environment; then
-    echo KUBECONFIG=/etc/rancher/rke2/rke2.yaml | tee -a /etc/environment
-fi
+# Remove any existing KUBECONFIG entries from /etc/environment
+sed -i '/^KUBECONFIG=/d' /etc/environment
+
+# Add the new K3s KUBECONFIG entry
+echo KUBECONFIG=/etc/rancher/k3s/k3s.yaml | tee -a /etc/environment
 
 apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.platform-telemetry-agent
 
