@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -15,13 +14,12 @@ import (
 
 var log = logger.Logger
 var AgentId string = "N/A"
-var Kubeconfig string = "KUBECONFIG=/etc/rancher/k3s/k3s.yaml"
 var Kubectl = "kubectl"
 
 func RunExec(ctx context.Context, asyncFlg bool, args ...string) (bool, string, error) {
 
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
-	cmd.Env = append(os.Environ(), Kubeconfig)
+	// Let K3s handle KUBECONFIG through system environment - no explicit setting needed
 
 	// Starting to record output of udevadm monitor
 	cmdReader, err := cmd.StdoutPipe()

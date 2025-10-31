@@ -92,8 +92,7 @@ func main() {
 	fluentbitClusterGoldPath := viper.GetString("ConfigPath.configroot") + viper.GetString("ConfigPath.fluentbitgoldcluster")
 	metriccfg.TmpFileDir = viper.GetString("ConfigPath.tmpdir")
 	logcfg.TmpFileDir = viper.GetString("ConfigPath.tmpdir")
-	helper.Kubeconfig = viper.GetString("misc.kubeconfig")
-	helper.Kubectl = viper.GetString("misc.kubectl")
+	// kubectl config will be handled by K3s system defaults - no explicit configuration needed
 	metriccfg.ConfigMapCommand = "sudo " + helper.Kubectl + " " + viper.GetString("misc.telegrafConfigMap")
 	logcfg.ConfigMapCommand = "sudo " + helper.Kubectl + " " + viper.GetString("misc.fluentbitConfigMap")
 	logcfg.FileOwner = viper.GetString("misc.fileOwner")

@@ -20,11 +20,12 @@ sed -i "s/nodeid: aaaaaaaa-0000-1111-2222-bbbbbbbbcccc/nodeid: $GUID/" /etc/edge
 groupadd -f bm-agents --system
 id -u platform-telemetry-agent >/dev/null 2>&1 || useradd --system --shell /sbin/nologin -g bm-agents platform-telemetry-agent
 
-# Remove any existing KUBECONFIG entries from /etc/environment
+# Clean up any old KUBECONFIG entries from previous versions
 sed -i '/^KUBECONFIG=/d' /etc/environment
 
-# Add the new K3s KUBECONFIG entry
-echo KUBECONFIG=/etc/rancher/k3s/k3s.yaml | tee -a /etc/environment
+# Clean up any old kubectl PATH entries from previous versions
+sed -i 's|:/var/lib/rancher/rke2/bin||g' /etc/environment
+sed -i 's|/var/lib/rancher/rke2/bin:||g' /etc/environment
 
 apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.platform-telemetry-agent
 
