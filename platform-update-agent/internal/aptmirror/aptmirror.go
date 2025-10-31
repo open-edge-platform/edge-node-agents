@@ -8,7 +8,9 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/logger"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/utils"
@@ -30,12 +32,26 @@ const (
 	InbcSourceApplicationAddCommandStr           = "sudo inbc source application add"
 	InbcSourceApplicationRemoveCommandStr        = "sudo inbc source application remove --filename"
 	CaddyReloadCommandStr                        = "sudo systemctl reload caddy"
+	AptListUpgradableCommandStr                  = "apt list --upgradable"
 )
 
 var (
 	log             = logger.Logger()
 	commandExecutor = utils.NewExecutor(exec.Command, utils.ExecuteAndReadOutput)
 )
+
+type UpgradablePackage struct {
+	Name             string
+	CurrentVersion   string
+	AvailableVersion string
+	Architecture     string
+}
+
+type UpgradablePackages struct {
+	Packages    []UpgradablePackage
+	TotalCount  int
+	LastChecked time.Time
+}
 
 // toCommandSlice splits the various space-separated arguments in a command string into a slice of strings
 func toCommandSlice(commandStr string) []string {
@@ -272,20 +288,96 @@ func updateForwardProxyConfig(forwardProxyConfPath, releaseServiceUrl string) er
 	return nil
 }
 
+// ListUpgradablePackages returns all packages that have updates available
+func ListUpgradablePackages() (*UpgradablePackages, error) {
+	out, err := commandExecutor.Execute(toCommandSlice(AptListUpgradableCommandStr))
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute apt list --upgradable - %v", err)
+	}
+
+	return parseAptListOutput(string(out))
+}
+
+// GetUpgradablePackageNames returns just the names of upgradable packages
+func GetUpgradablePackageNames() ([]string, error) {
+	packages, err := ListUpgradablePackages()
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, len(packages.Packages))
+	for i, pkg := range packages.Packages {
+		names[i] = pkg.Name
+	}
+	return names, nil
+}
+
+// HasUpgradablePackages checks if there are any upgradable packages
+func HasUpgradablePackages() (bool, error) {
+	packages, err := ListUpgradablePackages()
+	if err != nil {
+		return false, err
+	}
+	return packages.TotalCount > 0, nil
+}
+
+// parseAptListOutput parses the output from 'apt list --upgradable'
+// Expected format: packagename/suite version arch [upgradable from: old_version]
+func parseAptListOutput(output string) (*UpgradablePackages, error) {
+	lines := strings.Split(output, "\n")
+	packages := []UpgradablePackage{}
+
+	// Regex to parse: git/jammy-updates 1:2.34.1-1ubuntu1.11 amd64 [upgradable from: 1:2.34.1-1ubuntu1.10]
+	re := regexp.MustCompile(`^(.+?)/.+?\s+(.+?)\s+(.+?)\s+\[upgradable from:\s*(.+?)\]`)
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// Skip header and empty lines
+		if line == "" || strings.HasPrefix(line, "Listing") || strings.HasPrefix(line, "WARNING") {
+			continue
+		}
+
+		matches := re.FindStringSubmatch(line)
+		if len(matches) == 5 {
+			packages = append(packages, UpgradablePackage{
+				Name:             matches[1],
+				AvailableVersion: matches[2],
+				Architecture:     matches[3],
+				CurrentVersion:   matches[4],
+			})
+		} else {
+			log.Debugf("Could not parse line: %s", line)
+		}
+	}
+
+	return &UpgradablePackages{
+		Packages:    packages,
+		TotalCount:  len(packages),
+		LastChecked: time.Now(),
+	}, nil
+}
+
 type AptController struct {
-	ConfigureOsAptRepo      func(osRepoURL string) error
-	ConfigureCustomAptRepos func(customRepos []string) error
-	CleanupCustomRepos      func() error
-	UpdatePackages          func() error
-	AptRepoFile             string
+	ConfigureOsAptRepo        func(osRepoURL string) error
+	ConfigureCustomAptRepos   func(customRepos []string) error
+	CleanupCustomRepos        func() error
+	UpdatePackages            func() error
+	ListUpgradablePackages    func() (*UpgradablePackages, error)
+	GetUpgradablePackageNames func() ([]string, error)
+	HasUpgradablePackages     func() (bool, error)
+	AptRepoFile               string
 }
 
 func NewController() *AptController {
 	return &AptController{
-		ConfigureOsAptRepo:      ConfigureOsAptRepo,
-		ConfigureCustomAptRepos: ConfigureCustomAptRepos,
-		CleanupCustomRepos:      CleanupCustomRepos,
-		UpdatePackages:          UpdatePackages,
-		AptRepoFile:             AptRepoPath,
+		ConfigureOsAptRepo:        ConfigureOsAptRepo,
+		ConfigureCustomAptRepos:   ConfigureCustomAptRepos,
+		CleanupCustomRepos:        CleanupCustomRepos,
+		UpdatePackages:            UpdatePackages,
+		ListUpgradablePackages:    ListUpgradablePackages,
+		GetUpgradablePackageNames: GetUpgradablePackageNames,
+		HasUpgradablePackages:     HasUpgradablePackages,
+		AptRepoFile:               AptRepoPath,
 	}
 }
