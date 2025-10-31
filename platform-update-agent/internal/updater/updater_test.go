@@ -48,7 +48,7 @@ func Test_VerifyDefaultConstructorOfUpdateControllerEmt(t *testing.T) {
 	assert.NotNil(t, up.edgeNodeUpdater)
 
 	fv := reflect.ValueOf(up.edgeNodeUpdater).Elem().FieldByName("subsystemUpdaters")
-	assert.Equal(t, 1, fv.Len())
+	assert.Equal(t, 2, fv.Len())
 }
 
 func Test_VerifyDefaultConstructorOfUpdateControllerInvalidOs(t *testing.T) {
