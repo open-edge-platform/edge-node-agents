@@ -202,7 +202,7 @@ jobs:
         id: inbm-version
         shell: bash
         run: |
-          echo "inbm_version=$(grep 'INBM_VERSION ?' platform-update-agent/Makefile | cut -d '=' -f 2-)" >> ${GITHUB_OUTPUT}
+          echo "inbm_version=$(head -n1 in-band-manageability/VERSION)" >> ${GITHUB_OUTPUT}
 
       - name: Get Caddy version
         id: caddy-version
@@ -234,7 +234,7 @@ jobs:
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@c4b86434962d13f65fd7b16a33e9eecfd5849a64  # 0.1.56
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
-          bootstrap_tools: "base"
+          bootstrap_tools: "base,yq"
 
       - name: Set up Git identity
         shell: bash
@@ -264,7 +264,6 @@ jobs:
             echo "Skipping cluster agent version update as no new version created"
           else
             sed -i "s#cluster_agent_version: .*#cluster_agent_version: ${cluster_agent_version}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  cluster_agent_version: .*#  cluster_agent_version: ${cluster_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update hardware-discovery-agent versions in chart
@@ -277,7 +276,6 @@ jobs:
             echo "Skipping hardware discovery agent version update as no new version created"
           else
             sed -i "s#hardware_discovery_agent_version: .*#hardware_discovery_agent_version: ${hardware_discovery_agent_version}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  hardware_discovery_agent_version: .*#  hardware_discovery_agent_version: ${hardware_discovery_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update node-agent versions in chart
@@ -290,7 +288,6 @@ jobs:
             echo "Skipping node agent version update as no new version created"
           else
             sed -i "s#node_agent_version: .*#node_agent_version: ${node_agent_version}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  node_agent_version: .*#  node_agent_version: ${node_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update platform-manageability-agent versions in chart
@@ -303,7 +300,6 @@ jobs:
             echo "Skipping platform manageability version update as no new version created"
           else
             sed -i "s#platform_manageability_agent_version: .*#platform_manageability_agent_version: ${platform_manageability_agent_version}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  platform_manageability_agent_version: .*#  platform_manageability_agent_version: ${platform_manageability_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update platform-observability-agent versions in chart
@@ -316,7 +312,6 @@ jobs:
             echo "Skipping platform observability agent version update as no new version created"
           else
             sed -i "s#platform_observability_agent_version: .*#platform_observability_agent_version: ${platform_observability_agent_version}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  platform_observability_agent_version: .*#  platform_observability_agent_version: ${platform_observability_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update platform-telemetry-agent versions in chart
@@ -329,7 +324,6 @@ jobs:
             echo "Skipping platform telemetry agent version update as no new version created"
           else
             sed -i "s#platform_telemetry_agent_version: .*#platform_telemetry_agent_version: ${platform_telemetry_agent_version}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  platform_telemetry_agent_version: .*#  platform_telemetry_agent_version: ${platform_telemetry_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update platform-update-agent versions in chart
@@ -342,7 +336,6 @@ jobs:
             echo "Skipping platform update agent version update as no new version created"
           else
             sed -i "s#platform_update_agent_version: .*#platform_update_agent_version: ${platform_update_agent_version}#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  platform_update_agent_version: .*#  platform_update_agent_version: ${platform_update_agent_version}#" edge-node-container/chart/values.yaml
           fi
 
       - name: Update INBM versions in chart
@@ -354,24 +347,7 @@ jobs:
           if [[ $(echo "${inbm_version}" | grep 'dev') ]]; then
             echo "Skipping INBM version update as no new version created"
           else
-            sed -i "s#inbc_program_version: .*#inbc_program_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbc_program_version: .*#  inbc_program_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_cloudadapter_agent_version: .*#inbm_cloudadapter_agent_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_cloudadapter_agent_version: .*#  inbm_cloudadapter_agent_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_configuration_agent_version: .*#inbm_configuration_agent_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_configuration_agent_version: .*#  inbm_configuration_agent_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_diagnostic_agent_version: .*#inbm_diagnostic_agent_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_diagnostic_agent_version: .*#  inbm_diagnostic_agent_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_dispatcher_agent_version: .*#inbm_dispatcher_agent_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_dispatcher_agent_version: .*#  inbm_dispatcher_agent_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#inbm_telemetry_agent_version: .*#inbm_telemetry_agent_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  inbm_telemetry_agent_version: .*#  inbm_telemetry_agent_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#mqtt_version: .*#mqtt_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  mqtt_version: .*#  mqtt_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#tpm_provision_version: .*#tpm_provision_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  tpm_provision_version: .*#  tpm_provision_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
-            sed -i "s#trtl_version: .*#trtl_version:${inbm_version}-1#" edge-node-container/chart/bma_values.yaml
-            sed -i "s#  trtl_version: .*#  trtl_version:${inbm_version}-1#" edge-node-container/chart/values.yaml
+            sed -i "s#inbm_version: .*#inbm_version: ${inbm_version}#" edge-node-container/chart/bma_values.yaml
           fi
 
       - name: Update Caddy versions in chart
@@ -381,7 +357,27 @@ jobs:
           caddy_version: ${{ needs.collect-versions.outputs.caddy_version }}
         run: |
           sed -i "s#caddy_version: .*#caddy_version: ${caddy_version}#" edge-node-container/chart/bma_values.yaml
-          sed -i "s#  caddy_version: .*#  caddy_version: ${caddy_version}#" edge-node-container/chart/values.yaml
+
+      - name: Update values.yaml file in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          make bma_versions
+
+      - name: Update edge-node-container VERSION
+        shell: bash
+        working-directory: virtual-edge-node
+        run: |
+          enic_version=$(head -n1 edge-node-container/VERSION)
+          check_if_dev_version=$(echo "${enic_version}" | grep "dev")
+          if [ -z ${check_if_dev_version} ]; then
+            major_version=$(echo "${enic_version}" | cut -d '.' -f1)
+            minor_version=$(echo "${enic_version}" | cut -d '.' -f2)
+            patch_version=$(echo "${enic_version}" | cut -d '.' -f3)
+            new_patch_version=$(( patch_version + 1 ))
+            new_enic_version="${major_version}.${minor_version}.${new_patch_version}-dev"
+            echo "${new_enic_version}" > edge-node-container/VERSION
+          fi
 
       - name: Commit changes to branch and create PR
         shell: bash
