@@ -129,7 +129,7 @@ tarball:
 	@echo "---MAKEFILE TARBALL---"
 	@# Help: Create source tarball
 	mkdir -p $(TARBALL_DIR)
-	cp -r cmd/ pkg/ proto/ internal/ debian/ configs/ scripts/ Makefile go.mod go.sum ../common.mk $(TARBALL_DIR)
+	cp -r cmd/ pkg/ internal/ debian/ configs/ scripts/ Makefile go.mod go.sum ../common.mk $(TARBALL_DIR)
 	if [ -f VERSION ]; then cp VERSION $(TARBALL_DIR); fi
 	cp *.yaml *.md *.txt LICENSE $(TARBALL_DIR)
 	sed -i "s#COMMIT := .*#COMMIT := $(COMMIT)#" $(TARBALL_DIR)/Makefile

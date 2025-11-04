@@ -162,6 +162,11 @@ profile ca_dash {
   /usr/local/bin/k3s-killall.sh w,
   /usr/local/bin/k3s-uninstall.sh w,
   /usr/local/bin/k3s-agent-uninstall.sh w,
+  /var/lib/rancher/k3s/bin/k3s rwk,
+  /var/lib/rancher/k3s/bin/k3s-ro-test rwk,
+  /var/lib/rancher/k3s/bin/k3s-killall.sh w,
+  /var/lib/rancher/k3s/bin/k3s-uninstall.sh w,
+  /var/lib/rancher/k3s/bin/k3s-agent-uninstall.sh w,
 
   ## systemd environment and drop-in files for k3s
   /etc/systemd/system/k3s.service rw,
@@ -257,10 +262,10 @@ profile ca_dash {
   /usr/sbin/xtables-nft-multi ix,
   /proc/cgroups r,
   /sys/fs/cgroup/cgroup.controllers r,
+  /etc/systemd/network/10-cluster.netdev rw,
+  /etc/systemd/network/20-cluster.network rw,
+  /etc/systemd/network/ r,
   # ends here
-
-  /usr/local/bin/k3s-killall.sh ix,
-
 # --- k3s support ca_dash section end ---
 }
 profile ca_rancher-system-agent-uninstall {
@@ -436,6 +441,8 @@ profile ca_sudo {
   ## k3s uninstall scripts with profile transitions
   /usr/local/bin/k3s-agent-uninstall.sh rPx -> ca_k3s-agent-uninstall,
   /usr/local/bin/k3s-uninstall.sh rPx -> ca_k3s-uninstall,
+  /var/lib/rancher/k3s/bin/k3s-agent-uninstall.sh rPx -> ca_k3s-agent-uninstall,
+  /var/lib/rancher/k3s/bin/k3s-uninstall.sh rPx -> ca_k3s-uninstall,
 
   ## system and kernel files
   /proc/sys/kernel/seccomp/actions_avail r,
@@ -461,6 +468,7 @@ profile ca_sudo {
   ## system utilities used by uninstall scripts
   /usr/bin/cp ix,
   /bin/cp ix,
+  /usr/bin/ls ix,
 
 # --- k3s support ca_sudo section end ---
 }
@@ -483,12 +491,15 @@ profile ca_k3s-uninstall {
   /usr/bin/systemctl mrix,
   /usr/bin/grep ix,
   /usr/sbin/sendmail ix,
+  /usr/bin/ls ix,
 
   # --- k3s binaries and scripts ---
   /usr/local/bin/k3s w,
-  /usr/local/bin/k3s-killall.sh Ux,
+  /usr/local/bin/k3s-killall.sh rwUx,
   /usr/local/bin/k3s-uninstall.sh rw,
-  /usr/local/bin/k3s-killall.sh rw,
+  /var/lib/rancher/k3s/bin/k3s w,
+  /var/lib/rancher/k3s/bin/k3s-killall.sh rwUx,
+  /var/lib/rancher/k3s/bin/k3s-uninstall.sh rw,
   /usr/local/bin/kubectl rw,
   /usr/local/bin/crictl rw,
   /usr/local/bin/ctr rw,
@@ -502,7 +513,7 @@ profile ca_k3s-uninstall {
   /var/lib/rancher/** rw,
   /var/lib/rancher/k3s/ rw,
   /var/lib/rancher/k3s/** rw,
-  /etc/rancher/k3s rw,
+  /etc/rancher/k3s/ rw,
   /etc/rancher/k3s/** rw,
 
   # --- systemd service files ---
@@ -515,15 +526,17 @@ profile ca_k3s-uninstall {
   owner /etc/systemd/system/** r,
 
   # --- runtime and lock files ---
-  /run/k3s rw,
+  /run/k3s/ rw,
   /run/k3s/** rw,
-  /run/flannel rw,
+  /run/flannel/ rw,
   /run/flannel/** rw,
   /run/sudo/ rw,
   /run/sudo/ts rwk,
   owner /run/systemd/private rw,
 
   # --- System and root files ---
+  /etc/init.d/ r,
+  /proc/*/mounts r,
   owner /etc/ld.so.cache r,
   owner /proc/filesystems r,
 }
@@ -557,6 +570,7 @@ profile ca_k3s-agent-uninstall {
   owner /proc/filesystems r,
 
   /usr/local/bin/k3s-agent-uninstall.sh rw,
+  /var/lib/rancher/k3s/bin/k3s-agent-uninstall.sh rw,
 
   # --- k3s and CNI data directories ---
   /var/lib/cni/ rw,

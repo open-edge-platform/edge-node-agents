@@ -12,6 +12,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -33,9 +35,11 @@ import (
 
 // Initialize logger
 var log = logger.Logger
+var initTimestamp = time.Now().Unix()
 
 const REFRESH_CHECK_INTERVAL = 600 * time.Second
 const TOKEN_REFRESH_CHECK_INTERVAL = 300 * time.Second
+const COMPONENTS_INIT_WAIT_INTERVAL = 300 * time.Second
 
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "version" {
@@ -252,6 +256,27 @@ func createListener(confs *config.NodeAgentConfig) (net.Listener, error) {
 	return lis, nil
 }
 
+// getSystemUptime returns the system uptime in seconds by reading /proc/uptime
+func getSystemUptime() (float64, error) {
+	data, err := utils.ReadFileNoLinks("/proc/uptime")
+	if err != nil {
+		return 0, err
+	}
+
+	line := strings.TrimSpace(string(data))
+	fields := strings.Fields(line)
+	if len(fields) == 0 {
+		return 0, errors.New("unable to parse uptime from /proc/uptime")
+	}
+
+	uptime, err := strconv.ParseFloat(fields[0], 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return uptime, nil
+}
+
 func createRefreshTokens(ctx context.Context, tokMgr *auth.TokenManager, releaseAuthCli *comms.Client, confs *config.NodeAgentConfig, authCli *comms.Client) {
 	for i, tokenClient := range tokMgr.TokenClients {
 		var err error
@@ -298,8 +323,26 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 	status := proto.InstanceStatus_INSTANCE_STATUS_ERROR
 	humanReadableStatus, ok := statusService.GatherStatus(confs)
 
-	if ok { // if all components are healthy
+	// Check if system uptime is less than COMPONENTS_INIT_WAIT_INTERVAL
+	systemUptime, uptimeErr := getSystemUptime()
+	isSystemBootingUp := false
+	if uptimeErr != nil {
+		log.Warnf("Failed to get system uptime: %v", uptimeErr)
+	} else {
+		// Booting up can be time consuming especially on Ubuntu post-install as installer
+		// carries out several updates/upgrades. Hence consider system to be booting up
+		// if uptime is less than 3 times COMPONENTS_INIT_WAIT_INTERVAL
+		isSystemBootingUp = systemUptime < 3*COMPONENTS_INIT_WAIT_INTERVAL.Seconds()
+	}
+
+	// If all components are healthy, send running status
+	if ok {
 		status = proto.InstanceStatus_INSTANCE_STATUS_RUNNING
+	} else if time.Now().Unix() < (initTimestamp+int64(COMPONENTS_INIT_WAIT_INTERVAL)) && isSystemBootingUp {
+		// Send initializing status if:
+		// 1. The agent has started less than 5 minutes ago, AND
+		// 2. The system has been up for less than 5 minutes
+		status = proto.InstanceStatus_INSTANCE_STATUS_INITIALIZING
 	}
 
 	tokenFile := filepath.Join(confs.Auth.AccessTokenPath, "node-agent", config.AccessToken)

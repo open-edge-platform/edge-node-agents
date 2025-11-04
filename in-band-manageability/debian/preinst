@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+# preinst script for in-band-manageability
+# This script detects existing Python-based INBM installations and provides removal instructions
+
+set +e  # Don't exit on errors to ensure detection continues
+
+# Function to detect if Python-based INBM installation exists
+detect_python_installation() {
+  # Check for Python-based services
+  for service in inbm-configuration inbm-dispatcher inbm-telemetry inbm-diagnostic inbm-cloudadapter; do
+      if systemctl list-unit-files | grep -q "${service}.service" || \
+         systemctl list-units --all | grep -q "${service}.service" || \
+         systemctl status "${service}.service" >/dev/null 2>&1; then
+          return 0  # Found Python installation
+      fi
+  done
+  
+  # Check for Python-based packages
+  for package in inbm-configuration-agent inbm-dispatcher-agent inbm-telemetry-agent inbm-diagnostic-agent inbm-cloudadapter-agent; do
+      if dpkg -l | grep -q "^ii.*${package}" >/dev/null 2>&1; then
+          return 0  # Found Python installation
+      fi
+  done
+  
+  # Check for Python-based executables
+  if [ -x "/usr/bin/inbm-configuration" ] || [ -x "/usr/bin/inbm-dispatcher" ] || \
+     [ -x "/usr/bin/inbm-telemetry" ] || [ -x "/usr/bin/inbm-diagnostic" ] || \
+     [ -x "/usr/bin/inbm-cloudadapter" ]; then
+      return 0  # Found Python installation
+  fi
+  
+  # Check for Python-based configuration directories
+  if [ -d "/etc/intel-manageability/dispatcher" ] || [ -d "/etc/intel-manageability/telemetry" ] || \
+     [ -d "/etc/intel-manageability/configuration" ] || [ -d "/etc/intel-manageability/diagnostic" ] || \
+     [ -d "/etc/intel-manageability/cloudadapter" ]; then
+      return 0  # Found Python installation
+  fi
+  
+  return 1  # No Python installation found
+}
+
+# Check for Python-based INBM installation and provide removal instructions
+if detect_python_installation; then
+    echo ""
+    echo "==========================================================================="
+    echo "WARNING: Python-based Intel In-Band Manageability installation detected!"
+    echo "==========================================================================="
+    echo ""
+    echo "Before installing the new Go-based version, you must remove the existing"
+    echo "Python-based installation to avoid file conflicts."
+    echo ""
+    echo "Please run the following command to remove Python-based INBM:"
+    echo ""
+    echo "  wget -O uninstall-python-tc.sh https://github.com/open-edge-platform/edge-node-agents/raw/main/in-band-manageability/installer/uninstall-python-tc.sh"
+    echo "  chmod +x uninstall-python-tc.sh"
+    echo "  sudo ./uninstall-python-tc.sh"
+    echo ""
+    echo "After running the uninstaller, retry the Go-based INBM installation."
+    echo "==========================================================================="
+    echo ""
+    
+    # Exit with error to prevent installation
+    exit 1
+else
+    echo "No Python-based INBM installation detected. Proceeding with Go-based installation."
+fi
+
+exit 0
