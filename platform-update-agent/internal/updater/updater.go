@@ -23,8 +23,14 @@ import (
 
 const (
 	// more update types to be added later
-	kernelPath      = "/etc/default/grub.d/90-platform-update-agent.cfg"
-	kernelParamName = "GRUB_CMDLINE_LINUX_DEFAULT"
+	kernelPath                   = "/etc/default/grub.d/90-platform-update-agent.cfg"
+	kernelParamName              = "GRUB_CMDLINE_LINUX_DEFAULT"
+	emtKernelParamDir            = "/boot/efi/loader/entries"
+	emtKernelParamFile           = "/boot/efi/loader/entries/emt_user_kernel_param.conf"
+	emtKernelParamFileDefContent = `title   Edge Microvisor Toolkit Kernel Parameters`
+	emtKernelDefCfgPath          = "/boot/efi/loader"
+	emtKernelDefCfgFile          = "/boot/efi/loader/loader.conf"
+	emtKernelDefCfgContent       = "default emt_user_kernel_param.conf"
 )
 
 type UpdateStatus struct {
@@ -69,6 +75,18 @@ var (
 	// between reboots to not be removed
 	granularLogTruncateCommand = []string{
 		"sudo", "truncate", "-s", "0", "/var/log/inbm-update-log.log",
+	}
+
+	cmdlineCommand = []string{
+		"cat", "/proc/cmdline",
+	}
+
+	cmdlineListEfiCommand = []string{
+		"sudo", "ls", "/boot/efi/EFI/Linux/",
+	}
+
+	cmdlineRebootCommand = []string{
+		"sudo", "reboot",
 	}
 )
 
@@ -115,6 +133,7 @@ func NewUpdateController(granularPath string, osType string, downloadChecker fun
 			Executor:       executor,
 			MetaController: metadataController,
 			kernelFile:     kernelPath,
+			osType:         osType,
 		}
 
 		newPackageInstaller := &newPackageInstaller{
@@ -140,9 +159,16 @@ func NewUpdateController(granularPath string, osType string, downloadChecker fun
 			DownloadChecker: downloadChecker,
 		}
 
+		emtkernelUpdater := &kernelUpdater{
+			Executor:       executor,
+			MetaController: metadataController,
+			kernelFile:     emtKernelParamFile,
+			osType:         osType,
+		}
+
 		enUpdater = &edgeNodeUpdater{
 			MetaController:    metadata.NewController(),
-			subsystemUpdaters: []SubsystemUpdater{emtUpdater},
+			subsystemUpdaters: []SubsystemUpdater{emtUpdater, emtkernelUpdater},
 			timeNow:           time.Now,
 		}
 	}
@@ -395,17 +421,25 @@ type emtUpdater struct {
 }
 
 func (o *emtUpdater) update() error {
-	log.Info("Executing Edge Microvisor Toolkit A/B update")
 
+	// Check if this is a kernel-only update
+	updateSource, err := metadata.GetMetaUpdateSource()
+
+	if err == nil && updateSource != nil && updateSource.KernelCommand != "" {
+		log.Info("Kernel parameter provided - Skip OS update step")
+		return nil
+	}
+
+	log.Info("Executing Edge Microvisor Toolkit A/B update")
 	if !o.DownloadChecker() {
 		return fmt.Errorf("cannot execute Edge Microvisor Toolkit update as download has not taken place")
 	}
 
-	if err := o.SetMetaUpdateInProgress(metadata.OS); err != nil {
+	if err = o.SetMetaUpdateInProgress(metadata.OS); err != nil {
 		return fmt.Errorf("%s", fmt.Sprintf("%s: %v", _ERR_CANNOT_SET_METAFILE, err))
 	}
 
-	_, err := o.Execute(inbcEmtUpdateCommand)
+	_, err = o.Execute(inbcEmtUpdateCommand)
 	if err != nil {
 		return fmt.Errorf("failed to execute shell command(%v)- %v", inbcEmtUpdateCommand, err)
 	}
@@ -417,6 +451,7 @@ type kernelUpdater struct {
 	utils.Executor
 	*metadata.MetaController
 	kernelFile string
+	osType     string // "ubuntu" or "emt"
 }
 
 func (k *kernelUpdater) update() error {
@@ -424,6 +459,142 @@ func (k *kernelUpdater) update() error {
 	metadataUpdateSource, err := k.GetMetaUpdateSource()
 	if err != nil {
 		return err
+	}
+
+	if k.osType == "emt" {
+		log.Info("Configuring EMT kernel parameters")
+
+		//cmdlineCommand
+		// Get current kernel command line
+		currentCmdlineOutput, err := k.Execute(cmdlineCommand)
+		if err != nil {
+			return fmt.Errorf("failed to read /proc/cmdline: %v", err)
+		}
+
+		currentCmdline := strings.TrimSpace(string(currentCmdlineOutput))
+
+		log.Info("Existing kernel parameters", currentCmdline)
+
+		// Get EFI file path
+		efiFilesOutput, err := k.Execute(cmdlineListEfiCommand)
+		if err != nil {
+			return fmt.Errorf("failed to list EFI files: %v", err)
+		}
+
+		var efiFile string
+		for _, line := range strings.Split(strings.TrimSpace(string(efiFilesOutput)), "\n") {
+			if strings.HasPrefix(line, "linux-") && strings.HasSuffix(line, ".efi") {
+				efiFile = line
+				break
+			}
+		}
+		if efiFile == "" {
+			return fmt.Errorf("no EFI kernel file found in /boot/efi/EFI/Linux/")
+		}
+
+		log.Info("efi file name", efiFile)
+
+		var fileContent string
+		// Check if file exists using stat command with sudo
+		_, err = k.Execute([]string{"sudo", "stat", emtKernelParamFile})
+		if err != nil {
+			// File doesn't exist - create directory if needed and create new file
+			log.Infof("Creating new kernel parameter file: %s", emtKernelParamFile)
+
+			// Check if directory exists, create if it doesn't
+			_, dirErr := k.Execute([]string{"sudo", "stat", emtKernelParamDir})
+			if dirErr != nil {
+				log.Infof("Creating directory: %s", emtKernelParamDir)
+				if _, mkdirErr := k.Execute([]string{"sudo", "mkdir", "-p", emtKernelParamDir}); mkdirErr != nil {
+					return fmt.Errorf("failed to create directory %s: %v", emtKernelParamDir, mkdirErr)
+				}
+				if _, chmodErr := k.Execute([]string{"sudo", "chmod", "0755", emtKernelParamDir}); chmodErr != nil {
+					return fmt.Errorf("failed to set permissions on %s: %v", emtKernelParamDir, chmodErr)
+				}
+			}
+
+			newOptions := currentCmdline + " " + metadataUpdateSource.KernelCommand
+			fileContent = fmt.Sprintf("%s\nlinux   /EFI/Linux/%s\noptions %s\n# %s\n",
+				emtKernelParamFileDefContent,
+				efiFile,
+				newOptions,
+				currentCmdline)
+		} else {
+
+			// File exists - update it
+			log.Infof("Updating existing kernel parameter file: %s", emtKernelParamFile)
+			existingContentBytes, err := k.Execute([]string{"sudo", "cat", emtKernelParamFile})
+			if err != nil {
+				return fmt.Errorf("failed to read %s: %v", emtKernelParamFile, err)
+			}
+
+			lines := strings.Split(string(existingContentBytes), "\n")
+			if len(lines) < 4 {
+				return fmt.Errorf("unexpected format in %s", emtKernelParamFile)
+			}
+
+			// Extract original cmdline from 4th line (comment)
+			originalCmdline := strings.TrimPrefix(strings.TrimSpace(lines[3]), "# ")
+
+			// Update 3rd line with original cmdline + new kernel command
+			newOptions := originalCmdline + " " + metadataUpdateSource.KernelCommand
+			lines[2] = "options " + newOptions
+
+			fileContent = strings.Join(lines, "\n")
+		}
+
+		// Write the file using sudo
+		tmpFile := "/tmp/emt_debug_entry.conf.tmp"
+		writeCmd := []string{"sh", "-c", fmt.Sprintf("echo '%s' > %s", fileContent, tmpFile)}
+		if _, err := k.Execute(writeCmd); err != nil {
+			return fmt.Errorf("failed to write temporary file: %v", err)
+		}
+		defer os.Remove(tmpFile)
+
+		if _, err := k.Execute([]string{"sudo", "cp", tmpFile, emtKernelParamFile}); err != nil {
+			return fmt.Errorf("failed to copy %s to %s: %v", tmpFile, emtKernelParamFile, err)
+		}
+
+		if _, err := k.Execute([]string{"sudo", "chmod", "0600", emtKernelParamFile}); err != nil {
+			return fmt.Errorf("failed to set permissions on %s: %v", emtKernelParamFile, err)
+		}
+
+		_, err = k.Execute([]string{"sudo", "stat", emtKernelDefCfgFile})
+		if err != nil {
+			log.Infof("Creating default boot configuration: %s", emtKernelDefCfgFile)
+			tmpDefFile := "/tmp/loader.conf.tmp"
+			if err := os.WriteFile(tmpDefFile, []byte(emtKernelDefCfgContent+"\n"), 0600); err != nil {
+				return fmt.Errorf("failed to write temporary file: %v", err)
+			}
+			defer os.Remove(tmpDefFile)
+
+			if _, err := k.Execute([]string{"sudo", "cp", tmpDefFile, emtKernelDefCfgFile}); err != nil {
+				return fmt.Errorf("failed to copy %s to %s: %v", tmpDefFile, emtKernelDefCfgFile, err)
+			}
+
+			if _, err := k.Execute([]string{"sudo", "chmod", "0600", emtKernelDefCfgFile}); err != nil {
+				return fmt.Errorf("failed to set permissions on %s: %v", emtKernelDefCfgFile, err)
+			}
+		}
+
+		log.Info("EMT kernel parameters configured successfully")
+
+		err = k.SetMetaUpdateStatus(pb.UpdateStatus_STATUS_TYPE_UPDATED)
+		if err != nil {
+			return fmt.Errorf("failed to set metadata - %v", err)
+		}
+
+		// Clear the update source after successful configuration
+		err = metadata.SetMetaUpdateSource(nil)
+		if err != nil {
+			log.Warnf("Failed to clear update source: %v", err)
+		}
+		_, err = k.Execute(cmdlineRebootCommand)
+		if err != nil {
+			return fmt.Errorf("failed to execute shell command(%v)- %v", cmdlineRebootCommand, err)
+		}
+
+		return nil
 	}
 
 	if metadataUpdateSource == nil || metadataUpdateSource.KernelCommand == "" {
