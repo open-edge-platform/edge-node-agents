@@ -28,6 +28,10 @@ const (
 var (
 	inbmConfigSuccessPath = "/var/edge-node/pua/.inbm-config-success"
 
+	startInbdServiceCommand = []string{
+		"sudo", "systemctl", "start", "inbd",
+	}
+
 	restartInbmConfigurationCommand = []string{
 		"sudo", "systemctl", "restart", "inbd",
 	}
@@ -92,6 +96,12 @@ func (i *Installer) ProvisionInbm(_ context.Context) error {
 		return err
 	}
 	defer file.Close()
+
+	log.Info("Starting inbd service")
+	if _, err := i.execute(startInbdServiceCommand); err != nil {
+		log.Errorf("Failed to start inbd service - %v", err)
+		return fmt.Errorf("failed to start inbd service - %v", err)
+	}
 
 	log.Info("INBM provisioning finished")
 
