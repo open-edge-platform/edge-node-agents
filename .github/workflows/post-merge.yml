@@ -362,6 +362,7 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         run: |
+          cd edge-node-container
           make bma_versions
 
       - name: Update edge-node-container VERSION
