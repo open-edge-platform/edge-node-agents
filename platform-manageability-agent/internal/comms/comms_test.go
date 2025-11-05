@@ -845,3 +845,71 @@ func TestPerformDeactivationAsync_AMTInfoFailures(t *testing.T) {
 	assert.False(t, client.GetDeactivationInProgress(), "Deactivation in progress flag should be cleared")
 	assert.True(t, callCount >= 4, "Should have retried AMT info multiple times")
 }
+
+// TestRetrieveActivationDetails_UnableToAuthenticateWithAMT tests the "Unable to authenticate with AMT" scenario
+func TestRetrieveActivationDetails_UnableToAuthenticateWithAMT(t *testing.T) {
+	var capturedRequests []*pb.ActivationResultRequest
+
+	mockServer := &mockDeviceManagementServer{
+		operationType: pb.OperationType_ACTIVATE,
+		onReportActivationResults: func(ctx context.Context, req *pb.ActivationResultRequest) (*pb.ActivationResultResponse, error) {
+			capturedRequests = append(capturedRequests, req)
+			return &pb.ActivationResultResponse{}, nil
+		},
+	}
+
+	lis, server := runMockServer(mockServer)
+	defer func() {
+		server.GracefulStop()
+		lis.Close()
+	}()
+
+	// Mock executor with "Unable to authenticate with AMT" error in activation output
+	mockExecutor := &mockCommandExecutor{
+		activationOutput:   []byte(`time="2025-11-05T10:30:15Z" level=error msg="Unable to authenticate with AMT"`),
+		activationError:    fmt.Errorf("activation failed"),
+		amtInfoOutput:      []byte("RAS Remote Status: not connected"),
+		amtInfoError:       nil,
+		deactivationOutput: []byte("Deactivation successful"),
+		deactivationError:  nil,
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+	client := comms.NewClient("mock-service", tlsConfig,
+		WithBufconnDialer(lis),
+		WithMockExecutor(mockExecutor))
+
+	err := client.Connect(context.Background())
+	assert.NoError(t, err, "Client should connect successfully")
+
+	// Use a longer timeout context for testing to allow async deactivation to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = client.RetrieveActivationDetails(ctx, "host-id", &config.Config{
+		RPSAddress: "mock-service",
+	})
+
+	// Should succeed despite the authentication failure (async deactivation triggered)
+	assert.NoError(t, err, "RetrieveActivationDetails should succeed with async deactivation logic")
+
+	// Verify that at least one activation result was reported
+	assert.NotEmpty(t, capturedRequests, "At least one activation result should have been reported")
+
+	// The "Unable to authenticate with AMT" error should trigger async deactivation
+	// which returns ACTIVATION_FAILED status
+	hasActivationFailedStatus := false
+	for _, req := range capturedRequests {
+		if req.ActivationStatus == pb.ActivationStatus_ACTIVATION_FAILED {
+			hasActivationFailedStatus = true
+			break
+		}
+	}
+	assert.True(t, hasActivationFailedStatus, "Should have received ACTIVATION_FAILED status due to authentication failure triggering deactivation")
+
+	// Give a brief moment for async deactivation to complete
+	time.Sleep(100 * time.Millisecond)
+
+	// Verify that deactivation is no longer in progress after completion
+	assert.False(t, client.GetDeactivationInProgress(), "Deactivation should no longer be in progress after completion")
+}
