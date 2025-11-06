@@ -5,7 +5,7 @@ go 1.24.6
 require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/open-edge-platform/edge-node-agents/common v1.8.0
 	github.com/open-edge-platform/infra-managers/host v1.23.1
 	github.com/safchain/ethtool v0.6.2
