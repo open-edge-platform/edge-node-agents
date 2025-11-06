@@ -291,6 +291,11 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 			strings.Contains(outputStr, "exit code: 10") {
 			log.Logger.Warnf("Interrupted system call detected for host %s - retrying next cycle", hostID)
 		}
+		if strings.Contains(outputStr, `msg="Unable to authenticate with AMT"`) {
+			log.Logger.Warnf("Unable to authenticate with AMT for host %s - triggering deactivation", hostID)
+			cli.triggerDeactivationAsync(hostID)
+		}
+
 		if activationErr != nil {
 			log.Logger.Errorf("Failed to execute activation command for host %s: %v", hostID, activationErr)
 		}
