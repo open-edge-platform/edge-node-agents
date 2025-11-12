@@ -116,6 +116,8 @@ profile ca_dash {
   /etc/kubernetes/** rw,
   /etc/rancher/ rw,
   /etc/rancher/** rw,
+  /etc/environment.d/ rw,
+  /etc/environment.d/** rw,
   /etc/systemd/system/rke2-server.service.d/ rw,
   /etc/systemd/system/rke2-server.service.d/override.conf rw,
   /etc/systemd/system/rke2-agent.service.d/ rw,
