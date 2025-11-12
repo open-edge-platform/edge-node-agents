@@ -19,16 +19,16 @@ packages:
     version: 1.8.1
     ociArtifact: edge-orch/en/deb/node-agent
   - name: platform-manageability-agent
-    version: 0.2.1
+    version: 0.2.2
     ociArtifact: edge-orch/en/deb/platform-manageability-agent
   - name: platform-observability-agent
-    version: 1.10.0
+    version: 1.10.1
     ociArtifact: edge-orch/en/deb/platform-observability-agent
   - name: platform-telemetry-agent
-    version: 1.4.0
+    version: 1.5.0
     ociArtifact: edge-orch/en/deb/platform-telemetry-agent
   - name: platform-update-agent
-    version: 1.7.0
+    version: 1.7.3
     ociArtifact: edge-orch/en/deb/platform-update-agent
   - name: caddy
     version: 2.7.6

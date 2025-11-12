@@ -1,12 +1,12 @@
 module github.com/open-edge-platform/edge-node-agents/cluster-agent
 
-go 1.24.6
+go 1.24.9
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
-	github.com/open-edge-platform/cluster-api-provider-intel v1.2.5
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
+	github.com/open-edge-platform/cluster-api-provider-intel v1.2.7
 	github.com/open-edge-platform/edge-node-agents/common v1.8.0
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/stretchr/testify v1.11.1

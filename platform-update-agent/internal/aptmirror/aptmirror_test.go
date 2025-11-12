@@ -13,6 +13,7 @@ import (
 
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewController(t *testing.T) {
@@ -466,4 +467,38 @@ func TestCmdFailed(t *testing.T) {
 
 	fmt.Fprintf(os.Stderr, "process failed")
 	os.Exit(1)
+}
+
+func TestListUpgradablePackages(t *testing.T) {
+	testOutput := `Listing...
+git/jammy-updates 1:2.34.1-1ubuntu1.11 amd64 [upgradable from: 1:2.34.1-1ubuntu1.10]
+curl/jammy-security 7.81.0-1ubuntu1.16 amd64 [upgradable from: 7.81.0-1ubuntu1.15]
+`
+
+	packages, err := parseAptListOutput(testOutput)
+	require.NoError(t, err)
+	require.Equal(t, 2, packages.TotalCount)
+	require.Equal(t, "git", packages.Packages[0].Name)
+	require.Equal(t, "1:2.34.1-1ubuntu1.11", packages.Packages[0].AvailableVersion)
+}
+func TestListUpgradablePackages_EmptyOutput(t *testing.T) {
+	testOutput := `Listing...
+`
+
+	packages, err := parseAptListOutput(testOutput)
+	require.NoError(t, err)
+	require.Equal(t, 0, packages.TotalCount)
+	require.Empty(t, packages.Packages)
+}
+
+func TestListUpgradablePackages_InvalidOutput(t *testing.T) {
+	testOutput := `Listing...
+invalid line that does not conform
+`
+
+	// Invalid lines should be skipped, not cause errors
+	packages, err := parseAptListOutput(testOutput)
+	require.NoError(t, err)
+	require.Equal(t, 0, packages.TotalCount)
+	require.Empty(t, packages.Packages)
 }
