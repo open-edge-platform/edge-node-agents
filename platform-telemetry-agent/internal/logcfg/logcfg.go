@@ -21,7 +21,6 @@ import (
 
 var log = logger.Logger
 var TmpFileDir = "/tmp"
-var ConfigMapCommand = ""
 var FileOwner = "platform-telemetry-agent"
 
 type FluentBitTemplate struct {
@@ -104,9 +103,10 @@ func UpdateClusterLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRespo
 		return false, err
 	}
 
-	currConfigMap, err := helper.RunStringCommand(ctx, false, ConfigMapCommand)
+	// Execute kubectl command directly to avoid issues with string field parsing
+	_, currConfigMap, err := helper.RunExec(ctx, false, "sudo", helper.Kubectl, "get", "configmap", "fluent-bit", "-n", "observability", "-o", `jsonpath={.data.fluent-bit\.conf}`)
 	if err != nil {
-		log.Errorf("Error on get fluent-bit configmap: %s Err: %s", ConfigMapCommand, err)
+		log.Errorf("Error on get fluent-bit configmap Err: %s", err)
 		return false, err
 	}
 

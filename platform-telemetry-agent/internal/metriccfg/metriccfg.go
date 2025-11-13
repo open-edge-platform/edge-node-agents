@@ -24,7 +24,6 @@ var log = logger.Logger
 var TmpFileDir = "/tmp/"
 var TmpHostFile = "telegraf-tmp.conf"
 var TmpClusterFile = "telegraf-tmp-cluster.conf"
-var ConfigMapCommand = ""
 
 type TelegrafTemplate struct {
 	Key           string        `yaml:"key"`
@@ -104,9 +103,10 @@ func UpdateClusterMetricConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRe
 		return false, err
 	}
 
-	currConfigMap, err := helper.RunStringCommand(ctx, false, ConfigMapCommand)
+	// Execute kubectl command directly to avoid issues with string field parsing
+	_, currConfigMap, err := helper.RunExec(ctx, false, "sudo", helper.Kubectl, "get", "configmap", "telegraf-config", "-n", "observability", "-o", `jsonpath={.data.base-ext-telegraf\.conf}`)
 	if err != nil {
-		log.Errorf("Error on get telegraf configmap: %s Err: %s", ConfigMapCommand, err)
+		log.Errorf("Error on get telegraf configmap Err: %s", err)
 		return false, err
 	}
 

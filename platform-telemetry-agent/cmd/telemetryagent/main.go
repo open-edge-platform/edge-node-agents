@@ -89,12 +89,10 @@ func main() {
 	telegrafHostGoldPath := viper.GetString("ConfigPath.configroot") + viper.GetString("ConfigPath.telegrafgoldhost")
 	telegrafClusterGoldPath := viper.GetString("ConfigPath.configroot") + viper.GetString("ConfigPath.telegrafgoldcluster")
 	fluentbitHostGoldPath := viper.GetString("ConfigPath.configroot") + viper.GetString("ConfigPath.fluentbitgoldhost")
-	fluentbitClusterGoldPath := viper.GetString("ConfigPath.configroot") + viper.GetString("ConfigPath.fluentbitgoldcluster")
+	fluentbitClusterGoldPath := viper.GetString("ConfigPath.configroot") + viper.GetString("ConfigPath.telegrafgoldcluster")
 	metriccfg.TmpFileDir = viper.GetString("ConfigPath.tmpdir")
 	logcfg.TmpFileDir = viper.GetString("ConfigPath.tmpdir")
 	helper.Kubectl = viper.GetString("misc.kubectl")
-	metriccfg.ConfigMapCommand = "sudo " + helper.Kubectl + " " + viper.GetString("misc.telegrafConfigMap")
-	logcfg.ConfigMapCommand = "sudo " + helper.Kubectl + " " + viper.GetString("misc.fluentbitConfigMap")
 	logcfg.FileOwner = viper.GetString("misc.fileOwner")
 
 	refreshIntervalStr := viper.GetString("global.updateinterval")
