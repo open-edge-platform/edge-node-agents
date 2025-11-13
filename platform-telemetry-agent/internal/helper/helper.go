@@ -15,16 +15,23 @@ import (
 var log = logger.Logger
 var AgentId string = "N/A"
 var Kubectl = "kubectl"
+var KubectlArgs = []string{"kubectl"} // kubectl command and subcommand as separate args
 
 func RunExec(ctx context.Context, asyncFlg bool, args ...string) (bool, string, error) {
 
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 	// Let K3s handle KUBECONFIG through system environment - no explicit setting needed
 
-	// Starting to record output of udevadm monitor
+	// Capture both stdout and stderr
 	cmdReader, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Printf("failed creating StdoutPipe : %v\n", err)
+		return false, "", err
+	}
+
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		log.Printf("failed creating StderrPipe : %v\n", err)
 		return false, "", err
 	}
 
@@ -40,7 +47,7 @@ func RunExec(ctx context.Context, asyncFlg bool, args ...string) (bool, string, 
 		return true, "", nil
 	}
 
-	// Create a scanner to read the output
+	// Create a scanner to read the stdout
 	scanner := bufio.NewScanner(cmdReader)
 	// Read and print each line from the command output
 	var output string
@@ -48,10 +55,21 @@ func RunExec(ctx context.Context, asyncFlg bool, args ...string) (bool, string, 
 		output += scanner.Text() + "\n"
 	}
 
+	// Read stderr (even if we don't use it, we need to consume it to avoid blocking)
+	stderrScanner := bufio.NewScanner(stderrPipe)
+	var stderrOutput string
+	for stderrScanner.Scan() {
+		stderrOutput += stderrScanner.Text() + "\n"
+	}
+
 	// Wait for the command to finish
 	err = cmd.Wait()
 	if err != nil {
-		log.Errorf("command failed: %s cmd: %s", err, cmd)
+		if stderrOutput != "" {
+			log.Errorf("command failed: %s cmd: %s stderr: %s", err, cmd, stderrOutput)
+		} else {
+			log.Errorf("command failed: %s cmd: %s", err, cmd)
+		}
 		return false, "", err
 	}
 

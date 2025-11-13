@@ -190,6 +190,7 @@ cat ./fb-configmap.conf
 
 	logcfg.TmpFileDir = tmpDir
 	helper.Kubectl = mockKubectl
+	helper.KubectlArgs = []string{mockKubectl}
 	fluentbitClusterPath := "../../configs/fluentbit-cluster-gold.yaml"
 	resp := &pb.GetTelemetryConfigResponse{
 		HostGuid:  "mock-host-guid",
@@ -284,6 +285,7 @@ exit 1
 
 	logcfg.TmpFileDir = "./"
 	helper.Kubectl = mockKubectl
+	helper.KubectlArgs = []string{mockKubectl}
 	resp := &pb.GetTelemetryConfigResponse{
 		HostGuid:  "mock-host-guid",
 		Timestamp: "2023-01-15T12:34:56+00:00",

@@ -257,6 +257,7 @@ cat ./configmap.conf
 
 	metriccfg.TmpFileDir = tmpDir
 	helper.Kubectl = mockKubectl
+	helper.KubectlArgs = []string{mockKubectl}
 	telegrafClusterGoldPath := "../../configs/telegraf-cluster-gold.yaml"
 
 	resp := &pb.GetTelemetryConfigResponse{
@@ -539,6 +540,7 @@ cat ./configmap.conf
 
 	metriccfg.TmpFileDir = "/root/nonexistent/"
 	helper.Kubectl = mockKubectl
+	helper.KubectlArgs = []string{mockKubectl}
 	telegrafClusterGoldPath := "../../configs/telegraf-cluster-gold.yaml"
 	metriccfg.TmpClusterFile = "telegraf-tmp-cluster.conf"
 

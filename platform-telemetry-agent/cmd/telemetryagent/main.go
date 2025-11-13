@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -92,7 +93,12 @@ func main() {
 	fluentbitClusterGoldPath := viper.GetString("ConfigPath.configroot") + viper.GetString("ConfigPath.telegrafgoldcluster")
 	metriccfg.TmpFileDir = viper.GetString("ConfigPath.tmpdir")
 	logcfg.TmpFileDir = viper.GetString("ConfigPath.tmpdir")
-	helper.Kubectl = viper.GetString("misc.kubectl")
+
+	// Parse kubectl config - it may be a command with subcommand like "/var/lib/rancher/k3s/bin/k3s kubectl"
+	kubectlConfig := viper.GetString("misc.kubectl")
+	helper.Kubectl = kubectlConfig
+	helper.KubectlArgs = strings.Fields(kubectlConfig)
+
 	logcfg.FileOwner = viper.GetString("misc.fileOwner")
 
 	refreshIntervalStr := viper.GetString("global.updateinterval")

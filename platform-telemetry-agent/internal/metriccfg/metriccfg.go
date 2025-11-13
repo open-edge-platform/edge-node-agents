@@ -104,7 +104,10 @@ func UpdateClusterMetricConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRe
 	}
 
 	// Execute kubectl command directly to avoid issues with string field parsing
-	_, currConfigMap, err := helper.RunExec(ctx, false, "sudo", helper.Kubectl, "get", "configmap", "telegraf-config", "-n", "observability", "-o", `jsonpath={.data.base-ext-telegraf\.conf}`)
+	// Build the full command args: sudo + kubectl command parts + kubectl args
+	kubectlCmd := append([]string{"sudo"}, helper.KubectlArgs...)
+	kubectlCmd = append(kubectlCmd, "get", "configmap", "telegraf-config", "-n", "observability", "-o", `jsonpath={.data.base-ext-telegraf\.conf}`)
+	_, currConfigMap, err := helper.RunExec(ctx, false, kubectlCmd...)
 	if err != nil {
 		log.Errorf("Error on get telegraf configmap Err: %s", err)
 		return false, err
@@ -147,13 +150,19 @@ func UpdateClusterMetricConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRe
 		return false, err
 	}
 
-	_, _, err = helper.RunExec(ctx, false, "sudo", helper.Kubectl, "patch", "configmap", "telegraf-config", "-p", string(jsonStr), "-n", "observability")
+	// Build kubectl patch command
+	patchCmd := append([]string{"sudo"}, helper.KubectlArgs...)
+	patchCmd = append(patchCmd, "patch", "configmap", "telegraf-config", "-p", string(jsonStr), "-n", "observability")
+	_, _, err = helper.RunExec(ctx, false, patchCmd...)
 	if err != nil {
 		log.Errorf("Failed to update Telegraf configmap: %s", err)
 		return false, err
 	}
 
-	_, _, err = helper.RunExec(ctx, false, "sudo", helper.Kubectl, "delete", "pods", "-l", "app.kubernetes.io/name=telegraf", "-n", "observability")
+	// Build kubectl delete command
+	deleteCmd := append([]string{"sudo"}, helper.KubectlArgs...)
+	deleteCmd = append(deleteCmd, "delete", "pods", "-l", "app.kubernetes.io/name=telegraf", "-n", "observability")
+	_, _, err = helper.RunExec(ctx, false, deleteCmd...)
 	if err != nil {
 		log.Errorf("Failed to restart Telegraf: %s", err)
 		return false, err
