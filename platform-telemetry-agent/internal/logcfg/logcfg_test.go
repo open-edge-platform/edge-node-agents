@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
+	"github.com/open-edge-platform/edge-node-agents/platform-telemetry-agent/internal/helper"
 	"github.com/open-edge-platform/edge-node-agents/platform-telemetry-agent/internal/logcfg"
 	pb "github.com/open-edge-platform/infra-managers/telemetry/pkg/api/telemetrymgr/v1"
 	"github.com/stretchr/testify/assert"
@@ -179,8 +180,16 @@ func testUpdateClusterLogConfigWithTmpFile(t *testing.T, tmpDir string) {
 	// Write data to the file
 	_, _ = file.WriteString(data)
 
+	// Create a mock kubectl script that returns the configmap data
+	mockKubectl := "./mock-kubectl.sh"
+	mockScript := `#!/bin/bash
+cat ./fb-configmap.conf
+`
+	os.WriteFile(mockKubectl, []byte(mockScript), 0755)
+	defer os.Remove(mockKubectl)
+
 	logcfg.TmpFileDir = tmpDir
-	logcfg.ConfigMapCommand = "cat ./fb-configmap.conf"
+	helper.Kubectl = mockKubectl
 	fluentbitClusterPath := "../../configs/fluentbit-cluster-gold.yaml"
 	resp := &pb.GetTelemetryConfigResponse{
 		HostGuid:  "mock-host-guid",
@@ -265,8 +274,16 @@ func testUpdateClusterLogConfigWithTmpFile(t *testing.T, tmpDir string) {
 }
 
 func TestErrorUpdateClusterLogConfig(t *testing.T) {
+	// Create a mock kubectl script that returns empty (simulating error)
+	mockKubectl := "./mock-kubectl-error.sh"
+	mockScript := `#!/bin/bash
+exit 1
+`
+	os.WriteFile(mockKubectl, []byte(mockScript), 0755)
+	defer os.Remove(mockKubectl)
+
 	logcfg.TmpFileDir = "./"
-	logcfg.ConfigMapCommand = "kubectl get configmap fluent-bit-config -n observability -o jsonpath='{.data.fluent-bit\\.conf}'"
+	helper.Kubectl = mockKubectl
 	resp := &pb.GetTelemetryConfigResponse{
 		HostGuid:  "mock-host-guid",
 		Timestamp: "2023-01-15T12:34:56+00:00",

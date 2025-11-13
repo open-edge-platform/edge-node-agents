@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/open-edge-platform/edge-node-agents/common/pkg/utils"
+	"github.com/open-edge-platform/edge-node-agents/platform-telemetry-agent/internal/helper"
 	"github.com/open-edge-platform/edge-node-agents/platform-telemetry-agent/internal/metriccfg"
 	pb "github.com/open-edge-platform/infra-managers/telemetry/pkg/api/telemetrymgr/v1"
 	"github.com/stretchr/testify/assert"
@@ -246,8 +247,16 @@ func testUpdateClusterMetricConfigWithTmpFile(t *testing.T, tmpDir string) {
 	// Write data to the file
 	_, _ = file.WriteString(data)
 
+	// Create a mock kubectl script that returns the configmap data
+	mockKubectl := "./mock-kubectl.sh"
+	mockScript := `#!/bin/bash
+cat ./configmap.conf
+`
+	os.WriteFile(mockKubectl, []byte(mockScript), 0755)
+	defer os.Remove(mockKubectl)
+
 	metriccfg.TmpFileDir = tmpDir
-	metriccfg.ConfigMapCommand = "cat ./configmap.conf"
+	helper.Kubectl = mockKubectl
 	telegrafClusterGoldPath := "../../configs/telegraf-cluster-gold.yaml"
 
 	resp := &pb.GetTelemetryConfigResponse{
@@ -386,8 +395,16 @@ func createFileWithWrongContent(filename string) error {
 }
 
 func TestUpdateClusterMetricConfigErrorConfigMap(t *testing.T) {
+	// Create a mock kubectl script that returns error
+	mockKubectl := "./mock-kubectl-error.sh"
+	mockScript := `#!/bin/bash
+exit 1
+`
+	os.WriteFile(mockKubectl, []byte(mockScript), 0755)
+	defer os.Remove(mockKubectl)
+
 	metriccfg.TmpFileDir = "./"
-	metriccfg.ConfigMapCommand = ""
+	helper.Kubectl = mockKubectl
 	telegrafClusterGoldPath := "../../configs/telegraf-cluster-gold.yaml"
 
 	resp := &pb.GetTelemetryConfigResponse{
@@ -512,10 +529,18 @@ func TestUpdateClusterMetricConfigWithErr(t *testing.T) {
 	// Write data to the file
 	_, _ = file.WriteString(data)
 
-	metriccfg.TmpFileDir = "/tmp/"
-	metriccfg.ConfigMapCommand = "cat ./configmap.conf"
+	// Create a mock kubectl script that returns the configmap data
+	mockKubectl := "./mock-kubectl-tmpfile.sh"
+	mockScript := `#!/bin/bash
+cat ./configmap.conf
+`
+	os.WriteFile(mockKubectl, []byte(mockScript), 0755)
+	defer os.Remove(mockKubectl)
+
+	metriccfg.TmpFileDir = "/root/nonexistent/"
+	helper.Kubectl = mockKubectl
 	telegrafClusterGoldPath := "../../configs/telegraf-cluster-gold.yaml"
-	metriccfg.TmpClusterFile = "~test"
+	metriccfg.TmpClusterFile = "telegraf-tmp-cluster.conf"
 
 	resp := &pb.GetTelemetryConfigResponse{
 		HostGuid:  "mock-host-guid",
