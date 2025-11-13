@@ -1,1 +1,1 @@
-platform-telemetry-agent ALL=(root) NOPASSWD: /usr/bin/mv,/usr/bin/chown,/usr/bin/systemctl,/var/lib/rancher/rke2/bin/kubectl,/usr/sbin/dmidecode
+platform-telemetry-agent ALL=(root) NOPASSWD: /usr/bin/mv,/usr/bin/chown,/usr/bin/systemctl,/var/lib/rancher/rke2/bin/kubectl,/var/lib/rancher/k3s/bin/k3s,/usr/sbin/dmidecode

@@ -25,6 +25,7 @@ server:
     port: 443
     token: "/etc/intel_edge_node/tokens/platform-telemetry-agent/access_token"
 misc:
-    telegrafConfigMap: "get configmap telegraf-config -n observability -o jsonpath='{.data.telegraf\\.conf}'"
-    fluentbitConfigMap: "get configmap fluent-bit-config -n observability -o jsonpath='{.data.fluent-bit\\.conf}'"
+    kubectl: "/var/lib/rancher/k3s/bin/k3s kubectl"
+    telegrafConfigMap: 'get configmap telegraf-config -n observability -o jsonpath="{.data.base-ext-telegraf\.conf}"'
+    fluentbitConfigMap: 'get configmap fluent-bit -n observability -o jsonpath="{.data.fluent-bit\.conf}"'
     fileOwner: "platform-observability-agent"
