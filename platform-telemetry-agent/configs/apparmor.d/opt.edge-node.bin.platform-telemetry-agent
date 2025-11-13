@@ -62,9 +62,14 @@ profile pta_kubectl {
 
   /var/lib/rancher/rke2/data/**/bin/kubectl rix,
   /var/lib/rancher/k3s/bin/k3s rix,
+  /var/lib/rancher/k3s/data/**/bin/kubectl rix,
+  /var/lib/rancher/k3s/data/**/bin/k3s rix,
   /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
   /etc/rancher/rke2/rke2.yaml r,
   /etc/rancher/k3s/k3s.yaml r,
+  /etc/rancher/k3s/config.yaml r,
+  /etc/rancher/k3s/config.yaml.d/ r,
+  /etc/rancher/k3s/config.yaml.d/** r,
   /root/.kube/cache/** rw,
 }
 
