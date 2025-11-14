@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@50452868e1a7850e3f76e9247e6b6e436a9980e1  # v0.1.61
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@da08a06e8aec70621e50ed4aec2fac5599839f45  # v0.1.62
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
@@ -40,7 +40,7 @@ jobs:
 
       - name: Discover Changed Files
         id: check-files
-        uses: open-edge-platform/orch-ci/discover-changed-files@50452868e1a7850e3f76e9247e6b6e436a9980e1  # v0.1.61
+        uses: open-edge-platform/orch-ci/discover-changed-files@da08a06e8aec70621e50ed4aec2fac5599839f45  # v0.1.62
         with:
           project_folder: "."
   post-merge-pipeline:
@@ -55,7 +55,7 @@ jobs:
       matrix:
         # runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@50452868e1a7850e3f76e9247e6b6e436a9980e1  # v0.1.61
+    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@da08a06e8aec70621e50ed4aec2fac5599839f45  # v0.1.62
     with:
       #  runner_version: ${{ matrix.runner_version }}
       runs_on: ubuntu-22.04
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@50452868e1a7850e3f76e9247e6b6e436a9980e1  # v0.1.61
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@da08a06e8aec70621e50ed4aec2fac5599839f45  # v0.1.62
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "yq,aws,oras"
@@ -173,7 +173,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@50452868e1a7850e3f76e9247e6b6e436a9980e1  # v0.1.61
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@da08a06e8aec70621e50ed4aec2fac5599839f45  # v0.1.62
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base,yq"
@@ -229,7 +229,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@50452868e1a7850e3f76e9247e6b6e436a9980e1  # v0.1.61
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@da08a06e8aec70621e50ed4aec2fac5599839f45  # v0.1.62
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base,yq"
@@ -419,7 +419,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@50452868e1a7850e3f76e9247e6b6e436a9980e1  # v0.1.61
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@da08a06e8aec70621e50ed4aec2fac5599839f45  # v0.1.62
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base"
