@@ -25,7 +25,5 @@ server:
     port: 5001
     token: "/etc/intel_edge_node/tokens/platform-telemetry-agent/access_token"
 misc:
-    kubeconfig: "KUBECONFIG=/etc/rancher/rke2/rke2.yaml"
-    kubectl: "/var/lib/rancher/rke2/bin/kubectl"
     telegrafConfigMap: "get configmap telegraf-config -n observability -o jsonpath='{.data.telegraf\\.conf}'"
     fluentbitConfigMap: "get configmap fluent-bit-config -n observability -o jsonpath='{.data.fluent-bit\\.conf}'"
