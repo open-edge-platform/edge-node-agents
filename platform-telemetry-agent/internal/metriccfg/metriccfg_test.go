@@ -274,7 +274,8 @@ cat ./configmap.conf
 		},
 	}
 
-	result, _ := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, false)
+	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
+	result, _ := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, false)
 	assert.NotNil(t, result)
 
 	// create fail template
@@ -292,7 +293,7 @@ cat ./configmap.conf
 	defer udestinationFile.Close()
 	_, _ = udestinationFile.WriteString(cfgupdatedtext)
 
-	result, _ = metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "./tg-cluster.yaml", false)
+	result, _ = metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "./tg-cluster.yaml", configMapCmd, false)
 	assert.NotNil(t, result)
 
 	// failt output
@@ -301,7 +302,7 @@ cat ./configmap.conf
 	nfgupdatedtext := strings.ReplaceAll(text, "output", "ft")
 	_, _ = ndestinationFile.WriteString(nfgupdatedtext)
 
-	result, _ = metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "./tg-cluster-2.yaml", false)
+	result, _ = metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "./tg-cluster-2.yaml", configMapCmd, false)
 	assert.NotNil(t, result)
 
 	os.Remove("telegraf-tmp-cluster.conf")
@@ -326,7 +327,8 @@ func TestErrorUpdateClusterMetricConfig(t *testing.T) {
 		},
 	}
 
-	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "", false)
+	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
+	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "", configMapCmd, false)
 	assert.NotNil(t, err)
 
 	os.Remove("telegraf-tmp-cluster.conf")
@@ -360,8 +362,9 @@ func TestErrorOnMarshall(t *testing.T) {
 	telegrafHostPath := "unittest_config.conf"
 	telegrafClusterPath := "unittest_config.conf"
 
+	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
 	result, _ := metriccfg.UpdateHostMetricConfig(context.Background(), resp, telegrafFilePath, telegrafHostPath, false)
-	result1, _ := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterPath, false)
+	result1, _ := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterPath, configMapCmd, false)
 	assert.NotNil(t, result)
 	assert.NotNil(t, result1)
 	os.Remove(telegrafFilePath)
@@ -422,7 +425,8 @@ exit 1
 		},
 	}
 
-	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, false)
+	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
+	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, false)
 	assert.NotNil(t, err)
 
 	os.Remove("telegraf-tmp-cluster.conf")
@@ -558,7 +562,8 @@ cat ./configmap.conf
 		},
 	}
 
-	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, false)
+	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
+	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, false)
 	if err == nil {
 		t.Error(err)
 	}

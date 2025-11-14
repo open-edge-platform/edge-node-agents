@@ -87,7 +87,7 @@ func UpdateHostMetricConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRespo
 	return true, nil
 }
 
-func UpdateClusterMetricConfig(ctx context.Context, cfg *pb.GetTelemetryConfigResponse, cfgTemplatePath string, isInit bool) (bool, error) {
+func UpdateClusterMetricConfig(ctx context.Context, cfg *pb.GetTelemetryConfigResponse, cfgTemplatePath string, configMapCmd string, isInit bool) (bool, error) {
 
 	log.Printf("Cluster Telegraf Update: %s", "Started")
 
@@ -104,9 +104,10 @@ func UpdateClusterMetricConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRe
 	}
 
 	// Execute kubectl command directly to avoid issues with string field parsing
-	// Build the full command args: sudo + kubectl command parts + kubectl args
+	// Build the full command args: sudo + kubectl command parts + kubectl args from config
 	kubectlCmd := append([]string{"sudo"}, helper.KubectlArgs...)
-	kubectlCmd = append(kubectlCmd, "get", "configmap", "telegraf-config", "-n", "observability", "-o", `jsonpath={.data.base-ext-telegraf\.conf}`)
+	configMapArgs := strings.Fields(configMapCmd)
+	kubectlCmd = append(kubectlCmd, configMapArgs...)
 	_, currConfigMap, err := helper.RunExec(ctx, false, kubectlCmd...)
 	if err != nil {
 		log.Errorf("Error on get telegraf configmap Err: %s", err)

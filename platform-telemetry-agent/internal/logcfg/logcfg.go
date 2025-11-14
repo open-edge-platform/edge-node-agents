@@ -87,7 +87,7 @@ func UpdateHostLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigResponse
 	return true, nil
 }
 
-func UpdateClusterLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigResponse, cfgTemplatePath string, isInit bool) (bool, error) {
+func UpdateClusterLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigResponse, cfgTemplatePath string, configMapCmd string, isInit bool) (bool, error) {
 
 	log.Printf("Update Cluster Log Config: %s", "Started")
 
@@ -104,9 +104,10 @@ func UpdateClusterLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRespo
 	}
 
 	// Execute kubectl command directly to avoid issues with string field parsing
-	// Build the full command args: sudo + kubectl command parts + kubectl args
+	// Build the full command args: sudo + kubectl command parts + kubectl args from config
 	kubectlCmd := append([]string{"sudo"}, helper.KubectlArgs...)
-	kubectlCmd = append(kubectlCmd, "get", "configmap", "fluent-bit", "-n", "observability", "-o", `jsonpath={.data.fluent-bit\.conf}`)
+	configMapArgs := strings.Fields(configMapCmd)
+	kubectlCmd = append(kubectlCmd, configMapArgs...)
 	_, currConfigMap, err := helper.RunExec(ctx, false, kubectlCmd...)
 	if err != nil {
 		log.Errorf("Error on get fluent-bit configmap Err: %s", err)
