@@ -87,7 +87,7 @@ func UpdateHostLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigResponse
 	return true, nil
 }
 
-func UpdateClusterLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigResponse, cfgTemplatePath string, configMapCmd string, isInit bool) (bool, error) {
+func UpdateClusterLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigResponse, cfgTemplatePath string, configMapCmd string, patchConfigMapCmd string, restartPodsCmd string, isInit bool) (bool, error) {
 
 	log.Printf("Update Cluster Log Config: %s", "Started")
 
@@ -149,18 +149,21 @@ func UpdateClusterLogConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRespo
 		return false, err
 	}
 
-	// Build kubectl patch command
+	// Build kubectl patch command from config
 	patchCmd := append([]string{"sudo"}, helper.KubectlArgs...)
-	patchCmd = append(patchCmd, "patch", "configmap", "fluent-bit-config", "-p", string(jsonStr), "-n", "observability")
+	patchArgs := strings.Fields(patchConfigMapCmd)
+	patchCmd = append(patchCmd, patchArgs...)
+	patchCmd = append(patchCmd, "-p", string(jsonStr))
 	_, _, err = helper.RunExec(ctx, false, patchCmd...)
 	if err != nil {
 		log.Errorf("Failed to update fluent-bit-config configmap: %s", err)
 		return false, err
 	}
 
-	// Build kubectl delete command
+	// Build kubectl delete command from config
 	deleteCmd := append([]string{"sudo"}, helper.KubectlArgs...)
-	deleteCmd = append(deleteCmd, "delete", "pods", "-l", "app.kubernetes.io/name=fluent-bit", "-n", "observability")
+	deleteArgs := strings.Fields(restartPodsCmd)
+	deleteCmd = append(deleteCmd, deleteArgs...)
 	_, _, err = helper.RunExec(ctx, false, deleteCmd...)
 	if err != nil {
 		log.Errorf("Failed to restart Telegraf: %s", err)

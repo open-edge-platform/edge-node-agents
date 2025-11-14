@@ -27,5 +27,9 @@ server:
 misc:
     kubectl: "/var/lib/rancher/k3s/bin/k3s kubectl"
     telegrafConfigMap: 'get configmap telegraf-config -n observability -o jsonpath="{.data.base-ext-telegraf\.conf}"'
+    telegrafPatchConfigMap: 'patch configmap telegraf-config -n observability'
+    telegrafRestartPods: 'delete pods -l app.kubernetes.io/name=telegraf -n observability'
     fluentbitConfigMap: 'get configmap fluent-bit -n observability -o jsonpath="{.data.fluent-bit\.conf}"'
+    fluentbitPatchConfigMap: 'patch configmap fluent-bit-config -n observability'
+    fluentbitRestartPods: 'delete pods -l app.kubernetes.io/name=fluent-bit -n observability'
     fileOwner: "platform-observability-agent"

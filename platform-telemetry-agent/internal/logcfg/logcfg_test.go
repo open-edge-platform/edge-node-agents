@@ -207,35 +207,37 @@ cat ./fb-configmap.conf
 	}
 
 	configMapCmd := "get configmap fluent-bit -n observability -o jsonpath={.data.fluent-bit\\.conf}"
-	result, _ := logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	patchConfigMapCmd := "patch configmap fluent-bit-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=fluent-bit -n observability"
+	result, _ := logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	resp.Cfg[0].Level = -1
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	resp.Cfg[0].Level = pb.SeverityLevel_SEVERITY_LEVEL_UNSPECIFIED
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	resp.Cfg[0].Level = pb.SeverityLevel_SEVERITY_LEVEL_DEBUG
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	resp.Cfg[0].Level = pb.SeverityLevel_SEVERITY_LEVEL_CRITICAL
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	resp.Cfg[0].Level = pb.SeverityLevel_SEVERITY_LEVEL_ERROR
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	resp.Cfg[0].Level = pb.SeverityLevel_SEVERITY_LEVEL_WARN
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	resp.Cfg[0].Input = "NOT_EXIST_INPUT"
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	// create fail template
@@ -257,7 +259,7 @@ cat ./fb-configmap.conf
 	_, _ = udestinationFile.WriteString(cfgupdatedtext)
 
 	resp.Cfg[0].Input = "opentelemetry"
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, "./fb-cluster.yaml", configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, "./fb-cluster.yaml", configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	// create no header
@@ -267,7 +269,7 @@ cat ./fb-configmap.conf
 	defer hdestinationFile.Close()
 	_, _ = udestinationFile.WriteString(hfgupdatedtext)
 
-	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, "./fb-cluster-noheader.yaml", configMapCmd, false)
+	result, _ = logcfg.UpdateClusterLogConfig(context.Background(), resp, "./fb-cluster-noheader.yaml", configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 	os.Remove("fluentbit-cluster-tmp.conf")
 	os.Remove("./fb-configmap.conf")
@@ -303,7 +305,9 @@ exit 1
 	}
 
 	configMapCmd := "get configmap fluent-bit -n observability -o jsonpath={.data.fluent-bit\\.conf}"
-	result, _ := logcfg.UpdateClusterLogConfig(context.Background(), resp, "", configMapCmd, false)
+	patchConfigMapCmd := "patch configmap fluent-bit-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=fluent-bit -n observability"
+	result, _ := logcfg.UpdateClusterLogConfig(context.Background(), resp, "", configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	os.Remove("fluentbit-cluster-tmp.conf")
@@ -338,8 +342,10 @@ func TestErrorOnMarshall(t *testing.T) {
 	fluentbitClusterPath := "unittest_config.conf"
 
 	configMapCmd := "get configmap fluent-bit -n observability -o jsonpath={.data.fluent-bit\\.conf}"
+	patchConfigMapCmd := "patch configmap fluent-bit-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=fluent-bit -n observability"
 	result, _ := logcfg.UpdateHostLogConfig(context.Background(), resp, fluentbitFilePath, fluentbitHostPath, false)
-	result1, _ := logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, false)
+	result1, _ := logcfg.UpdateClusterLogConfig(context.Background(), resp, fluentbitClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 	assert.NotNil(t, result1)
 	os.Remove(fluentbitFilePath)
@@ -420,8 +426,10 @@ func TestErrorOnEmptyTemplate(t *testing.T) {
 
 	fluentbitFilePath := "fluenbit_unittest.conf"
 	configMapCmd := "get configmap fluent-bit -n observability -o jsonpath={.data.fluent-bit\\.conf}"
+	patchConfigMapCmd := "patch configmap fluent-bit-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=fluent-bit -n observability"
 	result, _ := logcfg.UpdateHostLogConfig(context.Background(), resp, fluentbitFilePath, errGoldTmpFile, false)
-	result1, _ := logcfg.UpdateClusterLogConfig(context.Background(), resp, errGoldTmpFile, configMapCmd, false)
+	result1, _ := logcfg.UpdateClusterLogConfig(context.Background(), resp, errGoldTmpFile, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 	assert.NotNil(t, result1)
 	os.Remove(errGoldTmpFile)

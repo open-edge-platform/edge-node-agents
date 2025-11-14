@@ -275,7 +275,9 @@ cat ./configmap.conf
 	}
 
 	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
-	result, _ := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, false)
+	patchConfigMapCmd := "patch configmap telegraf-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=telegraf -n observability"
+	result, _ := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	// create fail template
@@ -293,7 +295,7 @@ cat ./configmap.conf
 	defer udestinationFile.Close()
 	_, _ = udestinationFile.WriteString(cfgupdatedtext)
 
-	result, _ = metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "./tg-cluster.yaml", configMapCmd, false)
+	result, _ = metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "./tg-cluster.yaml", configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	// failt output
@@ -302,7 +304,7 @@ cat ./configmap.conf
 	nfgupdatedtext := strings.ReplaceAll(text, "output", "ft")
 	_, _ = ndestinationFile.WriteString(nfgupdatedtext)
 
-	result, _ = metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "./tg-cluster-2.yaml", configMapCmd, false)
+	result, _ = metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "./tg-cluster-2.yaml", configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 
 	os.Remove("telegraf-tmp-cluster.conf")
@@ -328,7 +330,9 @@ func TestErrorUpdateClusterMetricConfig(t *testing.T) {
 	}
 
 	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
-	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "", configMapCmd, false)
+	patchConfigMapCmd := "patch configmap telegraf-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=telegraf -n observability"
+	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, "", configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, err)
 
 	os.Remove("telegraf-tmp-cluster.conf")
@@ -363,8 +367,10 @@ func TestErrorOnMarshall(t *testing.T) {
 	telegrafClusterPath := "unittest_config.conf"
 
 	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
+	patchConfigMapCmd := "patch configmap telegraf-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=telegraf -n observability"
 	result, _ := metriccfg.UpdateHostMetricConfig(context.Background(), resp, telegrafFilePath, telegrafHostPath, false)
-	result1, _ := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterPath, configMapCmd, false)
+	result1, _ := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, result)
 	assert.NotNil(t, result1)
 	os.Remove(telegrafFilePath)
@@ -426,7 +432,9 @@ exit 1
 	}
 
 	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
-	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, false)
+	patchConfigMapCmd := "patch configmap telegraf-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=telegraf -n observability"
+	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	assert.NotNil(t, err)
 
 	os.Remove("telegraf-tmp-cluster.conf")
@@ -563,7 +571,9 @@ cat ./configmap.conf
 	}
 
 	configMapCmd := "get configmap telegraf-config -n observability -o jsonpath={.data.base-ext-telegraf\\.conf}"
-	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, false)
+	patchConfigMapCmd := "patch configmap telegraf-config -n observability"
+	restartPodsCmd := "delete pods -l app.kubernetes.io/name=telegraf -n observability"
+	_, err := metriccfg.UpdateClusterMetricConfig(context.Background(), resp, telegrafClusterGoldPath, configMapCmd, patchConfigMapCmd, restartPodsCmd, false)
 	if err == nil {
 		t.Error(err)
 	}

@@ -100,7 +100,11 @@ func main() {
 	helper.KubectlArgs = strings.Fields(kubectlConfig)
 
 	telegrafConfigMapCmd := viper.GetString("misc.telegrafConfigMap")
+	telegrafPatchConfigMapCmd := viper.GetString("misc.telegrafPatchConfigMap")
+	telegrafRestartPodsCmd := viper.GetString("misc.telegrafRestartPods")
 	fluentbitConfigMapCmd := viper.GetString("misc.fluentbitConfigMap")
+	fluentbitPatchConfigMapCmd := viper.GetString("misc.fluentbitPatchConfigMap")
+	fluentbitRestartPodsCmd := viper.GetString("misc.fluentbitRestartPods")
 
 	logcfg.FileOwner = viper.GetString("misc.fileOwner")
 
@@ -166,7 +170,7 @@ func main() {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					_, err := metriccfg.UpdateClusterMetricConfig(ctx, resp, telegrafClusterGoldPath, telegrafConfigMapCmd, isInitMask[clientapi.MetricCluster])
+					_, err := metriccfg.UpdateClusterMetricConfig(ctx, resp, telegrafClusterGoldPath, telegrafConfigMapCmd, telegrafPatchConfigMapCmd, telegrafRestartPodsCmd, isInitMask[clientapi.MetricCluster])
 					if err != nil {
 						fmt.Println("Update Cluster Metric Config Error:", err)
 					}
@@ -188,7 +192,7 @@ func main() {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					_, err := logcfg.UpdateClusterLogConfig(ctx, resp, fluentbitClusterGoldPath, fluentbitConfigMapCmd, isInitMask[clientapi.LogCluster])
+					_, err := logcfg.UpdateClusterLogConfig(ctx, resp, fluentbitClusterGoldPath, fluentbitConfigMapCmd, fluentbitPatchConfigMapCmd, fluentbitRestartPodsCmd, isInitMask[clientapi.LogCluster])
 					if err != nil {
 						fmt.Println("Update Cluster Log Config Error:", err)
 					}
