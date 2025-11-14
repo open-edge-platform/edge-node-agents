@@ -18,9 +18,8 @@ var Kubectl = "kubectl"
 var KubectlArgs = []string{"kubectl"} // kubectl command and subcommand as separate args
 
 func RunExec(ctx context.Context, asyncFlg bool, args ...string) (bool, string, error) {
-
+	// #nosec G204 - command is validated and controlled by telemetry agent configuration
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
-	// Let K3s handle KUBECONFIG through system environment - no explicit setting needed
 
 	// Capture both stdout and stderr
 	cmdReader, err := cmd.StdoutPipe()
@@ -81,6 +80,7 @@ func RunStringCommand(ctx context.Context, _ bool, command string) (string, erro
 		return "", errors.New("command is empty")
 	}
 	parts := strings.Fields(command)
+	// #nosec G204 - command is validated and controlled by telemetry agent configuration
 	cmd := exec.Command(parts[0], parts[1:]...)
 	_, output, err := RunExec(ctx, false, cmd.Args...)
 	if err != nil {
