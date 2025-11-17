@@ -6,6 +6,9 @@
 
 ## Cluster Agent Changelog
 
+### 1.8.1
+- Update AppArmor profile to allow environment.d read/write
+
 ### 1.8.0
 - Update AppArmor profile to allow netdev creation
 - Update AppArmor and sudoers to allow k3s uninstallation
@@ -95,6 +98,12 @@
 - Initial platform observability agent release
 
 ## Platform Telemetry Agent Changelog
+
+### 1.5.1
+- Revome RKE2 references from the telemetry agent config
+
+### 1.5.0
+- cleanup old inbm entries and add new inbd(in-band daemon) entry
 
 ### 1.4.0
 - Add retry/backoff to status call
