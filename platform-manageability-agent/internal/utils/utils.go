@@ -76,9 +76,11 @@ func (r *RealCommandExecutor) ExecuteAMTInfo() ([]byte, error) {
 
 // ExecuteAMTActivate executes the AMT activate command.
 func (r *RealCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, password string) ([]byte, error) {
-	cmd := exec.Command("sudo", "-E", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-n")
+	cmd := exec.Command("sudo", "-E", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-tenant", profileName, "-n")
 	cmd.Env = append(cmd.Environ(), fmt.Sprintf("AMT_PASSWORD=%s", password))
 	cmd.Env = append(cmd.Environ(), fmt.Sprintf("PROFILE=%s", profileName))
+	// cmd.Env = append(cmd.Environ(), fmt.Sprintf("TENANT_ID=%s", profileName))
+
 	return cmd.CombinedOutput()
 }
 
