@@ -70,8 +70,8 @@ github.com/lufia/plan9stats v0.0.0-20250827001030-24949be3fa54 h1:mFWunSatvkQQDh
 github.com/lufia/plan9stats v0.0.0-20250827001030-24949be3fa54/go.mod h1:autxFIvghDt3jPTLoqZ9OZ7s9qTGNAWmYCjVFWPX/zg=
 github.com/open-edge-platform/cluster-api-provider-intel v1.2.8 h1:zsCLD05jXUblDBPjlRhZpYAFdzbs+8hLwGeJYfYh+XE=
 github.com/open-edge-platform/cluster-api-provider-intel v1.2.8/go.mod h1:y32MjuisZgTsjIF6K75w8QYENCdppKyBXQCAMphaxKU=
-github.com/open-edge-platform/edge-node-agents/common v1.8.0 h1:VhVhdftyDLQWbSeEDMXnzzP8jqDhJzph8B42IWQ6fFo=
-github.com/open-edge-platform/edge-node-agents/common v1.8.0/go.mod h1:zTswftFqpDz/VE/RB5cUQMPLwKWbohjlNtbOgG6X0n8=
+github.com/open-edge-platform/edge-node-agents/common v1.9.0 h1:m5VtCiiFpukJEbs8BluXbhL8kca4YxpUy3LVzwRUFjc=
+github.com/open-edge-platform/edge-node-agents/common v1.9.0/go.mod h1:NAQkeoQhcU2fD/vXua6Ph+AxwgU1qrEWNruGzLtoCVU=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
