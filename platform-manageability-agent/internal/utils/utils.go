@@ -79,7 +79,6 @@ func (r *RealCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, passwo
 	cmd := exec.Command("sudo", "-E", "/usr/bin/rpc", "activate", "-u", rpsAddress, "-tenant", profileName, "-n")
 	cmd.Env = append(cmd.Environ(), fmt.Sprintf("AMT_PASSWORD=%s", password))
 	cmd.Env = append(cmd.Environ(), fmt.Sprintf("PROFILE=%s", profileName))
-	// cmd.Env = append(cmd.Environ(), fmt.Sprintf("TENANT_ID=%s", profileName))
 
 	return cmd.CombinedOutput()
 }
