@@ -3,15 +3,15 @@
 
 module github.com/open-edge-platform/edge-node-agents/platform-update-agent
 
-go 1.24.6
+go 1.24.9
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/open-edge-platform/edge-node-agents/common v1.8.0
-	github.com/open-edge-platform/infra-managers/maintenance v1.23.7
+	github.com/open-edge-platform/edge-node-agents/common v1.9.0
+	github.com/open-edge-platform/infra-managers/maintenance v1.24.1
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/spf13/afero v1.15.0
 	github.com/stretchr/testify v1.11.1
@@ -52,10 +52,10 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	golang.org/x/net v0.46.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.32.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250825161204-c5933d9347a5 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
