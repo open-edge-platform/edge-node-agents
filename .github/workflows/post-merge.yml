@@ -55,7 +55,7 @@ jobs:
       matrix:
         # runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@10a695ef1672c6cc429f1f590db80b1e9f3ab5a1  #cosign-fix
+    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@bd7e47db17ede4b7a262229e728d4c5488b0d835  #cosign-fix
     with:
       #  runner_version: ${{ matrix.runner_version }}
       runs_on: ubuntu-22.04
