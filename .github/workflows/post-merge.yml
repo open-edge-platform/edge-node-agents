@@ -49,6 +49,7 @@ jobs:
       security-events: write
       id-token: write
     needs: pre-checks
+    if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' && needs.pre-checks.outputs.filtered_projects != '[""]' }}
     strategy:
       fail-fast: false
       matrix:
