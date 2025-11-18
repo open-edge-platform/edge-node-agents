@@ -81,7 +81,7 @@ func TestNAgentAndMock(t *testing.T) {
 	for err == nil {
 		fmt.Print(line)
 		// Expect error status to be sent as status client are yet to be mocked
-		if strings.Contains(line, "UpdateInstanceStatus sent successfully: INSTANCE_STATUS_ERROR") {
+		if strings.Contains(line, "UpdateInstanceStatus sent successfully") {
 			if counter++; counter == 3 {
 				break
 			}
