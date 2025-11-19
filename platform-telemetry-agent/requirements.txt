@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-# test#1
+# test#2
 
 # OpenAPI validator
 openapi-spec-validator~=0.5.7
