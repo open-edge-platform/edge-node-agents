@@ -8,7 +8,7 @@ require (
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 

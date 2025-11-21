@@ -11,7 +11,8 @@ on:
       - release-*
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   pre-checks:
@@ -22,12 +23,12 @@ jobs:
       filtered_projects: ${{ steps.filter-changes.outputs.filtered_projects }}
       manifest: ${{ contains(steps.check-files.outputs.changed_files, 'ena-manifest.yaml') }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
         with:
           persist-credentials: false
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@57ae89489027070792089531710c450af3b66c26  # v0.1.64
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@490a8651344e504bba68a208b1104254046dacd5  # v0.1.65
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
@@ -40,14 +41,14 @@ jobs:
 
       - name: Discover Changed Files
         id: check-files
-        uses: open-edge-platform/orch-ci/discover-changed-files@57ae89489027070792089531710c450af3b66c26  # v0.1.64
+        uses: open-edge-platform/orch-ci/discover-changed-files@490a8651344e504bba68a208b1104254046dacd5  # v0.1.65
         with:
           project_folder: "."
   post-merge-pipeline:
     permissions:
       contents: read
-      security-events: write
       id-token: write
+      security-events: write
     needs: pre-checks
     if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' && needs.pre-checks.outputs.filtered_projects != '[""]' }}
     strategy:
@@ -55,7 +56,7 @@ jobs:
       matrix:
         # runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@57ae89489027070792089531710c450af3b66c26  # v0.1.64
+    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@490a8651344e504bba68a208b1104254046dacd5  # v0.1.65
     with:
       #  runner_version: ${{ matrix.runner_version }}
       runs_on: ubuntu-22.04
@@ -79,7 +80,6 @@ jobs:
   push-manifest:
     permissions:
       contents: read
-      security-events: write
       id-token: write
     runs-on: ubuntu-latest
     needs:
@@ -88,7 +88,7 @@ jobs:
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd   # v5.0.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3   # v6.0.0
         with:
           fetch-depth: 0   # Fetch all history, WO sporadic issue with missing tags
           fetch-tags: true  # Fetch tags
@@ -96,7 +96,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout action repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
         with:
           repository: open-edge-platform/orch-ci
           path: ci
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@57ae89489027070792089531710c450af3b66c26  # v0.1.64
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@490a8651344e504bba68a208b1104254046dacd5  # v0.1.65
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "yq,aws,oras"
@@ -165,7 +165,7 @@ jobs:
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd   # v5.0.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3   # v6.0.0
         with:
           fetch-depth: 0   # Fetch all history, WO sporadic issue with missing tags
           fetch-tags: true   # Fetch tags
@@ -173,7 +173,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@57ae89489027070792089531710c450af3b66c26  # v0.1.64
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@490a8651344e504bba68a208b1104254046dacd5  # v0.1.65
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base,yq"
@@ -221,7 +221,7 @@ jobs:
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout VEN repo
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd   # v5.0.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3   # v6.0.0
         with:
           repository: open-edge-platform/virtual-edge-node
           path: virtual-edge-node
@@ -229,7 +229,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@57ae89489027070792089531710c450af3b66c26  # v0.1.64
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@490a8651344e504bba68a208b1104254046dacd5  # v0.1.65
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base,yq"
@@ -411,7 +411,7 @@ jobs:
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout EMF repo
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd   # v5.0.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3   # v6.0.0
         with:
           repository: open-edge-platform/edge-manageability-framework
           path: edge-manageability-framework
@@ -419,7 +419,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@57ae89489027070792089531710c450af3b66c26  # v0.1.64
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@490a8651344e504bba68a208b1104254046dacd5  # v0.1.65
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base"

@@ -25,14 +25,14 @@ jobs:
     outputs:
       filtered_projects: ${{ steps.filter-changes.outputs.filtered_projects }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd   # v5.0.1
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3   # v6.0.0
         with:
           persist-credentials: false
       - name: "Verify Branch Name"
-        uses: open-edge-platform/orch-ci/verify-branch-name@57ae89489027070792089531710c450af3b66c26  # 0.1.64
+        uses: open-edge-platform/orch-ci/verify-branch-name@490a8651344e504bba68a208b1104254046dacd5  # 0.1.65
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@57ae89489027070792089531710c450af3b66c26  # 0.1.64
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@490a8651344e504bba68a208b1104254046dacd5  # 0.1.65
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
@@ -52,7 +52,7 @@ jobs:
       matrix:
         # runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@57ae89489027070792089531710c450af3b66c26  # 0.1.64
+    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@490a8651344e504bba68a208b1104254046dacd5  # 0.1.65
     with:
       # runner_version: ${{ matrix.runner_version }}
       runs_on: ubuntu-22.04
