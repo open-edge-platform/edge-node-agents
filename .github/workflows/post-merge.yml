@@ -11,7 +11,8 @@ on:
       - release-*
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   pre-checks:
@@ -46,7 +47,6 @@ jobs:
   post-merge-pipeline:
     permissions:
       contents: read
-      security-events: write
       id-token: write
     needs: pre-checks
     if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' && needs.pre-checks.outputs.filtered_projects != '[""]' }}
@@ -79,7 +79,6 @@ jobs:
   push-manifest:
     permissions:
       contents: read
-      security-events: write
       id-token: write
     runs-on: ubuntu-latest
     needs:
