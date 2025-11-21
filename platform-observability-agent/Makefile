@@ -8,11 +8,11 @@ PACKAGE_DIR ?= $(BUILD_DIR)/package
 INSTALL_DIR ?= $(BUILD_DIR)/install
 PKG_VERSION := $(shell if grep -q dev VERSION; then echo $$(cat VERSION)-$$(git rev-parse --short HEAD); else cat VERSION; fi)
 ASSETS_DIR ?= assets
-FB_VERSION = 3.2.9
+FB_VERSION = 4.2.0
 FB_DIR = fluent-bit_$(FB_VERSION)
-TELEGRAF_VERSION = 1.34.0-1
+TELEGRAF_VERSION = 1.36.1-1
 TELEGRAF_DIR = telegraf_$(TELEGRAF_VERSION)
-OTELCOL_VERSION = 0.122.1
+OTELCOL_VERSION = 0.140.1
 OTELCOL_DIR = otelcol_$(OTELCOL_VERSION)
 
 

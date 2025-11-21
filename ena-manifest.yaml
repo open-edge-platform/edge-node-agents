@@ -4,7 +4,7 @@
 ---
 metadata:
   schemaVersion: 2.0.0
-  release: 1.4.2
+  release: 1.4.3
 repository:
   codename: 3.1
   component: main
@@ -22,7 +22,7 @@ packages:
     version: 0.3.1
     ociArtifact: edge-orch/en/deb/platform-manageability-agent
   - name: platform-observability-agent
-    version: 1.10.1
+    version: 1.10.2
     ociArtifact: edge-orch/en/deb/platform-observability-agent
   - name: platform-telemetry-agent
     version: 1.6.1
