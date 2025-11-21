@@ -48,6 +48,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      security-events: write
     needs: pre-checks
     if: ${{ needs.pre-checks.outputs.filtered_projects != '[]' && needs.pre-checks.outputs.filtered_projects != '[""]' }}
     strategy:
