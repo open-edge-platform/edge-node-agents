@@ -6,7 +6,7 @@
 
 ## Overview
 
-This Platform Telemetry Agent for Observability as a Service (ObaaS) manages and updates node metric and log configurations, re-executing metric and log collectors with the latest configuration
+This Platform Telemetry Agent for Observability as a Service (ObaaS) manages and updates node metric and log configurations, re-executing metric and log collectors with the latest configuration.
 
 ## Develop
 
