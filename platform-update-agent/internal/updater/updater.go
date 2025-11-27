@@ -464,6 +464,10 @@ func (k *kernelUpdater) update() error {
 	if k.osType == "emt" {
 		log.Info("Configuring EMT kernel parameters")
 
+		if metadataUpdateSource.KernelCommand == "" {
+			log.Debugf("No kernel command provided - skipping EMT kernel parameter update")
+			return nil
+		}
 		//cmdlineCommand
 		// Get current kernel command line
 		currentCmdlineOutput, err := k.Execute(cmdlineCommand)
