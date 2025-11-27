@@ -78,7 +78,7 @@ func TestRealDownloadExecutor_Download_Success(t *testing.T) {
 	assert.Len(t, calls, 1, "Expected 1 command to be run")
 
 	// verify the command's arguments
-	expectedCommand := []string{"inbc", "sota", "-m", "download-only", "-s", sha, "-u", url}
+	expectedCommand := []string{"inbc", "sota", "--mode", "download-only", "--signature", sha, "--uri", url}
 	assert.Equal(t, expectedCommand, calls[0].Args, "Command args mismatch.")
 }
 
