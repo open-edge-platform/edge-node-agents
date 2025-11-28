@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -49,7 +50,7 @@ func NewDownloader(request *pb.UpdateSystemSoftwareRequest) *Downloader {
 		writeUpdateStatus:       writeUpdateStatus,
 		writeGranularLog:        writeGranularLog,
 		statfs:                  unix.Statfs,
-		httpClient:              &http.Client{},
+		httpClient:              &http.Client{Timeout: 30 * time.Minute},
 		requestCreator:          http.NewRequest,
 		fs:                      afero.NewOsFs(),
 		getFreeDiskSpaceInBytes: utils.GetFreeDiskSpaceInBytes,
@@ -81,17 +82,17 @@ func (t *Downloader) Download() error {
 
 	log.Println("Downloading update from", t.request.Url)
 
-	// Check available space on disk
-	// isDiskEnough, err := t.isDiskSpaceAvailable()
-	// if err != nil {
-	// 	return fmt.Errorf("error checking disk space: %w", err)
-	// }
+	//Check available space on disk
+	isDiskEnough, err := t.isDiskSpaceAvailable()
+	if err != nil {
+		return fmt.Errorf("error checking disk space: %w", err)
+	}
 
-	// if !isDiskEnough {
-	// 	t.writeUpdateStatus(t.fs, FAIL, string(jsonString), "Insufficient disk space")
-	// 	t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INSUFFICIENT_STORAGE)
-	// 	return fmt.Errorf("insufficient disk space")
-	// }
+	if !isDiskEnough {
+		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), "Insufficient disk space")
+		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INSUFFICIENT_STORAGE)
+		return fmt.Errorf("insufficient disk space")
+	}
 
 	log.Println("Sufficient disk space available. Proceeding to download the artifact.")
 
@@ -146,7 +147,7 @@ func (t *Updater) VerifyHash() error {
 
 // downloadFile downloads the file from the url.
 func (t *Downloader) downloadFile() error {
-	// Read JWT token
+	// Read JWT token (anonymous tokens are automatically converted to empty string)
 	token, err := t.readJWTTokenFunc(t.fs, utils.JWTTokenPath, t.isTokenExpiredFunc)
 	if err != nil {
 		return fmt.Errorf("error reading JWT token: %w", err)
@@ -278,6 +279,7 @@ func (t *Downloader) handleAuthError(resp *http.Response, methodName string) err
 
 // isDiskSpaceAvailable checks if there is enough disk space to download the artifacts.
 func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
+
 	availableSpace, err := t.getFreeDiskSpaceInBytes("/var/cache/manageability/repository-tool/sota", unix.Statfs)
 	if err != nil {
 		log.Printf("Error getting disk space: %v\n", err)
@@ -294,7 +296,10 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 	// Get required space for the file
 	requiredSpace, err := t.getRequiredFileSize(string(jsonString))
 	if err != nil {
-		return false, err
+		// Don't fail the download just because we can't check the size
+		// This allows download to proceed even if HEAD request fails
+		log.Printf("[DISK_CHECK] WARNING: Could not determine required file size, allowing download to proceed: %v\n", err)
+		return true, nil
 	}
 
 	// Check if there is enough space
@@ -303,12 +308,14 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 		return false, nil
 	}
 
+	log.Printf("[DISK_CHECK] SUCCESS: Sufficient disk space available. Available: %.2f GB, Required: %.2f GB\n",
+		float64(availableSpace)/(1024*1024*1024), float64(requiredSpace)/(1024*1024*1024))
 	return true, nil
 }
 
 // getRequiredFileSize gets the file size needed for the download with proper error handling
 func (t *Downloader) getRequiredFileSize(jsonString string) (int64, error) {
-	// Read JWT token
+	// Read JWT token (anonymous tokens are automatically converted to empty string)
 	token, err := t.readJWTTokenFunc(t.fs, utils.JWTTokenPath, t.isTokenExpiredFunc)
 	if err != nil {
 		t.writeUpdateStatus(t.fs, FAIL, jsonString, err.Error())
@@ -316,15 +323,21 @@ func (t *Downloader) getRequiredFileSize(jsonString string) (int64, error) {
 		return 0, fmt.Errorf("error reading JWT token: %w", err)
 	}
 
+	if token == "" {
+		log.Println("[DISK_CHECK] WARNING: JWT token is empty. Will try without authentication.")
+	} else {
+		log.Println("[DISK_CHECK] JWT token found.")
+	}
+
 	requiredSpace, err := t.getFileSizeInBytesFunc(t.fs, t.request.Url, token)
 	if err != nil {
 		// If we get a 401 error, run diagnostics to help debug the issue
 		if strings.Contains(err.Error(), "401") {
-			log.Printf("Authentication failed (401), running JWT token diagnostics")
 			utils.DiagnoseJWTToken(t.fs, utils.JWTTokenPath)
 		}
-		t.writeUpdateStatus(t.fs, FAIL, jsonString, err.Error())
-		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_DOWNLOAD)
+		// Don't write FAIL status here - let the caller decide if this is fatal
+		// The caller (isDiskSpaceAvailable) makes this non-blocking
+		log.Printf("[DISK_CHECK] ERROR: Failed to get required file size: %v", err)
 		return 0, fmt.Errorf("error getting file size: %w", err)
 	}
 

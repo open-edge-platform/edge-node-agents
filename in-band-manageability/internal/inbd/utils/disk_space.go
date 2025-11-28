@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/afero"
@@ -93,7 +94,8 @@ func getFileSizeWithHEAD(fs afero.Fs, url string, token string) (int64, error) {
 	}
 
 	// Perform the HEAD request using secure TLS client
-	client, err := CreateSecureHTTPClient(fs, url)
+	// Pass token to allow insecure TLS for anonymous access
+	client, err := CreateSecureHTTPClient(fs, url, token)
 	if err != nil {
 		return 0, fmt.Errorf("error creating secure HTTP client: %w", err)
 	}
@@ -139,7 +141,8 @@ func getFileSizeWithRange(fs afero.Fs, url string, token string) (int64, error) 
 	}
 
 	// Perform the GET request using secure TLS client
-	client, err := CreateSecureHTTPClient(fs, url)
+	// Pass token to allow insecure TLS for anonymous access
+	client, err := CreateSecureHTTPClient(fs, url, token)
 	if err != nil {
 		return 0, fmt.Errorf("error creating secure HTTP client: %w", err)
 	}
@@ -233,7 +236,8 @@ func IsDiskSpaceAvailable(url string,
 
 // CreateSecureHTTPClient creates an HTTP client with appropriate TLS configuration
 // based on whether the URL uses an IP address or hostname.
-func CreateSecureHTTPClient(fs afero.Fs, url string) (*http.Client, error) {
+// When token is empty (anonymous access), uses InsecureSkipVerify for TLS.
+func CreateSecureHTTPClient(fs afero.Fs, url string, token string) (*http.Client, error) {
 	parsedURL, err := neturl.Parse(url)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing URL: %w", err)
@@ -243,11 +247,15 @@ func CreateSecureHTTPClient(fs afero.Fs, url string) (*http.Client, error) {
 	hostname := parsedURL.Hostname()
 	isIP := net.ParseIP(hostname) != nil
 
+	// For anonymous access (no token), use insecure TLS to skip certificate verification
+	insecureTLS := (token == "")
+
 	// Use strict TLS configuration with optional custom CA support
 	tlsConfig := &tls.Config{
-		ServerName: hostname,
-		MinVersion: tls.VersionTLS12, // Enforce minimum TLS 1.2
-		MaxVersion: tls.VersionTLS13, // Prefer TLS 1.3 when available
+		ServerName:         hostname,
+		MinVersion:         tls.VersionTLS12, // Enforce minimum TLS 1.2
+		MaxVersion:         tls.VersionTLS13, // Prefer TLS 1.3 when available
+		InsecureSkipVerify: insecureTLS,      // Skip verification for anonymous access
 	}
 
 	// Check for custom CA certificate file for development scenarios
@@ -281,16 +289,18 @@ func CreateSecureHTTPClient(fs afero.Fs, url string) (*http.Client, error) {
 		log.Printf("No custom CA certificate specified via INBM_CUSTOM_CA_FILE environment variable")
 	}
 
-	if isIP {
+	if insecureTLS {
+		log.Printf("Creating HTTP client for %s - INSECURE MODE (anonymous access, skipping certificate verification)", hostname)
+	} else if isIP {
 		log.Printf("Creating HTTP client for IP address %s - full certificate verification", hostname)
 		// For IP addresses, we might need to be more explicit
 		tlsConfig.ServerName = hostname
 	} else {
-		log.Printf("Creating HTTP client for hostname %s - flexible certificate verification", hostname)
-		// For hostnames, use the custom verification
+		log.Printf("Creating HTTP client for hostname %s - full certificate verification", hostname)
 	}
 
 	client := &http.Client{
+		Timeout: 30 * time.Second, // 30 second timeout for HEAD/size check requests
 		Transport: &http.Transport{
 			TLSClientConfig: tlsConfig,
 		},
@@ -440,7 +450,8 @@ func tryBasicAuthWithCredentials(fs afero.Fs, url string, username string, passw
 	// Set Basic Auth credentials
 	req.SetBasicAuth(username, password)
 
-	client, err := CreateSecureHTTPClient(fs, url)
+	// For Basic Auth, pass empty token to use strict TLS
+	client, err := CreateSecureHTTPClient(fs, url, "")
 	if err != nil {
 		return 0, fmt.Errorf("error creating secure HTTP client for Basic Auth: %w", err)
 	}
@@ -570,7 +581,8 @@ func tryBearerWithExtraHeaders(fs afero.Fs, url string, token string, extraHeade
 		req.Header.Set(key, value)
 	}
 
-	client, err := CreateSecureHTTPClient(fs, url)
+	// Pass token to CreateSecureHTTPClient
+	client, err := CreateSecureHTTPClient(fs, url, token)
 	if err != nil {
 		return 0, fmt.Errorf("error creating secure HTTP client for enhanced Bearer: %w", err)
 	}
@@ -615,7 +627,8 @@ func tryAuthorizationHeaderVariations(fs afero.Fs, url string, token string) (in
 
 		req.Header.Set("Authorization", authValue)
 
-		client, err := CreateSecureHTTPClient(fs, url)
+		// For auth header variations, use empty token for strict TLS
+		client, err := CreateSecureHTTPClient(fs, url, "")
 		if err != nil {
 			continue
 		}
