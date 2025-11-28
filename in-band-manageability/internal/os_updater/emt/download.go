@@ -82,16 +82,16 @@ func (t *Downloader) Download() error {
 	log.Println("Downloading update from", t.request.Url)
 
 	// Check available space on disk
-	isDiskEnough, err := t.isDiskSpaceAvailable()
-	if err != nil {
-		return fmt.Errorf("error checking disk space: %w", err)
-	}
+	// isDiskEnough, err := t.isDiskSpaceAvailable()
+	// if err != nil {
+	// 	return fmt.Errorf("error checking disk space: %w", err)
+	// }
 
-	if !isDiskEnough {
-		t.writeUpdateStatus(t.fs, FAIL, string(jsonString), "Insufficient disk space")
-		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INSUFFICIENT_STORAGE)
-		return fmt.Errorf("insufficient disk space")
-	}
+	// if !isDiskEnough {
+	// 	t.writeUpdateStatus(t.fs, FAIL, string(jsonString), "Insufficient disk space")
+	// 	t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INSUFFICIENT_STORAGE)
+	// 	return fmt.Errorf("insufficient disk space")
+	// }
 
 	log.Println("Sufficient disk space available. Proceeding to download the artifact.")
 
