@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@79c4381f9be567527d8782094317b0282493e45a  # v0.1.66
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@592eafb7c84669729eb1adc610515bad61c3550b  # v0.1.67
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Discover Changed Files
         id: check-files
-        uses: open-edge-platform/orch-ci/discover-changed-files@79c4381f9be567527d8782094317b0282493e45a  # v0.1.66
+        uses: open-edge-platform/orch-ci/discover-changed-files@592eafb7c84669729eb1adc610515bad61c3550b  # v0.1.67
         with:
           project_folder: "."
   post-merge-pipeline:
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@79c4381f9be567527d8782094317b0282493e45a  # v0.1.66
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@592eafb7c84669729eb1adc610515bad61c3550b  # v0.1.67
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "yq,aws,oras"
@@ -173,7 +173,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@79c4381f9be567527d8782094317b0282493e45a  # v0.1.66
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@592eafb7c84669729eb1adc610515bad61c3550b  # v0.1.67
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base,yq"
@@ -229,7 +229,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@79c4381f9be567527d8782094317b0282493e45a  # v0.1.66
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@592eafb7c84669729eb1adc610515bad61c3550b  # v0.1.67
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base,yq"
@@ -419,7 +419,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@79c4381f9be567527d8782094317b0282493e45a  # v0.1.66
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@592eafb7c84669729eb1adc610515bad61c3550b  # v0.1.67
         with:
           gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
           bootstrap_tools: "base"
