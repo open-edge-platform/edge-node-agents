@@ -32,6 +32,19 @@ type Snapshotter struct {
 	Fs                      afero.Fs
 }
 
+// NewSnapshotter creates a new Ubuntu Snapshotter.
+func NewSnapshotter(commandExecutor common.Executor, fs afero.Fs) *Snapshotter {
+	return &Snapshotter{
+		CommandExecutor:         commandExecutor,
+		IsBTRFSFileSystemFunc:   utils.IsBTRFSFileSystem,
+		IsSnapperInstalledFunc:  IsSnapperInstalled,
+		EnsureSnapperConfigFunc: EnsureSnapperConfig,
+		ClearStateFileFunc:      utils.ClearStateFile,
+		WriteToStateFileFunc:    utils.WriteToStateFile,
+		Fs:                      fs,
+	}
+}
+
 // Snapshot method for Ubuntu
 func (u *Snapshotter) Snapshot() error {
 	// Check if the file system is BTRFS
@@ -49,10 +62,6 @@ func (u *Snapshotter) Snapshot() error {
 		}
 		if !isInstalled {
 			return fmt.Errorf("snapper is not installed")
-		}
-
-		if err := u.ClearStateFileFunc(u.CommandExecutor, utils.StateFilePath); err != nil {
-			return fmt.Errorf("failed to clear dispatcher state file: %w", err)
 		}
 
 		err = u.EnsureSnapperConfigFunc(u.CommandExecutor, "rootConfig")
@@ -104,6 +113,25 @@ func (u *Snapshotter) Snapshot() error {
 		// TODO: Check if ProceedWithRollback flag is set to false.
 		// If it set to false, send error and do not proceed.
 		log.Println("No snapshot taken as the file system is not BTRFS.")
+
+		// Still create state file for post-reboot verification even without BTRFS snapshot
+		state := utils.INBDState{
+			RestartReason:  "sota",
+			SnapshotNumber: 0, // No snapshot number for non-BTRFS
+		}
+
+		stateJSON, err := json.Marshal(state)
+		if err != nil {
+			return fmt.Errorf("failed to serialize state to JSON: %w", err)
+		}
+		log.Printf("State JSON: %s", string(stateJSON))
+
+		// WriteToStateFile will create directory and file if they don't exist
+		err = u.WriteToStateFileFunc(u.Fs, utils.StateFilePath, string(stateJSON))
+		if err != nil {
+			return fmt.Errorf("failed to write to state file: %w", err)
+		}
+		log.Println("State file created for post-reboot verification (non-BTRFS filesystem)")
 	}
 	return nil
 }

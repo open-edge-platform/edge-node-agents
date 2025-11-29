@@ -9,7 +9,7 @@ package commands
 // Context Timeouts
 const clientDialTimeoutInSeconds = 5
 const sourceTimeoutInSeconds = 15
-const emtSoftwareUpdateTimerInSeconds = 360
+const emtSoftwareUpdateTimerInSeconds = 2100 // 35 minutes - accounts for 30min HTTP timeout + disk check + download time
 const defaultSoftwareUpdateTimerInSeconds = 660
 const configTimeoutInSeconds = 15
 const firmwareUpdateTimerInSeconds = 90

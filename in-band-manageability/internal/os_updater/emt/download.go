@@ -38,7 +38,7 @@ type Downloader struct {
 	requestCreator          func(string, string, io.Reader) (*http.Request, error)
 	fs                      afero.Fs
 	getFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
-	getFileSizeInBytesFunc  func(afero.Fs, string, string) (int64, error)
+	getFileSizeInBytesFunc  func(afero.Fs, string) (int64, error)
 }
 
 // NewDownloader creates a new Downloader.
@@ -147,95 +147,24 @@ func (t *Updater) VerifyHash() error {
 
 // downloadFile downloads the file from the url.
 func (t *Downloader) downloadFile() error {
-	// Read JWT token (anonymous tokens are automatically converted to empty string)
-	token, err := t.readJWTTokenFunc(t.fs, utils.JWTTokenPath, t.isTokenExpiredFunc)
-	if err != nil {
-		return fmt.Errorf("error reading JWT token: %w", err)
-	}
-
-	if token == "" {
-		log.Println("JWT token is empty. Proceeding without Authorization.")
-	}
-
-	// Try different authentication methods
-	authMethods := t.getAuthMethods(token)
-
-	var lastErr error
-	for _, method := range authMethods {
-		if err := t.tryAuthMethod(method); err != nil {
-			lastErr = err
-			continue
-		}
-		// Success - file was downloaded
-		return nil
-	}
-
-	// If we reach here, all methods failed
-	if lastErr == nil {
-		lastErr = fmt.Errorf("all authentication methods failed")
-	}
-	return lastErr
-}
-
-// authMethod represents an authentication method configuration
-type authMethod struct {
-	name      string
-	setupAuth func(*http.Request)
-}
-
-// getAuthMethods returns a slice of authentication methods to try
-func (t *Downloader) getAuthMethods(token string) []authMethod {
-	return []authMethod{
-		{
-			name:      "Bearer Token",
-			setupAuth: t.setupBearerTokenAuth(token),
-		},
-		{
-			name:      "No Authentication",
-			setupAuth: t.setupNoAuth(),
-		},
-	}
-}
-
-// setupBearerTokenAuth returns a function that sets up Bearer token authentication
-func (t *Downloader) setupBearerTokenAuth(token string) func(*http.Request) {
-	return func(req *http.Request) {
-		if token != "" {
-			req.Header.Set("Authorization", "Bearer "+token)
-		}
-	}
-}
-
-// setupNoAuth returns a function that sets up no authentication
-func (t *Downloader) setupNoAuth() func(*http.Request) {
-	return func(req *http.Request) {
-		// No authentication headers added
-	}
-}
-
-// tryAuthMethod attempts to download the file using a specific authentication method
-func (t *Downloader) tryAuthMethod(method authMethod) error {
 	// Create a new HTTP request
 	req, err := t.requestCreator("GET", t.request.Url, nil)
 	if err != nil {
 		return fmt.Errorf("error creating request: %w", err)
 	}
 
-	// Setup authentication for this method
-	method.setupAuth(req)
-
 	// Perform the request
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("error performing request with %s: %w", method.name, err)
+		return fmt.Errorf("error performing request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		return t.downloadFileFromResponse(resp, method.name)
+		return t.downloadFileFromResponse(resp, "Download")
 	}
 
-	return t.handleAuthError(resp, method.name)
+	return t.handleAuthError(resp, "Download")
 }
 
 // downloadFileFromResponse handles the actual file download from a successful HTTP response
@@ -315,26 +244,8 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 
 // getRequiredFileSize gets the file size needed for the download with proper error handling
 func (t *Downloader) getRequiredFileSize(jsonString string) (int64, error) {
-	// Read JWT token (anonymous tokens are automatically converted to empty string)
-	token, err := t.readJWTTokenFunc(t.fs, utils.JWTTokenPath, t.isTokenExpiredFunc)
+	requiredSpace, err := t.getFileSizeInBytesFunc(t.fs, t.request.Url)
 	if err != nil {
-		t.writeUpdateStatus(t.fs, FAIL, jsonString, err.Error())
-		t.writeGranularLog(t.fs, FAIL, FAILURE_REASON_INBM)
-		return 0, fmt.Errorf("error reading JWT token: %w", err)
-	}
-
-	if token == "" {
-		log.Println("[DISK_CHECK] WARNING: JWT token is empty. Will try without authentication.")
-	} else {
-		log.Println("[DISK_CHECK] JWT token found.")
-	}
-
-	requiredSpace, err := t.getFileSizeInBytesFunc(t.fs, t.request.Url, token)
-	if err != nil {
-		// If we get a 401 error, run diagnostics to help debug the issue
-		if strings.Contains(err.Error(), "401") {
-			utils.DiagnoseJWTToken(t.fs, utils.JWTTokenPath)
-		}
 		// Don't write FAIL status here - let the caller decide if this is fatal
 		// The caller (isDiskSpaceAvailable) makes this non-blocking
 		log.Printf("[DISK_CHECK] ERROR: Failed to get required file size: %v", err)

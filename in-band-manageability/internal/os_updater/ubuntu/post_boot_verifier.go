@@ -12,6 +12,7 @@ import (
 
 	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 	utils "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
+	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/os_updater/emt"
 	"github.com/spf13/afero"
 )
 
@@ -66,6 +67,10 @@ func (v *Verifier) VerifyUpdateAfterReboot(state utils.INBDState) error {
 
 	}
 	log.Println("Network connection detected.  Proceeding with update verification.")
+
+	// Write SUCCESS status to update log files
+	emt.WriteUpdateStatus(v.fs, emt.SUCCESS, "", "")
+	emt.WriteGranularLogWithOSType(v.fs, emt.SUCCESS, "", "ubuntu")
 
 	// Remove state file after checks
 	err := v.RemoveFileFunc(v.fs, utils.StateFilePath)

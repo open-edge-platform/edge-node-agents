@@ -84,6 +84,18 @@ func (u *Updater) Update() (bool, error) {
 		return false, err
 	}
 
+	// Take snapshot before applying updates (for FULL and NO_DOWNLOAD modes)
+	if u.Request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL ||
+		u.Request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
+		log.Println("Save snapshot before applying the update.")
+		if err := NewSnapshotter(u.CommandExecutor, fs).Snapshot(); err != nil {
+			errMsg := fmt.Sprintf("Error taking snapshot: %v", err)
+			emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), errMsg)
+			emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_INBM, "ubuntu")
+			return false, fmt.Errorf("failed to take snapshot before applying the update: %v", err)
+		}
+	}
+
 	var cmds [][]string
 	switch u.Request.Mode {
 	case pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL:
@@ -112,7 +124,7 @@ func (u *Updater) Update() (bool, error) {
 		}
 	}
 
-	// Success - write success status
+	// Success - write success status (will be verified after reboot)
 	emt.WriteUpdateStatus(fs, emt.SUCCESS, string(jsonString), "")
 	emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", "ubuntu")
 

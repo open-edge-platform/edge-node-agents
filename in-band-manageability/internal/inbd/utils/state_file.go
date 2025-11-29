@@ -55,7 +55,7 @@ func WriteToStateFile(fs afero.Fs, filePath string, content string) error {
 	}
 
 	// Open the file for writing
-	file, err := OpenFile(fs, filePath, os.O_WRONLY|os.O_CREATE, 0644)
+	file, err := OpenFile(fs, filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Println("Error opening file:", err)
 		return err
