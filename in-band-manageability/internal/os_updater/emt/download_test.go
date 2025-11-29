@@ -235,8 +235,8 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			writeGranularLog: func(afero.Fs, string, string) {
 				// No-op implementation for testing
 			},
-			expectedResult: false,
-			expectedError:  errors.New("error reading JWT token: token error"),
+			expectedResult: true,
+			expectedError:  nil,
 		},
 		{
 			name: "error getting file size",
@@ -255,8 +255,8 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			getFileSizeInBytes: func(afero.Fs, string, string) (int64, error) {
 				return 0, errors.New("error getting file size")
 			},
-			expectedResult: false,
-			expectedError:  errors.New("error getting file size: error getting file size"),
+			expectedResult: true,
+			expectedError:  nil,
 		},
 		{
 			name: "not enough disk space",

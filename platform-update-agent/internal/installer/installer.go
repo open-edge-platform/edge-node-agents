@@ -45,11 +45,11 @@ var (
 	}
 
 	inbcSotaDownloadOnlyInstallPackagesCommand = []string{
-		"sudo", "inbc", "sota", "--mode", "download-only", "-reboot", "no", "--package-list",
+		"sudo", "inbc", "sota", "--mode", "download-only", "--reboot", "no", "--package-list",
 	}
 
 	inbcSotaNoDownloadInstallPackagesCommand = []string{
-		"sudo", "inbc", "sota", "--mode", "no-download", "-reboot", "no", "--package-list",
+		"sudo", "inbc", "sota", "--mode", "no-download", "--reboot", "no", "--package-list",
 	}
 )
 

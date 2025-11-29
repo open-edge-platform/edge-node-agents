@@ -49,7 +49,7 @@ func (r *RealDownloadExecutor) Download(ctx context.Context, prependToImageURL s
 
 	r.log.Info("DOWNLOAD: started")
 
-	if err := r.runInbcCommand(ctx, "sota", "-m", "download-only", "-s", source.OsImageSha, "-u", actualUrl); err != nil {
+	if err := r.runInbcCommand(ctx, "sota", "--mode", "download-only", "--signature", source.OsImageSha, "--uri", actualUrl); err != nil {
 		return fmt.Errorf("cannot download: %w", err)
 	}
 
