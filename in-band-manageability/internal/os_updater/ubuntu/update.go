@@ -15,8 +15,11 @@ import (
 	"strings"
 
 	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/os_updater/emt"
 	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // Updater is the concrete implementation of the Updater interface
@@ -30,19 +33,34 @@ type Updater struct {
 
 // Update method for Ubuntu
 func (u *Updater) Update() (bool, error) {
-	// Set the environment variable DEBIAN_FRONTEND to non-interactive
-	err := os.Setenv("DEBIAN_FRONTEND", "noninteractive")
+	fs := afero.NewOsFs()
+
+	// Get the request details for logging
+	jsonString, err := protojson.Marshal(u.Request)
 	if err != nil {
+		log.Printf("Error converting request to string: %v\n", err)
+		jsonString = []byte("{}")
+	}
+
+	// Set the environment variable DEBIAN_FRONTEND to non-interactive
+	err = os.Setenv("DEBIAN_FRONTEND", "noninteractive")
+	if err != nil {
+		emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
+		emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_INBM, "ubuntu")
 		return false, fmt.Errorf("SOTA Aborted: Failed to set environment variable: %v", err)
 	}
 
 	err = os.Setenv("PATH", os.Getenv("PATH")+":/usr/bin:/bin")
 	if err != nil {
+		emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
+		emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_INBM, "ubuntu")
 		return false, fmt.Errorf("SOTA Aborted: Failed to set environment variable: %v", err)
 	}
 
 	isUpdateAvail, updateSize, err := u.GetEstimatedSize(u.CommandExecutor)
 	if err != nil {
+		emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
+		emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_DOWNLOAD, "ubuntu")
 		return false, fmt.Errorf("SOTA Aborted: Update Failed: %s", err)
 	}
 	if !isUpdateAvail {
@@ -54,11 +72,16 @@ func (u *Updater) Update() (bool, error) {
 
 	freeSpace, err := u.GetFreeDiskSpaceInBytes("/", unix.Statfs)
 	if err != nil {
+		emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
+		emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_INSUFFICIENT_STORAGE, "ubuntu")
 		return false, fmt.Errorf("SOTA Aborted: Failed to get free disk space: %v", err)
 	}
 	log.Printf("Free disk space: %d bytes", freeSpace)
 	if freeSpace < updateSize {
-		return false, fmt.Errorf("SOTA Aborted: Not enough free disk space.  Free: %d bytes, Required: %d bytes", freeSpace, updateSize)
+		err := fmt.Errorf("SOTA Aborted: Not enough free disk space.  Free: %d bytes, Required: %d bytes", freeSpace, updateSize)
+		emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
+		emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_INSUFFICIENT_STORAGE, "ubuntu")
+		return false, err
 	}
 
 	var cmds [][]string
@@ -77,12 +100,21 @@ func (u *Updater) Update() (bool, error) {
 		log.Printf("Executing command: %s", cmd)
 		_, stderr, err := u.CommandExecutor.Execute(cmd)
 		if err != nil {
+			emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
+			emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_UPDATE_TOOL, "ubuntu")
 			return false, fmt.Errorf("SOTA Aborted: Command execution error: %v", err)
 		}
 		if len(stderr) > 0 {
-			return false, fmt.Errorf("SOTA Aborted: Command failed: %s", string(stderr))
+			errMsg := fmt.Sprintf("SOTA Aborted: Command failed: %s", string(stderr))
+			emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), errMsg)
+			emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_UPDATE_TOOL, "ubuntu")
+			return false, fmt.Errorf("%s", errMsg)
 		}
 	}
+
+	// Success - write success status
+	emt.WriteUpdateStatus(fs, emt.SUCCESS, string(jsonString), "")
+	emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", "ubuntu")
 
 	return true, nil
 }
