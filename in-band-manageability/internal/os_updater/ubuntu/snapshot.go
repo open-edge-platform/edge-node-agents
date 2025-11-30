@@ -94,9 +94,19 @@ func (u *Snapshotter) Snapshot() error {
 			return fmt.Errorf("snapshot ID is not a valid integer: %s", snapshotID)
 		}
 
+		// Check if there's an existing state file with PackageList
+		var packageList string
+		if existingState, err := utils.ReadStateFile(u.Fs, utils.StateFilePath); err == nil {
+			if existingState.PackageList != "" {
+				log.Printf("Preserving existing PackageList: %s", existingState.PackageList)
+				packageList = existingState.PackageList
+			}
+		}
+
 		state := utils.INBDState{
 			RestartReason:  "sota",
 			SnapshotNumber: snapshotNumber,
+			PackageList:    packageList,
 		}
 
 		stateJSON, err := json.Marshal(state)
@@ -114,10 +124,20 @@ func (u *Snapshotter) Snapshot() error {
 		// If it set to false, send error and do not proceed.
 		log.Println("No snapshot taken as the file system is not BTRFS.")
 
+		// Check if there's an existing state file with PackageList
+		var packageList string
+		if existingState, err := utils.ReadStateFile(u.Fs, utils.StateFilePath); err == nil {
+			if existingState.PackageList != "" {
+				log.Printf("Preserving existing PackageList: %s", existingState.PackageList)
+				packageList = existingState.PackageList
+			}
+		}
+
 		// Still create state file for post-reboot verification even without BTRFS snapshot
 		state := utils.INBDState{
 			RestartReason:  "sota",
 			SnapshotNumber: 0, // No snapshot number for non-BTRFS
+			PackageList:    packageList,
 		}
 
 		stateJSON, err := json.Marshal(state)

@@ -43,6 +43,7 @@ type INBDState struct {
 	RestartReason  string `json:"restart_reason"`
 	SnapshotNumber int    `json:"snapshot_number"`
 	TiberVersion   string `json:"tiber-version"`
+	PackageList    string `json:"package_list,omitempty"`
 }
 
 // WriteToStateFile writes the content to the state file.

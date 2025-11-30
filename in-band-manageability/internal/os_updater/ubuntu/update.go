@@ -7,6 +7,7 @@
 package ubuntu
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"strings"
 
 	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
+	utils "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
 	"github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/os_updater/emt"
 	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/afero"
@@ -27,7 +29,6 @@ import (
 type Updater struct {
 	CommandExecutor         common.Executor
 	Request                 *pb.UpdateSystemSoftwareRequest
-	GetEstimatedSize        func(cmdExec common.Executor) (bool, uint64, error)
 	GetFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
 }
 
@@ -57,7 +58,7 @@ func (u *Updater) Update() (bool, error) {
 		return false, fmt.Errorf("SOTA Aborted: Failed to set environment variable: %v", err)
 	}
 
-	isUpdateAvail, updateSize, err := u.GetEstimatedSize(u.CommandExecutor)
+	isUpdateAvail, updateSize, err := GetEstimatedSize(u.CommandExecutor, u.Request.PackageList)
 	if err != nil {
 		emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
 		emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_DOWNLOAD, "ubuntu")
@@ -65,6 +66,17 @@ func (u *Updater) Update() (bool, error) {
 	}
 	if !isUpdateAvail {
 		log.Println("No update available.  System is up to date.")
+		// If specific packages were requested and they're already installed, that's success
+		if len(u.Request.PackageList) > 0 && u.Request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
+			log.Println("Package(s) already installed - treating as success")
+			// Write state file for post-boot verification even if already installed
+			if err := writeStateFileForPackageInstallation(fs, u.Request.PackageList); err != nil {
+				log.Printf("WARNING: Failed to write state file for package installation: %v", err)
+			}
+			emt.WriteUpdateStatus(fs, emt.SUCCESS, string(jsonString), "")
+			emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", "ubuntu")
+			return true, nil
+		}
 		return false, nil
 	}
 
@@ -85,14 +97,20 @@ func (u *Updater) Update() (bool, error) {
 	}
 
 	// Take snapshot before applying updates (for FULL and NO_DOWNLOAD modes)
+	// Skip snapshot for package-only installations as they don't need rollback capability
 	if u.Request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL ||
 		u.Request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
-		log.Println("Save snapshot before applying the update.")
-		if err := NewSnapshotter(u.CommandExecutor, fs).Snapshot(); err != nil {
-			errMsg := fmt.Sprintf("Error taking snapshot: %v", err)
-			emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), errMsg)
-			emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_INBM, "ubuntu")
-			return false, fmt.Errorf("failed to take snapshot before applying the update: %v", err)
+		// Only take snapshot for system-wide upgrades, not for specific package installations
+		if len(u.Request.PackageList) == 0 {
+			log.Println("Save snapshot before applying the update.")
+			if err := NewSnapshotter(u.CommandExecutor, fs).Snapshot(); err != nil {
+				errMsg := fmt.Sprintf("Error taking snapshot: %v", err)
+				emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), errMsg)
+				emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_INBM, "ubuntu")
+				return false, fmt.Errorf("failed to take snapshot before applying the update: %v", err)
+			}
+		} else {
+			log.Printf("Skipping snapshot for specific package installation: %v", u.Request.PackageList)
 		}
 	}
 
@@ -124,6 +142,14 @@ func (u *Updater) Update() (bool, error) {
 		}
 	}
 
+	// For NO_DOWNLOAD mode with packages, write state file before SUCCESS
+	if u.Request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD && len(u.Request.PackageList) > 0 {
+		log.Println("State file check: NO_DOWNLOAD mode with packages, writing state file")
+		if err := writeStateFileForPackageInstallation(fs, u.Request.PackageList); err != nil {
+			log.Printf("WARNING: Failed to write state file for package installation: %v", err)
+		}
+	}
+
 	// Success - write success status (will be verified after reboot)
 	emt.WriteUpdateStatus(fs, emt.SUCCESS, string(jsonString), "")
 	emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", "ubuntu")
@@ -133,9 +159,19 @@ func (u *Updater) Update() (bool, error) {
 
 // GetEstimatedSize returns the estimated size of the update
 // and whether an update is available.
-func GetEstimatedSize(cmdExec common.Executor) (bool, uint64, error) {
-	cmd := []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o",
-		"Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}
+func GetEstimatedSize(cmdExec common.Executor, packageList []string) (bool, uint64, error) {
+	var cmd []string
+
+	// If specific packages are requested, check those; otherwise check system-wide upgrade
+	if len(packageList) > 0 {
+		// For specific packages: apt-get install --dry-run <packages>
+		cmd = append([]string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
+			"Dpkg::Options::=--force-confold", "-u", "install", "--assume-no"}, packageList...)
+	} else {
+		// For system-wide upgrade
+		cmd = []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
+			"Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}
+	}
 
 	// Ignore the error as the command will return a non-zero exit code
 	stdout, stderr, err := cmdExec.Execute(cmd)
@@ -228,6 +264,50 @@ func noDownload(packages []string) [][]string {
 	}
 
 	return cmds
+}
+
+// writeStateFileForPackageInstallation writes state file for package-only installations
+func writeStateFileForPackageInstallation(fs afero.Fs, packageList []string) error {
+	if len(packageList) == 0 {
+		return nil
+	}
+
+	log.Printf("Writing state file for package installation: %v", packageList)
+
+	// Check if state file already exists (from previous kernel/OS update)
+	existingState, err := utils.ReadStateFile(fs, utils.StateFilePath)
+	if err == nil && existingState.SnapshotNumber > 0 {
+		log.Printf("State file exists from previous update. Preserving snapshot info and adding packages.")
+		existingState.PackageList = strings.Join(packageList, ",")
+		stateJSON, _ := json.Marshal(existingState)
+		return utils.WriteToStateFile(fs, utils.StateFilePath, string(stateJSON))
+	}
+
+	// No existing state - create new one for package installation
+	state := utils.INBDState{
+		RestartReason: "package_installation",
+		PackageList:   strings.Join(packageList, ","),
+	}
+
+	stateJSON, err := json.Marshal(state)
+	if err != nil {
+		return fmt.Errorf("failed to marshal state: %w", err)
+	}
+
+	if err := utils.WriteToStateFile(fs, utils.StateFilePath, string(stateJSON)); err != nil {
+		return fmt.Errorf("failed to write state file: %w", err)
+	}
+
+	log.Printf("State file written successfully: %s", string(stateJSON))
+
+	// Verify the file was written
+	if data, err := afero.ReadFile(fs, utils.StateFilePath); err != nil {
+		log.Printf("WARNING: State file verification failed: %v", err)
+	} else {
+		log.Printf("State file verification successful. Content: %s", string(data))
+	}
+
+	return nil
 }
 
 func downloadOnly(packages []string) [][]string {
