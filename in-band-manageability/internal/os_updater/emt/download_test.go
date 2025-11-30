@@ -194,7 +194,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 		expectedResult          bool
 		expectedError           error
 		getFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
-		getFileSizeInBytes      func(afero.Fs, string, string) (int64, error)
+		getFileSizeInBytes      func(afero.Fs, string) (int64, error)
 	}{
 		{
 			name: "successful check with enough disk space",
@@ -204,7 +204,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
-			getFileSizeInBytes: func(afero.Fs, string, string) (int64, error) {
+			getFileSizeInBytes: func(afero.Fs, string) (int64, error) {
 				return 1000 * 2048, nil
 			},
 			expectedResult: true,
@@ -252,7 +252,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			writeGranularLog: func(afero.Fs, string, string) {
 				// No-op implementation for testing
 			},
-			getFileSizeInBytes: func(afero.Fs, string, string) (int64, error) {
+			getFileSizeInBytes: func(afero.Fs, string) (int64, error) {
 				return 0, errors.New("error getting file size")
 			},
 			expectedResult: true,
@@ -266,7 +266,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "valid-token", nil
 			},
-			getFileSizeInBytes: func(afero.Fs, string, string) (int64, error) {
+			getFileSizeInBytes: func(afero.Fs, string) (int64, error) {
 				return 1000 * 6130, nil
 			},
 			expectedResult: false,
@@ -301,65 +301,6 @@ type roundTripperFunc func(req *http.Request) *http.Response
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req), nil
-}
-
-// Tests for the new authentication helper functions
-
-func TestDownloader_getAuthMethods(t *testing.T) {
-	downloader := &Downloader{}
-
-	t.Run("with valid token", func(t *testing.T) {
-		token := "valid-token"
-		methods := downloader.getAuthMethods(token)
-
-		assert.Len(t, methods, 2)
-		assert.Equal(t, "Bearer Token", methods[0].name)
-		assert.Equal(t, "No Authentication", methods[1].name)
-	})
-
-	t.Run("with empty token", func(t *testing.T) {
-		token := ""
-		methods := downloader.getAuthMethods(token)
-
-		assert.Len(t, methods, 2)
-		assert.Equal(t, "Bearer Token", methods[0].name)
-		assert.Equal(t, "No Authentication", methods[1].name)
-	})
-}
-
-func TestDownloader_setupBearerTokenAuth(t *testing.T) {
-	downloader := &Downloader{}
-
-	t.Run("with valid token", func(t *testing.T) {
-		token := "valid-token"
-		setupAuth := downloader.setupBearerTokenAuth(token)
-
-		req, _ := http.NewRequest("GET", "http://example.com", nil)
-		setupAuth(req)
-
-		assert.Equal(t, "Bearer valid-token", req.Header.Get("Authorization"))
-	})
-
-	t.Run("with empty token", func(t *testing.T) {
-		token := ""
-		setupAuth := downloader.setupBearerTokenAuth(token)
-
-		req, _ := http.NewRequest("GET", "http://example.com", nil)
-		setupAuth(req)
-
-		assert.Empty(t, req.Header.Get("Authorization"))
-	})
-}
-
-func TestDownloader_setupNoAuth(t *testing.T) {
-	downloader := &Downloader{}
-
-	setupAuth := downloader.setupNoAuth()
-
-	req, _ := http.NewRequest("GET", "http://example.com", nil)
-	setupAuth(req)
-
-	assert.Empty(t, req.Header.Get("Authorization"))
 }
 
 func TestDownloader_handleAuthError(t *testing.T) {
