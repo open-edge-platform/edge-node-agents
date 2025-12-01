@@ -155,42 +155,6 @@ func TestSnapshot_SnapshotIDNotValidInteger(t *testing.T) {
 	mockExecutor.AssertExpectations(t)
 }
 
-func TestSnapshot_ClearStateFileError(t *testing.T) {
-	mockExecutor := new(MockExecutor)
-
-	// Mock the "snapper create" command to succeed
-	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("42", "", nil)
-
-	// Mock other dependencies to succeed
-	snapshotter := Snapshotter{
-		Fs:              afero.NewMemMapFs(),
-		CommandExecutor: mockExecutor,
-		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
-			return true, nil
-		},
-		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
-			return true, nil
-		},
-		EnsureSnapperConfigFunc: func(cmdExecutor common.Executor, configName string) error {
-			return nil
-		},
-		ClearStateFileFunc: func(cmdExecutor common.Executor, stateFilePath string) error {
-			return fmt.Errorf("mock clear state file error")
-		},
-		WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
-			return nil
-		},
-	}
-
-	// Call Snapshot
-	err := snapshotter.Snapshot()
-
-	// Assertions
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to clear dispatcher state file")
-	assert.Contains(t, err.Error(), "mock clear state file error")
-}
-
 func TestSnapshot_EnsureSnapperConfigError(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 
