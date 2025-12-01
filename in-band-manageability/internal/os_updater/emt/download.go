@@ -161,14 +161,14 @@ func (t *Downloader) downloadFile() error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		return t.downloadFileFromResponse(resp, "Download")
+		return t.downloadFileFromResponse(resp)
 	}
 
-	return t.handleAuthError(resp, "Download")
+	return t.handleAuthError(resp)
 }
 
 // downloadFileFromResponse handles the actual file download from a successful HTTP response
-func (t *Downloader) downloadFileFromResponse(resp *http.Response, methodName string) error {
+func (t *Downloader) downloadFileFromResponse(resp *http.Response) error {
 	// Extract the file name from the URL
 	urlParts := strings.Split(t.request.Url, "/")
 	fileName := urlParts[len(urlParts)-1]
@@ -186,12 +186,12 @@ func (t *Downloader) downloadFileFromResponse(resp *http.Response, methodName st
 		return fmt.Errorf("error downloading file: %w", err)
 	}
 
-	log.Printf("Successfully downloaded %d bytes using %s", bytesWritten, methodName)
+	log.Printf("Successfully downloaded %d bytes", bytesWritten)
 	return nil
 }
 
 // handleAuthError processes authentication-related HTTP errors
-func (t *Downloader) handleAuthError(resp *http.Response, methodName string) error {
+func (t *Downloader) handleAuthError(resp *http.Response) error {
 	// Read response body for error details
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -199,11 +199,11 @@ func (t *Downloader) handleAuthError(resp *http.Response, methodName string) err
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return fmt.Errorf("authentication failed with %s: status %d", methodName, resp.StatusCode)
+		return fmt.Errorf("authentication failed: status %d", resp.StatusCode)
 	}
 
 	// For other errors, fail immediately as they're likely not auth-related
-	return fmt.Errorf("HTTP error with %s: status %d, response: %s", methodName, resp.StatusCode, string(bodyBytes)[:min(len(bodyBytes), 200)])
+	return fmt.Errorf("HTTP error: status %d, response: %s", resp.StatusCode, string(bodyBytes)[:min(len(bodyBytes), 200)])
 }
 
 // isDiskSpaceAvailable checks if there is enough disk space to download the artifacts.

@@ -110,7 +110,7 @@ func WriteGranularLogWithOSType(fs afero.Fs, statusDetail string, failureReason 
 		var version string
 		var err error
 
-		if osType == "ubuntu" {
+		if osType == "Ubuntu" {
 			// For Ubuntu, we need to import and call ubuntu
 			// Since we can't have circular imports, we'll check for /etc/os-release directly here
 			version, err = getVersionForOS(fs, "/etc/os-release")
