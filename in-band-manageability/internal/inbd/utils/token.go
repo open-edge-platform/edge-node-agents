@@ -8,6 +8,7 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -28,14 +29,21 @@ func ReadJWTToken(fs afero.Fs, path string, isTokenExpiredFunc func(string) (boo
 		return "", nil
 	}
 
-	expired, err := isTokenExpiredFunc(string(token))
+	// Check if token is "anonymous" - treat as empty token (no authentication)
+	tokenStr := strings.TrimSpace(string(token))
+	if strings.ToLower(tokenStr) == "anonymous" {
+		log.Println("JWT token file contains 'anonymous'. Treating as no authentication.")
+		return "", nil
+	}
+
+	expired, err := isTokenExpiredFunc(tokenStr)
 	if err != nil {
 		return "", fmt.Errorf("error checking token expiration: %w", err)
 	}
 	if expired {
 		return "", fmt.Errorf("token is expired")
 	}
-	return strings.TrimSpace(string(token)), nil
+	return tokenStr, nil
 }
 
 // IsTokenExpired checks if a JWT token is expired.

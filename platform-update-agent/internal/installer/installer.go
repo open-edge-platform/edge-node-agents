@@ -45,11 +45,11 @@ var (
 	}
 
 	inbcSotaDownloadOnlyInstallPackagesCommand = []string{
-		"sudo", "inbc", "sota", "--mode", "download-only", "-reboot", "no", "--package-list",
+		"sudo", "inbc", "sota", "--mode", "download-only", "--reboot", "no", "--package-list",
 	}
 
 	inbcSotaNoDownloadInstallPackagesCommand = []string{
-		"sudo", "inbc", "sota", "--mode", "no-download", "-reboot", "no", "--package-list",
+		"sudo", "inbc", "sota", "--mode", "no-download", "--reboot", "no", "--package-list",
 	}
 )
 
@@ -202,7 +202,7 @@ func (i *Installer) InstallAdditionalPackages(packages string) error {
 		return fmt.Errorf("failed to execute shell command(%v)- %v", inbcSotaDownloadOnlyInstallPackagesCommand, err)
 	}
 
-	if err := i.MetaController.SetMetaUpdateInProgress(metadata.NEW); err != nil {
+	if err := i.MetaController.SetMetaUpdateInProgress(metadata.OS); err != nil {
 		return fmt.Errorf("%s", fmt.Sprintf("%s: %v", _ERR_CANNOT_SET_METAFILE, err))
 	}
 

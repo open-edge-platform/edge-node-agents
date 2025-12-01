@@ -320,5 +320,5 @@ func Test_newPackageInstaller_happyPath(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, inbcSotaDownloadOnlyInstallPackagesCmdExecuted)
 	require.True(t, inbcSotaNoDownloadInstallPackagesCmdExecuted)
-	require.Equal(t, metadata.NEW, interceptedSetMetaUpdateInProgressCall)
+	require.Equal(t, metadata.OS, interceptedSetMetaUpdateInProgressCall)
 }

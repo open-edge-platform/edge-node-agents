@@ -26,4 +26,5 @@ const (
 	FAILURE_REASON_CRITICAL_SERVICES    = "criticalservices"
 	FAILURE_REASON_INBM                 = "inbm"
 	FAILURE_REASON_OS_COMMIT            = "oscommit"
+	FAILURE_REASON_UPDATE_TOOL          = "updatetool" // For Ubuntu apt/package manager failures
 )

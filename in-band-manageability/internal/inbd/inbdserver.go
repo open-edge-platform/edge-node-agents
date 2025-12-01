@@ -142,7 +142,7 @@ func (s *InbdServer) UpdateFirmware(ctx context.Context, req *pb.UpdateFirmwareR
 // UpdateSystemSoftware updates the system software
 func (s *InbdServer) UpdateSystemSoftware(ctx context.Context, req *pb.UpdateSystemSoftwareRequest) (*pb.UpdateResponse, error) {
 
-	log.Printf("Received UpdateSystemSoftware request")
+	log.Printf("Received UpdateSystemSoftware request - Mode: %v, PackageList: %v", req.Mode, req.PackageList)
 	os, err := common.DetectOS()
 	if err != nil {
 		return &pb.UpdateResponse{StatusCode: 415, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern

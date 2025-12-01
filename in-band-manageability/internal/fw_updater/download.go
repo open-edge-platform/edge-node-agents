@@ -42,7 +42,8 @@ type Downloader struct {
 // NewDownloader creates a new Downloader.
 func NewDownloader(request *pb.UpdateFirmwareRequest) *Downloader {
 	// Create HTTP client with secure TLS configuration
-	httpClient, err := utils.CreateSecureHTTPClient(afero.NewOsFs(), request.Url)
+	// Pass empty token for firmware updates (uses strict TLS)
+	httpClient, err := utils.CreateSecureHTTPClient(afero.NewOsFs(), request.Url, "")
 	if err != nil {
 		// If URL parsing fails, create a default secure client
 		log.Printf("Failed to parse URL for secure client creation: %v. Using default secure client.", err)
@@ -82,7 +83,7 @@ func (t *Downloader) download() error {
 		utils.ReadJWTToken,
 		utils.GetFreeDiskSpaceInBytes,
 		func(url string, token string) (int64, error) {
-			return utils.GetFileSizeInBytes(t.fs, url, token)
+			return utils.GetFileSizeInBytes(t.fs, url)
 		},
 		utils.IsTokenExpired,
 		t.fs)
