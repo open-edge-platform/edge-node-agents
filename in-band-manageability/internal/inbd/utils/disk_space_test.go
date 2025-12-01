@@ -78,7 +78,7 @@ func TestGetFileSizeInBytes_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, testToken)
+	size, err := GetFileSizeInBytes(fs, server.URL)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(12345), size)
 }
@@ -96,34 +96,16 @@ func TestGetFileSizeInBytes_WithoutToken(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, "")
+	size, err := GetFileSizeInBytes(fs, server.URL)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(54321), size)
 }
 
-func TestGetFileSizeInBytes_WithToken(t *testing.T) {
-	fs := afero.NewMemMapFs()
-	// Create a test server that verifies the Authorization header
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Verify that a HEAD request is being made
-		assert.Equal(t, "HEAD", r.Method)
-		expectedAuth := testBearerPrefix + testToken
-		assert.Equal(t, expectedAuth, r.Header.Get("Authorization"))
-		w.Header().Set("Content-Length", "98765")
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer server.Close()
-
-	size, err := GetFileSizeInBytes(fs, server.URL, testToken)
-	assert.NoError(t, err)
-	assert.Equal(t, int64(98765), size)
-}
-
 func TestGetFileSizeInBytes_InvalidURL(t *testing.T) {
 	fs := afero.NewMemMapFs()
-	size, err := GetFileSizeInBytes(fs, "://invalid-url", "")
+	size, err := GetFileSizeInBytes(fs, "://invalid-url")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "error creating HEAD request")
+	assert.Contains(t, err.Error(), "error creating")
 	assert.Equal(t, int64(0), size)
 }
 
@@ -135,9 +117,9 @@ func TestGetFileSizeInBytes_HTTPError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, "")
+	size, err := GetFileSizeInBytes(fs, server.URL)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "HEAD request failed with status code: 404")
+	assert.Contains(t, err.Error(), "request failed with status code: 404")
 	assert.Equal(t, int64(0), size)
 }
 
@@ -156,9 +138,9 @@ func TestGetFileSizeInBytes_MissingContentLength(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, "")
+	size, err := GetFileSizeInBytes(fs, server.URL)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "Content-Length header is missing")
+	assert.Contains(t, err.Error(), "header")
 	assert.Equal(t, int64(0), size)
 }
 
@@ -173,7 +155,7 @@ func TestGetFileSizeInBytes_InvalidContentLength(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, "")
+	size, err := GetFileSizeInBytes(fs, server.URL)
 	assert.Error(t, err)
 	// The error can be either from HTTP transport level or parsing level depending on Go version/environment
 	errorMessage := err.Error()
@@ -205,7 +187,7 @@ func TestGetFileSizeInBytes_FallbackToRange(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, testToken)
+	size, err := GetFileSizeInBytes(fs, server.URL)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(54321), size)
 }
@@ -218,9 +200,9 @@ func TestGetFileSizeInBytes_BothMethodsFail(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, testToken)
+	size, err := GetFileSizeInBytes(fs, server.URL)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "basic Auth HEAD request failed with status code: 401")
+	assert.Contains(t, err.Error(), "request failed with status code: 401")
 	assert.Equal(t, int64(0), size)
 }
 
@@ -250,9 +232,10 @@ func TestGetFileSizeInBytes_BasicAuthFallback(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, testJWTToken)
-	assert.NoError(t, err)
-	assert.Equal(t, int64(98765), size)
+	size, err := GetFileSizeInBytes(fs, server.URL)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "request failed with status code:")
+	assert.Equal(t, int64(0), size)
 }
 
 func TestGetFileSizeInBytes_AllMethodsFail(t *testing.T) {
@@ -263,9 +246,9 @@ func TestGetFileSizeInBytes_AllMethodsFail(t *testing.T) {
 	}))
 	defer server.Close()
 
-	size, err := GetFileSizeInBytes(fs, server.URL, testToken)
+	size, err := GetFileSizeInBytes(fs, server.URL)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "basic Auth HEAD request failed with status code: 401")
+	assert.Contains(t, err.Error(), "range GET request failed with status code: 401")
 	assert.Equal(t, int64(0), size)
 }
 
@@ -543,7 +526,9 @@ func TestIsDiskSpaceAvailable_BufferLogic(t *testing.T) {
 	})
 }
 
-// Test for tryBasicAuthWithCredentials function
+// Tests for tryBasicAuthWithCredentials and related functions are commented out
+// since these functions are no longer used (authentication removed from GetFileSizeInBytes)
+/*
 func TestTryBasicAuthWithCredentials(t *testing.T) {
 	t.Run("Success with correct credentials", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
@@ -601,3 +586,4 @@ func TestTryBasicAuthWithCredentials(t *testing.T) {
 		assert.Contains(t, err.Error(), "Content-Length header is missing")
 	})
 }
+*/

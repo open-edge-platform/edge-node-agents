@@ -83,7 +83,7 @@ func (t *Downloader) download() error {
 		utils.ReadJWTToken,
 		utils.GetFreeDiskSpaceInBytes,
 		func(url string, token string) (int64, error) {
-			return utils.GetFileSizeInBytes(t.fs, url, token)
+			return utils.GetFileSizeInBytes(t.fs, url)
 		},
 		utils.IsTokenExpired,
 		t.fs)

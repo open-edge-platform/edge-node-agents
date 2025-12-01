@@ -20,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/afero"
 	"golang.org/x/sys/unix"
 )
@@ -53,49 +52,30 @@ func getSafeTokenPrefix(token string) string {
 }
 
 // GetFileSizeInBytes retrieves the size of a file at the given URL.
-func GetFileSizeInBytes(fs afero.Fs, url string, token string) (int64, error) {
+func GetFileSizeInBytes(fs afero.Fs, url string) (int64, error) {
 	// Try HEAD request first
-	size, err := getFileSizeWithHEAD(fs, url, token)
+	size, err := getFileSizeWithHEAD(fs, url)
 	if err != nil {
-		// If HEAD request fails with 401, try GET with Range header as fallback
-		if strings.Contains(err.Error(), "401") {
-			size, err := getFileSizeWithRange(fs, url, token)
-			if err != nil {
-				if strings.Contains(err.Error(), "401") {
-					// If Range GET also fails with 401, try enhanced Bearer token patterns before Basic Auth
-					size, err := tryEnhancedBearerAuth(fs, url, token)
-					if err == nil {
-						return size, nil
-					}
-
-					// If enhanced Bearer also fails, try Basic Auth as last resort
-					return tryBasicAuthFallback(fs, url, token)
-				}
-				return 0, err
-			}
-			return size, err
+		// If HEAD request fails, try GET with Range header as fallback
+		size, err := getFileSizeWithRange(url)
+		if err != nil {
+			return 0, err
 		}
-		return 0, err
+		return size, nil
 	}
 	return size, nil
 }
 
 // getFileSizeWithHEAD attempts to get file size using HEAD request
-func getFileSizeWithHEAD(fs afero.Fs, url string, token string) (int64, error) {
+func getFileSizeWithHEAD(fs afero.Fs, url string) (int64, error) {
 	// Create a new HTTP HEAD request
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		return 0, fmt.Errorf("error creating HEAD request: %w", err)
 	}
 
-	// Add the JWT token to the request header if it exists
-	if token != "" {
-		req.Header.Add("Authorization", "Bearer "+token)
-	}
-
 	// Perform the HEAD request using secure TLS client
-	// Pass token to allow insecure TLS for anonymous access
-	client, err := CreateSecureHTTPClient(fs, url, token)
+	client, err := CreateSecureHTTPClient(fs, url, "")
 	if err != nil {
 		return 0, fmt.Errorf("error creating secure HTTP client: %w", err)
 	}
@@ -127,7 +107,7 @@ func getFileSizeWithHEAD(fs afero.Fs, url string, token string) (int64, error) {
 }
 
 // getFileSizeWithRange attempts to get file size using GET request with Range header
-func getFileSizeWithRange(fs afero.Fs, url string, token string) (int64, error) {
+func getFileSizeWithRange(url string) (int64, error) {
 	// Create a new HTTP GET request with Range header to get only first byte
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -135,19 +115,7 @@ func getFileSizeWithRange(fs afero.Fs, url string, token string) (int64, error) 
 	}
 	req.Header.Set("Range", "bytes=0-0")
 
-	// Add the JWT token to the request header if it exists
-	if token != "" {
-		req.Header.Add("Authorization", "Bearer "+token)
-	}
-
-	// Perform the GET request using secure TLS client
-	// Pass token to allow insecure TLS for anonymous access
-	client, err := CreateSecureHTTPClient(fs, url, token)
-	if err != nil {
-		return 0, fmt.Errorf("error creating secure HTTP client: %w", err)
-	}
-
-	resp, err := DoSecureHTTPRequest(client, req, url)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("error performing Range GET request: %w", err)
 	}
@@ -392,263 +360,4 @@ func DiagnoseJWTToken(fs afero.Fs, path string) {
 	}
 
 	log.Printf("=== End JWT Token Diagnostics ===")
-}
-
-// tryBasicAuthFallback attempts to use Basic Auth when Bearer token fails with 401
-func tryBasicAuthFallback(fs afero.Fs, url string, token string) (int64, error) {
-	// For Artifactory, sometimes the JWT token needs to be used as a password with a specific username
-	// or we need to look for separate Basic Auth credentials
-
-	// Try common Basic Auth patterns
-	patterns := []struct {
-		username string
-		desc     string
-	}{
-		{"api", "API username"},
-		{"", "Empty username"},
-		{"token", "Token username"},
-		{"_token", "Underscore token"},
-		{"admin", "Admin username"},
-		{"bearer", "Bearer username"},
-		{"artifactory", "Artifactory service"},
-	}
-
-	for i, pattern := range patterns {
-		size, err := tryBasicAuthWithCredentials(fs, url, pattern.username, token)
-		if err == nil {
-			return size, nil
-		}
-		// Only log every few attempts to reduce noise
-		if i%3 == 0 {
-			log.Printf("Basic Auth attempts in progress...")
-		}
-	}
-
-	// Pattern 8: Try with the JWT token as both username and password
-	size, err := tryBasicAuthWithCredentials(fs, url, token, token)
-	if err == nil {
-		return size, nil
-	}
-
-	// Pattern 9: Try using credentials extracted from JWT claims
-	size, err = tryBasicAuthWithJWTClaims(fs, url, token)
-	if err == nil {
-		return size, nil
-	}
-
-	// Return the standard error for test compatibility
-	return 0, fmt.Errorf("basic Auth HEAD request failed with status code: 401")
-}
-
-// tryBasicAuthWithCredentials attempts Basic Auth with specific username/password
-func tryBasicAuthWithCredentials(fs afero.Fs, url string, username string, password string) (int64, error) {
-	req, err := http.NewRequest("HEAD", url, nil)
-	if err != nil {
-		return 0, fmt.Errorf("error creating Basic Auth HEAD request: %w", err)
-	}
-
-	// Set Basic Auth credentials
-	req.SetBasicAuth(username, password)
-
-	// For Basic Auth, pass empty token to use strict TLS
-	client, err := CreateSecureHTTPClient(fs, url, "")
-	if err != nil {
-		return 0, fmt.Errorf("error creating secure HTTP client for Basic Auth: %w", err)
-	}
-
-	resp, err := DoSecureHTTPRequest(client, req, url)
-	if err != nil {
-		return 0, fmt.Errorf("error performing Basic Auth HEAD request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("basic Auth HEAD request failed with status code: %d", resp.StatusCode)
-	}
-
-	contentLength := resp.Header.Get("Content-Length")
-	if contentLength == "" {
-		return 0, fmt.Errorf("Content-Length header is missing in Basic Auth HEAD response")
-	}
-
-	size, err := strconv.ParseInt(contentLength, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("error parsing Content-Length from Basic Auth response: %w", err)
-	}
-
-	return size, nil
-}
-
-// tryBasicAuthWithJWTClaims attempts to use Basic Auth with username from JWT claims
-func tryBasicAuthWithJWTClaims(fs afero.Fs, url string, token string) (int64, error) {
-	// Parse the token without validating the signature
-	parsedToken, _, err := new(jwt.Parser).ParseUnverified(token, jwt.MapClaims{})
-	if err != nil {
-		log.Printf("Cannot parse JWT token for claims (token may be invalid for testing): %v", err)
-		return 0, fmt.Errorf("error parsing JWT token for claims: %w", err)
-	}
-
-	// Extract the claims
-	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	if !ok {
-		return 0, fmt.Errorf("error extracting claims from JWT token")
-	}
-
-	// Try different username fields from the JWT claims
-	var usernames []string
-
-	// Common username fields in JWT tokens
-	if sub, exists := claims["sub"]; exists {
-		if subStr, ok := sub.(string); ok {
-			usernames = append(usernames, subStr)
-		}
-	}
-	if username, exists := claims["username"]; exists {
-		if usernameStr, ok := username.(string); ok {
-			usernames = append(usernames, usernameStr)
-		}
-	}
-	if preferredUsername, exists := claims["preferred_username"]; exists {
-		if preferredStr, ok := preferredUsername.(string); ok {
-			usernames = append(usernames, preferredStr)
-		}
-	}
-	if email, exists := claims["email"]; exists {
-		if emailStr, ok := email.(string); ok {
-			usernames = append(usernames, emailStr)
-		}
-	}
-	if clientID, exists := claims["client_id"]; exists {
-		if clientIDStr, ok := clientID.(string); ok {
-			usernames = append(usernames, clientIDStr)
-		}
-	}
-
-	// If we have no usernames to try, return an error that doesn't fail the tests
-	if len(usernames) == 0 {
-		return 0, fmt.Errorf("no valid username found in JWT claims for Basic Auth")
-	}
-
-	// Try each username with the JWT token as password
-	for _, username := range usernames {
-		size, err := tryBasicAuthWithCredentials(fs, url, username, token)
-		if err == nil {
-			return size, nil
-		}
-	}
-
-	return 0, fmt.Errorf("no valid username found in JWT claims for Basic Auth")
-}
-
-// tryEnhancedBearerAuth attempts Bearer token authentication with additional headers and patterns
-func tryEnhancedBearerAuth(fs afero.Fs, url string, token string) (int64, error) {
-	// Try different Bearer token patterns
-	patterns := []map[string]string{
-		{"X-JFrog-Art-Api": token},
-		{"X-API-Key": token},
-		{"X-Azure-Token": token, "X-MS-TOKEN-AAD-ACCESS-TOKEN": token},
-	}
-
-	// Try Bearer token with additional headers
-	for _, headers := range patterns {
-		size, err := tryBearerWithExtraHeaders(fs, url, token, headers)
-		if err == nil {
-			return size, nil
-		}
-	}
-
-	// Try with Authorization header variations
-	size, err := tryAuthorizationHeaderVariations(fs, url, token)
-	if err == nil {
-		return size, nil
-	}
-
-	return 0, fmt.Errorf("all enhanced Bearer patterns failed")
-}
-
-// tryBearerWithExtraHeaders tries Bearer token authentication with additional headers
-func tryBearerWithExtraHeaders(fs afero.Fs, url string, token string, extraHeaders map[string]string) (int64, error) {
-	req, err := http.NewRequest("HEAD", url, nil)
-	if err != nil {
-		return 0, fmt.Errorf("error creating enhanced Bearer HEAD request: %w", err)
-	}
-
-	// Set standard Bearer token
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	// Add extra headers
-	for key, value := range extraHeaders {
-		req.Header.Set(key, value)
-	}
-
-	// Pass token to CreateSecureHTTPClient
-	client, err := CreateSecureHTTPClient(fs, url, token)
-	if err != nil {
-		return 0, fmt.Errorf("error creating secure HTTP client for enhanced Bearer: %w", err)
-	}
-
-	resp, err := DoSecureHTTPRequest(client, req, url)
-	if err != nil {
-		return 0, fmt.Errorf("error performing enhanced Bearer HEAD request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("enhanced Bearer HEAD request failed with status code: %d", resp.StatusCode)
-	}
-
-	contentLength := resp.Header.Get("Content-Length")
-	if contentLength == "" {
-		return 0, fmt.Errorf("Content-Length header is missing in enhanced Bearer HEAD response")
-	}
-
-	size, err := strconv.ParseInt(contentLength, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("error parsing Content-Length from enhanced Bearer response: %w", err)
-	}
-
-	return size, nil
-}
-
-// tryAuthorizationHeaderVariations tries different Authorization header formats
-func tryAuthorizationHeaderVariations(fs afero.Fs, url string, token string) (int64, error) {
-	variations := []string{
-		"Token " + token,
-		"JWT " + token,
-		"ApiKey " + token,
-		token, // Token only without prefix
-	}
-
-	for _, authValue := range variations {
-		req, err := http.NewRequest("HEAD", url, nil)
-		if err != nil {
-			continue
-		}
-
-		req.Header.Set("Authorization", authValue)
-
-		// For auth header variations, use empty token for strict TLS
-		client, err := CreateSecureHTTPClient(fs, url, "")
-		if err != nil {
-			continue
-		}
-
-		resp, err := DoSecureHTTPRequest(client, req, url)
-		if err != nil {
-			continue
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode == http.StatusOK {
-			contentLength := resp.Header.Get("Content-Length")
-			if contentLength != "" {
-				size, err := strconv.ParseInt(contentLength, 10, 64)
-				if err == nil {
-					return size, nil
-				}
-			}
-		}
-	}
-
-	return 0, fmt.Errorf("all Authorization header variations failed")
 }

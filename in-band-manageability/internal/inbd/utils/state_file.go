@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 	"github.com/spf13/afero"
@@ -42,10 +43,18 @@ type INBDState struct {
 	RestartReason  string `json:"restart_reason"`
 	SnapshotNumber int    `json:"snapshot_number"`
 	TiberVersion   string `json:"tiber-version"`
+	PackageList    string `json:"package_list,omitempty"`
 }
 
 // WriteToStateFile writes the content to the state file.
 func WriteToStateFile(fs afero.Fs, filePath string, content string) error {
+	// Create parent directory if it doesn't exist
+	dir := filepath.Dir(filePath)
+	if err := fs.MkdirAll(dir, 0755); err != nil {
+		log.Printf("Error creating directory %s: %v", dir, err)
+		return fmt.Errorf("error creating directory: %w", err)
+	}
+
 	// Open the file for writing
 	file, err := OpenFile(fs, filePath, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {

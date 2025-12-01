@@ -202,7 +202,7 @@ func (i *Installer) InstallAdditionalPackages(packages string) error {
 		return fmt.Errorf("failed to execute shell command(%v)- %v", inbcSotaDownloadOnlyInstallPackagesCommand, err)
 	}
 
-	if err := i.MetaController.SetMetaUpdateInProgress(metadata.NEW); err != nil {
+	if err := i.MetaController.SetMetaUpdateInProgress(metadata.OS); err != nil {
 		return fmt.Errorf("%s", fmt.Sprintf("%s: %v", _ERR_CANNOT_SET_METAFILE, err))
 	}
 
