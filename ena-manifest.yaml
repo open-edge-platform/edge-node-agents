@@ -3,7 +3,7 @@
 ---
 metadata:
   schemaVersion: 2.0.0
-  release: 1.4.5
+  release: 1.4.6
 repository:
   codename: 3.1
   component: main
@@ -33,5 +33,5 @@ packages:
     version: 2.7.6
     ociArtifact: edge-orch/en/deb/caddy
   - name: in-band-manageability
-    version: 1.0.4
+    version: 1.0.5
     ociArtifact: edge-orch/en/deb/in-band-manageability

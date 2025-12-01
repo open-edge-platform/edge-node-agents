@@ -69,12 +69,6 @@ func (u *Snapshotter) Snapshot() error {
 			return fmt.Errorf("failed to ensure snapper config exists: %w", err)
 		}
 
-		// Clear the state file before writing new state
-		err = u.ClearStateFileFunc(u.CommandExecutor, utils.StateFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to clear dispatcher state file: %w", err)
-		}
-
 		// Create a snapshot using snapper
 		snapshotCmd := []string{
 			common.SnapperCmd, "-c", "rootConfig", "create", "-p", "--description", "sota_update",
@@ -151,12 +145,6 @@ func (u *Snapshotter) Snapshot() error {
 			return fmt.Errorf("failed to serialize state to JSON: %w", err)
 		}
 		log.Printf("State JSON: %s", string(stateJSON))
-
-		// Clear the state file before writing new state
-		err = u.ClearStateFileFunc(u.CommandExecutor, utils.StateFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to clear dispatcher state file: %w", err)
-		}
 
 		// WriteToStateFile will create directory and file if they don't exist
 		err = u.WriteToStateFileFunc(u.Fs, utils.StateFilePath, string(stateJSON))
