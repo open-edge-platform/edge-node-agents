@@ -12,6 +12,7 @@ import (
 
 	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sys/unix"
 )
@@ -124,7 +125,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("successful size estimation", func(t *testing.T) {
@@ -139,7 +140,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.True(t, isUpdateAvail)
 		assert.Equal(t, uint64(524288000), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("failed to get size estimation", func(t *testing.T) {
@@ -154,7 +155,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.False(t, isUpdateAvail)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("no size information in output", func(t *testing.T) {
@@ -168,7 +169,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.False(t, isUpdateAvail)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("command execution error but valid output", func(t *testing.T) {
@@ -183,7 +184,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.True(t, isUpdateAvail)
 		assert.Equal(t, uint64(524288000), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::='--force-confdef'", "-o", "Dpkg::Options::='--force-confold'", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 }
 
@@ -192,7 +193,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 		mockExec := &mockExecutor{
 			stdout: []string{"After this operation, 500 kB of additional disk space will be used."},
 			stderr: []string{""},
-			errors: []error{nil, nil, nil},
+			errors: []error{nil, nil, nil, nil, nil, nil}, // GetEstimatedSize, dpkg configure, apt-get update, ClearStateFile, WriteToStateFile, apt-get upgrade
 		}
 		updater := &Updater{
 			CommandExecutor: mockExec,
@@ -202,6 +203,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
+			Fs: afero.NewMemMapFs(),
 		}
 
 		proceedWithReboot, err := updater.Update()
@@ -242,7 +244,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 		proceedWithReboot, err := updater.Update()
 		assert.NoError(t, err)
 		assert.False(t, proceedWithReboot)
-		assert.Equal(t, 0, len(mockExec.commands))
+		assert.Equal(t, 1, len(mockExec.commands)) // GetEstimatedSize command
 	})
 
 	t.Run("insufficient disk space", func(t *testing.T) {
@@ -269,7 +271,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 		mockExec := &mockExecutor{
 			stdout: []string{"After this operation, 500 kB of additional disk space will be used."},
 			stderr: []string{""},
-			errors: []error{nil, nil, nil},
+			errors: []error{nil, nil, nil, nil, nil, nil},
 		}
 		updater := &Updater{
 			CommandExecutor: mockExec,
@@ -279,6 +281,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
+			Fs: afero.NewMemMapFs(),
 		}
 
 		proceedWithReboot, err := updater.Update()
@@ -291,7 +294,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 		mockExec := &mockExecutor{
 			stdout: []string{"After this operation, 500 kB of additional disk space will be used."},
 			stderr: []string{""},
-			errors: []error{nil, nil, nil},
+			errors: []error{nil, nil, nil, nil, nil, nil},
 		}
 		updater := &Updater{
 			CommandExecutor: mockExec,
@@ -301,6 +304,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 			GetFreeDiskSpaceInBytes: func(string, func(string, *unix.Statfs_t) error) (uint64, error) {
 				return 100000000, nil
 			},
+			Fs: afero.NewMemMapFs(),
 		}
 
 		proceedWithReboot, err := updater.Update()

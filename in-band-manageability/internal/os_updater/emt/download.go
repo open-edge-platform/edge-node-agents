@@ -215,15 +215,8 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 		return false, err
 	}
 
-	// Get the request details
-	jsonString, err := protojson.Marshal(t.request)
-	if err != nil {
-		log.Printf("Error converting request to string: %v\n", err)
-		jsonString = []byte("{}")
-	}
-
 	// Get required space for the file
-	requiredSpace, err := t.getRequiredFileSize(string(jsonString))
+	requiredSpace, err := t.getRequiredFileSize()
 	if err != nil {
 		// Don't fail the download just because we can't check the size
 		// This allows download to proceed even if HEAD request fails
@@ -243,7 +236,7 @@ func (t *Downloader) isDiskSpaceAvailable() (bool, error) {
 }
 
 // getRequiredFileSize gets the file size needed for the download with proper error handling
-func (t *Downloader) getRequiredFileSize(jsonString string) (int64, error) {
+func (t *Downloader) getRequiredFileSize() (int64, error) {
 	requiredSpace, err := t.getFileSizeInBytesFunc(t.fs, t.request.Url)
 	if err != nil {
 		// Don't write FAIL status here - let the caller decide if this is fatal

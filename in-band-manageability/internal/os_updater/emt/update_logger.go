@@ -113,7 +113,7 @@ func WriteGranularLogWithOSType(fs afero.Fs, statusDetail string, failureReason 
 		if osType == "Ubuntu" {
 			// For Ubuntu, we need to import and call ubuntu
 			// Since we can't have circular imports, we'll check for /etc/os-release directly here
-			version, err = getVersionForOS(fs, "/etc/os-release")
+			version, err = getVersionForOS("/etc/os-release")
 		} else {
 			// For EMT, use /etc/image-id
 			version, err = GetImageBuildDate(fs)
@@ -157,7 +157,7 @@ func WriteGranularLogWithOSType(fs afero.Fs, statusDetail string, failureReason 
 }
 
 // getVersionForOS reads version from OS-specific release file (Ubuntu's /etc/os-release)
-func getVersionForOS(fs afero.Fs, filePath string) (string, error) {
+func getVersionForOS(filePath string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Println("Error opening", filePath, ":", err)

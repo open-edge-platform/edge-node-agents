@@ -30,11 +30,15 @@ type Updater struct {
 	CommandExecutor         common.Executor
 	Request                 *pb.UpdateSystemSoftwareRequest
 	GetFreeDiskSpaceInBytes func(string, func(string, *unix.Statfs_t) error) (uint64, error)
+	Fs                      afero.Fs
 }
 
 // Update method for Ubuntu
 func (u *Updater) Update() (bool, error) {
-	fs := afero.NewOsFs()
+	fs := u.Fs
+	if fs == nil {
+		fs = afero.NewOsFs()
+	}
 
 	// Get the request details for logging
 	jsonString, err := protojson.Marshal(u.Request)

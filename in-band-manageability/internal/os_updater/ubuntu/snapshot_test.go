@@ -43,6 +43,7 @@ func TestSnapshot_Success(t *testing.T) {
 	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("1", "", nil)
 
 	snapshotter := Snapshotter{
+		Fs:              afero.NewMemMapFs(),
 		CommandExecutor: mockExecutor,
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
@@ -73,9 +74,16 @@ func TestSnapshot_NotBTRFS(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 
 	snapshotter := Snapshotter{
+		Fs:              afero.NewMemMapFs(),
 		CommandExecutor: mockExecutor,
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return false, nil
+		},
+		ClearStateFileFunc: func(cmdExecutor common.Executor, stateFilePath string) error {
+			return nil
+		},
+		WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
+			return nil
 		},
 	}
 
@@ -90,6 +98,7 @@ func TestSnapshot_SnapperNotInstalled(t *testing.T) {
 	mockExecutor := new(MockExecutor)
 
 	snapshotter := Snapshotter{
+		Fs:              afero.NewMemMapFs(),
 		CommandExecutor: mockExecutor,
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
@@ -120,6 +129,7 @@ func TestSnapshot_SnapshotIDNotValidInteger(t *testing.T) {
 	mockExecutor.On("Execute", []string{"snapper", "-c", "rootConfig", "create", "-p", "--description", "sota_update"}).Return("Snapshot created", "Warning: minor issue", nil)
 
 	snapshotter := Snapshotter{
+		Fs:                    afero.NewMemMapFs(),
 		CommandExecutor:       mockExecutor,
 		IsBTRFSFileSystemFunc: isBtrfsFunc,
 		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
@@ -153,6 +163,7 @@ func TestSnapshot_ClearStateFileError(t *testing.T) {
 
 	// Mock other dependencies to succeed
 	snapshotter := Snapshotter{
+		Fs:              afero.NewMemMapFs(),
 		CommandExecutor: mockExecutor,
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
@@ -160,10 +171,15 @@ func TestSnapshot_ClearStateFileError(t *testing.T) {
 		IsSnapperInstalledFunc: func(cmdExecutor common.Executor) (bool, error) {
 			return true, nil
 		},
+		EnsureSnapperConfigFunc: func(cmdExecutor common.Executor, configName string) error {
+			return nil
+		},
 		ClearStateFileFunc: func(cmdExecutor common.Executor, stateFilePath string) error {
 			return fmt.Errorf("mock clear state file error")
 		},
-		Fs: afero.NewMemMapFs(),
+		WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
+			return nil
+		},
 	}
 
 	// Call Snapshot
@@ -183,6 +199,7 @@ func TestSnapshot_EnsureSnapperConfigError(t *testing.T) {
 
 	// Mock other dependencies to succeed
 	snapshotter := Snapshotter{
+		Fs:              afero.NewMemMapFs(),
 		CommandExecutor: mockExecutor,
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
@@ -196,7 +213,6 @@ func TestSnapshot_EnsureSnapperConfigError(t *testing.T) {
 		EnsureSnapperConfigFunc: func(cmdExecutor common.Executor, configName string) error {
 			return fmt.Errorf("mock ensure snapper config error")
 		},
-		Fs: afero.NewMemMapFs(),
 	}
 
 	// Call Snapshot
@@ -427,6 +443,7 @@ func TestSnapshot_WriteToStateFileError(t *testing.T) {
 
 	// Mock the other dependencies to succeed
 	snapshotter := Snapshotter{
+		Fs:              afero.NewMemMapFs(),
 		CommandExecutor: mockExecutor,
 		IsBTRFSFileSystemFunc: func(path string, statfsFunc func(string, *unix.Statfs_t) error) (bool, error) {
 			return true, nil
@@ -443,7 +460,6 @@ func TestSnapshot_WriteToStateFileError(t *testing.T) {
 		WriteToStateFileFunc: func(fs afero.Fs, stateFilePath string, content string) error {
 			return fmt.Errorf("mock write to state file error")
 		},
-		Fs: afero.NewMemMapFs(),
 	}
 
 	// Call Snapshot

@@ -57,7 +57,7 @@ func GetFileSizeInBytes(fs afero.Fs, url string) (int64, error) {
 	size, err := getFileSizeWithHEAD(fs, url)
 	if err != nil {
 		// If HEAD request fails, try GET with Range header as fallback
-		size, err := getFileSizeWithRange(fs, url)
+		size, err := getFileSizeWithRange(url)
 		if err != nil {
 			return 0, err
 		}
@@ -107,7 +107,7 @@ func getFileSizeWithHEAD(fs afero.Fs, url string) (int64, error) {
 }
 
 // getFileSizeWithRange attempts to get file size using GET request with Range header
-func getFileSizeWithRange(fs afero.Fs, url string) (int64, error) {
+func getFileSizeWithRange(url string) (int64, error) {
 	// Create a new HTTP GET request with Range header to get only first byte
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

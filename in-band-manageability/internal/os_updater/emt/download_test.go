@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	"strings"
 	"testing"
@@ -97,12 +98,14 @@ func TestDownloader_downloadFile(t *testing.T) {
 			readJWTTokenFunc: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "", errors.New("error")
 			},
-			httpClient:     &http.Client{},
+			httpClient:     &http.Client{Timeout: 1 * time.Millisecond}, // Short timeout to prevent real calls
 			requestCreator: http.NewRequest,
 		}
 
 		err := downloader.downloadFile()
-		assert.EqualError(t, err, "error reading JWT token: error")
+		assert.Error(t, err)
+		// JWT token read errors are logged but download proceeds with anonymous access
+		// So we expect an HTTP error from attempting the download
 	})
 
 	t.Run("error performing request", func(t *testing.T) {
@@ -229,6 +232,9 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 			readJWTToken: func(afero.Fs, string, func(string) (bool, error)) (string, error) {
 				return "", errors.New("token error")
 			},
+			getFileSizeInBytes: func(afero.Fs, string) (int64, error) {
+				return 1000 * 2048, nil
+			},
 			writeUpdateStatus: func(afero.Fs, string, string, string) {
 				// No-op implementation for testing
 			},
@@ -277,6 +283,7 @@ func TestDownloader_isDiskSpaceAvailable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			downloader := &Downloader{
+				fs:                      afero.NewMemMapFs(),
 				getFreeDiskSpaceInBytes: tt.getFreeDiskSpaceInBytes,
 				getFileSizeInBytesFunc:  tt.getFileSizeInBytes,
 				readJWTTokenFunc:        tt.readJWTToken,
@@ -312,10 +319,10 @@ func TestDownloader_handleAuthError(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader("Unauthorized")),
 		}
 
-		err := downloader.handleAuthError(resp, "Bearer Token")
+		err := downloader.handleAuthError(resp)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "authentication failed with Bearer Token: status 401")
+		assert.Contains(t, err.Error(), "authentication failed")
 	})
 
 	t.Run("forbidden error", func(t *testing.T) {
@@ -324,10 +331,10 @@ func TestDownloader_handleAuthError(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader("Forbidden")),
 		}
 
-		err := downloader.handleAuthError(resp, "Bearer Token")
+		err := downloader.handleAuthError(resp)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "authentication failed with Bearer Token: status 403")
+		assert.Contains(t, err.Error(), "authentication failed")
 	})
 
 	t.Run("server error", func(t *testing.T) {
@@ -336,10 +343,10 @@ func TestDownloader_handleAuthError(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader("Internal Server Error")),
 		}
 
-		err := downloader.handleAuthError(resp, "Bearer Token")
+		err := downloader.handleAuthError(resp)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "HTTP error with Bearer Token: status 500")
+		assert.Contains(t, err.Error(), "HTTP error")
 	})
 }
 
@@ -358,7 +365,7 @@ func TestDownloader_downloadFileFromResponse(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader("test file content")),
 		}
 
-		err := downloader.downloadFileFromResponse(resp, "Bearer Token")
+		err := downloader.downloadFileFromResponse(resp)
 
 		assert.NoError(t, err)
 
@@ -383,7 +390,7 @@ func TestDownloader_downloadFileFromResponse(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader("test content")),
 		}
 
-		err := downloader.downloadFileFromResponse(resp, "Bearer Token")
+		err := downloader.downloadFileFromResponse(resp)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error creating file")
