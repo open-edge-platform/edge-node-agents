@@ -61,7 +61,7 @@ func VerifyUpdateAfterReboot(fs afero.Fs) error {
 		// Write SUCCESS status for Ubuntu (EMT writes its own status)
 		if osType == "Ubuntu" {
 			emt.WriteUpdateStatus(fs, "SUCCESS", "", "")
-			emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", osType)
+			emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", "ubuntu")
 		}
 	} else {
 		log.Println("No dispatcher state file. Skip post update verification.")

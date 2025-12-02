@@ -9,7 +9,7 @@ if [ "$1" = purge ]; then
     # Remove configuration files and directories
     rm -f /etc/intel_manageability.conf
     rm -f /etc/firmware_tool_info.conf
-    rm -rf /etc/intel_edge_node
+    #rm -rf /etc/intel_edge_node
     rm -f /usr/share/inbd_schema.json
     rm -f /usr/share/firmware_tool_config_schema.json
     
