@@ -8,6 +8,9 @@
 
 set +e  # Don't exit on errors to ensure detection continues
 
+# Delete user if exists
+userdel -r inbc 2>/dev/null || true
+
 # Function to detect if Python-based INBM installation exists
 detect_python_installation() {
   # Check for Python-based services
@@ -68,5 +71,17 @@ if detect_python_installation; then
 else
     echo "No Python-based INBM installation detected. Proceeding with Go-based installation."
 fi
+
+stop_service_on_upgrade() {
+  # Only stop the service if we're upgrading (not on fresh install)
+  if [ "$1" = "upgrade" ] || [ "$1" = "install" ]; then
+    if systemctl is-active --quiet inbd.service; then
+      echo "Stopping inbd service for upgrade..."
+      systemctl stop inbd.service || true
+    fi
+  fi
+}
+
+stop_service_on_upgrade "$@"
 
 exit 0
