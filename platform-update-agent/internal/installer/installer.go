@@ -85,17 +85,14 @@ func NewWithDefaults() *Installer {
 func (i *Installer) ProvisionInbm(_ context.Context) error {
 	if fileOrDirExists(inbmConfigSuccessPath) {
 		log.Debugf("INBC is already provisioned")
-		return nil
+	} else {
+		file, err := os.Create(inbmConfigSuccessPath)
+		if err != nil {
+			log.Errorf("Creating file failed: %s", inbmConfigSuccessPath)
+			return err
+		}
+		defer file.Close()
 	}
-
-	log.Info("INBM provisioning with debian package - no additional setup needed")
-
-	file, err := os.Create(inbmConfigSuccessPath)
-	if err != nil {
-		log.Errorf("Creating file failed: %s", inbmConfigSuccessPath)
-		return err
-	}
-	defer file.Close()
 
 	log.Info("Starting inbd service")
 	if _, err := i.execute(startInbdServiceCommand); err != nil {

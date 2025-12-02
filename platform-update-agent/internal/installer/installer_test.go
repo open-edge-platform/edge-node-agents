@@ -201,13 +201,22 @@ func TestInbm_ModifyConfiguration_handleErrorReturnedByRestartInbmConfigurationC
 }
 
 func TestInbm_ProvisionInbm_IfAlreadyProvisionedShouldDoNothing(t *testing.T) {
-	inbmConfigSuccessPath = "testdata/.inbm-config-success"
+	inbmConfigSuccessPath = "testdata/.configured"
 
+	callCount := 0
 	executor := utils.NewExecutor[[]string](
 		asStringArray,
 		func(args *[]string) (out []byte, e error) {
-			require.Fail(t, "executor function shall not be called")
-			return nil, e
+			callCount++
+			// Expect one call to start the inbd service
+			if callCount > 1 {
+				require.Fail(t, "executor function called more than once")
+			}
+			// Verify it's the start inbd service command
+			require.Equal(t, "systemctl", (*args)[1])
+			require.Equal(t, "start", (*args)[2])
+			require.Equal(t, "inbd", (*args)[3])
+			return []byte("success"), nil
 		})
 
 	installer := New(executor)
@@ -219,6 +228,7 @@ func TestInbm_ProvisionInbm_IfAlreadyProvisionedShouldDoNothing(t *testing.T) {
 	sut := installer.ProvisionInbm
 
 	require.Nil(t, sut(context.TODO()))
+	require.Equal(t, 1, callCount, "Expected exactly one call to start inbd service")
 }
 
 func TestInbm_ProvisionInbm_HappyPath(t *testing.T) {

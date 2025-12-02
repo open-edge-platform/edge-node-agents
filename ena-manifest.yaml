@@ -3,7 +3,7 @@
 ---
 metadata:
   schemaVersion: 2.0.0
-  release: 1.4.7
+  release: 1.4.8
 repository:
   codename: 3.1
   component: main
@@ -27,7 +27,7 @@ packages:
     version: 1.6.2
     ociArtifact: edge-orch/en/deb/platform-telemetry-agent
   - name: platform-update-agent
-    version: 1.8.3
+    version: 1.8.4
     ociArtifact: edge-orch/en/deb/platform-update-agent
   - name: caddy
     version: 2.7.6
