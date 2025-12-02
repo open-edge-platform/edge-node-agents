@@ -244,6 +244,8 @@ profile ca_dash {
   /etc/pam.d/* r,
   /etc/security/ r,
   /etc/security/* r,
+  /etc/security/limits.d/ r,
+  /etc/security/limits.d/* r,
 
   ## other needed files
   owner /etc/host.conf r,
