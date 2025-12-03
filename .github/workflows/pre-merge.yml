@@ -25,14 +25,14 @@ jobs:
     outputs:
       filtered_projects: ${{ steps.filter-changes.outputs.filtered_projects }}
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3   # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8   # v6.0.1
         with:
           persist-credentials: false
       - name: "Verify Branch Name"
-        uses: open-edge-platform/orch-ci/verify-branch-name@592eafb7c84669729eb1adc610515bad61c3550b  # 0.1.67
+        uses: open-edge-platform/orch-ci/verify-branch-name@d3fe218ea585fb390b73c87f9e482cbe1424829c  # 0.1.68
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@592eafb7c84669729eb1adc610515bad61c3550b  # 0.1.67
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@d3fe218ea585fb390b73c87f9e482cbe1424829c  # 0.1.68
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
