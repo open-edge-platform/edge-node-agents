@@ -6,6 +6,15 @@
 
 ## Cluster Agent Changelog
 
+### 1.8.4
+- Update AppArmor profile to allow limits.d read
+
+### 1.8.3
+- Update go.mod
+
+### 1.8.2
+- Update go.mod
+
 ### 1.8.1
 - Update AppArmor profile to allow environment.d read/write
 

@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3   # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8   # v6.0.1
         with:
           persist-credentials: false   # Do not persist credentials, otherwise they will clash with credentials set by bootstrap action
           fetch-depth: 0   # Fetch all history, WO sporadic issue with missing tags
@@ -34,7 +34,7 @@ jobs:
           ref: ${{ github.head_ref }}   # Checkout the branch that triggered the workflow to avoid detached HEAD
 
       - name: Checkout action repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3   # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8   # v6.0.1
         with:
           repository: open-edge-platform/orch-ci
           path: ci

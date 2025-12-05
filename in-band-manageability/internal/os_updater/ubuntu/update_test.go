@@ -230,7 +230,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 	//     assert.Contains(t, err.Error(), "Failed to set environment variable")
 	// })
 
-	t.Run("no updates available", func(t *testing.T) {
+	t.Run("no updates available - system-wide", func(t *testing.T) {
 		mockExec := &mockExecutor{
 			stdout: []string{"0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."},
 			errors: []error{nil},
@@ -238,12 +238,32 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 
 		updater := &Updater{
 			CommandExecutor: mockExec,
-			Request:         &pb.UpdateSystemSoftwareRequest{},
+			Request:         &pb.UpdateSystemSoftwareRequest{}, // Empty PackageList = system-wide
 		}
 
 		proceedWithReboot, err := updater.Update()
 		assert.NoError(t, err)
-		assert.False(t, proceedWithReboot)
+		assert.True(t, proceedWithReboot) // System-wide update should reboot for kernel args
+		assert.Equal(t, 1, len(mockExec.commands)) // GetEstimatedSize command
+	})
+
+	t.Run("no updates available - package specific", func(t *testing.T) {
+		mockExec := &mockExecutor{
+			stdout: []string{"0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."},
+			errors: []error{nil},
+		}
+
+		updater := &Updater{
+			CommandExecutor: mockExec,
+			Request: &pb.UpdateSystemSoftwareRequest{
+				PackageList: []string{"vim"},
+				Mode:        pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD,
+			},
+		}
+
+		proceedWithReboot, err := updater.Update()
+		assert.NoError(t, err)
+		assert.False(t, proceedWithReboot) // Package already installed, no reboot needed
 		assert.Equal(t, 1, len(mockExec.commands)) // GetEstimatedSize command
 	})
 
