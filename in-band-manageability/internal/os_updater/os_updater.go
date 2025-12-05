@@ -76,24 +76,17 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 	}
 
 	log.Println("Update completed successfully.")
-	log.Printf("[REBOOT DEBUG] proceedWithReboot=%v, Mode=%v, DoNotReboot=%v", proceedWithReboot, u.req.Mode, u.req.DoNotReboot)
 
 	// Remove the artifacts after update success.
 	cleanFiles(cleaner)
 
 	if proceedWithReboot {
-		log.Println("[REBOOT DEBUG] proceedWithReboot is TRUE, checking mode...")
 		if u.req.Mode != pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_DOWNLOAD_ONLY {
-			log.Printf("[REBOOT DEBUG] Mode is %v (not DOWNLOAD_ONLY), calling rebooter...", u.req.Mode)
 			// Reboot the system
 			rebooter := factory.CreateRebooter(common.NewExecutor(exec.Command, common.ExecuteAndReadOutput), u.req)
-			log.Println("[REBOOT DEBUG] Calling rebooter.Reboot()...")
 			if err = rebooter.Reboot(); err != nil {
-				log.Printf("[REBOOT DEBUG] Rebooter returned error: %v", err)
-				log.Printf("[REBOOT DEBUG] Rebooter returned error: %v", err)
 				return &pb.UpdateResponse{StatusCode: 500, Error: err.Error()}, nil //nolint:nilerr // gRPC response pattern
 			}
-			log.Println("[REBOOT DEBUG] rebooter.Reboot() returned successfully (no error)")
 		} else {
 			log.Printf("[REBOOT DEBUG] Skipping reboot because mode is DOWNLOAD_ONLY")
 		}
