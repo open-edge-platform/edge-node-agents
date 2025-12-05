@@ -55,6 +55,17 @@ func (u *Updater) Update() (bool, error) {
 		return false, fmt.Errorf("SOTA Aborted: Failed to set environment variable: %v", err)
 	}
 
+	// Disable needrestart auto-restart to prevent it from intercepting system reboot
+	// needrestart runs after apt-get and may restart services instead of allowing full system reboot
+	err = os.Setenv("NEEDRESTART_MODE", "l")
+	if err != nil {
+		log.Printf("Warning: Failed to set NEEDRESTART_MODE: %v", err)
+	}
+	err = os.Setenv("NEEDRESTART_SUSPEND", "1")
+	if err != nil {
+		log.Printf("Warning: Failed to set NEEDRESTART_SUSPEND: %v", err)
+	}
+
 	err = os.Setenv("PATH", os.Getenv("PATH")+":/usr/bin:/bin")
 	if err != nil {
 		emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
@@ -62,25 +73,45 @@ func (u *Updater) Update() (bool, error) {
 		return false, fmt.Errorf("SOTA Aborted: Failed to set environment variable: %v", err)
 	}
 
+	// Scenario 4: Validate packages/kernel args FIRST (fail fast before any changes)
 	isUpdateAvail, updateSize, err := GetEstimatedSize(u.CommandExecutor, u.Request.PackageList)
 	if err != nil {
+		// Invalid package names or validation errors caught here
+		log.Printf("Package validation failed: %v", err)
 		emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
 		emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_DOWNLOAD, "ubuntu")
 		return false, fmt.Errorf("SOTA Aborted: Update Failed: %s", err)
 	}
+
+	// Determine if this is a system-wide update (triggered by kernel args update from PUA)
+	isSystemWideUpdate := len(u.Request.PackageList) == 0
+
 	if !isUpdateAvail {
-		log.Println("No update available.  System is up to date.")
-		// If specific packages were requested and they're already installed, that's success
-		if len(u.Request.PackageList) > 0 && u.Request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
-			log.Println("Package(s) already installed - treating as success")
-			// Write state file for post-boot verification even if already installed
-			if err := writeStateFileForPackageInstallation(fs, u.Request.PackageList); err != nil {
-				log.Printf("WARNING: Failed to write state file for package installation: %v", err)
+		log.Println("No update available. System is up to date.")
+
+		if len(u.Request.PackageList) > 0 {
+			// Scenario 3: Package-only request, packages already installed, no system updates
+			log.Println("Package(s) already installed, no system updates available - no reboot needed")
+			if u.Request.Mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD {
+				// Write state file for post-boot verification even if already installed
+				if err := writeStateFileForPackageInstallation(fs, u.Request.PackageList); err != nil {
+					log.Printf("WARNING: Failed to write state file for package installation: %v", err)
+				}
 			}
+			emt.WriteUpdateStatus(fs, emt.SUCCESS, string(jsonString), "")
+			emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", "ubuntu")
+			return false, nil
+		}
+
+		// Scenario 1: System-wide update requested (kernel args update) but no apt packages to update
+		// Still need to reboot to apply kernel args that were written by PUA
+		if isSystemWideUpdate {
+			log.Println("System-wide update requested but no apt packages to update - triggering reboot for kernel args update")
 			emt.WriteUpdateStatus(fs, emt.SUCCESS, string(jsonString), "")
 			emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", "ubuntu")
 			return true, nil
 		}
+
 		return false, nil
 	}
 
@@ -158,6 +189,19 @@ func (u *Updater) Update() (bool, error) {
 	emt.WriteUpdateStatus(fs, emt.SUCCESS, string(jsonString), "")
 	emt.WriteGranularLogWithOSType(fs, emt.SUCCESS, "", "ubuntu")
 
+	// Determine reboot based on update type:
+	// Scenario 1: System-wide update (kernel args) - ALWAYS reboot
+	// Scenario 2: Package install WITH system updates - ALWAYS reboot
+	// Scenario 3: Package install WITHOUT system updates - handled above (returns false)
+	if isSystemWideUpdate {
+		// Scenario 1: System-wide update (triggered by kernel args from PUA)
+		log.Println("System-wide update completed - triggering reboot to apply kernel args and system updates")
+		return true, nil
+	}
+
+	// Scenario 2: Package installation with system updates available
+	// We already installed both packages and system updates, so reboot
+	log.Println("Package installation with system updates completed - triggering reboot")
 	return true, nil
 }
 
@@ -183,14 +227,34 @@ func GetEstimatedSize(cmdExec common.Executor, packageList []string) (bool, uint
 		// Log the error, but continue processing as output may still be useful
 		log.Printf("Warning: command execution returned error: %v", err)
 	}
+
+	// Check stderr for invalid package errors
+	stderrStr := string(stderr)
 	if len(stderr) > 0 {
-		return false, 0, fmt.Errorf("SOTA Aborted: command execution for update size determination failed: %s", string(stderr))
+		// Check for specific invalid package error
+		if strings.Contains(stderrStr, "Unable to locate package") || strings.Contains(stderrStr, "E: ") {
+			return false, 0, fmt.Errorf("invalid package name(s): %s", stderrStr)
+		}
+		return false, 0, fmt.Errorf("SOTA Aborted: command execution for update size determination failed: %s", stderrStr)
 	}
+
+	// Also check stdout for error messages (apt sometimes writes errors to stdout)
+	stdoutStr := string(stdout)
+	if len(stdout) > 0 {
+		if strings.Contains(stdoutStr, "Unable to locate package") {
+			return false, 0, fmt.Errorf("invalid package name(s): %s", stdoutStr)
+		}
+		// Check for generic apt errors in stdout
+		if strings.Contains(stdoutStr, "E: ") && !strings.Contains(stdoutStr, "Need to get") {
+			return false, 0, fmt.Errorf("package validation failed: %s", stdoutStr)
+		}
+	}
+
 	if len(stdout) == 0 {
 		return false, 0, fmt.Errorf("SOTA Aborted: no output from command to determine update size")
 	}
 
-	return getEstimatedSizeInBytesFromAptGetUpgrade(string(stdout))
+	return getEstimatedSizeInBytesFromAptGetUpgrade(stdoutStr)
 }
 
 func sizeToBytes(size string, unit string) uint64 {

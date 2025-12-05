@@ -23,10 +23,18 @@ type Rebooter struct {
 
 // Reboot method for Ubuntu
 func (u *Rebooter) Reboot() error {
+	log.Printf("[REBOOT DEBUG] Ubuntu Rebooter.Reboot() called - DoNotReboot=%v", u.Request.DoNotReboot)
 	if u.Request.DoNotReboot {
-		log.Println("Reboot is disabled.  Skipping reboot.")
+		log.Println("[REBOOT DEBUG] Reboot is disabled (DoNotReboot=true). Skipping reboot.")
 		return nil
 	}
 
-	return utils.RebootSystem(u.CommandExecutor)
+	log.Println("[REBOOT DEBUG] Calling utils.RebootSystem() to execute /usr/sbin/reboot...")
+	err := utils.RebootSystem(u.CommandExecutor)
+	if err != nil {
+		log.Printf("[REBOOT DEBUG] utils.RebootSystem() returned error: %v", err)
+	} else {
+		log.Println("[REBOOT DEBUG] utils.RebootSystem() returned successfully (system should be rebooting now)")
+	}
+	return err
 }
