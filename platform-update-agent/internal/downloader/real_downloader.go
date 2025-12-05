@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	pb "github.com/open-edge-platform/infra-managers/maintenance/pkg/api/maintmgr/v1"
 	"github.com/sirupsen/logrus"
@@ -44,8 +45,14 @@ func (r *Downloader) setStatus(status pb.UpdateStatus_StatusType) error {
 
 // Download starts the real download process with inbc
 // prependToImageURL will be prepended to the image URL on download
+// If OsImageUrl is already a complete URL (starts with http:// or https://), it will be used as-is
 func (r *RealDownloadExecutor) Download(ctx context.Context, prependToImageURL string, source *pb.OSProfileUpdateSource) error {
-	actualUrl := prependToImageURL + source.OsImageUrl
+	actualUrl := source.OsImageUrl
+
+	// Only prepend if OsImageUrl is not already a complete URL
+	if !isCompleteURL(source.OsImageUrl) {
+		actualUrl = prependToImageURL + source.OsImageUrl
+	}
 
 	r.log.Info("DOWNLOAD: started")
 
@@ -68,4 +75,9 @@ func (r *RealDownloadExecutor) runInbcCommand(ctx context.Context, args ...strin
 		return fmt.Errorf("command failed. output: \n%s\nerror: %w", string(output), err)
 	}
 	return nil
+}
+
+// isCompleteURL checks if a URL string is a complete URL (starts with http:// or https://)
+func isCompleteURL(url string) bool {
+	return strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")
 }

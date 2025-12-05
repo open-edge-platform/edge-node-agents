@@ -213,7 +213,18 @@ func (u *UpdateController) StartUpdate(durationSeconds int64) {
 
 	log.Infof("Starting Edge Node Update.")
 
-	err := u.metaController.SetMetaUpdateStatus(pb.UpdateStatus_STATUS_TYPE_STARTED)
+	// Clean up granular log from previous update before starting new update
+	err := u.cleaner.CleanupAfterUpdate(u.granularLogPath)
+	if err != nil {
+		log.Warnf("Failed to cleanup granular log before update: %v", err)
+	}
+
+	// Also clear the metadata UpdateLog to prevent stale logs from appearing
+	if err := u.metaController.SetMetaUpdateLog(""); err != nil {
+		log.Warnf("Failed to clear metadata update log before update: %v", err)
+	}
+
+	err = u.metaController.SetMetaUpdateStatus(pb.UpdateStatus_STATUS_TYPE_STARTED)
 	if err != nil {
 		log.Errorf("failed to set metadata - %v", err)
 		return

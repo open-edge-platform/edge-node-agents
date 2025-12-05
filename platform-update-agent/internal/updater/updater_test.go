@@ -65,7 +65,11 @@ func TestUpdater_StartUpdate_handleErrorThrownBySetMetaUpdateStatus(t *testing.T
 				interceptedStatusType = s
 				return fmt.Errorf("SetMetaUpdateStatusError")
 			},
+			SetMetaUpdateLog: func(s string) error {
+				return nil
+			},
 		},
+		cleaner: &MockCleaner{},
 	}
 
 	assert.NotEqual(t, pb.UpdateStatus_STATUS_TYPE_STARTED, interceptedStatusType)
@@ -93,6 +97,9 @@ func TestUpdater_StartUpdate_handleErrorThrownBySetMetaUpdateTime(t *testing.T) 
 				require.Fail(t, "SetMetaUpdateDuration function shouldn't be called")
 				return nil
 			},
+			SetMetaUpdateLog: func(s string) error {
+				return nil
+			},
 		},
 		edgeNodeUpdater: testUpdater{
 			updateFn: func() error {
@@ -103,6 +110,7 @@ func TestUpdater_StartUpdate_handleErrorThrownBySetMetaUpdateTime(t *testing.T) 
 		timeNow: func() time.Time {
 			return now
 		},
+		cleaner: &MockCleaner{},
 	}
 
 	u.StartUpdate(1)
@@ -139,6 +147,9 @@ func TestUpdater_StartUpdate_handleErrorThrownBySetMetaUpdateDuration(t *testing
 				interceptedUpdateDuration = updateDuration
 				return fmt.Errorf("SetMetaUpdateDurationError")
 			},
+			SetMetaUpdateLog: func(s string) error {
+				return nil
+			},
 		},
 		edgeNodeUpdater: testUpdater{
 			updateFn: func() error {
@@ -149,6 +160,7 @@ func TestUpdater_StartUpdate_handleErrorThrownBySetMetaUpdateDuration(t *testing
 		timeNow: func() time.Time {
 			return now
 		},
+		cleaner: &MockCleaner{},
 	}
 
 	u.StartUpdate(1)
@@ -241,6 +253,9 @@ func TestUpdater_StartUpdate_happyPath(t *testing.T) {
 				interceptedUpdateDuration = updateDuration
 				return nil
 			},
+			SetMetaUpdateLog: func(s string) error {
+				return nil
+			},
 		},
 		edgeNodeUpdater: testUpdater{updateFn: func() error {
 			interceptedUpdateAllExecution = true
@@ -249,6 +264,7 @@ func TestUpdater_StartUpdate_happyPath(t *testing.T) {
 		timeNow: func() time.Time {
 			return now
 		},
+		cleaner: &MockCleaner{},
 	}
 
 	u.StartUpdate(1)
