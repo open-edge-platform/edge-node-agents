@@ -90,8 +90,6 @@ func (u *OSUpdater) UpdateOS(factory UpdaterFactory) (*pb.UpdateResponse, error)
 		} else {
 			log.Printf("[REBOOT DEBUG] Skipping reboot because mode is DOWNLOAD_ONLY")
 		}
-	} else {
-		log.Println("[REBOOT DEBUG] proceedWithReboot is FALSE, skipping reboot")
 	}
 
 	return &pb.UpdateResponse{StatusCode: 200, Error: "Success"}, nil //nolint:nilerr // gRPC response pattern
