@@ -137,6 +137,11 @@ func handleSOTA(
 
 		fmt.Printf("SOTA Command Response: %d-%s\n", resp.GetStatusCode(), resp.GetError())
 
+		// Check if the operation failed based on status code
+		if resp.GetStatusCode() != 200 {
+			return fmt.Errorf("SOTA operation failed: %s", resp.GetError())
+		}
+
 		return nil
 	}
 }

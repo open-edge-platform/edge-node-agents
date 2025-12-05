@@ -40,7 +40,7 @@ func NewSnapshotter(commandExecutor common.Executor, fs afero.Fs) *Snapshotter {
 		IsSnapperInstalledFunc:  IsSnapperInstalled,
 		EnsureSnapperConfigFunc: EnsureSnapperConfig,
 		ClearStateFileFunc:      utils.ClearStateFile,
-		WriteToStateFileFunc:    utils.WriteToStateFile,
+		WriteToStateFileFunc:    writeStateFileWithTruncate,
 		Fs:                      fs,
 	}
 }
