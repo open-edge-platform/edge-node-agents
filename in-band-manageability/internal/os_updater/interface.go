@@ -84,15 +84,8 @@ func (f *UbuntuFactory) CreateUpdater(commandExecutor common.Executor, req *pb.U
 
 // CreateSnapshotter creates a snapshotter concrete class for Ubuntu OS.
 func (f *UbuntuFactory) CreateSnapshotter(commandExecutor common.Executor, req *pb.UpdateSystemSoftwareRequest) Snapshotter {
-	return &ubuntu.Snapshotter{
-		CommandExecutor:         commandExecutor,
-		IsBTRFSFileSystemFunc:   utils.IsBTRFSFileSystem,
-		IsSnapperInstalledFunc:  ubuntu.IsSnapperInstalled,
-		EnsureSnapperConfigFunc: ubuntu.EnsureSnapperConfig,
-		ClearStateFileFunc:      utils.ClearStateFile,
-		WriteToStateFileFunc:    utils.WriteToStateFile,
-		Fs:                      afero.NewOsFs(),
-	}
+	// Use ubuntu.NewSnapshotter to get the proper configuration with writeStateFileWithTruncate
+	return ubuntu.NewSnapshotter(commandExecutor, afero.NewOsFs())
 }
 
 // CreateCleaner creates a cleaner concrete class for Ubuntu OS.

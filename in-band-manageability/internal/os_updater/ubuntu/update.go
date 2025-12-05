@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -336,11 +337,47 @@ func noDownload(packages []string) [][]string {
 
 // writeStateFileWithTruncate writes state file content with proper truncation to avoid leftover data
 func writeStateFileWithTruncate(fs afero.Fs, filePath string, content string) error {
-	// Remove the file first to ensure clean write (Ubuntu-specific safety measure)
-	_ = fs.Remove(filePath)
+	log.Printf("writeStateFileWithTruncate: Content: %s", content)
 
-	// Now write the new content
-	return utils.WriteToStateFile(fs, filePath, content)
+	// Create parent directory if it doesn't exist
+	dir := filepath.Dir(filePath)
+	if err := fs.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("error creating directory: %w", err)
+	}
+
+	// COMPLETELY remove the old file first to ensure no corruption
+	if err := fs.Remove(filePath); err != nil && !os.IsNotExist(err) {
+		log.Printf("writeStateFileWithTruncate: Error removing old file (continuing): %v", err)
+	} else {
+		log.Printf("writeStateFileWithTruncate: Old file removed or didn't exist")
+	}
+
+	// Now create a fresh file
+	file, err := fs.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if err != nil {
+		// If file exists somehow, force remove and try again
+		_ = fs.Remove(filePath)
+		file, err = fs.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+		if err != nil {
+			return fmt.Errorf("error opening file: %w", err)
+		}
+	}
+	defer file.Close()
+
+	// Write the content to the file
+	_, err = file.WriteString(content)
+	if err != nil {
+		return fmt.Errorf("error writing to file: %w", err)
+	}
+
+	// Sync to ensure data is written to disk before closing
+	if err = file.Sync(); err != nil {
+		return fmt.Errorf("error syncing file: %w", err)
+	}
+
+	log.Printf("writeStateFileWithTruncate: Successfully wrote and synced %d bytes", len(content))
+
+	return nil
 }
 
 // writeStateFileForPackageInstallation writes state file for package-only installations
