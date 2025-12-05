@@ -243,7 +243,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 
 		proceedWithReboot, err := updater.Update()
 		assert.NoError(t, err)
-		assert.True(t, proceedWithReboot) // System-wide update should reboot for kernel args
+		assert.True(t, proceedWithReboot)          // System-wide update should reboot for kernel args
 		assert.Equal(t, 1, len(mockExec.commands)) // GetEstimatedSize command
 	})
 
@@ -263,7 +263,7 @@ func TestUbuntuUpdater_Update(t *testing.T) {
 
 		proceedWithReboot, err := updater.Update()
 		assert.NoError(t, err)
-		assert.False(t, proceedWithReboot) // Package already installed, no reboot needed
+		assert.False(t, proceedWithReboot)         // Package already installed, no reboot needed
 		assert.Equal(t, 1, len(mockExec.commands)) // GetEstimatedSize command
 	})
 

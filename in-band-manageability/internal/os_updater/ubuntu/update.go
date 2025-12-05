@@ -334,6 +334,15 @@ func noDownload(packages []string) [][]string {
 	return cmds
 }
 
+// writeStateFileWithTruncate writes state file content with proper truncation to avoid leftover data
+func writeStateFileWithTruncate(fs afero.Fs, filePath string, content string) error {
+	// Remove the file first to ensure clean write (Ubuntu-specific safety measure)
+	_ = fs.Remove(filePath)
+
+	// Now write the new content
+	return utils.WriteToStateFile(fs, filePath, content)
+}
+
 // writeStateFileForPackageInstallation writes state file for package-only installations
 func writeStateFileForPackageInstallation(fs afero.Fs, packageList []string) error {
 	if len(packageList) == 0 {
@@ -348,7 +357,7 @@ func writeStateFileForPackageInstallation(fs afero.Fs, packageList []string) err
 		log.Printf("State file exists from previous update. Preserving snapshot info and adding packages.")
 		existingState.PackageList = strings.Join(packageList, ",")
 		stateJSON, _ := json.Marshal(existingState)
-		return utils.WriteToStateFile(fs, utils.StateFilePath, string(stateJSON))
+		return writeStateFileWithTruncate(fs, utils.StateFilePath, string(stateJSON))
 	}
 
 	// No existing state - create new one for package installation
@@ -362,7 +371,7 @@ func writeStateFileForPackageInstallation(fs afero.Fs, packageList []string) err
 		return fmt.Errorf("failed to marshal state: %w", err)
 	}
 
-	if err := utils.WriteToStateFile(fs, utils.StateFilePath, string(stateJSON)); err != nil {
+	if err := writeStateFileWithTruncate(fs, utils.StateFilePath, string(stateJSON)); err != nil {
 		return fmt.Errorf("failed to write state file: %w", err)
 	}
 
