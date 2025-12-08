@@ -244,6 +244,8 @@ profile ca_dash {
   /etc/pam.d/* r,
   /etc/security/ r,
   /etc/security/* r,
+  /etc/security/limits.d/ r,
+  /etc/security/limits.d/* r,
 
   ## other needed files
   owner /etc/host.conf r,
@@ -420,6 +422,7 @@ profile ca_sudo {
   owner /etc/security/capability.conf r,
   owner /etc/security/limits.conf r,
   owner /etc/security/limits.d/ r,
+  owner /etc/security/limits.d/* r,
   owner /etc/security/pam_env.conf r,
   owner /etc/shadow r,
   owner /etc/sudo.conf r,

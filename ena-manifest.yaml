@@ -3,13 +3,13 @@
 ---
 metadata:
   schemaVersion: 2.0.0
-  release: 1.4.8
+  release: 1.4.11
 repository:
   codename: 3.1
   component: main
 packages:
   - name: cluster-agent
-    version: 1.8.3
+    version: 1.8.4
     ociArtifact: edge-orch/en/deb/cluster-agent
   - name: hardware-discovery-agent
     version: 1.8.1
@@ -33,5 +33,5 @@ packages:
     version: 2.7.6
     ociArtifact: edge-orch/en/deb/caddy
   - name: in-band-manageability
-    version: 1.0.6
+    version: 1.0.8
     ociArtifact: edge-orch/en/deb/in-band-manageability
