@@ -169,8 +169,8 @@ github.com/lufia/plan9stats v0.0.0-20250827001030-24949be3fa54 h1:mFWunSatvkQQDh
 github.com/lufia/plan9stats v0.0.0-20250827001030-24949be3fa54/go.mod h1:autxFIvghDt3jPTLoqZ9OZ7s9qTGNAWmYCjVFWPX/zg=
 github.com/open-edge-platform/edge-node-agents/common v1.9.1 h1:PqFuiVd9y4HXZDxYl76uhjmw448DZP+7ULlJclys7S8=
 github.com/open-edge-platform/edge-node-agents/common v1.9.1/go.mod h1:M2mflV2ZboCQrTyAGRRq3I0lDFlV2ne8JDMj15dDoW8=
-github.com/open-edge-platform/infra-managers/maintenance v1.24.2 h1:IMyuEZgZcjgJ8GhDLsV/NWsCcpw1JrqRaVBAm/nJni4=
-github.com/open-edge-platform/infra-managers/maintenance v1.24.2/go.mod h1:fuj4NXawGZxhzzKZmRaXm2EM5WwIqTVcbxfC054VjXM=
+github.com/open-edge-platform/infra-managers/maintenance v1.24.3 h1:+q7bCT2i1YvLqKLfV3mQyFEVKz0uY2eq88CS/AESX8s=
+github.com/open-edge-platform/infra-managers/maintenance v1.24.3/go.mod h1:fuj4NXawGZxhzzKZmRaXm2EM5WwIqTVcbxfC054VjXM=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
