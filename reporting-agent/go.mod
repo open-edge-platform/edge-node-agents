@@ -5,7 +5,7 @@ go 1.24.9
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/open-edge-platform/edge-node-agents/common v1.9.1
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.27.1
