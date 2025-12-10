@@ -5,7 +5,7 @@ NAME ?= platform-update-agent
 BUILD_DIR ?= build/artifacts
 PUA_PACKAGE_BUILD_DIR ?= $(BUILD_DIR)/package
 GO_MOD_MODE ?= readonly
-FUZZTIME ?= 1s
+FUZZ_TIME ?= 1s
 PKG_VERSION := $(shell if grep -q dev VERSION; then echo $$(cat VERSION)-$$(git rev-parse --short HEAD); else cat VERSION; fi)
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
 REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
@@ -70,8 +70,8 @@ build: puabuild mmbuild
 fuzztest:
 	sudo cp mocks/server-cert.pem /usr/local/share/ca-certificates/server-cert.crt
 	sudo update-ca-certificates
-	go test ./cmd/platform-update-agent/ -fuzz=FuzzGrpcCommunication -parallel=1 -fuzztime=${FUZZTIME}
-	go test ./cmd/platform-update-agent/ -fuzz=FuzzLogic -parallel=1 -fuzztime=${FUZZTIME}
+	go test ./cmd/platform-update-agent/ -fuzz=FuzzGrpcCommunication -parallel=1 -fuzztime=${FUZZ_TIME}
+	go test ./cmd/platform-update-agent/ -fuzz=FuzzLogic -parallel=1 -fuzztime=${FUZZ_TIME}
 
 test: common-unit-test
 

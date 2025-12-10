@@ -39,10 +39,11 @@ common-unit-test:
 #### Fuzzing test targets ####
 
 FUZZ_TIME ?= 60s
+LOG_FUZZ_RESULTS ?= true
 SCRIPTS_DIR := ../common/ci_scripts
 
 common-fuzztest:
-	bash -c '$(SCRIPTS_DIR)/fuzz_test.sh "internal" $(FUZZ_TIME); EXIT_STATUS=$$?; if [ $$EXIT_STATUS -ne 0 ]; then exit $$EXIT_STATUS; fi'
+	bash -c '$(SCRIPTS_DIR)/fuzz_test.sh "internal" $(FUZZ_TIME) $(LOG_FUZZ_RESULTS); EXIT_STATUS=$$?; if [ $$EXIT_STATUS -ne 0 ]; then exit $$EXIT_STATUS; fi'
 
 #### Tarball targets ####
 
