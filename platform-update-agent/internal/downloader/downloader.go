@@ -207,6 +207,11 @@ func (d *Downloader) startDownload(ctx context.Context, prependToImageURL string
 			return false
 		}
 
+		// Clear any stale granular log from previous updates
+		if err := d.metadataController.SetMetaUpdateLog(""); err != nil {
+			d.log.Warnf("DOWNLOAD: could not clear meta update log at start of download: %v", err)
+		}
+
 		err := d.downloadExecutor.Download(ctx, prependToImageURL, updateSource)
 		if err != nil {
 			if err := d.setStatus(pb.UpdateStatus_STATUS_TYPE_FAILED); err != nil {
