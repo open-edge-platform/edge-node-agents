@@ -15,6 +15,7 @@ else
 endif
 TARBALL_DIR := $(BUILD_DIR)/$(NAME)-$(PKG_VERSION)
 REGISTRY := 080137407410.dkr.ecr.us-west-2.amazonaws.com
+FUZZ_TIME ?= 1s
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ./common.mk)","")
@@ -84,7 +85,28 @@ test: common-unit-test
 integration_test:
 	@echo "no integration tests to run, skipping"
 
-fuzztest: common-fuzztest
+fuzztest:
+	@echo "---MAKEFILE FUZZ TEST ALL---"
+	@# Help: Run ALL 18 fuzz tests - validation, parsing, and gRPC handlers
+	@go test ./cmd/inbd/ -fuzz=FuzzPackageValidation -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./cmd/inbd/ -fuzz=FuzzURLValidation -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/telemetry/ -fuzz=FuzzParsePackageOutput -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/telemetry/ -fuzz=FuzzParseRPMOutput -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/telemetry/ -fuzz=FuzzParseRPMPackageName -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzUpdateFirmwareURL -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzUpdateSystemSoftwareURL -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzUpdateSystemSoftwareReleaseDate -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzLoadConfigURI -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzGetConfigPath -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzSetConfigPath -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzAppendConfigPath -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzRemoveConfigPath -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzQueryOption -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzSetPowerStateAction -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzAddApplicationSourceGPGKeyName -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzRemoveApplicationSourceFilename -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@go test ./internal/inbd/ -fuzz=FuzzUpdateOSSourceList -parallel=1 -fuzztime=$(FUZZ_TIME)
+	@echo "---END MAKEFILE FUZZ TEST ALL (18 tests completed)---"
 
 cover:
 	@echo "---MAKEFILE COVERAGE---"
