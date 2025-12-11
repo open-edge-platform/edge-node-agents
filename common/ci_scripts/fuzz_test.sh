@@ -26,10 +26,17 @@ for pkg in ${sourceCodePkgs}; do
 					checkFuzzTest=$(grep 'func Fuzz' "${testFile}" | cut -d '(' -f 1 | cut -d ' ' -f 2)
 					for fuzzTest in ${checkFuzzTest}; do
 						echo running "${fuzzTest}" test case
-						logFile="${homeDir}/fuzz_${pkg}_${fuzzTest}.log"
-						go test -fuzz "${fuzzTest}" -fuzztime "${FUZZ_TIME}" > "${logFile}" 2>&1
-						exitStatus=$?
-						echo "Output written to ${logFile}"
+						exitStatus=0
+						if [ "${LOG_FUZZ_RESULTS}" == "true" ]; then
+							echo "Write test output to file"
+							logFile="${homeDir}/fuzz_${pkg}_${fuzzTest}.log"
+							go test -fuzz "${fuzzTest}" -fuzztime "${FUZZ_TIME}" > "${logFile}" 2>&1
+							exitStatus=$?
+							echo "Output written to ${logFile}"
+						else
+							go test -fuzz "${fuzzTest}" -fuzztime "${FUZZ_TIME}"
+							exitStatus=$?
+						fi
 
 						if [ $exitStatus -ne 0 ]; then
 							echo "Fuzz test ${fuzzTest} in package ${pkg} FAILED"
