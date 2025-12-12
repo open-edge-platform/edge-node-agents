@@ -136,7 +136,7 @@ func UpdateClusterMetricConfig(ctx context.Context, cfg *pb.GetTelemetryConfigRe
 	// Step 1: Construct the JSON payload for kubectl patch command
 	jsonCfgChanged := map[string]interface{}{
 		"data": map[string]interface{}{
-			"telegraf.conf": string(tempFileContent),
+			"base-ext-telegraf.conf": string(tempFileContent),
 		},
 	}
 
