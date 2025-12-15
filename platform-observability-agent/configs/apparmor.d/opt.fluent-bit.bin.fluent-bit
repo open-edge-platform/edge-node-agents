@@ -14,6 +14,7 @@ include <tunables/global>
   /sys/kernel/mm/transparent_hugepage/enabled r,
   /usr/bin/dash ix,
   /var/log/apt/history.log r,
+  /var/log/cloud-init.log r,
   /var/log/inbm-update-status.log r,
   /var/log/journal/ r,
   /var/log/journal/** r,
