@@ -14,6 +14,8 @@ include <tunables/global>
   capability setuid,
   capability audit_write,
   capability sys_ptrace,
+  capability sys_admin,
+  capability dac_read_search,
 
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=GetAll path=/org/freedesktop/hostname1,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=GetAll path=/org/freedesktop/systemd1,
@@ -40,6 +42,7 @@ include <tunables/global>
 
   /etc/edge-node/node/confs/platform-observability-health-check ix,
   /etc/health-check/health-check.conf r,
+  /etc/locale.conf r,
   /opt/health-check/bin/fluent-bit mr,
   /dev/tty rmw,
   /etc/default/locale r,
@@ -70,6 +73,7 @@ include <tunables/global>
   /proc/ r,
   /run/platform-observability-agent/agent-logs.sock rw,
   /run/ufw.lock wk,
+  /sys/devices/system/node/ r,
   /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
   /sys/kernel/mm/transparent_hugepage/enabled r,
   /sys/kernel/security/apparmor/profiles r,
@@ -83,6 +87,7 @@ include <tunables/global>
   /usr/bin/hostnamectl ix,
   /usr/bin/ip ix,
   /usr/bin/jq ix,
+  /usr/bin/mawk ix,
   /usr/bin/ps ix,
   /usr/bin/sudo ix,
   /usr/bin/systemctl ix,
