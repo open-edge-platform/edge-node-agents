@@ -73,7 +73,7 @@ jobs:
       cache_go: true
       bootstrap_tools: "all,golangci-lint2"
     secrets:
-      SYS_ORCH_GITHUB: ${{ secrets.SYS_ORCH_GITHUB }}
+      SYS_EMF_GH_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
       NO_AUTH_ECR_PUSH_USERNAME: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}
       NO_AUTH_ECR_PUSH_PASSWD: ${{ secrets.NO_AUTH_ECR_PUSH_PASSWD }}
       MSTEAMS_WEBHOOK: ${{ secrets.TEAMS_WEBHOOK }}
@@ -100,13 +100,13 @@ jobs:
         with:
           repository: open-edge-platform/orch-ci
           path: ci
-          token: ${{ secrets.SYS_ORCH_GITHUB }}
+          token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           persist-credentials: false
 
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@d3fe218ea585fb390b73c87f9e482cbe1424829c  # v0.1.68
         with:
-          gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
+          gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "yq,aws,oras"
 
       - name: Configure AWS credentials
@@ -140,7 +140,7 @@ jobs:
 
       - name: Tag new manifest version
         env:
-          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
         run: |
           ./common/ci_scripts/manifest-versioning.sh tag
   collect-versions:
@@ -175,7 +175,7 @@ jobs:
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@d3fe218ea585fb390b73c87f9e482cbe1424829c  # v0.1.68
         with:
-          gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
+          gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base,yq"
 
       - name: Get manifest version
@@ -225,13 +225,13 @@ jobs:
         with:
           repository: open-edge-platform/virtual-edge-node
           path: virtual-edge-node
-          token: ${{ secrets.SYS_ORCH_GITHUB }}
+          token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           persist-credentials: false
 
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@d3fe218ea585fb390b73c87f9e482cbe1424829c  # v0.1.68
         with:
-          gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
+          gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base,yq"
 
       - name: Set up Git identity
@@ -382,8 +382,8 @@ jobs:
         shell: bash
         working-directory: virtual-edge-node
         env:
-          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
-          GH_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
         run: |
           git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
@@ -415,13 +415,13 @@ jobs:
         with:
           repository: open-edge-platform/edge-manageability-framework
           path: edge-manageability-framework
-          token: ${{ secrets.SYS_ORCH_GITHUB }}
+          token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           persist-credentials: false
 
       - name: Setup CI environment
         uses: open-edge-platform/orch-ci/.github/actions/bootstrap@d3fe218ea585fb390b73c87f9e482cbe1424829c  # v0.1.68
         with:
-          gh_token: ${{ secrets.SYS_ORCH_GITHUB }}
+          gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base"
 
       - name: Set up Git identity
@@ -446,8 +446,8 @@ jobs:
         shell: bash
         working-directory: edge-manageability-framework
         env:
-          GITHUB_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
-          GH_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
         run: |
           git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
