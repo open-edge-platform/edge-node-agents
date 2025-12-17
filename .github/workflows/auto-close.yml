@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/stale@997185467fa4f803885201cee163a9f38240193d  # v10.1.1
         with:
-          repo-token: ${{ secrets.SYS_ORCH_GITHUB }}
+          repo-token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           stale-pr-message: 'This pull request is stale because it has been open 30 days with no activity. Make a comment or update the PR to avoid closing the PR after 15 days.'
           days-before-pr-stale: 30
           days-before-pr-close: 15
