@@ -17,6 +17,21 @@ if [ ! -z "$RET" ]; then
     sed -i -e '/^onboarding:$/{n' -e '/.*enabled:/{n' -e '/.*serviceURL:/{n' -e 's/heartbeatInterval:.*/heartbeatInterval: '"$RET"'/' -e '}}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
+db_get node-agent/status.serviceClients
+if [ ! -z "$RET" ]; then
+    sed -i -e '/^status:$/{n' -e '/.*endpoint:/{n' -e 's#serviceClients:.*#serviceClients: '"$RET"'#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
+db_get node-agent/status.outboundClients
+if [ ! -z "$RET" ]; then
+    sed -i -e '/^status:$/{n' -e '/.*endpoint:/{n' -e '/.*serviceClients:/{n' -e 's#outboundClients:.*#outboundClients: '"$RET"'#' -e '}}}' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
+db_get node-agent/metrics.enabled
+if [ ! -z "$RET" ]; then
+    sed -i -e '/^metrics:$/{n' -e 's/enabled:.*/enabled: '"$RET"'/' -e '}' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
 db_get node-agent/auth.accessTokenURL
 if [ ! -z "$RET" ]; then
     sed -i -e '/^auth:$/{n' -e 's#accessTokenURL:.*#accessTokenURL: '"$RET"'#' -e '}' /etc/edge-node/node/confs/node-agent.yaml
@@ -25,6 +40,11 @@ fi
 db_get node-agent/auth.rsTokenURL
 if [ ! -z "$RET" ]; then
     sed -i -e '/^auth:$/{n' -e '/.*accessTokenURL:/{n' -e 's#rsTokenURL:.*#rsTokenURL: '"$RET"'#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
+db_get node-agent/auth.tokenClients
+if [ ! -z "$RET" ]; then
+    sed -i -e '/^auth:$/{n' -e '/.*accessTokenURL:/{n' -e '/.*rsTokenURL:/{n' -e '/.*accessTokenPath:/{n' -e '/.*clientCredsPath:/{n' -e 's#tokenClients:.*#tokenClients: '"$RET"'#' -e '}}}}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
 db_get node-agent/proxy.aptSourceURL
