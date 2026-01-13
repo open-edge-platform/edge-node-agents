@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-package utils //nolint:revive // Keep package name
+package utils
 
 import (
 	"testing"
