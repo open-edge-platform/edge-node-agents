@@ -390,6 +390,12 @@ linters:
       - path: (.+)\.go$
         text: should have a package comment
 
+      # revive: Ignore meaningless package names error for utils package. Current utils name is ok
+      - path: pkg/utils/
+        linters:
+          - revive
+        text: "var-naming: avoid meaningless package names"
+
 formatters:
   # Enable specific formatter.
   # Default: [] (uses standard Go formatting)
