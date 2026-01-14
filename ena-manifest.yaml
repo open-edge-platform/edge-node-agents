@@ -15,7 +15,7 @@ packages:
     version: 1.8.1
     ociArtifact: edge-orch/en/deb/hardware-discovery-agent
   - name: node-agent
-    version: 1.9.1
+    version: 1.10.0
     ociArtifact: edge-orch/en/deb/node-agent
   - name: platform-manageability-agent
     version: 0.3.1
