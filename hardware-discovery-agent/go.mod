@@ -9,7 +9,7 @@ require (
 	github.com/open-edge-platform/edge-node-agents/common v1.9.1
 	github.com/open-edge-platform/infra-managers/host v1.24.1
 	github.com/safchain/ethtool v0.7.0
-	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.64.0
 	google.golang.org/grpc v1.78.0
