@@ -1,6 +1,6 @@
 module github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent
 
-go 1.24.9
+go 1.25.5
 
 require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
