@@ -1,6 +1,6 @@
 module github.com/open-edge-platform/edge-node-agents/platform-manageability-agent
 
-go 1.24.9
+go 1.25.5
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
