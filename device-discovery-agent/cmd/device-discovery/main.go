@@ -139,7 +139,7 @@ func parseCLIFlags() *CLIConfig {
 
 	// Optional configuration
 	flag.StringVar(&cfg.ExtraHosts, "extra-hosts", "", "Additional host mappings (comma-separated: 'host1:ip1,host2:ip2')")
-	flag.StringVar(&cfg.CaCertPath, "ca-cert", config.CaCertPath, "Path to CA certificate")
+	flag.StringVar(&cfg.CaCertPath, "ca-cert", "", "Path to CA certificate (required)")
 	flag.BoolVar(&cfg.Debug, "debug", false, "Enable debug mode with timeout")
 	flag.DurationVar(&cfg.Timeout, "timeout", 5*time.Minute, "Timeout duration for debug mode")
 
@@ -166,6 +166,8 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "        Onboarding manager port\n")
 	fmt.Fprintf(os.Stderr, "  -keycloak-url string\n")
 	fmt.Fprintf(os.Stderr, "        Keycloak authentication URL\n")
+	fmt.Fprintf(os.Stderr, "  -ca-cert string\n")
+	fmt.Fprintf(os.Stderr, "        Path to CA certificate\n")
 	fmt.Fprintf(os.Stderr, "  -mac string\n")
 	fmt.Fprintf(os.Stderr, "        MAC address of the device (required unless -auto-detect is used)\n")
 	fmt.Fprintf(os.Stderr, "\nOptional Device Information:\n")
@@ -181,8 +183,6 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "\nAdditional Options:\n")
 	fmt.Fprintf(os.Stderr, "  -extra-hosts string\n")
 	fmt.Fprintf(os.Stderr, "        Additional host mappings (comma-separated: 'host1:ip1,host2:ip2')\n")
-	fmt.Fprintf(os.Stderr, "  -ca-cert string\n")
-	fmt.Fprintf(os.Stderr, "        Path to CA certificate (default: %s)\n", config.CaCertPath)
 	fmt.Fprintf(os.Stderr, "  -debug\n")
 	fmt.Fprintf(os.Stderr, "        Enable debug mode with timeout\n")
 	fmt.Fprintf(os.Stderr, "  -timeout duration\n")
@@ -419,6 +419,9 @@ func validateConfig(cfg *CLIConfig) {
 	}
 	if cfg.KeycloakURL == "" {
 		missing = append(missing, "-keycloak-url")
+	}
+	if cfg.CaCertPath == "" {
+		missing = append(missing, "-ca-cert")
 	}
 	if cfg.MacAddr == "" {
 		missing = append(missing, "-mac (or use -auto-detect)")
