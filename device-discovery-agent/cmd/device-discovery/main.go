@@ -86,6 +86,11 @@ func main() {
 	// Validate after auto-detection
 	validateConfig(cfg)
 
+	// Write validated configuration to file
+	if err := writeConfigToFile(cfg); err != nil {
+		log.Fatalf("Failed to write configuration to file: %v", err)
+	}
+
 	// Add extra hosts if provided
 	if cfg.ExtraHosts != "" {
 		if err := config.UpdateHosts(cfg.ExtraHosts); err != nil {
@@ -495,6 +500,51 @@ func autoDetectSystemInfo(cfg *CLIConfig) error {
 		fmt.Printf("Auto-detected IP address: %s\n", cfg.IPAddress)
 	}
 
+	return nil
+}
+
+// writeConfigToFile writes the validated configuration to a file in KEY=VALUE format.
+func writeConfigToFile(cfg *CLIConfig) error {
+	const configFilePath = "/var/log/device-discovery/validated-config.env"
+
+	// Ensure the directory exists
+	configDir := "/var/log/device-discovery"
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Create the config file
+	file, err := os.Create(configFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create config file: %w", err)
+	}
+	defer file.Close()
+
+	// Write header
+	fmt.Fprintf(file, "# Device Discovery Validated Configuration\n")
+	fmt.Fprintf(file, "# Generated at: %s\n\n", time.Now().Format(time.RFC3339))
+
+	// Write configuration values
+	fmt.Fprintf(file, "OBM_SVC=%s\n", cfg.ObmSvc)
+	fmt.Fprintf(file, "OBS_SVC=%s\n", cfg.ObsSvc)
+	fmt.Fprintf(file, "OBM_PORT=%d\n", cfg.ObmPort)
+	fmt.Fprintf(file, "KEYCLOAK_URL=%s\n", cfg.KeycloakURL)
+	fmt.Fprintf(file, "MAC=%s\n", cfg.MacAddr)
+	fmt.Fprintf(file, "SERIAL=%s\n", cfg.SerialNumber)
+	fmt.Fprintf(file, "UUID=%s\n", cfg.UUID)
+	fmt.Fprintf(file, "IP=%s\n", cfg.IPAddress)
+	fmt.Fprintf(file, "CA_CERT=%s\n", cfg.CaCertPath)
+
+	if cfg.ExtraHosts != "" {
+		fmt.Fprintf(file, "EXTRA_HOSTS=%s\n", cfg.ExtraHosts)
+	}
+
+	fmt.Fprintf(file, "DEBUG=%t\n", cfg.Debug)
+	if cfg.Debug {
+		fmt.Fprintf(file, "TIMEOUT=%s\n", cfg.Timeout.String())
+	}
+
+	fmt.Printf("Configuration written to: %s\n", configFilePath)
 	return nil
 }
 
