@@ -6,7 +6,6 @@
     "dnsSuffixOS": "localhost",
     "features": "AMT Pro Corporate",
     "hostnameOS": "testhost",
-    "operationalState": "enabled",
     "ras": {
         "networkStatus": "direct",
         "remoteStatus": "not connected",

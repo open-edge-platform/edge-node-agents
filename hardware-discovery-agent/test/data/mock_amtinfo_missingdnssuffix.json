@@ -2,7 +2,6 @@
     "amt": "16.1.27",
     "buildNumber": "2176",
     "controlMode": "activated in client control mode",
-    "dnsSuffix": "test.com",
     "dnsSuffixOS": "localhost",
     "features": "AMT Pro Corporate",
     "hostnameOS": "testhost",

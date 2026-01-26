@@ -10,7 +10,6 @@
     "ras": {
         "networkStatus": "direct",
         "remoteStatus": "not connected",
-        "remoteTrigger": "user initiated",
         "mpsHostname": ""
     },
     "sku": "16392",

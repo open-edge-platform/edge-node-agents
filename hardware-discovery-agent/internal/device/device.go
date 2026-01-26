@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/system"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
 )
 
@@ -19,14 +20,16 @@ type RASInfo struct {
 }
 
 type AMTInfo struct {
-	Version     string  `json:"version"`
-	BuildNumber string  `json:"buildNumber"`
-	Sku         string  `json:"sku"`
-	Features    string  `json:"features"`
-	Uuid        string  `json:"uuid"`
-	ControlMode string  `json:"controlMode"`
-	DNSSuffix   string  `json:"dnsSuffix"`
-	RAS         RASInfo `json:"ras"`
+	Version          string  `json:"amt"`
+	Hostname         string  `json:"hostnameOS"`
+	OperationalState string  `json:"operationalState"`
+	BuildNumber      string  `json:"buildNumber"`
+	Sku              string  `json:"sku"`
+	Features         string  `json:"features"`
+	Uuid             string  `json:"uuid"`
+	ControlMode      string  `json:"controlMode"`
+	DNSSuffix        string  `json:"dnsSuffix"`
+	RAS              RASInfo `json:"ras"`
 }
 
 func GetDeviceInfo(executor utils.CmdExecutor) (AMTInfo, error) {
@@ -39,6 +42,14 @@ func GetDeviceInfo(executor utils.CmdExecutor) (AMTInfo, error) {
 	err = json.Unmarshal(dataBytes, &amtInfo)
 	if err != nil {
 		return amtInfo, fmt.Errorf("failed to parse data from command; error: %w", err)
+	}
+
+	if amtInfo.Uuid == "" {
+		systemId, err := system.GetSystemUUID(executor)
+		if err != nil {
+			return AMTInfo{}, fmt.Errorf("failed to retrieve system uuid; error: %w", err)
+		}
+		amtInfo.Uuid = systemId
 	}
 
 	return amtInfo, nil

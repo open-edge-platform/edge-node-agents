@@ -4,7 +4,6 @@
     "controlMode": "activated in client control mode",
     "dnsSuffix": "test.com",
     "dnsSuffixOS": "localhost",
-    "features": "AMT Pro Corporate",
     "hostnameOS": "testhost",
     "operationalState": "enabled",
     "ras": {

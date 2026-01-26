@@ -9,7 +9,6 @@
     "operationalState": "enabled",
     "ras": {
         "networkStatus": "direct",
-        "remoteStatus": "not connected",
         "remoteTrigger": "user initiated",
         "mpsHostname": ""
     },
