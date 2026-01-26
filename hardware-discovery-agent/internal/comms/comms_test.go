@@ -594,6 +594,24 @@ func TestGenerateUpdateDeviceRequestSuccessUsbInfoOnly(t *testing.T) {
 	assert.Equal(t, expected, json)
 }
 
+func TestGenerateUpdateDeviceRequestSuccessDeviceInfoOnly(t *testing.T) {
+	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassedDeviceOnly)
+	osKern := proto.OsKernel{}
+	osRelease := proto.OsRelease{}
+	osInfo := &proto.OsInfo{
+		Kernel:  &osKern,
+		Release: &osRelease,
+	}
+	cpu := &proto.SystemCPU{}
+	storage := []*proto.SystemDisk{}
+	gpu := []*proto.SystemGPU{}
+	networks := []*proto.SystemNetwork{}
+	usbInfo := []*proto.SystemUSB{}
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	require.NotNil(t, json)
+	assert.Equal(t, expected, json)
+}
+
 func testCmd(testFunc string, command string, args ...string) *exec.Cmd {
 	cs := []string{fmt.Sprintf("-test.run=%s", testFunc), "--", command}
 	cs = append(cs, args...)
@@ -644,6 +662,8 @@ func testCmdExecutorCommandPassed(command string, args ...string) *exec.Cmd {
 			return testCmd("TestGenerateUpdateDeviceRequestCommandGpuDetails", command, args...)
 		} else if strings.Contains(args[0], "ipmitool") {
 			return testCmd("TestGenerateUpdateDeviceRequestCommandIpmiDetails", command, args...)
+		} else if strings.Contains(args[0], "rpc") {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandDeviceDetails", command, args...)
 		} else {
 			if strings.Contains(args[2], "bios-version") {
 				return testCmd("TestGenerateUpdateDeviceRequestCommandBiosVersion", command, args...)
@@ -760,6 +780,18 @@ func testCmdExecutorCommandPassedUsbOnly(command string, args ...string) *exec.C
 	}
 }
 
+func testCmdExecutorCommandPassedDeviceOnly(command string, args ...string) *exec.Cmd {
+	if strings.Contains(command, "sudo") {
+		if strings.Contains(args[0], "rpc") {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandDeviceDetails", command, args...)
+		} else {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
+		}
+	} else {
+		return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
+	}
+}
+
 func testCmdExecutorCommandFailed(command string, args ...string) *exec.Cmd {
 	cs := []string{"-test.run=TestGenerateUpdateDeviceRequestCommandFailed", "--", command}
 	cs = append(cs, args...)
@@ -783,6 +815,16 @@ func TestGenerateUpdateDeviceRequestCommandCoreDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details.txt")
+	require.NoError(t, err)
+	fmt.Fprintf(os.Stdout, "%v", string(testData))
+	os.Exit(0)
+}
+
+func TestGenerateUpdateDeviceRequestCommandDeviceDetails(t *testing.T) {
+	if os.Getenv("GO_TEST_PROCESS") != "1" {
+		return
+	}
+	testData, err := os.ReadFile("../../test/data/mock_amtinfo.json")
 	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)

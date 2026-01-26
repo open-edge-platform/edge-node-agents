@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/cpu"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/device"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/disk"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/gpu"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/logger"
@@ -355,6 +356,11 @@ func GenerateSystemInfoRequest(executor utils.CmdExecutor) *proto.SystemInfo {
 	usbList, err := usb.GetUsbList(executor)
 	if err != nil {
 		log.Errorf("unable to get usb description : %v", err)
+	}
+
+	_, err = device.GetDeviceInfo(executor)
+	if err != nil {
+		log.Errorf("unable to get device description : %v", err)
 	}
 
 	return parseSystemInfo(sn, productName, bmcAddr, osInfo, biosInfo, cpu, storage, gpu, mem, networkList, bmType, usbList)
