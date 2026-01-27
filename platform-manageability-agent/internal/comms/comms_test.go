@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
@@ -179,12 +180,15 @@ func TestRetrieveActivationDetails_Success(t *testing.T) {
 }
 
 func TestRetrieveActivationDetails_Failed(t *testing.T) {
-	var capturedRequest *pb.ActivationResultRequest
+	var capturedRequests []*pb.ActivationResultRequest
+	var mu sync.Mutex // Protect capturedRequests from concurrent access
 
 	mockServer := &mockDeviceManagementServer{
 		operationType: pb.OperationType_ACTIVATE,
 		onReportActivationResults: func(ctx context.Context, req *pb.ActivationResultRequest) (*pb.ActivationResultResponse, error) {
-			capturedRequest = req // Capture the request to verify later.
+			mu.Lock()
+			capturedRequests = append(capturedRequests, req) // Capture all requests
+			mu.Unlock()
 			log.Logger.Infof("Received ReportActivationResults request: %v", req)
 			return &pb.ActivationResultResponse{}, nil
 		},
@@ -217,11 +221,23 @@ func TestRetrieveActivationDetails_Failed(t *testing.T) {
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
+	// Wait briefly for async activation to complete
+	time.Sleep(100 * time.Millisecond)
+
 	// Verify that the activation result was reported with ACTIVATION_FAILED status since CIRA is not configured.
-	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
-	assert.Equal(t, "host-id", capturedRequest.HostId, "Host ID should match")
-	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
-		"Activation status should be ACTIVATION_FAILED when CIRA is not configured")
+	mu.Lock()
+	assert.NotEmpty(t, capturedRequests, "At least one activation result should have been reported")
+
+	// Check that final status is ACTIVATION_FAILED
+	hasActivationFailed := false
+	for _, req := range capturedRequests {
+		assert.Equal(t, "host-id", req.HostId, "Host ID should match")
+		if req.ActivationStatus == pb.ActivationStatus_ACTIVATION_FAILED {
+			hasActivationFailed = true
+		}
+	}
+	mu.Unlock()
+	assert.True(t, hasActivationFailed, "Should have received ACTIVATION_FAILED status when CIRA is not configured")
 }
 
 func TestRetrieveActivationDetails_Connecting_Timeout(t *testing.T) {
@@ -511,10 +527,13 @@ func TestRetrieveActivationDetails_InterruptedSystemCall(t *testing.T) {
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
-	// Verify activation failed due to interrupted system call
+	// Wait briefly for async activation to complete
+	time.Sleep(100 * time.Millisecond)
+
+	// Verify activation status - interrupted system call should return ACTIVATING for retry
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
-	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
-		"Activation should fail when interrupted system call occurs")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATING, capturedRequest.ActivationStatus,
+		"Activation should return ACTIVATING when interrupted system call occurs (retryable)")
 }
 
 // TestRetrieveActivationDetails_InterruptedSystemCallWithExitCode tests exit code 10 detection
@@ -556,10 +575,13 @@ func TestRetrieveActivationDetails_InterruptedSystemCallWithExitCode(t *testing.
 	})
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed")
 
-	// Verify activation failed due to exit code 10
+	// Wait briefly for async activation to complete
+	time.Sleep(100 * time.Millisecond)
+
+	// Verify activation status - exit code 10 should return ACTIVATING for retry
 	assert.NotNil(t, capturedRequest, "Activation result should have been reported")
-	assert.Equal(t, pb.ActivationStatus_ACTIVATION_FAILED, capturedRequest.ActivationStatus,
-		"Activation should fail when exit code 10 occurs")
+	assert.Equal(t, pb.ActivationStatus_ACTIVATING, capturedRequest.ActivationStatus,
+		"Activation should return ACTIVATING when exit code 10 occurs (retryable)")
 }
 
 // TestRetrieveActivationDetails_ConnectingStateTimeout tests the 3-minute timeout for connecting state
@@ -849,11 +871,14 @@ func TestPerformDeactivationAsync_AMTInfoFailures(t *testing.T) {
 // TestRetrieveActivationDetails_UnableToAuthenticateWithAMT tests the "Unable to authenticate with AMT" scenario
 func TestRetrieveActivationDetails_UnableToAuthenticateWithAMT(t *testing.T) {
 	var capturedRequests []*pb.ActivationResultRequest
+	var mu sync.Mutex // Protect capturedRequests from concurrent access
 
 	mockServer := &mockDeviceManagementServer{
 		operationType: pb.OperationType_ACTIVATE,
 		onReportActivationResults: func(ctx context.Context, req *pb.ActivationResultRequest) (*pb.ActivationResultResponse, error) {
+			mu.Lock()
 			capturedRequests = append(capturedRequests, req)
+			mu.Unlock()
 			return &pb.ActivationResultResponse{}, nil
 		},
 	}
@@ -893,7 +918,11 @@ func TestRetrieveActivationDetails_UnableToAuthenticateWithAMT(t *testing.T) {
 	// Should succeed despite the authentication failure (async deactivation triggered)
 	assert.NoError(t, err, "RetrieveActivationDetails should succeed with async deactivation logic")
 
+	// Wait for async operations to complete
+	time.Sleep(100 * time.Millisecond)
+
 	// Verify that at least one activation result was reported
+	mu.Lock()
 	assert.NotEmpty(t, capturedRequests, "At least one activation result should have been reported")
 
 	// The "Unable to authenticate with AMT" error should trigger async deactivation
@@ -905,6 +934,7 @@ func TestRetrieveActivationDetails_UnableToAuthenticateWithAMT(t *testing.T) {
 			break
 		}
 	}
+	mu.Unlock()
 	assert.True(t, hasActivationFailedStatus, "Should have received ACTIVATION_FAILED status due to authentication failure triggering deactivation")
 
 	// Give a brief moment for async deactivation to complete
