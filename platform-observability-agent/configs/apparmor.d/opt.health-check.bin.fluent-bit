@@ -16,6 +16,7 @@ include <tunables/global>
   capability sys_ptrace,
   capability sys_admin,
   capability dac_read_search,
+  capability dac_override,
 
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=GetAll path=/org/freedesktop/hostname1,
   dbus (send) bus=system interface=org.freedesktop.DBus.Properties member=GetAll path=/org/freedesktop/systemd1,

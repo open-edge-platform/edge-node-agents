@@ -282,6 +282,7 @@ profile hda_sudo {
   capability sys_resource,
 
   /etc/locale.conf r,
+  /etc/security/limits.d/10-gamemode.conf r,
   /etc/sudoers r,
   /etc/sudoers.d/* r,
   /proc/*/loginuid r,
