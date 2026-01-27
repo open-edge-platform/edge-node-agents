@@ -27,7 +27,7 @@ type disk struct {
 
 // GetDiskData retrieves disk information from the system using the lsblk command.
 func GetDiskData(executor utils.CmdExecutor) ([]model.Disk, error) {
-	diskList := []model.Disk{}
+	diskList := []model.Disk{} //nolint:prealloc // Number of disks on node unknown before run time so cannot preallocate to specific size
 	var diskStruct disks
 
 	outputBytes, err := utils.ReadFromCommand(executor, "lsblk", "-o", "KNAME,VENDOR,MODEL,SIZE,TYPE", "-J", "-b", "--tree")

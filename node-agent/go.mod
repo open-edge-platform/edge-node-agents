@@ -1,12 +1,12 @@
 module github.com/open-edge-platform/edge-node-agents/node-agent
 
-go 1.24.9
+go 1.25.5
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/open-edge-platform/edge-node-agents/common v1.9.1
-	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
+	github.com/open-edge-platform/edge-node-agents/common v1.10.0
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.34.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -67,5 +67,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.64.0
 	golang.org/x/sys v0.39.0 // indirect
-	google.golang.org/grpc v1.77.0
+	google.golang.org/grpc v1.78.0
 )
