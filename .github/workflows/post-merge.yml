@@ -1,5 +1,5 @@
 ---
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 name: Post-Merge CI Pipeline
@@ -363,20 +363,20 @@ jobs:
           cd edge-node-container
           make bma_versions
 
-      - name: Update edge-node-container VERSION
-        shell: bash
-        working-directory: virtual-edge-node
-        run: |
-          enic_version=$(head -n1 edge-node-container/VERSION)
-          check_if_dev_version=$(echo "${enic_version}" | grep "dev")
-          if [ -z ${check_if_dev_version} ]; then
-            major_version=$(echo "${enic_version}" | cut -d '.' -f1)
-            minor_version=$(echo "${enic_version}" | cut -d '.' -f2)
-            patch_version=$(echo "${enic_version}" | cut -d '.' -f3)
-            new_patch_version=$(( patch_version + 1 ))
-            new_enic_version="${major_version}.${minor_version}.${new_patch_version}-dev"
-            echo "${new_enic_version}" > edge-node-container/VERSION
-          fi
+      #- name: Update edge-node-container VERSION
+      #  shell: bash
+      #  working-directory: virtual-edge-node
+      #  run: |
+      #    enic_version=$(head -n1 edge-node-container/VERSION)
+      #    check_if_dev_version=$(echo "${enic_version}" | grep "dev")
+      #    if [ -z ${check_if_dev_version} ]; then
+      #      major_version=$(echo "${enic_version}" | cut -d '.' -f1)
+      #      minor_version=$(echo "${enic_version}" | cut -d '.' -f2)
+      #      patch_version=$(echo "${enic_version}" | cut -d '.' -f3)
+      #      new_patch_version=$(( patch_version + 1 ))
+      #      new_enic_version="${major_version}.${minor_version}.${new_patch_version}-dev"
+      #      echo "${new_enic_version}" > edge-node-container/VERSION
+      #    fi
 
       - name: Commit changes to branch and create PR
         shell: bash
