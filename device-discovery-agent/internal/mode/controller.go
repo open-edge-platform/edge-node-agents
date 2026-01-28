@@ -29,40 +29,43 @@ type OnboardingController struct {
 	ipAddress    string
 
 	// Configuration
-	caCertPath string
+	caCertPath             string
+	disableInteractiveMode bool
 }
 
 // Config holds the configuration for the onboarding orchestrator.
 type Config struct {
-	ObmSvc       string
-	ObsSvc       string
-	ObmPort      int
-	KeycloakURL  string
-	MacAddr      string
-	SerialNumber string
-	UUID         string
-	IPAddress    string
-	CaCertPath   string
+	ObmSvc                 string
+	ObsSvc                 string
+	ObmPort                int
+	KeycloakURL            string
+	MacAddr                string
+	SerialNumber           string
+	UUID                   string
+	IPAddress              string
+	CaCertPath             string
+	DisableInteractiveMode bool
 }
 
 // NewOnboardingController creates a new onboarding controller.
 func NewOnboardingController(cfg Config) *OnboardingController {
 	return &OnboardingController{
-		obmSvc:       cfg.ObmSvc,
-		obsSvc:       cfg.ObsSvc,
-		obmPort:      cfg.ObmPort,
-		keycloakURL:  cfg.KeycloakURL,
-		macAddr:      cfg.MacAddr,
-		serialNumber: cfg.SerialNumber,
-		uuid:         cfg.UUID,
-		ipAddress:    cfg.IPAddress,
-		caCertPath:   cfg.CaCertPath,
+		obmSvc:                 cfg.ObmSvc,
+		obsSvc:                 cfg.ObsSvc,
+		obmPort:                cfg.ObmPort,
+		keycloakURL:            cfg.KeycloakURL,
+		macAddr:                cfg.MacAddr,
+		serialNumber:           cfg.SerialNumber,
+		uuid:                   cfg.UUID,
+		ipAddress:              cfg.IPAddress,
+		caCertPath:             cfg.CaCertPath,
+		disableInteractiveMode: cfg.DisableInteractiveMode,
 	}
 }
 
 // Execute performs device onboarding, automatically switching between modes as needed.
 // It first attempts non-interactive mode, and falls back to interactive mode if the
-// device is not found in the system.
+// device is not found in the system (unless interactive mode is disabled).
 func (o *OnboardingController) Execute(ctx context.Context) error {
 	fmt.Println("Starting device onboarding...")
 
@@ -70,7 +73,12 @@ func (o *OnboardingController) Execute(ctx context.Context) error {
 	result := o.tryNonInteractiveMode(ctx)
 
 	if result.ShouldFallback {
-		// Device not found - fall back to interactive mode
+		// Device not found - check if interactive mode is allowed
+		if o.disableInteractiveMode {
+			return fmt.Errorf("non-interactive onboarding failed (device not found) and interactive mode is disabled: %w", result.Error)
+		}
+
+		// Fall back to interactive mode
 		fmt.Printf("Executing fallback to interactive mode because: %v\n", result.Error)
 		return o.executeInteractiveMode(ctx)
 	}

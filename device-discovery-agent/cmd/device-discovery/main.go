@@ -41,10 +41,11 @@ type CLIConfig struct {
 	IPAddress    string
 
 	// Optional configuration
-	ExtraHosts string
-	CaCertPath string
-	Debug      bool
-	Timeout    time.Duration
+	ExtraHosts             string
+	CaCertPath             string
+	Debug                  bool
+	Timeout                time.Duration
+	DisableInteractiveMode bool
 
 	// Auto-detection flags
 	AutoDetect bool
@@ -147,6 +148,7 @@ func parseCLIFlags() *CLIConfig {
 	flag.StringVar(&cfg.CaCertPath, "ca-cert", "", "Path to CA certificate (required)")
 	flag.BoolVar(&cfg.Debug, "debug", false, "Enable debug mode with timeout")
 	flag.DurationVar(&cfg.Timeout, "timeout", 5*time.Minute, "Timeout duration for debug mode")
+	flag.BoolVar(&cfg.DisableInteractiveMode, "disable-interactive", false, "Disable interactive mode fallback")
 
 	// Auto-detection
 	flag.BoolVar(&cfg.AutoDetect, "auto-detect", false, "Auto-detect all system information (MAC, serial, UUID, IP)")
@@ -188,6 +190,8 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "\nAdditional Options:\n")
 	fmt.Fprintf(os.Stderr, "  -extra-hosts string\n")
 	fmt.Fprintf(os.Stderr, "        Additional host mappings (comma-separated: 'host1:ip1,host2:ip2')\n")
+	fmt.Fprintf(os.Stderr, "  -disable-interactive\n")
+	fmt.Fprintf(os.Stderr, "        Disable interactive mode fallback (fail if non-interactive mode fails)\n")
 	fmt.Fprintf(os.Stderr, "  -debug\n")
 	fmt.Fprintf(os.Stderr, "        Enable debug mode with timeout\n")
 	fmt.Fprintf(os.Stderr, "  -timeout duration\n")
@@ -334,19 +338,20 @@ func parseKernelArguments(cfg *CLIConfig) error {
 func applyConfigValue(cfg *CLIConfig, key, value string, explicitFlags map[string]bool) error {
 	// Map config file keys to flag names
 	keyToFlag := map[string]string{
-		"OBM_SVC":      "obm-svc",
-		"OBS_SVC":      "obs-svc",
-		"OBM_PORT":     "obm-port",
-		"KEYCLOAK_URL": "keycloak-url",
-		"MAC":          "mac",
-		"SERIAL":       "serial",
-		"UUID":         "uuid",
-		"IP":           "ip",
-		"EXTRA_HOSTS":  "extra-hosts",
-		"CA_CERT":      "ca-cert",
-		"DEBUG":        "debug",
-		"TIMEOUT":      "timeout",
-		"AUTO_DETECT":  "auto-detect",
+		"OBM_SVC":             "obm-svc",
+		"OBS_SVC":             "obs-svc",
+		"OBM_PORT":            "obm-port",
+		"KEYCLOAK_URL":        "keycloak-url",
+		"MAC":                 "mac",
+		"SERIAL":              "serial",
+		"UUID":                "uuid",
+		"IP":                  "ip",
+		"EXTRA_HOSTS":         "extra-hosts",
+		"CA_CERT":             "ca-cert",
+		"DEBUG":               "debug",
+		"TIMEOUT":             "timeout",
+		"AUTO_DETECT":         "auto-detect",
+		"DISABLE_INTERACTIVE": "disable-interactive",
 	}
 
 	flagName, ok := keyToFlag[key]
@@ -405,6 +410,12 @@ func applyConfigValue(cfg *CLIConfig, key, value string, explicitFlags map[strin
 			return fmt.Errorf("invalid auto-detect value '%s': %w", value, err)
 		}
 		cfg.AutoDetect = autoDetect
+	case "disable-interactive":
+		disableInteractive, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("invalid disable-interactive value '%s': %w", value, err)
+		}
+		cfg.DisableInteractiveMode = disableInteractive
 	}
 
 	return nil
@@ -540,6 +551,7 @@ func writeConfigToFile(cfg *CLIConfig) error {
 	}
 
 	fmt.Fprintf(file, "DEBUG=%t\n", cfg.Debug)
+	fmt.Fprintf(file, "DISABLE_INTERACTIVE=%t\n", cfg.DisableInteractiveMode)
 	if cfg.Debug {
 		fmt.Fprintf(file, "TIMEOUT=%s\n", cfg.Timeout.String())
 	}
@@ -565,15 +577,16 @@ func deviceDiscovery(cfg *CLIConfig) error {
 
 	// Create controller configuration
 	controllerCfg := mode.Config{
-		ObmSvc:       cfg.ObmSvc,
-		ObsSvc:       cfg.ObsSvc,
-		ObmPort:      cfg.ObmPort,
-		KeycloakURL:  cfg.KeycloakURL,
-		MacAddr:      cfg.MacAddr,
-		SerialNumber: cfg.SerialNumber,
-		UUID:         cfg.UUID,
-		IPAddress:    cfg.IPAddress,
-		CaCertPath:   cfg.CaCertPath,
+		ObmSvc:                 cfg.ObmSvc,
+		ObsSvc:                 cfg.ObsSvc,
+		ObmPort:                cfg.ObmPort,
+		KeycloakURL:            cfg.KeycloakURL,
+		MacAddr:                cfg.MacAddr,
+		SerialNumber:           cfg.SerialNumber,
+		UUID:                   cfg.UUID,
+		IPAddress:              cfg.IPAddress,
+		CaCertPath:             cfg.CaCertPath,
+		DisableInteractiveMode: cfg.DisableInteractiveMode,
 	}
 
 	// Create and execute onboarding controller
