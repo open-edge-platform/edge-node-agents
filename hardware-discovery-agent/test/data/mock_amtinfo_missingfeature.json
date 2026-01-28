@@ -1,0 +1,35 @@
+{
+    "amt": "16.1.27",
+    "buildNumber": "2176",
+    "controlMode": "activated in client control mode",
+    "dnsSuffix": "test.com",
+    "dnsSuffixOS": "localhost",
+    "hostnameOS": "testhost",
+    "operationalState": "enabled",
+    "ras": {
+        "networkStatus": "direct",
+        "remoteStatus": "not connected",
+        "remoteTrigger": "user initiated",
+        "mpsHostname": ""
+    },
+    "sku": "16392",
+    "uuid": "1234abcd-ef56-7890-abcd-123456ef7890",
+    "wiredAdapter": {
+        "isEnable": false,
+        "linkStatus": "down",
+        "dhcpEnabled": false,
+        "dhcpMode": "passive",
+        "ipAddress": "0.0.0.0",
+        "osIpAddress": "0.0.0.0",
+        "macAddress": "1a:b2:3c:d4:5e:f6"
+    },
+    "wirelessAddress": {
+        "isEnable": false,
+        "linkStatus": "down",
+        "dhcpEnabled": false,
+        "dhcpMode": "passive",
+        "ipAddress": "0.0.0.0",
+        "osIpAddress": "0.0.0.0",
+        "macAddress": "a1:2b:c3:4d:e5:6f"
+    }
+}
