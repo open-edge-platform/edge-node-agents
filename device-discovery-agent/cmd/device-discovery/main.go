@@ -516,10 +516,10 @@ func autoDetectSystemInfo(cfg *CLIConfig) error {
 
 // writeConfigToFile writes the validated configuration to a file in KEY=VALUE format.
 func writeConfigToFile(cfg *CLIConfig) error {
-	const configFilePath = "/var/log/device-discovery/validated-config.env"
+	const configFilePath = "/etc/device-discovery/validated-config.env"
 
 	// Ensure the directory exists
-	configDir := "/var/log/device-discovery"
+	configDir := "/etc/device-discovery"
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}

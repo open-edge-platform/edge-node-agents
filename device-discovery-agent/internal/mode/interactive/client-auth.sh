@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-pipe='/tmp/pipetmp'
+pipe='/tmp/pipetmpdd'
 mkfifo "$pipe"
 
 finished_read='false'
@@ -50,7 +50,7 @@ show_incorrect_credentials() {
 main() {
 
     # shellcheck source=/dev/null
-    . /etc/hook/env_config
+    . /etc/device-discovery/validated-config.env
 	export http_proxy=${http_proxy:-""}
 	export https_proxy=${https_proxy:-""}
 	export no_proxy=${no_proxy:-""}
@@ -92,14 +92,14 @@ main() {
 			continue
 		fi
  
-		if [ ! -e /etc/pki/ca-trust/source/anchors/server_cert.pem ];
+		if [ ! -e $CA_CERT ];
 		then
 			echo " IDP ca cert not found at the expected location: reboot" >> "$log_file"
 			sleep 3
 			reboot
 		fi
 
-		update-ca-trust
+		# update-ca-trust
 
 		#update hosts if they were provided
 		extra_hosts_needed=$(echo "$EXTRA_HOSTS" | sed "s|,|\n|g")
@@ -109,7 +109,7 @@ main() {
 		#login to IDP keycloak
 		# proxy if not set then the code will not be able to invoke curl.
 
-		access_token=$(curl --cacert /etc/pki/ca-trust/source/anchors/server_cert.pem -X POST https://"$KEYCLOAK_URL"/realms/master/protocol/openid-connect/token \
+		access_token=$(curl --cacert $CA_CERT -X POST https://"$KEYCLOAK_URL"/realms/master/protocol/openid-connect/token \
 					-H "Content-Type: application/x-www-form-urlencoded" \
 					--data-urlencode "username=$username" \
 					--data-urlencode "password=$password" \
@@ -138,7 +138,7 @@ main() {
 
 		response_body=$(mktemp)
 
-		status_code=$(curl --cacert /etc/pki/ca-trust/source/anchors/server_cert.pem -X GET "https://$release_server_url/token" -H "Authorization: Bearer $access_token" -w "%{http_code}" -o "$response_body")
+		status_code=$(curl --cacert $CA_CERT -X GET "https://$release_server_url/token" -H "Authorization: Bearer $access_token" -w "%{http_code}" -o "$response_body")
 		release_token=$(cat "$response_body")
 
 		rm "$response_body"
