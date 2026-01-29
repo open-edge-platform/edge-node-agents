@@ -22,7 +22,7 @@ func TestGetDiskDataSuccess(t *testing.T) {
 	out, err := GetDiskData(testutils.TestCmdExecutor)
 	require.NoError(t, err)
 
-	expected := []model.Disk{}
+	expected := make([]model.Disk, 0, 3)
 	disk1Res := model.Disk{
 		Name:   "nvme0n1p1",
 		Vendor: "",
