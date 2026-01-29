@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Package config contains Node Agent configuration management
@@ -52,15 +52,20 @@ type ConfigStatus struct {
 	NetworkEndpoints      []NetworkEndpoint `yaml:"networkEndpoints"`
 }
 
+type ConfigMetrics struct {
+	Enabled  bool          `yaml:"enabled"`
+	Endpoint string        `yaml:"endpoint"`
+	Interval time.Duration `yaml:"interval"`
+}
+
 type NodeAgentConfig struct {
-	Version         string           `yaml:"version"`
-	LogLevel        string           `yaml:"logLevel"`
-	GUID            string           `yaml:"GUID"`
-	Onboarding      ConfigOnboarding `yaml:"onboarding"`
-	Auth            ConfigAuth       `yaml:"auth"`
-	Status          ConfigStatus     `yaml:"status"`
-	MetricsEndpoint string           `yaml:"metricsEndpoint"`
-	MetricsInterval time.Duration    `yaml:"metricsInterval"`
+	Version    string           `yaml:"version"`
+	LogLevel   string           `yaml:"logLevel"`
+	GUID       string           `yaml:"GUID"`
+	Onboarding ConfigOnboarding `yaml:"onboarding"`
+	Auth       ConfigAuth       `yaml:"auth"`
+	Status     ConfigStatus     `yaml:"status"`
+	Metrics    ConfigMetrics    `yaml:"metrics"`
 }
 
 // Create a new Node agent configuration.
@@ -102,6 +107,10 @@ func (cfg *NodeAgentConfig) validate() error {
 	}
 	if cfg.Auth.AccessTokenPath == "" {
 		return fmt.Errorf("config validation err: auth.AccessTokenPath is required")
+	}
+
+	if cfg.GUID == "" {
+		return fmt.Errorf("config validation err: GUID is required")
 	}
 
 	log.Infoln("configurations parsed successfully")

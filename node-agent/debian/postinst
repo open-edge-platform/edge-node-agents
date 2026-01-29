@@ -17,6 +17,45 @@ if [ ! -z "$RET" ]; then
     sed -i -e '/^onboarding:$/{n' -e '/.*enabled:/{n' -e '/.*serviceURL:/{n' -e 's/heartbeatInterval:.*/heartbeatInterval: '"$RET"'/' -e '}}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
+db_get node-agent/status.serviceClients
+if [ ! -z "$RET" ]; then
+    IFS=',' read -r -a serviceClientArray <<< "$RET"
+    arrayLength=${#serviceClientArray[@]}
+    agentList=""
+    index=0
+    for agent in ${serviceClientArray[@]}; do
+        index=$(($((index))+1))
+        if [ "${index}" != "${listLength}" ]; then
+            agentList="${agentList}${agent}, "
+        else
+            agentList="${agentList}${agent}"
+        fi
+    done
+    sed -i -e '/^status:$/{n' -e '/.*endpoint:/{n' -e 's#serviceClients:.*#serviceClients: [ '"${agentList}"' ]#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
+db_get node-agent/status.outboundClients
+if [ ! -z "$RET" ]; then
+    IFS=',' read -r -a outboundClientArray <<< "$RET"
+    arrayLength=${#outboundClientArray[@]}
+    agentList=""
+    index=0
+    for agent in ${outboundClientArray[@]}; do
+        index=$(($((index))+1))
+        if [ "${index}" != "${listLength}" ]; then
+            agentList="${agentList}${agent}, "
+        else
+            agentList="${agentList}${agent}"
+        fi
+    done
+    sed -i -e '/^status:$/{n' -e '/.*endpoint:/{n' -e '/.*serviceClients:/{n' -e 's#outboundClients:.*#outboundClients: [ '"${agentList}"' ]#' -e '}}}' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
+db_get node-agent/metrics.enabled
+if [ ! -z "$RET" ]; then
+    sed -i -e '/^metrics:$/{n' -e 's/enabled:.*/enabled: '"$RET"'/' -e '}' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
 db_get node-agent/auth.accessTokenURL
 if [ ! -z "$RET" ]; then
     sed -i -e '/^auth:$/{n' -e 's#accessTokenURL:.*#accessTokenURL: '"$RET"'#' -e '}' /etc/edge-node/node/confs/node-agent.yaml
@@ -25,6 +64,23 @@ fi
 db_get node-agent/auth.rsTokenURL
 if [ ! -z "$RET" ]; then
     sed -i -e '/^auth:$/{n' -e '/.*accessTokenURL:/{n' -e 's#rsTokenURL:.*#rsTokenURL: '"$RET"'#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
+fi
+
+db_get node-agent/auth.tokenClients
+if [ ! -z "$RET" ]; then
+    IFS=',' read -r -a tokenClientArray <<< "$RET"
+    arrayLength=${#tokenClientArray[@]}
+    agentList=""
+    index=0
+    for agent in ${tokenClientArray[@]}; do
+        index=$(($((index))+1))
+        if [ "${index}" != "${listLength}" ]; then
+            agentList="${agentList}${agent}, "
+        else
+            agentList="${agentList}${agent}"
+        fi
+    done
+    sed -i -e '/^auth:$/{n' -e '/.*accessTokenURL:/{n' -e '/.*rsTokenURL:/{n' -e '/.*accessTokenPath:/{n' -e '/.*clientCredsPath:/{n' -e 's#tokenClients:.*#tokenClients: [ '"${agentList}"' ]#' -e '}}}}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
 db_get node-agent/proxy.aptSourceURL

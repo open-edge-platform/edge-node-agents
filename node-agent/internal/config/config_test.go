@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package config_test
@@ -22,6 +22,9 @@ const testGUID = "TEST-GUID-TEST-GUID"
 const testAuthAccessTokenURL = "keycloak.test"
 const testAuthRsTokenURL = "token-provider.test"
 const testStatusEndpoint = "/run/agent/test.sock"
+const testMetricsEnabled = true
+const testMetricsEndpoint = "unix:///run/agent/metrics.sock"
+const testMetricsHeartbeatInterval = 10 * time.Second
 
 // Disabling lint locally - G101: Potential hardcoded credentials (gosec)
 const testAuthAccessTokenPath = "/etc/intel_edge_node/tokens/node-agent"  // #nosec G101
@@ -38,7 +41,8 @@ var testNetworkStatusInterval = 6 * testOnboardingHeartbeatInterval
 var testStatusNetworkEndpoints = []config.NetworkEndpoint{{Name: "one", URL: "http://one.com"}}
 
 // Function to create a test configuration file with injected configurations
-func createConfigFile(t *testing.T, testGUID string, onboardingServiceURL string, logLevel string) string {
+func createConfigFile(t *testing.T, testGUID string, onboardingServiceURL string, logLevel string, rsTokenURL string,
+	accessTokenURL string, accessTokenPath string, heartbeatInterval time.Duration) string {
 
 	f, err := os.CreateTemp("", "test_config")
 	require.Nil(t, err)
@@ -48,8 +52,9 @@ func createConfigFile(t *testing.T, testGUID string, onboardingServiceURL string
 		LogLevel: logLevel,
 		GUID:     testGUID,
 		Onboarding: config.ConfigOnboarding{
-			Enabled:    testOnboardingEnabled,
-			ServiceURL: onboardingServiceURL,
+			Enabled:           testOnboardingEnabled,
+			ServiceURL:        onboardingServiceURL,
+			HeartbeatInterval: heartbeatInterval,
 		},
 		Status: config.ConfigStatus{
 			Endpoint:         testStatusEndpoint,
@@ -58,11 +63,16 @@ func createConfigFile(t *testing.T, testGUID string, onboardingServiceURL string
 			NetworkEndpoints: testStatusNetworkEndpoints,
 		},
 		Auth: config.ConfigAuth{
-			AccessTokenURL:  testAuthAccessTokenURL,
-			RsTokenURL:      testAuthRsTokenURL,
-			AccessTokenPath: testAuthAccessTokenPath,
+			AccessTokenURL:  accessTokenURL,
+			RsTokenURL:      rsTokenURL,
+			AccessTokenPath: accessTokenPath,
 			ClientCredsPath: testAuthClientCredsPath,
 			TokenClients:    testAuthTokenClients,
+		},
+		Metrics: config.ConfigMetrics{
+			Enabled:  testMetricsEnabled,
+			Endpoint: testMetricsEndpoint,
+			Interval: testMetricsHeartbeatInterval,
 		},
 	}
 
@@ -75,6 +85,38 @@ func createConfigFile(t *testing.T, testGUID string, onboardingServiceURL string
 	err = f.Close()
 	require.Nil(t, err)
 	return f.Name()
+}
+
+func getExpectedConfig(logLevel string, heartbeatInterval time.Duration, networkInterval time.Duration) config.NodeAgentConfig {
+	return config.NodeAgentConfig{
+		Version:  "v0.1.0",
+		LogLevel: logLevel,
+		GUID:     testGUID,
+		Onboarding: config.ConfigOnboarding{
+			Enabled:           testOnboardingEnabled,
+			ServiceURL:        testOnboardingServiceURL,
+			HeartbeatInterval: heartbeatInterval,
+		},
+		Status: config.ConfigStatus{
+			Endpoint:              testStatusEndpoint,
+			ServiceClients:        testStatusClients,
+			OutboundClients:       testStatusOutboundClients,
+			NetworkStatusInterval: networkInterval,
+			NetworkEndpoints:      testStatusNetworkEndpoints,
+		},
+		Auth: config.ConfigAuth{
+			AccessTokenURL:  testAuthAccessTokenURL,
+			AccessTokenPath: testAuthAccessTokenPath,
+			RsTokenURL:      testAuthRsTokenURL,
+			ClientCredsPath: testAuthClientCredsPath,
+			TokenClients:    testAuthTokenClients,
+		},
+		Metrics: config.ConfigMetrics{
+			Enabled:  testMetricsEnabled,
+			Endpoint: testMetricsEndpoint,
+			Interval: testMetricsHeartbeatInterval,
+		},
+	}
 }
 
 // Expect error when configuration file does not exist
@@ -91,37 +133,14 @@ func TestNoConfigFilePath(t *testing.T) {
 	assert.Nil(t, cfg)
 }
 
-var expectedCfg = config.NodeAgentConfig{
-	Version:  "v0.1.0",
-	LogLevel: testLogLevel,
-	GUID:     testGUID,
-	Onboarding: config.ConfigOnboarding{
-		Enabled:           testOnboardingEnabled,
-		ServiceURL:        testOnboardingServiceURL,
-		HeartbeatInterval: testOnboardingHeartbeatInterval,
-	},
-	Status: config.ConfigStatus{
-		Endpoint:              testStatusEndpoint,
-		ServiceClients:        testStatusClients,
-		OutboundClients:       testStatusOutboundClients,
-		NetworkStatusInterval: testNetworkStatusInterval,
-		NetworkEndpoints:      testStatusNetworkEndpoints,
-	},
-	Auth: config.ConfigAuth{
-		AccessTokenURL:  testAuthAccessTokenURL,
-		AccessTokenPath: testAuthAccessTokenPath,
-		RsTokenURL:      testAuthRsTokenURL,
-		ClientCredsPath: testAuthClientCredsPath,
-		TokenClients:    testAuthTokenClients,
-	},
-}
-
 // Verify an existing configuration file read
 func TestConfigFileExists(t *testing.T) {
-	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel)
+	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel, testAuthRsTokenURL,
+		testAuthAccessTokenURL, testAuthAccessTokenPath, 0*time.Second)
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName)
+	expectedCfg := getExpectedConfig(testLogLevel, testOnboardingHeartbeatInterval, testNetworkStatusInterval)
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)
 	assert.Equal(t, expectedCfg, *cfg)
@@ -129,7 +148,8 @@ func TestConfigFileExists(t *testing.T) {
 
 // Expect error if critical configuration not present
 func TestConfigFileNoOnboardingServiceURL(t *testing.T) {
-	fileName := createConfigFile(t, testGUID, "", testLogLevel)
+	fileName := createConfigFile(t, testGUID, "", testLogLevel, testAuthRsTokenURL, testAuthAccessTokenURL,
+		testAuthAccessTokenPath, 0*time.Second)
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName)
@@ -137,8 +157,9 @@ func TestConfigFileNoOnboardingServiceURL(t *testing.T) {
 	assert.Nil(t, cfg)
 }
 
-func TesConfigFiletNoGuid(t *testing.T) {
-	fileName := createConfigFile(t, "", testOnboardingServiceURL, testLogLevel)
+func TestConfigFileNoGuid(t *testing.T) {
+	fileName := createConfigFile(t, "", testOnboardingServiceURL, testLogLevel, testAuthRsTokenURL,
+		testAuthAccessTokenURL, testAuthAccessTokenPath, 0*time.Second)
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName)
@@ -146,18 +167,76 @@ func TesConfigFiletNoGuid(t *testing.T) {
 	assert.Nil(t, cfg)
 }
 
-// No error expected
-func TesConfigFiletNoLogLevel(t *testing.T) {
-	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, "")
+func TestConfigFileNoRsTokenURL(t *testing.T) {
+	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel, "", testAuthAccessTokenURL,
+		testAuthAccessTokenPath, 0*time.Second)
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName)
+	assert.Error(t, err)
+	assert.Nil(t, cfg)
+}
+
+func TestConfigFileNoAccessTokenURL(t *testing.T) {
+	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel, testAuthRsTokenURL,
+		"", testAuthAccessTokenPath, 0*time.Second)
+	defer os.Remove(fileName)
+
+	cfg, err := config.New(fileName)
+	assert.Error(t, err)
+	assert.Nil(t, cfg)
+}
+
+func TestConfigFileNoAccessTokenPath(t *testing.T) {
+	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel, testAuthRsTokenURL,
+		testAuthAccessTokenURL, "", 0*time.Second)
+	defer os.Remove(fileName)
+
+	cfg, err := config.New(fileName)
+	assert.Error(t, err)
+	assert.Nil(t, cfg)
+}
+
+// No error expected and configuration file returned
+func TestConfigFileNoLogLevel(t *testing.T) {
+	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, "", testAuthRsTokenURL, testAuthAccessTokenURL,
+		testAuthAccessTokenPath, 0*time.Second)
+	defer os.Remove(fileName)
+
+	cfg, err := config.New(fileName)
+	expectedCfg := getExpectedConfig("", testOnboardingHeartbeatInterval, testNetworkStatusInterval)
 	assert.NoError(t, err)
-	assert.Nil(t, cfg)
+	assert.NotNil(t, cfg)
+	assert.Equal(t, expectedCfg, *cfg)
+}
+
+func TestConfigFileOnboardingIntervalGreaterThanZero(t *testing.T) {
+	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel, testAuthRsTokenURL,
+		testAuthAccessTokenURL, testAuthAccessTokenPath, 5*time.Second)
+	defer os.Remove(fileName)
+
+	cfg, err := config.New(fileName)
+	expectedCfg := getExpectedConfig(testLogLevel, 5*time.Second, 30*time.Second)
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.Equal(t, expectedCfg, *cfg)
+}
+
+func TestConfigFileOnboardingIntervalGreaterThanOneMinute(t *testing.T) {
+	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel, testAuthRsTokenURL,
+		testAuthAccessTokenURL, testAuthAccessTokenPath, 15*time.Second)
+	defer os.Remove(fileName)
+
+	cfg, err := config.New(fileName)
+	expectedCfg := getExpectedConfig(testLogLevel, 15*time.Second, testNetworkStatusInterval)
+	assert.NoError(t, err)
+	assert.NotNil(t, cfg)
+	assert.Equal(t, expectedCfg, *cfg)
 }
 
 func TestConfigFileSymlinkFile(t *testing.T) {
-	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel)
+	fileName := createConfigFile(t, testGUID, testOnboardingServiceURL, testLogLevel, testAuthRsTokenURL,
+		testAuthAccessTokenURL, testAuthAccessTokenPath, 0*time.Second)
 	defer os.Remove(fileName)
 
 	symlinkConfig := "/tmp/symlink_config.txt"
