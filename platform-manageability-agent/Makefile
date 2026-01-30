@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 NAME ?= pm-agent
@@ -33,6 +33,7 @@ endif
 #   all:        Build, lint, and test the agent
 #   pmabuild:   Build the agent binary
 #   pmabuild_with_race: Build with Go race detector
+#   pmabuild_with_cover: Build with cover flags
 #   pmainstall: Install the agent binary to $(PREFIX)/bin
 #   package:    Build a Debian package (requires dh_make, dpkg-buildpackage)
 #   tarball:    Create a tarball using common-tarball

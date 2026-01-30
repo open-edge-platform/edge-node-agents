@@ -1,5 +1,5 @@
 ---
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 name: Post-Merge CI Pipeline
@@ -23,12 +23,12 @@ jobs:
       filtered_projects: ${{ steps.filter-changes.outputs.filtered_projects }}
       manifest: ${{ contains(steps.check-files.outputs.changed_files, 'ena-manifest.yaml') }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@c6a01b803d3c045de1b1b2f788a47eaaefed3f07  # 2026.0.4
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Discover Changed Files
         id: check-files
-        uses: open-edge-platform/orch-ci/discover-changed-files@c6a01b803d3c045de1b1b2f788a47eaaefed3f07  # 2026.0.4
+        uses: open-edge-platform/orch-ci/discover-changed-files@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           project_folder: "."
   post-merge-pipeline:
@@ -56,7 +56,7 @@ jobs:
       matrix:
         # runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@c6a01b803d3c045de1b1b2f788a47eaaefed3f07  # 2026.0.4
+    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
     with:
       #  runner_version: ${{ matrix.runner_version }}
       runs_on: ubuntu-22.04
@@ -88,7 +88,7 @@ jobs:
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8   # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
           fetch-depth: 0   # Fetch all history, WO sporadic issue with missing tags
           fetch-tags: true  # Fetch tags
@@ -96,7 +96,7 @@ jobs:
           persist-credentials: false
 
       - name: Checkout action repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           repository: open-edge-platform/orch-ci
           path: ci
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@c6a01b803d3c045de1b1b2f788a47eaaefed3f07  # 2026.0.4
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "yq,aws,oras"
@@ -165,7 +165,7 @@ jobs:
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8   # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
           fetch-depth: 0   # Fetch all history, WO sporadic issue with missing tags
           fetch-tags: true   # Fetch tags
@@ -173,7 +173,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@c6a01b803d3c045de1b1b2f788a47eaaefed3f07  # 2026.0.4
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base,yq"
@@ -221,7 +221,7 @@ jobs:
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout VEN repo
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8   # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
           repository: open-edge-platform/virtual-edge-node
           path: virtual-edge-node
@@ -229,7 +229,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@c6a01b803d3c045de1b1b2f788a47eaaefed3f07  # 2026.0.4
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base,yq"
@@ -363,20 +363,20 @@ jobs:
           cd edge-node-container
           make bma_versions
 
-      - name: Update edge-node-container VERSION
-        shell: bash
-        working-directory: virtual-edge-node
-        run: |
-          enic_version=$(head -n1 edge-node-container/VERSION)
-          check_if_dev_version=$(echo "${enic_version}" | grep "dev")
-          if [ -z ${check_if_dev_version} ]; then
-            major_version=$(echo "${enic_version}" | cut -d '.' -f1)
-            minor_version=$(echo "${enic_version}" | cut -d '.' -f2)
-            patch_version=$(echo "${enic_version}" | cut -d '.' -f3)
-            new_patch_version=$(( patch_version + 1 ))
-            new_enic_version="${major_version}.${minor_version}.${new_patch_version}-dev"
-            echo "${new_enic_version}" > edge-node-container/VERSION
-          fi
+      #- name: Update edge-node-container VERSION
+      #  shell: bash
+      #  working-directory: virtual-edge-node
+      #  run: |
+      #    enic_version=$(head -n1 edge-node-container/VERSION)
+      #    check_if_dev_version=$(echo "${enic_version}" | grep "dev")
+      #    if [ -z ${check_if_dev_version} ]; then
+      #      major_version=$(echo "${enic_version}" | cut -d '.' -f1)
+      #      minor_version=$(echo "${enic_version}" | cut -d '.' -f2)
+      #      patch_version=$(echo "${enic_version}" | cut -d '.' -f3)
+      #      new_patch_version=$(( patch_version + 1 ))
+      #      new_enic_version="${major_version}.${minor_version}.${new_patch_version}-dev"
+      #      echo "${new_enic_version}" > edge-node-container/VERSION
+      #    fi
 
       - name: Commit changes to branch and create PR
         shell: bash
@@ -411,7 +411,7 @@ jobs:
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
     steps:
       - name: Checkout EMF repo
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8   # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
           repository: open-edge-platform/edge-manageability-framework
           path: edge-manageability-framework
@@ -419,7 +419,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@c6a01b803d3c045de1b1b2f788a47eaaefed3f07  # 2026.0.4
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base"
