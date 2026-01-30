@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	$(MAKE) DESTDIR=$$(pwd)/debian/device-discovery-agent PREFIX=/opt/edge-node install
+
+override_dh_builddeb:
+	dh_builddeb -- -Zxz
+
+override_dh_auto_build:
+	dh_auto_build -- all

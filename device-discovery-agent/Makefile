@@ -156,17 +156,47 @@ install:
 	install -m 755 $(BUILD_DIR)/$(NAME) $(DESTDIR)$(PREFIX)/bin/
 
 package:
-	@echo "Building Debian package..."
-	dpkg-buildpackage -us -uc -b
-	mkdir -p $(BUILD_DIR)
-	mv ../$(FULL_NAME)_* $(BUILD_DIR)/ || true
+	@echo "---MAKEFILE DEBIAN PACKAGE---"
+	mkdir -p $(PACKAGE_BUILD_DIR)
+	cp -r $(shell ls . | grep -v build*) $(PACKAGE_BUILD_DIR)
+	cp -r ../LICENSES $(PACKAGE_BUILD_DIR)
+	cp ../common.mk $(PACKAGE_BUILD_DIR)
+	sed -i "s#VERSION#$(PKG_VERSION)#" $(PACKAGE_BUILD_DIR)/debian/changelog
+	sed -i "s#../common.mk#common.mk#" $(PACKAGE_BUILD_DIR)/Makefile
+	cd $(PACKAGE_BUILD_DIR); debuild --preserve-env --preserve-envvar PATH -us -uc -b
+	@echo "---END MAKEFILE DEBIAN PACKAGE---"
 
 package_test: package
 	@echo "Testing Debian package..."
+	@echo "Setting debconf values..."
+	echo "device-discovery-agent device-discovery-agent/onboarding.serviceURL string localhost" | sudo debconf-set-selections
+	echo "device-discovery-agent device-discovery-agent/onboarding.servicePort string 50051" | sudo debconf-set-selections
+	echo "device-discovery-agent device-discovery-agent/discovery.serviceURL string localhost" | sudo debconf-set-selections
+	echo "device-discovery-agent device-discovery-agent/auth.keycloakURL string keycloak.example.com" | sudo debconf-set-selections
+	echo "device-discovery-agent device-discovery-agent/onboarding.caCertPath string /etc/intel_edge_node/orch-ca-cert/orch-ca.pem" | sudo debconf-set-selections
+	echo "device-discovery-agent device-discovery-agent/sysinfo.autoDetect boolean true" | sudo debconf-set-selections
+	echo "device-discovery-agent device-discovery-agent/debug boolean false" | sudo debconf-set-selections
+	echo "device-discovery-agent device-discovery-agent/disableInteractive boolean false" | sudo debconf-set-selections
+	echo "device-discovery-agent device-discovery-agent/useKernelArgs boolean false" | sudo debconf-set-selections
+	@echo "Installing package..."
+	sudo apt-get install -y ./$(BUILD_DIR)/$(FULL_NAME)_$(PKG_VERSION)_amd64.deb
+	@echo "Package installed successfully"
 	@echo "Checking package contents..."
-	dpkg -c $(BUILD_DIR)/$(FULL_NAME)_$(PKG_VERSION)_*.deb
-	@echo "Checking package info..."
-	dpkg -I $(BUILD_DIR)/$(FULL_NAME)_$(PKG_VERSION)_*.deb
+	dpkg -l | grep device-discovery-agent
+	@echo "Verifying installed files..."
+	test -f /opt/edge-node/bin/device-discovery-agent
+	test -f /etc/edge-node/node/confs/device-discovery-agent.env
+	test -f /etc/apparmor.d/opt.edge-node.bin.device-discovery-agent
+	test -f /etc/sudoers.d/device-discovery-agent
+	@echo "Verifying configuration values..."
+	@grep -q "^OBM_SVC=localhost" /etc/edge-node/node/confs/device-discovery-agent.env
+	@grep -q "^OBM_PORT=50051" /etc/edge-node/node/confs/device-discovery-agent.env
+	@grep -q "^OBS_SVC=localhost" /etc/edge-node/node/confs/device-discovery-agent.env
+	@grep -q "^AUTO_DETECT=true" /etc/edge-node/node/confs/device-discovery-agent.env
+	@echo "All configuration values verified successfully"
+	@echo "Cleaning up..."
+	sudo apt-get purge -y device-discovery-agent
+	@echo "Package test completed successfully"
 
 tarball:
 	@echo "Creating source tarball..."

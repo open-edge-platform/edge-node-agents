@@ -1,0 +1,64 @@
+Template: device-discovery-agent/onboarding.serviceURL
+Type: string
+Default: localhost
+Description: Onboarding Manager Service URL (hostname or IP):
+ The address of the onboarding manager service where the device will register.
+ Do not include port number (configured separately).
+ Example: obm.example.com or 192.168.1.100
+
+Template: device-discovery-agent/onboarding.servicePort
+Type: string
+Default: 50051
+Description: Onboarding Manager Service Port:
+ The port number for the onboarding manager service.
+ Example: 50051
+
+Template: device-discovery-agent/discovery.serviceURL
+Type: string
+Default: localhost
+Description: Onboarding Stream Service URL (hostname or IP):
+ The address of the onboarding stream service for device discovery.
+ Do not include port number.
+ Example: obs.example.com or 192.168.1.101
+
+Template: device-discovery-agent/auth.keycloakURL
+Type: string
+Default: keycloak.example.com
+Description: Keycloak authentication URL:
+ The URL of the Keycloak server for device authentication.
+ Example: keycloak.example.com or auth.example.com
+
+Template: device-discovery-agent/onboarding.caCertPath
+Type: string
+Default: /etc/intel_edge_node/orch-ca-cert/orch-ca.pem
+Description: CA certificate path:
+ Path to the CA certificate file for TLS verification.
+ Example: /etc/intel_edge_node/orch-ca-cert/orch-ca.pem
+
+Template: device-discovery-agent/sysinfo.autoDetect
+Type: boolean
+Default: true
+Description: Auto-detect system information?
+ Enable automatic detection of MAC address, serial number, UUID, and IP address.
+ If disabled, you must provide these values manually.
+
+Template: device-discovery-agent/debug
+Type: boolean
+Default: false
+Description: Enable debug mode?
+ Enable debug mode with extended logging and timeout.
+ Useful for troubleshooting but not recommended for production.
+
+Template: device-discovery-agent/disableInteractive
+Type: boolean
+Default: false
+Description: Disable interactive mode fallback?
+ When enabled, if non-interactive mode fails, the agent will not fall back to interactive mode.
+ If disabled, the agent will attempt interactive mode as a fallback.
+
+Template: device-discovery-agent/useKernelArgs
+Type: boolean
+Default: false
+Description: Use kernel command line arguments for configuration?
+ When enabled, the agent will read configuration from /proc/cmdline.
+ This is useful for cloud-init or boot-time configuration scenarios.

@@ -23,7 +23,6 @@ const (
 	ClientIDPath            = ClientCredentialsFolder + "/client_id"
 	ClientSecretPath        = ClientCredentialsFolder + "/client_secret"
 	KernelArgsFilePath      = "/proc/cmdline"
-	CaCertPath              = "/etc/idp/server_cert.pem"
 	ProjectIDPath           = ClientCredentialsFolder + "/project_id"
 )
 
