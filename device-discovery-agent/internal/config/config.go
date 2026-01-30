@@ -12,14 +12,14 @@ import (
 )
 
 const (
-	TokenFolder             = "/dev/shm"
+	TokenFolder             = "/dev/shm" // #nosec G101 -- This is a path, not a credential
 	EnvConfigPath           = "/etc/hook/env_config"
 	ExtraHostsFile          = "/etc/hosts"
 	AccessTokenFile         = TokenFolder + "/idp_access_token"
 	ReleaseTokenFile        = TokenFolder + "/release_token"
 	KeycloakTokenURL        = "/realms/master/protocol/openid-connect/token"
 	ReleaseTokenURL         = "/token"
-	ClientCredentialsFolder = "/dev/shm/"
+	ClientCredentialsFolder = "/dev/shm/" // #nosec G101 -- This is a path, not a credential
 	ClientIDPath            = ClientCredentialsFolder + "/client_id"
 	ClientSecretPath        = ClientCredentialsFolder + "/client_secret"
 	KernelArgsFilePath      = "/proc/cmdline"

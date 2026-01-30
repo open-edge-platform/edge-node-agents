@@ -58,13 +58,13 @@ func TestGetIPAddressWithRetry(t *testing.T) {
 
 func TestGetIPAddressWithContext(t *testing.T) {
 	t.Run("ContextCancelled_ReturnsImmediately", func(t *testing.T) {
-		// Given: A context that's already cancelled
+		// Given: A context that's already canceled
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // Cancel immediately
 
 		macAddr := "FF:FF:FF:FF:FF:FF"
 
-		// When: Trying to get IP with cancelled context
+		// When: Trying to get IP with canceled context
 		start := time.Now()
 		ip, err := GetIPAddressWithContext(ctx, macAddr, 10, 3*time.Second)
 		duration := time.Since(start)
@@ -73,8 +73,8 @@ func TestGetIPAddressWithContext(t *testing.T) {
 		if err == nil {
 			t.Errorf("Expected context error, got IP: %s", ip)
 		}
-		if !contains(err.Error(), "cancelled") {
-			t.Errorf("Expected error to mention 'cancelled', got: %v", err)
+		if !contains(err.Error(), "canceled") {
+			t.Errorf("Expected error to mention 'canceled', got: %v", err)
 		}
 
 		// Should return quickly (within 1 second)
@@ -84,7 +84,7 @@ func TestGetIPAddressWithContext(t *testing.T) {
 	})
 
 	t.Run("ContextCancelledDuringSleep", func(t *testing.T) {
-		// Given: A context that will be cancelled during retry
+		// Given: A context that will be canceled during retry
 		ctx, cancel := context.WithCancel(context.Background())
 
 		macAddr := "FF:FF:FF:FF:FF:FF"
@@ -104,8 +104,8 @@ func TestGetIPAddressWithContext(t *testing.T) {
 		if err == nil {
 			t.Errorf("Expected context error, got IP: %s", ip)
 		}
-		if !contains(err.Error(), "cancelled") {
-			t.Errorf("Expected error to mention 'cancelled', got: %v", err)
+		if !contains(err.Error(), "canceled") {
+			t.Errorf("Expected error to mention 'canceled', got: %v", err)
 		}
 
 		// Should return shortly after cancellation (within 2 seconds of cancel time)
@@ -196,7 +196,7 @@ func TestRetryLogic_Documentation(t *testing.T) {
 		t.Log("")
 		t.Log("GetIPAddressWithContext:")
 		t.Log("  - Same as GetIPAddressWithRetry but supports context cancellation")
-		t.Log("  - Can be cancelled mid-retry via context")
+		t.Log("  - Can be canceled mid-retry via context")
 		t.Log("  - Useful with timeout contexts or manual cancellation")
 		t.Log("  - Returns context.Canceled or context.DeadlineExceeded errors")
 		t.Log("")

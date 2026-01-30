@@ -32,7 +32,7 @@ func TestAutoDetectSystemInfo(t *testing.T) {
 		t.Logf("Could not get primary MAC: %v", err)
 	} else {
 		t.Logf("Primary MAC: %s", mac)
-		
+
 		// Test getting IP from MAC
 		if mac != "" {
 			ip, err := sysinfo.GetIPAddress(mac)
@@ -92,10 +92,10 @@ func TestValidateConfig(t *testing.T) {
 			// This is a basic validation test
 			// In production, validateConfig exits on error
 			// Here we just check if required fields are present
-			hasError := tt.cfg.ObmSvc == "" || tt.cfg.ObsSvc == "" || 
-			            tt.cfg.ObmPort == 0 || tt.cfg.KeycloakURL == "" || 
-			            tt.cfg.MacAddr == ""
-			
+			hasError := tt.cfg.ObmSvc == "" || tt.cfg.ObsSvc == "" ||
+				tt.cfg.ObmPort == 0 || tt.cfg.KeycloakURL == "" ||
+				tt.cfg.MacAddr == ""
+
 			if hasError != tt.shouldErr {
 				t.Errorf("expected error: %v, got error: %v", tt.shouldErr, hasError)
 			}
@@ -118,7 +118,7 @@ func FuzzTestDeviceDiscovery(f *testing.F) {
 
 		// Test that validation doesn't panic
 		_ = cfg
-		
+
 		// Test sysinfo functions don't panic with various inputs
 		if macAddr != "" {
 			_, _ = sysinfo.GetIPAddress(macAddr)

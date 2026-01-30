@@ -32,10 +32,8 @@ func CreateSecureConnection(ctx context.Context, target string, caCertPath strin
 	creds := credentials.NewClientTLSFromCert(certPool, "")
 
 	// Create the gRPC connection with TLS credentials
-	conn, err := grpc.DialContext(
-		ctx,
+	conn, err := grpc.NewClient(
 		target,
-		grpc.WithBlock(),
 		grpc.WithTransportCredentials(creds),
 	)
 	if err != nil {

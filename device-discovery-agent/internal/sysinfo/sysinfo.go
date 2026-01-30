@@ -91,7 +91,7 @@ func GetIPAddressWithRetry(macAddr string, retries int, sleepDuration time.Durat
 
 // GetIPAddressWithContext retrieves the IP address with retry logic and context support.
 // This uses a time.Ticker for more efficient periodic checks and respects context cancellation.
-// The operation will be cancelled if the context is cancelled or times out before completion.
+// The operation will be canceled if the context is canceled or times out before completion.
 func GetIPAddressWithContext(ctx context.Context, macAddr string, retries int, sleepDuration time.Duration) (string, error) {
 	if retries <= 0 {
 		retries = 10
@@ -120,8 +120,8 @@ func GetIPAddressWithContext(ctx context.Context, macAddr string, retries int, s
 	for {
 		select {
 		case <-ctx.Done():
-			// Context cancelled or timed out
-			return "", fmt.Errorf("operation cancelled after %d attempts: %w", attempt-1, ctx.Err())
+			// Context canceled or timed out
+			return "", fmt.Errorf("operation canceled after %d attempts: %w", attempt-1, ctx.Err())
 
 		case <-ticker.C:
 			// Periodic check

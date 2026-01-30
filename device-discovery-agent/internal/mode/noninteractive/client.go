@@ -19,11 +19,11 @@ import (
 
 // StreamResult holds the result of a streaming onboarding attempt.
 type StreamResult struct {
-	ClientID     string
-	ClientSecret string
-	ProjectID    string
+	ClientID       string
+	ClientSecret   string
+	ProjectID      string
 	ShouldFallback bool
-	Error         error
+	Error          error
 }
 
 // Client handles non-interactive (streaming) device onboarding.
@@ -54,7 +54,6 @@ func NewClient(address string, port int, mac, uuid, serial, ipAddress, caCertPat
 // Returns StreamResult containing credentials or error with fallback flag.
 func (c *Client) Onboard(ctx context.Context) StreamResult {
 	result := StreamResult{ShouldFallback: false}
-	
 	target := fmt.Sprintf("%s:%d", c.address, c.port)
 	conn, err := connection.CreateSecureConnection(ctx, target, c.caCertPath)
 	if err != nil {
@@ -82,15 +81,15 @@ func (c *Client) Onboard(ctx context.Context) StreamResult {
 	}
 
 	// Receiving response from server with exponential backoff
-	var backoff time.Duration = 2 * time.Second
+	backoff := 2 * time.Second
 	maxBackoff := 32 * time.Second
-	
+
 	for {
 		if err := stream.Send(request); err != nil {
 			result.Error = fmt.Errorf("could not send data to server: %v", err)
 			return result
 		}
-		
+
 		// Ensure stream is not nil
 		if stream == nil {
 			result.Error = fmt.Errorf("stream is nil")
@@ -151,7 +150,7 @@ func (c *Client) Onboard(ctx context.Context) StreamResult {
 					result.Error = fmt.Errorf("received empty clientID or clientSecret")
 					return result
 				}
-				
+
 				result.ClientID = clientID
 				result.ClientSecret = clientSecret
 				result.ProjectID = projectID
@@ -168,10 +167,10 @@ func (c *Client) Onboard(ctx context.Context) StreamResult {
 		} else if resp.Status.Code == int32(codes.NotFound) {
 			// Device not found - trigger fallback to interactive mode
 			result.ShouldFallback = true
-			result.Error = fmt.Errorf(resp.Status.Message)
+			result.Error = fmt.Errorf("%s", resp.Status.Message)
 			return result
 		} else {
-			result.Error = fmt.Errorf(resp.Status.Message)
+			result.Error = fmt.Errorf("%s", resp.Status.Message)
 			return result
 		}
 	}

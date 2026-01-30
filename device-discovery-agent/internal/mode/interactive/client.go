@@ -23,26 +23,26 @@ import (
 
 // Client handles interactive (manual) device onboarding with JWT authentication.
 type Client struct {
-	address        string
-	port           int
-	mac            string
-	ipAddress      string
-	uuid           string
-	serial         string
-	caCertPath     string
+	address         string
+	port            int
+	mac             string
+	ipAddress       string
+	uuid            string
+	serial          string
+	caCertPath      string
 	accessTokenPath string
 }
 
 // NewClient creates a new interactive mode client.
 func NewClient(address string, port int, mac, ipAddress, uuid, serial, caCertPath, accessTokenPath string) *Client {
 	return &Client{
-		address:        address,
-		port:           port,
-		mac:            mac,
-		ipAddress:      ipAddress,
-		uuid:           uuid,
-		serial:         serial,
-		caCertPath:     caCertPath,
+		address:         address,
+		port:            port,
+		mac:             mac,
+		ipAddress:       ipAddress,
+		uuid:            uuid,
+		serial:          serial,
+		caCertPath:      caCertPath,
 		accessTokenPath: accessTokenPath,
 	}
 }
@@ -55,8 +55,7 @@ func (c *Client) Onboard(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to read CA certificate: %v", err)
 	}
-	fmt.Println("caCert: ", caCert)
-	
+
 	// Create a certificate pool from the CA certificate
 	certPool := x509.NewCertPool()
 	if !certPool.AppendCertsFromPEM(caCert) {
@@ -75,10 +74,8 @@ func (c *Client) Onboard(ctx context.Context) error {
 	tokenString := strings.TrimSpace(string(jwtToken))
 
 	target := fmt.Sprintf("%s:%d", c.address, c.port)
-	conn, err := grpc.DialContext(
-		ctx,
+	conn, err := grpc.NewClient(
 		target,
-		grpc.WithBlock(),
 		grpc.WithTransportCredentials(creds),
 		grpc.WithPerRPCCredentials(
 			oauth.TokenSource{
@@ -95,7 +92,7 @@ func (c *Client) Onboard(ctx context.Context) error {
 	fmt.Println("Dial Complete")
 
 	cli := pb.NewInteractiveOnboardingServiceClient(conn)
-	
+
 	// Create a NodeData object
 	nodeData := &pb.NodeData{
 		Hwdata: []*pb.HwData{
@@ -107,12 +104,12 @@ func (c *Client) Onboard(ctx context.Context) error {
 			},
 		},
 	}
-	
+
 	// Create a NodeRequest object and set the Payload field
 	nodeRequest := &pb.CreateNodesRequest{
 		Payload: []*pb.NodeData{nodeData},
 	}
-	
+
 	// Call the gRPC endpoint with the NodeRequest
 	nodeResponse, err := cli.CreateNodes(ctx, nodeRequest)
 	if err != nil {
@@ -128,7 +125,7 @@ func (c *Client) Onboard(ctx context.Context) error {
 	if err := config.SaveToFile(config.ProjectIDPath, nodeResponse.ProjectId); err != nil {
 		return fmt.Errorf("failed to save Project ID to file: %v", err)
 	}
-	
+
 	return nil
 }
 
@@ -151,6 +148,6 @@ func (c *Client) OnboardWithRetry(ctx context.Context) error {
 			time.Sleep(retryDelay + time.Duration(rand.Intn(1000))*time.Millisecond)   // Slight random jitter
 		}
 	}
-	
+
 	return fmt.Errorf("max retries reached")
 }

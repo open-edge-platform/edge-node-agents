@@ -53,7 +53,9 @@ func ExecuteAuthScript(ctx context.Context) error {
 		return nil
 	case <-ctx.Done():
 		fmt.Println("client-auth.sh timed out, killing process group...")
-		syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) // Kill the process group
+		if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
+			fmt.Printf("Failed to kill process group: %v\n", err)
+		}
 		return fmt.Errorf("client-auth.sh timed out: %w", ctx.Err())
 	}
 }
