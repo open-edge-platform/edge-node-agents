@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: 'v1.0.0'
+logLevel: debug
+
+# Onboarding service configuration
+onboarding:
+    serviceURL: 'localhost:8443'
+    certPath: './test/_dummy.crt'
+    timeout: 30
+
+# Device discovery settings
+discovery:
+    interval: 60
+    retryAttempts: 3
+    retryDelay: 5
+
+# Authentication settings
+auth:
+    keycloakURL: 'http://localhost:8080'
+    realm: 'test-realm'
+    clientID: 'device-discovery-agent'
+    clientSecret: 'test-secret'
+
+# System information collection
+sysinfo:
+    collectUUID: true
+    collectSerial: true
+    collectMAC: true
+    collectIP: true

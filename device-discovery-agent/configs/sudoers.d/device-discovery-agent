@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Allow device-discovery-agent to run dmidecode for reading hardware information
+# dmidecode requires root access to read DMI/SMBIOS data from /dev/mem or /sys/firmware/dmi/tables/
+device-discovery-agent ALL=(ALL) NOPASSWD: /usr/sbin/dmidecode

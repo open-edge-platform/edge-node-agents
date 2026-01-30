@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+#DEBHELPER#
+
+# Remove user on apt-get purge
+if [ "$1" = purge ]; then
+	userdel device-discovery-agent || true
+	# Note: Tokens are stored in /dev/shm (tmpfs) and are automatically cleared on reboot
+fi

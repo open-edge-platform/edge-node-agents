@@ -1,0 +1,26 @@
+[Unit]
+Description=Device Discovery Agent
+Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/device-discovery-agent/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/edge-node/bin/device-discovery-agent -config /etc/edge-node/node/confs/device-discovery-agent.env
+StandardOutput=journal
+StandardError=journal
+User=device-discovery-agent
+Group=bm-agents
+RemainAfterExit=no
+TimeoutStartSec=10m
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+CPUQuota=20%
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

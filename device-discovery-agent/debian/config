@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+# High priority prompts (critical configuration)
+db_input high device-discovery-agent/onboarding.serviceURL || true
+db_input high device-discovery-agent/onboarding.servicePort || true
+db_input high device-discovery-agent/discovery.serviceURL || true
+db_input high device-discovery-agent/auth.keycloakURL || true
+db_input medium device-discovery-agent/onboarding.caCertPath || true
+
+# Medium priority prompts (operational settings)
+db_input medium device-discovery-agent/sysinfo.autoDetect || true
+db_input medium device-discovery-agent/debug || true
+
+# Low priority prompts (advanced options)
+db_input low device-discovery-agent/disableInteractive || true
+db_input low device-discovery-agent/useKernelArgs || true
+
+db_go || true

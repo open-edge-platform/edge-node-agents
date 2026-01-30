@@ -1,0 +1,5 @@
+device-discovery-agent (VERSION) UNRELEASED; urgency=medium
+
+  * GA release
+
+ -- Device Discovery Agent Team <team@example.com>  Thu, 30 Jan 2026 00:00:00 +0000
