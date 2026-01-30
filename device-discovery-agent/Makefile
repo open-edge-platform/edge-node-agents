@@ -99,6 +99,8 @@ test: ## Run unit tests
 	@echo "Running unit tests..."
 	$(GOTEST) -v ./internal/... ./cmd/...
 
+fuzztest: common-fuzztest
+
 cover_unit:
 	@echo "Running unit tests with coverage..."
 	mkdir -p $(BUILD_DIR)/coverage/unit
