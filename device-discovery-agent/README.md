@@ -77,9 +77,11 @@ device-discovery-agent-<VERSION>  device-discovery-agent-<VERSION>.tar.gz
 
 To run the device discovery agent binary after compiling:
 
+```bash
+./build/artifacts/device-discovery-agent -config configs/device-discovery-agent.env
 ```
-./build/artifacts/device-discovery-agent -config configs/device-discovery-agent.yaml
-```
+
+Note: The `-config` flag expects a KEY=VALUE format file (.env), NOT YAML.
 
 ## Installing the Device Discovery Agent
 
@@ -127,15 +129,40 @@ sudo journalctl -u device-discovery-agent
 
 ## Configuration
 
-The Device Discovery Agent can be configured using a YAML configuration file located at:
-`/etc/edge-node/node/confs/device-discovery-agent.yaml`
+The Device Discovery Agent can be configured using:
 
-Key configuration sections include:
+1. **Configuration File** (KEY=VALUE format): `/etc/edge-node/node/confs/device-discovery-agent.env`
+2. **CLI Flags**: Command-line arguments (override config file values)
+3. **Kernel Arguments**: Values from `/proc/cmdline` (if `-use-kernel-args` is enabled)
 
-- `onboarding`: Onboarding service connection settings
-- `discovery`: Device discovery intervals and retry settings
-- `auth`: Keycloak authentication configuration
-- `sysinfo`: System information collection settings
+### Configuration File Format
+
+The configuration file uses KEY=VALUE format (not YAML):
+
+```bash
+# Service Endpoints
+OBM_SVC=localhost
+OBS_SVC=localhost
+OBM_PORT=50051
+KEYCLOAK_URL=keycloak.example.com
+CA_CERT=/etc/intel_edge_node/orch-ca-cert/orch-ca.pem
+
+# Auto-detection
+AUTO_DETECT=true
+
+# Optional Settings
+DEBUG=false
+TIMEOUT=5m
+DISABLE_INTERACTIVE=false
+USE_KERNEL_ARGS=false
+```
+
+### Configuration Priority (highest to lowest)
+
+1. CLI flags (highest priority)
+2. Kernel command line arguments (if `-use-kernel-args` is used)
+3. Configuration file (loaded via `-config` flag)
+4. Default values (lowest priority)
 
 ## Usage
 
@@ -149,70 +176,99 @@ Device Discovery Agent operates as a CLI utility with command-line flags for con
 
 ### Required Flags
 
-- `-obm-svc` - Onboarding manager service address
-- `-obs-svc` - Onboarding stream service address  
-- `-obm-port` - Onboarding manager port
-- `-keycloak-url` - Keycloak authentication URL
+The following flags are required unless specified in a configuration file:
+
+- `-obm-svc` - Onboarding manager service address (hostname or IP)
+- `-obs-svc` - Onboarding stream service address (hostname or IP)
+- `-obm-port` - Onboarding manager port (default: 50051)
+- `-keycloak-url` - Keycloak authentication URL (hostname or IP)
+- `-ca-cert` - Path to CA certificate (required for TLS)
 - `-mac` - MAC address of the device (required unless using `-auto-detect`)
 
 ### Optional Flags
 
-**Device Information:**
-- `-serial` - Serial number (auto-detected if not provided)
-- `-uuid` - System UUID (auto-detected if not provided)
-- `-ip` - IP address (auto-detected from MAC if not provided)
+**Configuration File:**
+- `-config` - Path to configuration file in KEY=VALUE format (e.g., `/etc/edge-node/node/confs/device-discovery-agent.env`)
+
+**Device Information (auto-detected if not provided):**
+- `-serial` - Serial number (auto-detected using dmidecode)
+- `-uuid` - System UUID (auto-detected using dmidecode)
+- `-ip` - IP address (auto-detected from MAC address)
 
 **Auto-Detection:**
 - `-auto-detect` - Auto-detect all system information (MAC, serial, UUID, IP)
 
 **Additional Options:**
 - `-extra-hosts` - Additional host mappings (comma-separated: 'host1:ip1,host2:ip2')
-- `-ca-cert` - Path to CA certificate (default: /etc/idp/server_cert.pem)
-- `-debug` - Enable debug mode with timeout
-- `-timeout` - Timeout duration for debug mode (default: 5m0s)
+- `-debug` - Enable debug mode with extended logging
+- `-timeout` - Timeout duration for debug mode (default: 5m)
+- `-disable-interactive` - Disable interactive mode fallback
+- `-use-kernel-args` - Read configuration from kernel command line (/proc/cmdline)
 
 ### Examples
 
-#### 1. Auto-detect all system information
+#### 1. Using configuration file
 ```bash
-./device-discovery-agent -obm-svc obm.example.com \
+./device-discovery-agent -config /etc/edge-node/node/confs/device-discovery-agent.env
+```
+
+#### 2. Auto-detect all system information
+```bash
+./device-discovery-agent \
+      -obm-svc obm.example.com \
       -obs-svc obs.example.com \
       -obm-port 50051 \
       -keycloak-url keycloak.example.com \
+      -ca-cert /etc/intel_edge_node/orch-ca-cert/orch-ca.pem \
       -auto-detect
 ```
 
-#### 2. Specify MAC address, auto-detect other info
+#### 3. Specify MAC address, auto-detect other info
 ```bash
-./device-discovery-agent -obm-svc obm.example.com \
+./device-discovery-agent \
+      -obm-svc obm.example.com \
       -obs-svc obs.example.com \
       -obm-port 50051 \
       -keycloak-url keycloak.example.com \
+      -ca-cert /etc/intel_edge_node/orch-ca-cert/orch-ca.pem \
       -mac 00:11:22:33:44:55
 ```
 
-#### 3. Fully manual configuration
+#### 4. Fully manual configuration
 ```bash
-./device-discovery-agent -obm-svc obm.example.com \
+./device-discovery-agent \
+      -obm-svc obm.example.com \
       -obs-svc obs.example.com \
       -obm-port 50051 \
       -keycloak-url keycloak.example.com \
+      -ca-cert /etc/intel_edge_node/orch-ca-cert/orch-ca.pem \
       -mac 00:11:22:33:44:55 \
       -serial ABC123 \
       -uuid 12345678-1234-1234-1234-123456789012 \
       -ip 192.168.1.100
 ```
 
-#### 4. With debug mode and extra hosts
+#### 5. With debug mode and extra hosts
 ```bash
-./device-discovery-agent -obm-svc obm.example.com \
+./device-discovery-agent \
+      -obm-svc obm.example.com \
       -obs-svc obs.example.com \
       -obm-port 50051 \
       -keycloak-url keycloak.example.com \
+      -ca-cert /etc/intel_edge_node/orch-ca-cert/orch-ca.pem \
       -auto-detect \
       -debug \
       -timeout 10m \
       -extra-hosts "registry.local:10.0.0.1,api.local:10.0.0.2"
+```
+
+#### 6. Override config file values with CLI flags
+```bash
+# Config file has OBM_SVC=localhost, but we override it
+./device-discovery-agent \
+      -config /etc/edge-node/node/confs/device-discovery-agent.env \
+      -obm-svc production.example.com \
+      -debug
 ```
 
 ## Additional Commands for Development
@@ -282,10 +338,12 @@ Kernel command line argument parsing (legacy support).
 
 ### internal/sysinfo
 System information retrieval using dmidecode and network interfaces:
-- Hardware serial number
-- System UUID
+- Hardware serial number (via `sudo dmidecode`)
+- System UUID (via `sudo dmidecode`)
 - IP address lookup by MAC
 - Primary MAC address detection
+
+**Note:** Requires sudo permissions for dmidecode commands. See `/etc/sudoers.d/device-discovery-agent` for configured permissions.
 
 ### internal/info
 Version information and build metadata:
@@ -296,10 +354,10 @@ Version information and build metadata:
 
 The application can automatically detect system information:
 
-1. **Serial Number** - Retrieved using `dmidecode -s system-serial-number`
-2. **UUID** - Retrieved using `dmidecode -s system-uuid`
-3. **MAC Address** - Automatically detects the primary network interface MAC
-4. **IP Address** - Automatically detected from the specified MAC address
+1. **Serial Number** - Retrieved using `sudo dmidecode -s system-serial-number`
+2. **UUID** - Retrieved using `sudo dmidecode -s system-uuid`
+3. **MAC Address** - Automatically detects the primary network interface MAC using Go's `net.Interfaces()`
+4. **IP Address** - Automatically detected from network interfaces associated with the specified MAC address
 
 When using `-auto-detect`, all system information is automatically gathered. Individual fields can also be auto-detected by omitting the corresponding flag.
 
