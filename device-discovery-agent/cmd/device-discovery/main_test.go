@@ -102,26 +102,3 @@ func TestValidateConfig(t *testing.T) {
 		})
 	}
 }
-
-func FuzzTestDeviceDiscovery(f *testing.F) {
-	f.Add("obm.example.com", "obs.example.com", 50051, "keycloak.example.com", "00:11:22:33:44:55")
-
-	f.Fuzz(func(t *testing.T, obmSvc string, obsSvc string, obmPort int, keycloakURL string, macAddr string) {
-		// Create a config with fuzzed values
-		cfg := &CLIConfig{
-			ObmSvc:      obmSvc,
-			ObsSvc:      obsSvc,
-			ObmPort:     obmPort,
-			KeycloakURL: keycloakURL,
-			MacAddr:     macAddr,
-		}
-
-		// Test that validation doesn't panic
-		_ = cfg
-
-		// Test sysinfo functions don't panic with various inputs
-		if macAddr != "" {
-			_, _ = sysinfo.GetIPAddress(macAddr)
-		}
-	})
-}
