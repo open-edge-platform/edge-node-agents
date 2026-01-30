@@ -129,11 +129,13 @@ sudo journalctl -u device-discovery-agent
 
 ## Configuration
 
-The Device Discovery Agent can be configured using:
+The Device Discovery Agent can be configured using multiple sources. Configuration values are loaded in a specific priority order, where higher priority sources override lower priority ones.
+
+### Configuration Sources
 
 1. **Configuration File** (KEY=VALUE format): `/etc/edge-node/node/confs/device-discovery-agent.env`
-2. **CLI Flags**: Command-line arguments (override config file values)
-3. **Kernel Arguments**: Values from `/proc/cmdline` (if `-use-kernel-args` is enabled)
+2. **Kernel Arguments**: Values from `/proc/cmdline` (if `-use-kernel-args` flag is enabled)
+3. **CLI Flags**: Command-line arguments
 
 ### Configuration File Format
 
@@ -157,12 +159,22 @@ DISABLE_INTERACTIVE=false
 USE_KERNEL_ARGS=false
 ```
 
-### Configuration Priority (highest to lowest)
+### Configuration Priority Order
 
-1. CLI flags (highest priority)
-2. Kernel command line arguments (if `-use-kernel-args` is used)
-3. Configuration file (loaded via `-config` flag)
-4. Default values (lowest priority)
+The agent loads configuration in the following priority order (from lowest to highest):
+
+1. **Default values** (lowest priority) - Built-in defaults
+2. **Kernel arguments** - Values from `/proc/cmdline` (if `-use-kernel-args` is enabled)
+3. **Configuration file** - Values from file specified with `-config` flag
+4. **CLI flags** (highest priority) - Command-line arguments
+
+**Important Notes:**
+- Higher priority sources **override** values from lower priority sources
+- CLI flags always take precedence over all other configuration sources
+- The configuration file overrides kernel arguments
+- Kernel arguments override default values
+- The `-use-kernel-args` flag enables reading DEBUG and TIMEOUT from `/proc/cmdline`
+- Supported kernel arguments: `DEBUG`, `TIMEOUT`, `worker_id` (logged but not used)
 
 ## Usage
 
@@ -271,6 +283,37 @@ The following flags are required unless specified in a configuration file:
       -debug
 ```
 
+#### 7. Using kernel arguments with configuration file
+```bash
+# Reads kernel args first, then config file (which overrides kernel args),
+# then CLI flags (which override everything)
+./device-discovery-agent \
+      -config /etc/edge-node/node/confs/device-discovery-agent.env \
+      -use-kernel-args \
+      -debug
+```
+
+### Configuration Priority Example
+
+Here's how the priority system works in practice:
+
+Suppose you have:
+- **Kernel arguments** (`/proc/cmdline`): `DEBUG=false TIMEOUT=5m`
+- **Config file** (`device-discovery-agent.env`): `DEBUG=true TIMEOUT=10m OBM_SVC=config.example.com`
+- **CLI flags**: `-debug=false -obm-svc=cli.example.com`
+
+The final configuration will be:
+- `DEBUG=false` (from CLI flag - highest priority)
+- `TIMEOUT=10m` (from config file - overrides kernel args)
+- `OBM_SVC=cli.example.com` (from CLI flag - highest priority)
+
+The agent processes configuration in this order:
+1. Loads defaults
+2. Reads kernel arguments (if `-use-kernel-args` enabled)
+3. Reads config file (if `-config` provided)
+4. Applies CLI flags (final override)
+
+
 ## Additional Commands for Development
 
 - **Build device discovery agent binary and mock binaries**:
@@ -328,9 +371,16 @@ gRPC client for communicating with the onboarding manager:
 
 ### internal/config
 Configuration management and utility functions:
-- File I/O operations
-- Host file updates
-- Temporary script creation
+- **Config struct** - Main configuration structure with all agent settings
+- **LoadFromFile** - Loads configuration from KEY=VALUE format files
+- **LoadFromKernelArgs** - Parses configuration from `/proc/cmdline`
+- **ApplyValue** - Maps configuration keys to struct fields with type conversion
+- **Validate** - Validates required configuration fields
+- **WriteToFile** - Persists validated configuration to file
+- Host file updates (`UpdateHosts`)
+- Environment variable loading (`LoadEnvConfig`, `ReadEnvVars`)
+- File I/O operations (`SaveToFile`)
+- Temporary script creation (`CreateTempScript`)
 - Constants for file paths
 
 ### internal/parser

@@ -6,6 +6,7 @@ package sysinfo
 import (
 	"bytes"
 	"context"
+	"device-discovery/internal/config"
 	"fmt"
 	"net"
 	"os/exec"
@@ -184,4 +185,48 @@ func GetPrimaryMAC() (string, error) {
 	}
 
 	return "", fmt.Errorf("no suitable network interface found")
+}
+
+func AutoDetectSystemInfo(cfg *config.Config) error {
+	var err error
+
+	// Auto-detect serial number if not provided
+	if cfg.SerialNumber == "" {
+		cfg.SerialNumber, err = GetSerialNumber()
+		if err != nil {
+			return fmt.Errorf("failed to auto-detect serial number: %w", err)
+		}
+		fmt.Printf("Auto-detected serial number: %s\n", cfg.SerialNumber)
+	}
+
+	// Auto-detect UUID if not provided
+	if cfg.UUID == "" {
+		cfg.UUID, err = GetUUID()
+		if err != nil {
+			return fmt.Errorf("failed to auto-detect UUID: %w", err)
+		}
+		fmt.Printf("Auto-detected UUID: %s\n", cfg.UUID)
+	}
+
+	// Auto-detect MAC address if auto-detect flag is set and MAC is empty
+	if cfg.AutoDetect && cfg.MacAddr == "" {
+		cfg.MacAddr, err = GetPrimaryMAC()
+		if err != nil {
+			return fmt.Errorf("failed to auto-detect MAC address: %w", err)
+		}
+		fmt.Printf("Auto-detected MAC address: %s\n", cfg.MacAddr)
+	}
+
+	// Auto-detect IP address from MAC if not provided
+	// Use retry logic to wait for DHCP assignment if needed
+	if cfg.IPAddress == "" && cfg.MacAddr != "" {
+		fmt.Printf("Waiting for IP address assignment for MAC %s...\n", cfg.MacAddr)
+		cfg.IPAddress, err = GetIPAddressWithRetry(cfg.MacAddr, 10, 3*time.Second)
+		if err != nil {
+			return fmt.Errorf("failed to auto-detect IP address for MAC %s: %w", cfg.MacAddr, err)
+		}
+		fmt.Printf("Auto-detected IP address: %s\n", cfg.IPAddress)
+	}
+
+	return nil
 }

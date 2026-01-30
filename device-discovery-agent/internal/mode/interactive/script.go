@@ -10,17 +10,37 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
-
-	"device-discovery/internal/config"
 )
 
 //go:embed client-auth.sh
 var authScript []byte
 
+// CreateTempScript creates a temporary script file with the given content.
+func CreateTempScript(scriptContent []byte) (*os.File, error) {
+	tmpfile, err := os.CreateTemp("", "client-auth.sh")
+	if err != nil {
+		return nil, fmt.Errorf("error creating temporary file: %w", err)
+	}
+
+	if _, err := tmpfile.Write(scriptContent); err != nil {
+		tmpfile.Close()
+		os.Remove(tmpfile.Name())
+		return nil, fmt.Errorf("error writing to temporary file: %w", err)
+	}
+
+	if err := tmpfile.Chmod(0700); err != nil {
+		tmpfile.Close()
+		os.Remove(tmpfile.Name())
+		return nil, fmt.Errorf("error setting permissions on temporary file: %w", err)
+	}
+
+	return tmpfile, nil
+}
+
 // ExecuteAuthScript executes the embedded client-auth.sh script for TTY-based authentication.
 // The script prompts the user for Keycloak credentials via TTY devices.
 func ExecuteAuthScript(ctx context.Context) error {
-	tmpfile, err := config.CreateTempScript(authScript)
+	tmpfile, err := CreateTempScript(authScript)
 	if err != nil {
 		return fmt.Errorf("error creating temporary file: %w", err)
 	}
