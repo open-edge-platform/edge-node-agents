@@ -7,14 +7,12 @@ module device-discovery
 go 1.24.9
 
 require (
-	github.com/open-edge-platform/edge-node-agents/common v1.9.1
 	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.33.0
 	golang.org/x/oauth2 v0.34.0
 	google.golang.org/grpc v1.80.0-dev
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
 	golang.org/x/net v0.48.0 // indirect

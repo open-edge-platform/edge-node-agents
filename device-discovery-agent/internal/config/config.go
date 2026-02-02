@@ -77,6 +77,11 @@ func parseCmdLine(cmdLines []string) (kernelConfig, error) {
 			continue
 		}
 
+		// Check if we have both key and value (cmdLine must have at least 2 elements)
+		if len(cmdLine) < 2 {
+			continue
+		}
+
 		switch cmd := cmdLine[0]; cmd {
 		case "worker_id":
 			cfg.WorkerID = cmdLine[1]
