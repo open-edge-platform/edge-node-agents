@@ -42,7 +42,7 @@ else ifneq ("$(wildcard ./common.mk)","")
 endif
 
 .PHONY: all build clean test fmt vet lint ddabuild package tarball install integration_test cover package_test help
-.PHONY: ombuild ssmbuild
+.PHONY: ombuild
 
 all: test build
 
@@ -57,13 +57,6 @@ ombuild:
 	-X main.commit=$(COMMIT)" \
 	-o $(BUILD_DIR)/onboarding-mock cmd/onboarding-mock/onboarding-mock.go
 
-ssmbuild:
-	@echo "Building status-server-mock..."
-	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
-	$(GOCMD) build -ldflags="-s -w -extldflags=-static \
-	-X main.version=$(VERSION) \
-	-X main.commit=$(COMMIT)" \
-	-o $(BUILD_DIR)/status-server-mock cmd/status-server-mock/status-server-mock.go
 
 ddabuild:
 	@echo "Building $(NAME)..."
@@ -87,7 +80,7 @@ ddabuild_with_cover:
 	-X github.com/open-edge-platform/edge-node-agents/device-discovery-agent/internal/info.commit=$(COMMIT)" \
 	-o $(BUILD_DIR)/$(NAME)_cover $(CMD_DIR)
 
-build: ddabuild ombuild ssmbuild
+build: ddabuild ombuild
 
 clean: ## Clean build artifacts
 	@echo "Cleaning..."
@@ -108,23 +101,21 @@ cover_unit:
 	go tool covdata percent -i=$(BUILD_DIR)/coverage/unit
 	go tool covdata func -i=$(BUILD_DIR)/coverage/unit
 
-integration_test: ddabuild_with_race ombuild ssmbuild
+integration_test: ddabuild_with_race ombuild
 	@echo "Running integration tests..."
 	DDA_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/device-discovery-agent_race \
 	OM_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/onboarding-mock \
-	SS_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/status-server-mock \
 	WORKING_CONFIG_PATH=$(shell pwd)/test/config_example.yaml \
 	DDA_VERSION="Device Discovery Agent v$(VERSION)-$(COMMIT)" \
 	GORACE="log_path=stdout" \
 	go test -v ./test/integration_test.go
 
-cover_integration: ddabuild_with_cover ombuild ssmbuild
+cover_integration: ddabuild_with_cover ombuild
 	@echo "Running integration tests with coverage..."
 	mkdir -p $(BUILD_DIR)/coverage/integration
 	GOCOVERDIR=$(shell pwd)/$(BUILD_DIR)/coverage/integration \
 	DDA_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/device-discovery-agent_cover \
 	OM_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/onboarding-mock \
-	SS_BINARY_PATH=$(shell pwd)/$(BUILD_DIR)/status-server-mock \
 	WORKING_CONFIG_PATH=$(shell pwd)/test/config_example.yaml \
 	DDA_VERSION="Device Discovery Agent v$(VERSION)-$(COMMIT)" \
 	go test -v ./test/integration_test.go | tee $(BUILD_DIR)/coverage/integration/integration.out
