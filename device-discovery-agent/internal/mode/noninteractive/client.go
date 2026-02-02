@@ -5,16 +5,19 @@ package noninteractive
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"math/rand"
+	"os"
 	"time"
 
 	pb "github.com/open-edge-platform/infra-onboarding/onboarding-manager/pkg/api/onboardingmgr/v1"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 
 	"device-discovery/internal/config"
-	"device-discovery/internal/connection"
 )
 
 // StreamResult holds the result of a streaming onboarding attempt.
@@ -50,12 +53,41 @@ func NewClient(address string, port int, mac, uuid, serial, ipAddress, caCertPat
 	}
 }
 
+// createSecureConnection creates a secure gRPC connection with TLS.
+func createSecureConnection(ctx context.Context, target string, caCertPath string) (*grpc.ClientConn, error) {
+	// Load the CA certificate
+	caCert, err := os.ReadFile(caCertPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CA certificate: %v", err)
+	}
+
+	// Create a certificate pool from the CA certificate
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(caCert) {
+		return nil, fmt.Errorf("failed to append CA certificate to cert pool")
+	}
+
+	// Create the credentials using the certificate pool
+	creds := credentials.NewClientTLSFromCert(certPool, "")
+
+	// Create the gRPC connection with TLS credentials
+	conn, err := grpc.NewClient(
+		target,
+		grpc.WithTransportCredentials(creds),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
 // Onboard performs non-interactive device onboarding using streaming gRPC.
 // Returns StreamResult containing credentials or error with fallback flag.
 func (c *Client) Onboard(ctx context.Context) StreamResult {
 	result := StreamResult{ShouldFallback: false}
 	target := fmt.Sprintf("%s:%d", c.address, c.port)
-	conn, err := connection.CreateSecureConnection(ctx, target, c.caCertPath)
+	conn, err := createSecureConnection(ctx, target, c.caCertPath)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to connect: %v", err)
 		return result
