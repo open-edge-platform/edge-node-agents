@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"device-discovery/internal/parser"
 )
 
 const (
@@ -61,6 +59,45 @@ func SaveToFile(path, data string) error {
 	// Use io.Writer interface to write data
 	_, err = io.WriteString(file, data)
 	return err
+}
+
+// kernelConfig holds the parsed kernel configuration from kernel arguments.
+type kernelConfig struct {
+	WorkerID string
+	Debug    string
+	Timeout  string
+}
+
+// parseCmdLine parses the kernel command line arguments and returns a kernelConfig.
+func parseCmdLine(cmdLines []string) (kernelConfig, error) {
+	var cfg kernelConfig
+	for i := range cmdLines {
+		cmdLine := strings.Split(cmdLines[i], "=")
+		if len(cmdLine) == 0 {
+			continue
+		}
+
+		switch cmd := cmdLine[0]; cmd {
+		case "worker_id":
+			cfg.WorkerID = cmdLine[1]
+		case "DEBUG":
+			cfg.Debug = cmdLine[1]
+		case "TIMEOUT":
+			cfg.Timeout = cmdLine[1]
+		}
+	}
+	return cfg, nil
+}
+
+// parseKernelArguments reads the kernel command line from the specified file
+// and returns the parsed configuration.
+func parseKernelArguments(kernelArgsFilePath string) (kernelConfig, error) {
+	content, err := os.ReadFile(kernelArgsFilePath)
+	if err != nil {
+		return kernelConfig{}, err
+	}
+	cmdLines := strings.Split(string(content), " ")
+	return parseCmdLine(cmdLines)
 }
 
 // Config holds all command-line and file-based configuration
@@ -145,8 +182,8 @@ func LoadFromFile(cfg *Config, configFile string) error {
 // Values from kernel arguments can be overwritten by config file and CLI flags later.
 func LoadFromKernelArgs(cfg *Config) error {
 
-	// Parse kernel arguments using parser package
-	kernelCfg, err := parser.ParseKernelArguments(KernelArgsFilePath)
+	// Parse kernel arguments using internal parseKernelArguments function
+	kernelCfg, err := parseKernelArguments(KernelArgsFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse kernel arguments from %s: %w", KernelArgsFilePath, err)
 	}
