@@ -152,10 +152,10 @@ func LoadFromKernelArgs(cfg *Config) error {
 	}
 
 	// Apply kernel argument values (will be overwritten by CLI flags later if they're set)
-	// Note: worker_id from Tinkerbell is kept separate and not mapped to any CLI field
-	// It's preserved for potential future use or logging
+	// Map worker_id from Tinkerbell to MAC address
 	if kernelCfg.WorkerID != "" {
-		fmt.Printf("Found worker_id in kernel args: %s (not mapped to any config field)\n", kernelCfg.WorkerID)
+		cfg.MacAddr = kernelCfg.WorkerID
+		fmt.Printf("Mapped worker_id from kernel args to MAC address: %s\n", kernelCfg.WorkerID)
 	}
 
 	// DEBUG flag from kernel args

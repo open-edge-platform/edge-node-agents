@@ -173,8 +173,8 @@ The agent loads configuration in the following priority order (from lowest to hi
 - CLI flags always take precedence over all other configuration sources
 - The configuration file overrides kernel arguments
 - Kernel arguments override default values
-- The `-use-kernel-args` flag enables reading DEBUG and TIMEOUT from `/proc/cmdline`
-- Supported kernel arguments: `DEBUG`, `TIMEOUT`, `worker_id` (logged but not used)
+- The `-use-kernel-args` flag enables reading from `/proc/cmdline`
+- Supported kernel arguments: `worker_id` (mapped to MAC address), `DEBUG`, `TIMEOUT`
 
 ## Usage
 
