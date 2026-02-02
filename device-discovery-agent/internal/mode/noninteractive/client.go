@@ -54,7 +54,7 @@ func NewClient(address string, port int, mac, uuid, serial, ipAddress, caCertPat
 }
 
 // createSecureConnection creates a secure gRPC connection with TLS.
-func createSecureConnection(ctx context.Context, target string, caCertPath string) (*grpc.ClientConn, error) {
+func createSecureConnection(target string, caCertPath string) (*grpc.ClientConn, error) {
 	// Load the CA certificate
 	caCert, err := os.ReadFile(caCertPath)
 	if err != nil {
@@ -87,7 +87,7 @@ func createSecureConnection(ctx context.Context, target string, caCertPath strin
 func (c *Client) Onboard(ctx context.Context) StreamResult {
 	result := StreamResult{ShouldFallback: false}
 	target := fmt.Sprintf("%s:%d", c.address, c.port)
-	conn, err := createSecureConnection(ctx, target, c.caCertPath)
+	conn, err := createSecureConnection(target, c.caCertPath)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to connect: %v", err)
 		return result
