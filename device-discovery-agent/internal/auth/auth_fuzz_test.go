@@ -236,21 +236,32 @@ MIIBkTCB+wIJAKHHCgVZU6KbMA0GCSqGSIb3DQEBCwUAMCExHzAdBgNVBAMMFnRl
 	f.Add([]byte("-----BEGIN CERTIFICATE-----\n" + strings.Repeat("A", 10000) + "\n-----END CERTIFICATE-----")) // Large block
 
 	f.Fuzz(func(t *testing.T, pemData []byte) {
-		// Test PEM decoding
+		// Test PEM decoding - should not panic
 		block, rest := pem.Decode(pemData)
 
-		if block != nil {
-			// If we got a block, validate it
-			if len(block.Bytes) == 0 && len(block.Headers) == 0 && block.Type == "" {
-				t.Error("Got empty PEM block")
+		if block == nil {
+			// This is expected for empty or invalid PEM data
+			// Just ensure rest is the original data or empty
+			if len(rest) > 0 && len(rest) != len(pemData) {
+				t.Errorf("Invalid rest data: got %d bytes, expected 0 or %d", len(rest), len(pemData))
 			}
-
-			// Test if there are more blocks
-			if len(rest) > 0 {
-				block2, _ := pem.Decode(rest)
-				_ = block2
-			}
+			return
 		}
-		// nil block is fine - means no valid PEM data
+
+		// If we got a block, it should be a valid *pem.Block
+		// Type can be empty (e.g., "-----BEGIN -----\n-----END -----")
+		// Bytes can be empty (e.g., empty certificate content)
+		// These are all valid PEM structures that shouldn't cause panics
+
+		// Rest should be the remaining unparsed data
+		if len(rest) > len(pemData) {
+			t.Error("Rest data is larger than input data")
+		}
+
+		// Test if there are more blocks
+		if len(rest) > 0 {
+			block2, _ := pem.Decode(rest)
+			_ = block2
+		}
 	})
 }
