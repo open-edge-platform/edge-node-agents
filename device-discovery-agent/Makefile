@@ -41,7 +41,7 @@ else ifneq ("$(wildcard ./common.mk)","")
 	include ./common.mk
 endif
 
-.PHONY: all build clean test fmt vet lint ddabuild package tarball install integration_test cover package_test help
+.PHONY: all build clean test fmt vet lint ddabuild package tarball install integration_test cover package_test help deb-push
 .PHONY: ombuild
 
 all: test build
@@ -196,6 +196,8 @@ tarball:
 	tar -czf $(BUILD_DIR)/$(FULL_NAME)-$(PKG_VERSION).tar.gz -C $(BUILD_DIR) $(FULL_NAME)-$(PKG_VERSION)
 	rm -rf $(TARBALL_DIR)
 	@echo "Tarball created: $(BUILD_DIR)/$(FULL_NAME)-$(PKG_VERSION).tar.gz"
+
+deb-push: common-deb-push
 
 help: ## Display this help screen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
