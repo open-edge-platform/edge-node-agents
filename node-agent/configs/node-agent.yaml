@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 ---
@@ -16,8 +16,10 @@ status:
   networkEndpoints:
     - name: client-proxy
       url: http://localhost:60444/files-edge-orch/edge-node.asc
-metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
-metricsInterval: 10s
+metrics:
+  enabled: true
+  endpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
+  interval: 10s
 auth:
   accessTokenURL: keycloak.edgeorch.intel.com
   rsTokenURL: token-provider.edgeorch.intel.com
