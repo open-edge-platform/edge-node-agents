@@ -1,0 +1,70 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+#include <tunables/global>
+
+/opt/edge-node/bin/device-discovery-agent {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  # Binary itself
+  /opt/edge-node/bin/device-discovery-agent mr,
+
+  # Configuration file
+  /etc/edge-node/node/confs/device-discovery-agent.env r,
+  
+  # Tokens (saved to tmpfs)
+  /dev/shm/idp_access_token rw,
+  /dev/shm/release_token rw,
+  
+  # Client credentials (read/write to persistent storage)
+  owner /etc/intel_edge_node/client-credentials/client_id rw,
+  owner /etc/intel_edge_node/client-credentials/client_secret rw,
+  owner /etc/intel_edge_node/client-credentials/project_id rw,
+  
+  # CA certificate
+  /etc/intel_edge_node/orch-ca-cert/orch-ca.pem r,
+
+  # System information access
+  /sys/class/dmi/id/product_uuid r,
+  /sys/class/dmi/id/product_serial r,
+  /sys/class/dmi/id/board_serial r,
+  /sys/class/net/*/address r,
+  /sys/class/net/*/operstate r,
+  /sys/devices/** r,
+
+  # Network access
+  /etc/hosts r,
+  /etc/resolv.conf r,
+  /etc/nsswitch.conf r,
+  /etc/ssl/certs/** r,
+  /etc/ssl/openssl.cnf r,
+  /usr/share/ca-certificates/** r,
+
+  # Process information
+  /proc/sys/net/core/somaxconn r,
+  /proc/sys/kernel/hostname r,
+
+  # Temporary files
+  /tmp/** rw,
+  owner /tmp/** rw,
+
+  # Allow network operations
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+  network unix stream,
+  network unix dgram,
+
+  # Capabilities
+  capability net_admin,
+  capability sys_admin,
+  capability dac_read_search,
+
+  # Deny certain operations
+  deny /proc/kcore rw,
+  deny /boot/** rw,
+  deny /sys/kernel/security/** rw,
+}

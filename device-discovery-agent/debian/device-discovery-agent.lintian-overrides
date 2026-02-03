@@ -1,0 +1,4 @@
+device-discovery-agent binary: dir-or-file-in-opt opt/edge-node/
+device-discovery-agent binary: dir-or-file-in-opt opt/edge-node/bin/
+device-discovery-agent binary: dir-or-file-in-opt opt/edge-node/bin/device-discovery-agent
+device-discovery-agent: statically-linked-binary opt/edge-node/bin/device-discovery-agent
