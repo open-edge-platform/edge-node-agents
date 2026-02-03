@@ -36,5 +36,5 @@ packages:
     version: 1.0.8
     ociArtifact: edge-orch/en/deb/in-band-manageability
   - name: device-discovery-agent
-    version: 0.0.1
+    version: 0.0.2
     ociArtifact: edge-orch/en/deb/device-discovery-agent
