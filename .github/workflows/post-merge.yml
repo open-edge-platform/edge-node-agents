@@ -160,6 +160,7 @@ jobs:
       platform_observability_agent_version: ${{ steps.agent-versions.outputs.platform_observability_agent }}
       platform_telemetry_agent_version: ${{ steps.agent-versions.outputs.platform_telemetry_agent }}
       platform_update_agent_version: ${{ steps.agent-versions.outputs.platform_update_agent }}
+      device_discovery_agent_version: ${{ steps.agent-versions.outputs.device_discovery_agent }}  
       inbm_version: ${{ steps.inbm-version.outputs.inbm_version }}
       caddy_version: ${{ steps.caddy-version.outputs.caddy_version }}
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
@@ -195,6 +196,7 @@ jobs:
           echo "platform_observability_agent=$(head -n1 platform-observability-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "platform_telemetry_agent=$(head -n1 platform-telemetry-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "platform_update_agent=$(head -n1 platform-update-agent/VERSION)" >> ${GITHUB_OUTPUT}
+          echo "device_discovery_agent=$(head -n1 device-discovery-agent/VERSION)" >> ${GITHUB_OUTPUT}
 
       - name: Get INBM version
         id: inbm-version
@@ -335,7 +337,17 @@ jobs:
           else
             sed -i "s#platform_update_agent_version: .*#platform_update_agent_version: ${platform_update_agent_version}#" edge-node-container/chart/bma_values.yaml
           fi
-
+      - name: Update device-discovery-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        env:
+          device_discovery_agent_version: ${{ needs.collect-versions.outputs.device_discovery_agent_version }}
+        run: |
+          if [[ $(echo "${device_discovery_agent_version}" | grep 'dev') ]]; then
+            echo "Skipping  device discovery agent version update as no new version created"
+          else
+            sed -i "s#device_discovery_agent_version: .*#device_discovery_agent_version: ${device_discovery_agent_version}#" edge-node-container/chart/bma_values.yaml
+          fi
       - name: Update INBM versions in chart
         shell: bash
         working-directory: virtual-edge-node

@@ -1,0 +1,14 @@
+Source: device-discovery-agent
+Maintainer: Device Discovery Agent Team <team@example.com>
+Section: misc
+Priority: optional
+Standards-Version: 1.0.0
+Build-Depends: debhelper-compat (= 12)
+
+Package: device-discovery-agent
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, apparmor-utils, dmidecode, lshw, iproute2
+Description: device-discovery-agent discovers and onboards edge devices
+ The Device Discovery Agent automatically discovers device hardware information,
+ registers devices with the onboarding manager, and facilitates both interactive
+ and non-interactive onboarding workflows for edge nodes.
