@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -21,11 +22,11 @@ const (
 	ReleaseTokenFile        = TokenFolder + "/release_token"
 	KeycloakTokenURL        = "/realms/master/protocol/openid-connect/token"
 	ReleaseTokenURL         = "/token"
-	ClientCredentialsFolder = "/dev/shm/" // #nosec G101 -- This is a path, not a credential
-	ClientIDPath            = ClientCredentialsFolder + "/client_id"
-	ClientSecretPath        = ClientCredentialsFolder + "/client_secret"
+	ClientCredentialsFolder = "/etc/intel_edge_node/client-credentials/" // #nosec G101 -- This is a path, not a credential
+	ClientIDPath            = ClientCredentialsFolder + "client_id"
+	ClientSecretPath        = ClientCredentialsFolder + "client_secret"
 	KernelArgsFilePath      = "/proc/cmdline"
-	ProjectIDPath           = ClientCredentialsFolder + "/project_id"
+	ProjectIDPath           = ClientCredentialsFolder + "project_id"
 )
 
 // UpdateHosts updates /etc/hosts with extra host mappings.
@@ -49,7 +50,16 @@ func UpdateHosts(extraHosts string) error {
 }
 
 // SaveToFile writes data to the specified file path with the given permissions.
+// Creates the directory path if it doesn't exist.
 func SaveToFile(path, data string) error {
+	// Extract directory path from file path
+	dir := filepath.Dir(path)
+
+	// Create directory if it doesn't exist
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return err

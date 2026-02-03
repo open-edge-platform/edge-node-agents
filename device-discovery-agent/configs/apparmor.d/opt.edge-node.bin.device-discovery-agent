@@ -18,10 +18,10 @@
   /dev/shm/idp_access_token rw,
   /dev/shm/release_token rw,
   
-  # Client credentials (read from tmpfs)
-  /dev/shm/client_id r,
-  /dev/shm/client_secret r,
-  /dev/shm/project_id r,
+  # Client credentials (read/write to persistent storage)
+  owner /etc/intel_edge_node/client-credentials/client_id rw,
+  owner /etc/intel_edge_node/client-credentials/client_secret rw,
+  owner /etc/intel_edge_node/client-credentials/project_id rw,
   
   # CA certificate
   /etc/intel_edge_node/orch-ca-cert/orch-ca.pem r,

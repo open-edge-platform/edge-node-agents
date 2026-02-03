@@ -62,6 +62,16 @@ groupadd -f bm-agents --system
 # Create system user
 id -u device-discovery-agent &>/dev/null || useradd device-discovery-agent --system -g bm-agents -s /sbin/nologin
 
+# Set permissions for client credentials directory
+chmod 700 /etc/intel_edge_node/client-credentials
+if [ -d "/etc/intel_edge_node/client-credentials" ]; then
+    chmod 600 /etc/intel_edge_node/client-credentials/* 2>/dev/null || true
+fi
+
+# Update file/dir ownership
+chown device-discovery-agent:bm-agents /etc/intel_edge_node
+chown -R device-discovery-agent:bm-agents /etc/intel_edge_node/client-credentials
+
 # Load AppArmor profile
 apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.device-discovery-agent
 
