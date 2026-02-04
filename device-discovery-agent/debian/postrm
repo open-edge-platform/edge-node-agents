@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+#DEBHELPER#
+
+# Remove user on apt-get purge
+if [ "$1" = purge ]; then
+	userdel device-discovery-agent || true
+	# Clean up client credentials
+	rm -rf /etc/intel_edge_node/client-credentials
+fi

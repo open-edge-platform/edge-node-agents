@@ -12,6 +12,7 @@ updates:
       - "/node-agent"
       - "/platform-telemetry-agent"
       - "/platform-update-agent"
+      - "/device-discovery-agent"
     schedule:
       interval: daily
     open-pull-requests-limit: 3
@@ -42,3 +43,4 @@ updates:
     open-pull-requests-limit: 10
     commit-message:
       prefix: "[gha] "
+

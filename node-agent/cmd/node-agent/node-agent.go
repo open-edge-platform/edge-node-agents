@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package main
@@ -75,18 +75,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	// metrics
-	shutdown, err := metrics.Init(ctx, confs.MetricsEndpoint, confs.MetricsInterval, info.Component, info.Version)
-	if err != nil {
-		log.Errorf("Initialization of metrics failed: %v", err)
-	} else {
-		log.Info("Metrics collection started")
-		defer func() {
-			err = shutdown(ctx)
-			if err != nil && !errors.Is(err, context.Canceled) {
-				log.Errorf("Shutting down metrics failed! Error: %v", err)
-			}
-		}()
+	// metrics -> initialize metrics collection if enabled
+	if confs.Metrics.Enabled {
+		shutdown, err := metrics.Init(ctx, confs.Metrics.Endpoint, confs.Metrics.Interval, info.Component, info.Version)
+		if err != nil {
+			log.Errorf("Initialization of metrics failed: %v", err)
+		} else {
+			log.Info("Metrics collection started")
+			defer func() {
+				err = shutdown(ctx)
+				if err != nil && !errors.Is(err, context.Canceled) {
+					log.Errorf("Shutting down metrics failed! Error: %v", err)
+				}
+			}()
+		}
 	}
 
 	// Set log level as per configuration

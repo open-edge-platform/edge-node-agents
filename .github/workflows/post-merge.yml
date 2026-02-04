@@ -1,5 +1,5 @@
 ---
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 name: Post-Merge CI Pipeline
@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@8fc2349c02d438e1707f99343069963fb49d3eba  # 2026.0.6
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Discover Changed Files
         id: check-files
-        uses: open-edge-platform/orch-ci/discover-changed-files@8fc2349c02d438e1707f99343069963fb49d3eba  # 2026.0.6
+        uses: open-edge-platform/orch-ci/discover-changed-files@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           project_folder: "."
   post-merge-pipeline:
@@ -56,7 +56,7 @@ jobs:
       matrix:
         # runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@8fc2349c02d438e1707f99343069963fb49d3eba  # 2026.0.6
+    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
     with:
       #  runner_version: ${{ matrix.runner_version }}
       runs_on: ubuntu-22.04
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@8fc2349c02d438e1707f99343069963fb49d3eba  # 2026.0.6
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "yq,aws,oras"
@@ -160,6 +160,7 @@ jobs:
       platform_observability_agent_version: ${{ steps.agent-versions.outputs.platform_observability_agent }}
       platform_telemetry_agent_version: ${{ steps.agent-versions.outputs.platform_telemetry_agent }}
       platform_update_agent_version: ${{ steps.agent-versions.outputs.platform_update_agent }}
+      device_discovery_agent_version: ${{ steps.agent-versions.outputs.device_discovery_agent }}  
       inbm_version: ${{ steps.inbm-version.outputs.inbm_version }}
       caddy_version: ${{ steps.caddy-version.outputs.caddy_version }}
     if: ${{ always() && needs.pre-checks.outputs.manifest == 'true' }}
@@ -173,7 +174,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@8fc2349c02d438e1707f99343069963fb49d3eba  # 2026.0.6
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base,yq"
@@ -195,6 +196,7 @@ jobs:
           echo "platform_observability_agent=$(head -n1 platform-observability-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "platform_telemetry_agent=$(head -n1 platform-telemetry-agent/VERSION)" >> ${GITHUB_OUTPUT}
           echo "platform_update_agent=$(head -n1 platform-update-agent/VERSION)" >> ${GITHUB_OUTPUT}
+          echo "device_discovery_agent=$(head -n1 device-discovery-agent/VERSION)" >> ${GITHUB_OUTPUT}
 
       - name: Get INBM version
         id: inbm-version
@@ -229,7 +231,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@8fc2349c02d438e1707f99343069963fb49d3eba  # 2026.0.6
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base,yq"
@@ -335,7 +337,17 @@ jobs:
           else
             sed -i "s#platform_update_agent_version: .*#platform_update_agent_version: ${platform_update_agent_version}#" edge-node-container/chart/bma_values.yaml
           fi
-
+      - name: Update device-discovery-agent versions in chart
+        shell: bash
+        working-directory: virtual-edge-node
+        env:
+          device_discovery_agent_version: ${{ needs.collect-versions.outputs.device_discovery_agent_version }}
+        run: |
+          if [[ $(echo "${device_discovery_agent_version}" | grep 'dev') ]]; then
+            echo "Skipping  device discovery agent version update as no new version created"
+          else
+            sed -i "s#device_discovery_agent_version: .*#device_discovery_agent_version: ${device_discovery_agent_version}#" edge-node-container/chart/bma_values.yaml
+          fi
       - name: Update INBM versions in chart
         shell: bash
         working-directory: virtual-edge-node
@@ -363,20 +375,20 @@ jobs:
           cd edge-node-container
           make bma_versions
 
-      - name: Update edge-node-container VERSION
-        shell: bash
-        working-directory: virtual-edge-node
-        run: |
-          enic_version=$(head -n1 edge-node-container/VERSION)
-          check_if_dev_version=$(echo "${enic_version}" | grep "dev")
-          if [ -z ${check_if_dev_version} ]; then
-            major_version=$(echo "${enic_version}" | cut -d '.' -f1)
-            minor_version=$(echo "${enic_version}" | cut -d '.' -f2)
-            patch_version=$(echo "${enic_version}" | cut -d '.' -f3)
-            new_patch_version=$(( patch_version + 1 ))
-            new_enic_version="${major_version}.${minor_version}.${new_patch_version}-dev"
-            echo "${new_enic_version}" > edge-node-container/VERSION
-          fi
+      #- name: Update edge-node-container VERSION
+      #  shell: bash
+      #  working-directory: virtual-edge-node
+      #  run: |
+      #    enic_version=$(head -n1 edge-node-container/VERSION)
+      #    check_if_dev_version=$(echo "${enic_version}" | grep "dev")
+      #    if [ -z ${check_if_dev_version} ]; then
+      #      major_version=$(echo "${enic_version}" | cut -d '.' -f1)
+      #      minor_version=$(echo "${enic_version}" | cut -d '.' -f2)
+      #      patch_version=$(echo "${enic_version}" | cut -d '.' -f3)
+      #      new_patch_version=$(( patch_version + 1 ))
+      #      new_enic_version="${major_version}.${minor_version}.${new_patch_version}-dev"
+      #      echo "${new_enic_version}" > edge-node-container/VERSION
+      #    fi
 
       - name: Commit changes to branch and create PR
         shell: bash
@@ -419,7 +431,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@8fc2349c02d438e1707f99343069963fb49d3eba  # 2026.0.6
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@467367d6f859a4654f2645ca78efd60035cf390c  # 2026.0.8
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base"

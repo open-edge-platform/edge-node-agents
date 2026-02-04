@@ -1,0 +1,78 @@
+#!/bin/bash -e
+
+. /usr/share/debconf/confmodule
+
+# Update onboarding service URL (OBM_SVC)
+db_get device-discovery-agent/onboarding.serviceURL
+if [ ! -z "$RET" ]; then
+    sed -i "s|^OBM_SVC=.*|OBM_SVC=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Update onboarding service port (OBM_PORT)
+db_get device-discovery-agent/onboarding.servicePort
+if [ ! -z "$RET" ]; then
+    sed -i "s|^OBM_PORT=.*|OBM_PORT=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Update discovery service URL (OBS_SVC)
+db_get device-discovery-agent/discovery.serviceURL
+if [ ! -z "$RET" ]; then
+    sed -i "s|^OBS_SVC=.*|OBS_SVC=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Update Keycloak URL (KEYCLOAK_URL)
+db_get device-discovery-agent/auth.keycloakURL
+if [ ! -z "$RET" ]; then
+    sed -i "s|^KEYCLOAK_URL=.*|KEYCLOAK_URL=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Update CA certificate path (CA_CERT)
+db_get device-discovery-agent/onboarding.caCertPath
+if [ ! -z "$RET" ]; then
+    sed -i "s|^CA_CERT=.*|CA_CERT=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Update auto-detect setting (AUTO_DETECT)
+db_get device-discovery-agent/sysinfo.autoDetect
+if [ ! -z "$RET" ]; then
+    sed -i "s|^AUTO_DETECT=.*|AUTO_DETECT=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Update debug mode (DEBUG)
+db_get device-discovery-agent/debug
+if [ ! -z "$RET" ]; then
+    sed -i "s|^DEBUG=.*|DEBUG=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Update disable interactive mode (DISABLE_INTERACTIVE)
+db_get device-discovery-agent/disableInteractive
+if [ ! -z "$RET" ]; then
+    sed -i "s|^DISABLE_INTERACTIVE=.*|DISABLE_INTERACTIVE=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Update use kernel args (USE_KERNEL_ARGS)
+db_get device-discovery-agent/useKernelArgs
+if [ ! -z "$RET" ]; then
+    sed -i "s|^USE_KERNEL_ARGS=.*|USE_KERNEL_ARGS=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+fi
+
+# Create system group
+groupadd -f bm-agents --system
+
+# Create system user
+id -u device-discovery-agent &>/dev/null || useradd device-discovery-agent --system -g bm-agents -s /sbin/nologin
+
+# Set permissions for client credentials directory
+chmod 700 /etc/intel_edge_node/client-credentials
+if [ -d "/etc/intel_edge_node/client-credentials" ]; then
+    chmod 600 /etc/intel_edge_node/client-credentials/* 2>/dev/null || true
+fi
+
+# Update file/dir ownership
+chown device-discovery-agent:bm-agents /etc/intel_edge_node
+chown -R device-discovery-agent:bm-agents /etc/intel_edge_node/client-credentials
+
+# Load AppArmor profile
+apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.device-discovery-agent
+
+#DEBHELPER#
