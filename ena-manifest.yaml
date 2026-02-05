@@ -3,19 +3,19 @@
 ---
 metadata:
   schemaVersion: 2.0.0
-  release: 1.5.0-dev
+  release: 1.5.0
 repository:
   codename: 3.1
   component: main
 packages:
   - name: cluster-agent
-    version: 1.8.4
+    version: 1.10.0
     ociArtifact: edge-orch/en/deb/cluster-agent
   - name: hardware-discovery-agent
-    version: 1.9.0
+    version: 1.10.1
     ociArtifact: edge-orch/en/deb/hardware-discovery-agent
   - name: node-agent
-    version: 1.10.0
+    version: 1.10.1
     ociArtifact: edge-orch/en/deb/node-agent
   - name: platform-manageability-agent
     version: 0.4.0
@@ -24,7 +24,7 @@ packages:
     version: 1.11.0
     ociArtifact: edge-orch/en/deb/platform-observability-agent
   - name: platform-telemetry-agent
-    version: 1.6.2
+    version: 1.7.0
     ociArtifact: edge-orch/en/deb/platform-telemetry-agent
   - name: platform-update-agent
     version: 1.8.4
@@ -33,7 +33,7 @@ packages:
     version: 2.7.6
     ociArtifact: edge-orch/en/deb/caddy
   - name: in-band-manageability
-    version: 1.0.8
+    version: 1.1.8
     ociArtifact: edge-orch/en/deb/in-band-manageability
   - name: device-discovery-agent
     version: 0.0.2
