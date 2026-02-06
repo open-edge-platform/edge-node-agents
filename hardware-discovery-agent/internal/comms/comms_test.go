@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 package comms_test
 
@@ -426,6 +426,18 @@ func getUsbInfo() []*proto.SystemUSB {
 	return usbInfo
 }
 
+func TestGenerateUpdateDeviceRequestSuccessAllInfo(t *testing.T) {
+	network.ReadFile = mockedReadFile
+	network.ReadDir = mockedReadDir
+	network.Readlink = mockedReadlink
+	network.CollectEthtoolData = mockedCollectEthtoolData
+	network.Stat = mockedStat
+	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassed)
+	expected := expectedSystemInfoResult("12A34B5", "Test Product", "192.168.1.50", getOsInfo(), getBiosInfo(), getCpuInfo(), getStorageInfo(), getGpuInfo(), 17179869184, getNetworkInfo(), proto.BmInfo_IPMI, getUsbInfo())
+	require.NotNil(t, json)
+	assert.Equal(t, expected, json)
+}
+
 func TestGenerateUpdateDeviceRequestErr(t *testing.T) {
 	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandFailed)
 	osKern := proto.OsKernel{}
@@ -444,18 +456,6 @@ func TestGenerateUpdateDeviceRequestErr(t *testing.T) {
 	assert.Equal(t, expected, json)
 }
 
-func TestGenerateUpdateDeviceRequestSuccessAllInfo(t *testing.T) {
-	network.ReadFile = mockedReadFile
-	network.ReadDir = mockedReadDir
-	network.Readlink = mockedReadlink
-	network.CollectEthtoolData = mockedCollectEthtoolData
-	network.Stat = mockedStat
-	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassed)
-	expected := expectedSystemInfoResult("12A34B5", "Test Product", "192.168.1.50", getOsInfo(), getBiosInfo(), getCpuInfo(), getStorageInfo(), getGpuInfo(), 17179869184, getNetworkInfo(), proto.BmInfo_IPMI, getUsbInfo())
-	require.NotNil(t, json)
-	assert.Equal(t, expected, json)
-}
-
 func TestGenerateUpdateDeviceRequestSuccessStorageOnly(t *testing.T) {
 	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassedStorageOnly)
 	osKern := proto.OsKernel{}
@@ -469,6 +469,42 @@ func TestGenerateUpdateDeviceRequestSuccessStorageOnly(t *testing.T) {
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
 	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, getStorageInfo(), gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	require.NotNil(t, json)
+	assert.Equal(t, expected, json)
+}
+
+func TestGeneraeUpdateDeviceRequestSuccessSerialNumberOnly(t *testing.T) {
+	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassedSerialNumberOnly)
+	osKern := proto.OsKernel{}
+	osRelease := proto.OsRelease{}
+	osInfo := &proto.OsInfo{
+		Kernel:  &osKern,
+		Release: &osRelease,
+	}
+	cpu := &proto.SystemCPU{}
+	storage := []*proto.SystemDisk{}
+	gpu := []*proto.SystemGPU{}
+	networks := []*proto.SystemNetwork{}
+	usbInfo := []*proto.SystemUSB{}
+	expected := expectedSystemInfoResult("12A34B5", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	require.NotNil(t, json)
+	assert.Equal(t, expected, json)
+}
+
+func TestGenerateUpdateDeviceRequestSuccessProductNameOnly(t *testing.T) {
+	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassedProductNameOnly)
+	osKern := proto.OsKernel{}
+	osRelease := proto.OsRelease{}
+	osInfo := &proto.OsInfo{
+		Kernel:  &osKern,
+		Release: &osRelease,
+	}
+	cpu := &proto.SystemCPU{}
+	storage := []*proto.SystemDisk{}
+	gpu := []*proto.SystemGPU{}
+	networks := []*proto.SystemNetwork{}
+	usbInfo := []*proto.SystemUSB{}
+	expected := expectedSystemInfoResult("", "Test Product", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -594,6 +630,24 @@ func TestGenerateUpdateDeviceRequestSuccessUsbInfoOnly(t *testing.T) {
 	assert.Equal(t, expected, json)
 }
 
+func TestGenerateUpdateDeviceRequestSuccessDeviceInfoOnly(t *testing.T) {
+	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassedDeviceOnly)
+	osKern := proto.OsKernel{}
+	osRelease := proto.OsRelease{}
+	osInfo := &proto.OsInfo{
+		Kernel:  &osKern,
+		Release: &osRelease,
+	}
+	cpu := &proto.SystemCPU{}
+	storage := []*proto.SystemDisk{}
+	gpu := []*proto.SystemGPU{}
+	networks := []*proto.SystemNetwork{}
+	usbInfo := []*proto.SystemUSB{}
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	require.NotNil(t, json)
+	assert.Equal(t, expected, json)
+}
+
 func testCmd(testFunc string, command string, args ...string) *exec.Cmd {
 	cs := []string{fmt.Sprintf("-test.run=%s", testFunc), "--", command}
 	cs = append(cs, args...)
@@ -644,6 +698,8 @@ func testCmdExecutorCommandPassed(command string, args ...string) *exec.Cmd {
 			return testCmd("TestGenerateUpdateDeviceRequestCommandGpuDetails", command, args...)
 		} else if strings.Contains(args[0], "ipmitool") {
 			return testCmd("TestGenerateUpdateDeviceRequestCommandIpmiDetails", command, args...)
+		} else if strings.Contains(args[0], "rpc") {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandDeviceDetails", command, args...)
 		} else {
 			if strings.Contains(args[2], "bios-version") {
 				return testCmd("TestGenerateUpdateDeviceRequestCommandBiosVersion", command, args...)
@@ -665,6 +721,30 @@ func testCmdExecutorCommandPassed(command string, args ...string) *exec.Cmd {
 func testCmdExecutorCommandPassedStorageOnly(command string, args ...string) *exec.Cmd {
 	if strings.Contains(command, "lsblk") {
 		return testCmd("TestGenerateUpdateDeviceRequestCommandDiskDetails", command, args...)
+	} else {
+		return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
+	}
+}
+
+func testCmdExecutorCommandPassedSerialNumberOnly(command string, args ...string) *exec.Cmd {
+	if strings.Contains(command, "sudo") && strings.Contains(args[0], "dmidecode") {
+		if strings.Contains(args[2], "system-serial-number") {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandSystemSerialNumber", command, args...)
+		} else {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
+		}
+	} else {
+		return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
+	}
+}
+
+func testCmdExecutorCommandPassedProductNameOnly(command string, args ...string) *exec.Cmd {
+	if strings.Contains(command, "sudo") && strings.Contains(args[0], "dmidecode") {
+		if strings.Contains(args[2], "system-product-name") {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandSystemProductName", command, args...)
+		} else {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
+		}
 	} else {
 		return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
 	}
@@ -760,6 +840,18 @@ func testCmdExecutorCommandPassedUsbOnly(command string, args ...string) *exec.C
 	}
 }
 
+func testCmdExecutorCommandPassedDeviceOnly(command string, args ...string) *exec.Cmd {
+	if strings.Contains(command, "sudo") {
+		if strings.Contains(args[0], "rpc") {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandDeviceDetails", command, args...)
+		} else {
+			return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
+		}
+	} else {
+		return testCmd("TestGenerateUpdateDeviceRequestCommandFailed", command, args...)
+	}
+}
+
 func testCmdExecutorCommandFailed(command string, args ...string) *exec.Cmd {
 	cs := []string{"-test.run=TestGenerateUpdateDeviceRequestCommandFailed", "--", command}
 	cs = append(cs, args...)
@@ -783,6 +875,16 @@ func TestGenerateUpdateDeviceRequestCommandCoreDetails(t *testing.T) {
 		return
 	}
 	testData, err := os.ReadFile("../../test/data/mock_cpu_details.txt")
+	require.NoError(t, err)
+	fmt.Fprintf(os.Stdout, "%v", string(testData))
+	os.Exit(0)
+}
+
+func TestGenerateUpdateDeviceRequestCommandDeviceDetails(t *testing.T) {
+	if os.Getenv("GO_TEST_PROCESS") != "1" {
+		return
+	}
+	testData, err := os.ReadFile("../../test/data/mock_amtinfo.json")
 	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)
