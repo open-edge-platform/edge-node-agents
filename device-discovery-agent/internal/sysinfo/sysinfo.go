@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"device-discovery/internal/config"
+	"device-discovery/internal/logger"
 	"fmt"
 	"net"
 	"os/exec"
@@ -104,7 +105,7 @@ func GetIPAddressWithContext(ctx context.Context, macAddr string, retries int, s
 	// Try immediately first (attempt 1)
 	ip, err := GetIPAddress(macAddr)
 	if err == nil && ip != "" {
-		fmt.Printf("IP address %s assigned to MAC %s (attempt 1/%d)\n", ip, macAddr, retries)
+		logger.Logger.Infof("IP address %s assigned to MAC %s (attempt 1/%d)", ip, macAddr, retries)
 		return ip, nil
 	}
 
@@ -128,11 +129,11 @@ func GetIPAddressWithContext(ctx context.Context, macAddr string, retries int, s
 			// Periodic check
 			ip, err := GetIPAddress(macAddr)
 			if err == nil && ip != "" {
-				fmt.Printf("IP address %s assigned to MAC %s (attempt %d/%d)\n", ip, macAddr, attempt, retries)
+				logger.Logger.Infof("IP address %s assigned to MAC %s (attempt %d/%d)", ip, macAddr, attempt, retries)
 				return ip, nil
 			}
 
-			fmt.Printf("Attempt %d/%d: No IP address assigned to MAC %s yet, waiting %v...\n",
+			logger.Logger.Infof("Attempt %d/%d: No IP address assigned to MAC %s yet, waiting %v...",
 				attempt, retries, macAddr, sleepDuration)
 
 			attempt++
@@ -196,7 +197,7 @@ func AutoDetectSystemInfo(cfg *config.Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to auto-detect serial number: %w", err)
 		}
-		fmt.Printf("Auto-detected serial number: %s\n", cfg.SerialNumber)
+		logger.Logger.Infof("Auto-detected serial number: %s", cfg.SerialNumber)
 	}
 
 	// Auto-detect UUID if not provided
@@ -205,7 +206,7 @@ func AutoDetectSystemInfo(cfg *config.Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to auto-detect UUID: %w", err)
 		}
-		fmt.Printf("Auto-detected UUID: %s\n", cfg.UUID)
+		logger.Logger.Infof("Auto-detected UUID: %s", cfg.UUID)
 	}
 
 	// Auto-detect MAC address if auto-detect flag is set and MAC is empty
@@ -214,18 +215,18 @@ func AutoDetectSystemInfo(cfg *config.Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to auto-detect MAC address: %w", err)
 		}
-		fmt.Printf("Auto-detected MAC address: %s\n", cfg.MacAddr)
+		logger.Logger.Infof("Auto-detected MAC address: %s", cfg.MacAddr)
 	}
 
 	// Auto-detect IP address from MAC if not provided
 	// Use retry logic to wait for DHCP assignment if needed
 	if cfg.IPAddress == "" && cfg.MacAddr != "" {
-		fmt.Printf("Waiting for IP address assignment for MAC %s...\n", cfg.MacAddr)
+		logger.Logger.Infof("Waiting for IP address assignment for MAC %s...", cfg.MacAddr)
 		cfg.IPAddress, err = GetIPAddressWithRetry(cfg.MacAddr, 10, 3*time.Second)
 		if err != nil {
 			return fmt.Errorf("failed to auto-detect IP address for MAC %s: %w", cfg.MacAddr, err)
 		}
-		fmt.Printf("Auto-detected IP address: %s\n", cfg.IPAddress)
+		logger.Logger.Infof("Auto-detected IP address: %s", cfg.IPAddress)
 	}
 
 	return nil

@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"device-discovery/internal/config"
+	"device-discovery/internal/logger"
 )
 
 // StreamResult holds the result of a streaming onboarding attempt.
@@ -149,7 +150,7 @@ func (c *Client) Onboard(ctx context.Context) StreamResult {
 		if resp.Status.Code == int32(codes.OK) {
 			switch resp.NodeState {
 			case pb.OnboardNodeStreamResponse_NODE_STATE_REGISTERED:
-				fmt.Println("Edge node registered. Waiting for the edge node to become ready for onboarding...")
+				logger.Logger.Info("Edge node registered. Waiting for the edge node to become ready for onboarding...")
 
 				// Sleep for a randomized backoff duration
 				time.Sleep(backoff + time.Duration(rand.Intn(1000))*time.Millisecond)

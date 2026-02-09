@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials/oauth"
 
 	"device-discovery/internal/config"
+	"device-discovery/internal/logger"
 )
 
 // Client handles interactive (manual) device onboarding with JWT authentication.
@@ -89,7 +90,7 @@ func (c *Client) Onboard(ctx context.Context) error {
 		return fmt.Errorf("could not dial server %s: %v", target, err)
 	}
 	defer conn.Close()
-	fmt.Println("Dial Complete")
+	logger.Logger.Debug("Dial Complete")
 
 	cli := pb.NewInteractiveOnboardingServiceClient(conn)
 
@@ -142,10 +143,10 @@ func (c *Client) OnboardWithRetry(ctx context.Context) error {
 		}
 
 		// Log the error and retry info
-		fmt.Printf("There was an error in updating the edge-node details with the onboarding manager: %v\n", err)
+		logger.Logger.Warnf("There was an error in updating the edge-node details with the onboarding manager: %v", err)
 		if retries < maxRetries-1 {
-			fmt.Printf("Retrying update... attempt %d of %d\n", retries+2, maxRetries) // retries+2 to show next attempt
-			time.Sleep(retryDelay + time.Duration(rand.Intn(1000))*time.Millisecond)   // Slight random jitter
+			logger.Logger.Infof("Retrying update... attempt %d of %d", retries+2, maxRetries) // retries+2 to show next attempt
+			time.Sleep(retryDelay + time.Duration(rand.Intn(1000))*time.Millisecond)          // Slight random jitter
 		}
 	}
 

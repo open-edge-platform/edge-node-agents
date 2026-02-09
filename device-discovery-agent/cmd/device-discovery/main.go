@@ -7,10 +7,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"device-discovery/internal/config"
+	"device-discovery/internal/logger"
 	"device-discovery/internal/mode"
 	"device-discovery/internal/sysinfo"
 )
@@ -25,6 +25,9 @@ func main() {
 	// Step 1: Parse CLI flags to get -config and -use-kernel-args flags
 	parseInitialFlags(cfg)
 
+	// Initialize logger early (before other operations)
+	logger.InitLogger(cfg.Debug)
+
 	// Track if kernel args were explicitly enabled via CLI
 	kernelArgsFromCLI := cfg.UseKernelArgs
 
@@ -32,7 +35,7 @@ func main() {
 	// This allows us to check if USE_KERNEL_ARGS is set in the config
 	if cfg.ConfigFile != "" {
 		if err := config.LoadFromFile(cfg, cfg.ConfigFile); err != nil {
-			log.Fatalf("Failed to load config file: %v", err)
+			logger.Logger.Fatalf("Failed to load config file: %v", err)
 		}
 	}
 
@@ -41,19 +44,22 @@ func main() {
 	// then reload config file to let it override
 	if cfg.UseKernelArgs {
 		if err := config.LoadFromKernelArgs(cfg); err != nil {
-			log.Fatalf("Failed to parse kernel arguments: %v", err)
+			logger.Logger.Fatalf("Failed to parse kernel arguments: %v", err)
 		}
 
 		// If USE_KERNEL_ARGS was set in config file (not CLI), reload config to override kernel args
 		if !kernelArgsFromCLI && cfg.ConfigFile != "" {
 			if err := config.LoadFromFile(cfg, cfg.ConfigFile); err != nil {
-				log.Fatalf("Failed to reload config file: %v", err)
+				logger.Logger.Fatalf("Failed to reload config file: %v", err)
 			}
 		}
 	}
 
 	// Step 4: Re-parse CLI flags - overrides everything (highest priority)
 	parseFinalFlags(cfg)
+
+	// Re-initialize logger in case debug flag changed
+	logger.InitLogger(cfg.Debug)
 
 	// Validate required flags if not auto-detecting
 	if !cfg.AutoDetect {
@@ -63,7 +69,7 @@ func main() {
 	// Auto-detect system information if requested
 	if cfg.AutoDetect || cfg.MacAddr != "" {
 		if err := sysinfo.AutoDetectSystemInfo(cfg); err != nil {
-			log.Fatalf("Failed to auto-detect system information: %v", err)
+			logger.Logger.Fatalf("Failed to auto-detect system information: %v", err)
 		}
 	}
 
@@ -72,37 +78,36 @@ func main() {
 
 	// Write validated configuration to file
 	if err := config.WriteToFile(cfg); err != nil {
-		log.Fatalf("Failed to write configuration to file: %v", err)
+		logger.Logger.Fatalf("Failed to write configuration to file: %v", err)
 	}
 
 	// Add extra hosts if provided
 	if cfg.ExtraHosts != "" {
 		if err := config.UpdateHosts(cfg.ExtraHosts); err != nil {
-			log.Fatalf("Failed to add extra hosts: %v", err)
+			logger.Logger.Fatalf("Failed to add extra hosts: %v", err)
 		}
 	}
 
-	// Display configuration
-	fmt.Println("Device Discovery Configuration:")
-	fmt.Printf("  Onboarding Manager: %s:%d\n", cfg.ObmSvc, cfg.ObmPort)
-	fmt.Printf("  Onboarding Stream: %s:%d\n", cfg.ObsSvc, cfg.ObmPort)
-	fmt.Printf("  Keycloak URL: %s\n", cfg.KeycloakURL)
-	fmt.Printf("  MAC Address: %s\n", cfg.MacAddr)
-	fmt.Printf("  Serial Number: %s\n", cfg.SerialNumber)
-	fmt.Printf("  UUID: %s\n", cfg.UUID)
-	fmt.Printf("  IP Address: %s\n", cfg.IPAddress)
-	fmt.Printf("  Debug Mode: %v\n", cfg.Debug)
+	// Display configuration (DEBUG mode only)
+	logger.Logger.Debug("Device Discovery Configuration:")
+	logger.Logger.Debugf("  Onboarding Manager: %s:%d", cfg.ObmSvc, cfg.ObmPort)
+	logger.Logger.Debugf("  Onboarding Stream: %s:%d", cfg.ObsSvc, cfg.ObmPort)
+	logger.Logger.Debugf("  Keycloak URL: %s", cfg.KeycloakURL)
+	logger.Logger.Debugf("  MAC Address: %s", cfg.MacAddr)
+	logger.Logger.Debugf("  Serial Number: %s", cfg.SerialNumber)
+	logger.Logger.Debugf("  UUID: %s", cfg.UUID)
+	logger.Logger.Debugf("  IP Address: %s", cfg.IPAddress)
+	logger.Logger.Debugf("  Debug Mode: %v", cfg.Debug)
 	if cfg.Debug {
-		fmt.Printf("  Timeout: %v\n", cfg.Timeout)
+		logger.Logger.Debugf("  Timeout: %v", cfg.Timeout)
 	}
-	fmt.Println()
 
 	// Run device discovery
 	if err := deviceDiscovery(cfg); err != nil {
-		log.Fatalf("Device discovery failed: %v", err)
+		logger.Logger.Fatalf("Device discovery failed: %v", err)
 	}
 
-	fmt.Println("Device discovery completed successfully")
+	logger.Logger.Info("Device discovery completed successfully")
 }
 
 // parseInitialFlags does the first parse to get -config and -use-kernel-args flags only
@@ -246,11 +251,11 @@ func deviceDiscovery(cfg *config.Config) error {
 		// Set a timeout when debug is true
 		ctx, cancel = context.WithTimeout(context.Background(), cfg.Timeout)
 		defer cancel()
-		fmt.Println("Starting device onboarding with timeout")
+		logger.Logger.Info("Starting device onboarding with timeout")
 	} else {
 		// Run without timeout if debug is false
 		ctx = context.Background()
-		fmt.Println("Starting device onboarding without timeout")
+		logger.Logger.Info("Starting device onboarding without timeout")
 	}
 
 	// Create controller configuration
