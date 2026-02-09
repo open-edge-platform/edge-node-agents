@@ -9,6 +9,7 @@ import (
 
 	"device-discovery/internal/auth"
 	"device-discovery/internal/config"
+	"device-discovery/internal/logger"
 	"device-discovery/internal/mode/interactive"
 	"device-discovery/internal/mode/noninteractive"
 )
@@ -67,7 +68,7 @@ func NewOnboardingController(cfg Config) *OnboardingController {
 // It first attempts non-interactive mode, and falls back to interactive mode if the
 // device is not found in the system (unless interactive mode is disabled).
 func (o *OnboardingController) Execute(ctx context.Context) error {
-	fmt.Println("Starting device onboarding...")
+	logger.Logger.Info("Starting device onboarding...")
 
 	// Try non-interactive mode first
 	result := o.tryNonInteractiveMode(ctx)
@@ -79,7 +80,7 @@ func (o *OnboardingController) Execute(ctx context.Context) error {
 		}
 
 		// Fall back to interactive mode
-		fmt.Printf("Executing fallback to interactive mode because: %v\n", result.Error)
+		logger.Logger.Infof("Executing fallback to interactive mode because: %v", result.Error)
 		return o.executeInteractiveMode(ctx)
 	}
 
@@ -93,7 +94,7 @@ func (o *OnboardingController) Execute(ctx context.Context) error {
 
 // tryNonInteractiveMode attempts automatic onboarding via streaming gRPC.
 func (o *OnboardingController) tryNonInteractiveMode(ctx context.Context) noninteractive.StreamResult {
-	fmt.Println("Attempting non-interactive (streaming) onboarding...")
+	logger.Logger.Info("Attempting non-interactive (streaming) onboarding...")
 
 	client := noninteractive.NewClient(
 		o.obsSvc,
@@ -119,7 +120,7 @@ func (o *OnboardingController) completeNonInteractiveAuth(clientID, clientSecret
 		return fmt.Errorf("failed to save client secret: %w", err)
 	}
 
-	fmt.Println("Credentials written successfully.")
+	logger.Logger.Info("Credentials written successfully.")
 
 	// Client authentication - exchange credentials for tokens
 	idpAccessToken, releaseToken, err := auth.ClientAuth(
@@ -144,16 +145,16 @@ func (o *OnboardingController) completeNonInteractiveAuth(clientID, clientSecret
 		return fmt.Errorf("failed to save release token: %w", err)
 	}
 
-	fmt.Println("Tokens saved successfully (non-interactive mode)")
+	logger.Logger.Info("Tokens saved successfully (non-interactive mode)")
 	return nil
 }
 
 // executeInteractiveMode performs manual onboarding with user authentication.
 func (o *OnboardingController) executeInteractiveMode(ctx context.Context) error {
-	fmt.Println("Starting interactive (manual) onboarding...")
+	logger.Logger.Info("Starting interactive (manual) onboarding...")
 
 	// Step 1: Execute client-auth.sh for TTY-based authentication
-	fmt.Println("Executing client authentication script...")
+	logger.Logger.Info("Executing client authentication script...")
 	if err := interactive.ExecuteAuthScript(ctx); err != nil {
 		return fmt.Errorf("failed to run client auth script: %w", err)
 	}
@@ -175,6 +176,6 @@ func (o *OnboardingController) executeInteractiveMode(ctx context.Context) error
 		return fmt.Errorf("interactive onboarding failed after retries: %w", err)
 	}
 
-	fmt.Println("Device discovery completed (interactive mode)")
+	logger.Logger.Info("Device discovery completed (interactive mode)")
 	return nil
 }
