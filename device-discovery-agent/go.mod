@@ -8,7 +8,7 @@ go 1.24.9
 
 require (
 	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.39.1
-	golang.org/x/oauth2 v0.34.0
+	golang.org/x/oauth2 v0.35.0
 	google.golang.org/grpc v1.80.0-dev
 )
 
