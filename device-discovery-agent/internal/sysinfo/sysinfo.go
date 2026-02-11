@@ -16,7 +16,7 @@ import (
 
 // GetSerialNumber retrieves the serial number of the machine.
 func GetSerialNumber() (string, error) {
-	cmd := exec.Command("sudo", "/usr/sbin/dmidecode", "-s", "system-serial-number")
+	cmd := exec.Command("/usr/sbin/dmidecode", "-s", "system-serial-number")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -28,7 +28,7 @@ func GetSerialNumber() (string, error) {
 
 // GetUUID retrieves the UUID of the machine.
 func GetUUID() (string, error) {
-	cmd := exec.Command("sudo", "/usr/sbin/dmidecode", "-s", "system-uuid")
+	cmd := exec.Command("/usr/sbin/dmidecode", "-s", "system-uuid")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
