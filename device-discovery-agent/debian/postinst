@@ -105,6 +105,12 @@ fi
 chown device-discovery-agent:bm-agents /etc/intel_edge_node
 chown -R device-discovery-agent:bm-agents /etc/intel_edge_node/client-credentials
 
+# Set ownership for edge-node config directory
+if [ -d "/etc/edge-node/node/confs" ]; then
+    chown -R device-discovery-agent:bm-agents /etc/edge-node/node/confs
+    chmod 755 /etc/edge-node/node/confs
+fi
+
 # Load AppArmor profile
 apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.device-discovery-agent
 
