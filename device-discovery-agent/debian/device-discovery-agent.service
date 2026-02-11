@@ -9,8 +9,9 @@ Type=oneshot
 ExecStart=/opt/edge-node/bin/device-discovery-agent -config /etc/edge-node/node/confs/device-discovery-agent.env
 StandardOutput=journal
 StandardError=journal
-User=device-discovery-agent
-Group=bm-agents
+# Run as root to access DMI information in /sys/class/dmi/id/
+User=root
+Group=root
 RemainAfterExit=no
 TimeoutStartSec=10m
 
