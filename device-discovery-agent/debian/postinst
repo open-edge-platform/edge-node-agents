@@ -56,6 +56,27 @@ if [ ! -z "$RET" ]; then
     sed -i "s|^USE_KERNEL_ARGS=.*|USE_KERNEL_ARGS=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
+# Read hardware serial number and update config
+if [ -r /sys/class/dmi/id/product_serial ]; then
+    PRODUCT_SERIAL="$(cat /sys/class/dmi/id/product_serial 2>/dev/null | tr -d '\n')"
+    if [ ! -z "$PRODUCT_SERIAL" ] && [ "$PRODUCT_SERIAL" != "None" ]; then
+        if grep -q "^SERIAL=" /etc/edge-node/node/confs/device-discovery-agent.env; then
+            sed -i "s|^SERIAL=.*|SERIAL=$PRODUCT_SERIAL|" /etc/edge-node/node/confs/device-discovery-agent.env
+        else
+            echo "SERIAL=$PRODUCT_SERIAL" >> /etc/edge-node/node/confs/device-discovery-agent.env
+        fi
+    fi
+elif [ -r /sys/class/dmi/id/board_serial ]; then
+    PRODUCT_SERIAL="$(cat /sys/class/dmi/id/board_serial 2>/dev/null | tr -d '\n')"
+    if [ ! -z "$PRODUCT_SERIAL" ] && [ "$PRODUCT_SERIAL" != "None" ]; then
+        if grep -q "^SERIAL=" /etc/edge-node/node/confs/device-discovery-agent.env; then
+            sed -i "s|^SERIAL=.*|SERIAL=$PRODUCT_SERIAL|" /etc/edge-node/node/confs/device-discovery-agent.env
+        else
+            echo "SERIAL=$PRODUCT_SERIAL" >> /etc/edge-node/node/confs/device-discovery-agent.env
+        fi
+    fi
+fi
+
 # Create system group
 groupadd -f bm-agents --system
 
