@@ -9,33 +9,46 @@ import (
 	"device-discovery/internal/config"
 	"fmt"
 	"net"
-	"os/exec"
+	"os"
 	"strings"
 	"time"
 )
 
-// GetSerialNumber retrieves the serial number of the machine.
+// GetSerialNumber retrieves the serial number of the machine from sysfs.
 func GetSerialNumber() (string, error) {
-	cmd := exec.Command("sudo", "/usr/sbin/dmidecode", "-s", "system-serial-number")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
+	// Try product_serial first
+	serial, err := os.ReadFile("/sys/class/dmi/id/product_serial")
+	if err == nil && len(bytes.TrimSpace(serial)) > 0 {
+		return strings.TrimSpace(string(serial)), nil
+	}
+
+	// Fall back to board_serial
+	serial, err = os.ReadFile("/sys/class/dmi/id/board_serial")
 	if err != nil {
 		return "", fmt.Errorf("failed to get serial number: %w", err)
 	}
-	return strings.TrimSpace(out.String()), nil
+
+	serialStr := strings.TrimSpace(string(serial))
+	if serialStr == "" || serialStr == "None" || serialStr == "To be filled by O.E.M." {
+		return "", fmt.Errorf("no valid serial number found")
+	}
+
+	return serialStr, nil
 }
 
-// GetUUID retrieves the UUID of the machine.
+// GetUUID retrieves the UUID of the machine from sysfs.
 func GetUUID() (string, error) {
-	cmd := exec.Command("sudo", "/usr/sbin/dmidecode", "-s", "system-uuid")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
+	uuid, err := os.ReadFile("/sys/class/dmi/id/product_uuid")
 	if err != nil {
 		return "", fmt.Errorf("failed to get UUID: %w", err)
 	}
-	return strings.TrimSpace(out.String()), nil
+
+	uuidStr := strings.TrimSpace(string(uuid))
+	if uuidStr == "" || uuidStr == "None" {
+		return "", fmt.Errorf("no valid UUID found")
+	}
+
+	return uuidStr, nil
 }
 
 // GetIPAddress retrieves the IP address associated with a given MAC address.
