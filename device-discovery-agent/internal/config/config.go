@@ -16,7 +16,7 @@ import (
 
 const (
 	TokenFolder             = "/dev/shm" // #nosec G101 -- This is a path, not a credential
-	EnvConfigPath           = "/etc/device-discovery/validated-config.env"
+	EnvConfigPath           = "/etc/edge-node/node/confs/validated-config.env"
 	ExtraHostsFile          = "/etc/hosts"
 	AccessTokenFile         = TokenFolder + "/idp_access_token"
 	ReleaseTokenFile        = TokenFolder + "/release_token"

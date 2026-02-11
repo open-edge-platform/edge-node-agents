@@ -56,6 +56,39 @@ if [ ! -z "$RET" ]; then
     sed -i "s|^USE_KERNEL_ARGS=.*|USE_KERNEL_ARGS=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
+# Read hardware serial number and update config
+if [ -r /sys/class/dmi/id/product_serial ]; then
+    PRODUCT_SERIAL="$(cat /sys/class/dmi/id/product_serial 2>/dev/null | tr -d '\n')"
+    if [ ! -z "$PRODUCT_SERIAL" ] && [ "$PRODUCT_SERIAL" != "None" ]; then
+        if grep -q "^SERIAL=" /etc/edge-node/node/confs/device-discovery-agent.env; then
+            sed -i "s|^SERIAL=.*|SERIAL=$PRODUCT_SERIAL|" /etc/edge-node/node/confs/device-discovery-agent.env
+        else
+            echo "SERIAL=$PRODUCT_SERIAL" >> /etc/edge-node/node/confs/device-discovery-agent.env
+        fi
+    fi
+elif [ -r /sys/class/dmi/id/board_serial ]; then
+    PRODUCT_SERIAL="$(cat /sys/class/dmi/id/board_serial 2>/dev/null | tr -d '\n')"
+    if [ ! -z "$PRODUCT_SERIAL" ] && [ "$PRODUCT_SERIAL" != "None" ]; then
+        if grep -q "^SERIAL=" /etc/edge-node/node/confs/device-discovery-agent.env; then
+            sed -i "s|^SERIAL=.*|SERIAL=$PRODUCT_SERIAL|" /etc/edge-node/node/confs/device-discovery-agent.env
+        else
+            echo "SERIAL=$PRODUCT_SERIAL" >> /etc/edge-node/node/confs/device-discovery-agent.env
+        fi
+    fi
+fi
+
+# Read hardware UUID and update config
+if [ -r /sys/class/dmi/id/product_uuid ]; then
+    PRODUCT_UUID="$(cat /sys/class/dmi/id/product_uuid 2>/dev/null | tr -d '\n')"
+    if [ ! -z "$PRODUCT_UUID" ] && [ "$PRODUCT_UUID" != "None" ]; then
+        if grep -q "^UUID=" /etc/edge-node/node/confs/device-discovery-agent.env; then
+            sed -i "s|^UUID=.*|UUID=$PRODUCT_UUID|" /etc/edge-node/node/confs/device-discovery-agent.env
+        else
+            echo "UUID=$PRODUCT_UUID" >> /etc/edge-node/node/confs/device-discovery-agent.env
+        fi
+    fi
+fi
+
 # Create system group
 groupadd -f bm-agents --system
 
@@ -71,6 +104,12 @@ fi
 # Update file/dir ownership
 chown device-discovery-agent:bm-agents /etc/intel_edge_node
 chown -R device-discovery-agent:bm-agents /etc/intel_edge_node/client-credentials
+
+# Set ownership for edge-node config directory
+if [ -d "/etc/edge-node/node/confs" ]; then
+    chown -R device-discovery-agent:bm-agents /etc/edge-node/node/confs
+    chmod 755 /etc/edge-node/node/confs
+fi
 
 # Load AppArmor profile
 apparmor_parser -rK /etc/apparmor.d/opt.edge-node.bin.device-discovery-agent
