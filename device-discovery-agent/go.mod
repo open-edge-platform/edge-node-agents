@@ -4,11 +4,11 @@
 module device-discovery
 
 // remains with Go 1.24.1 till EMT Go is updated to support Go 1.24.4
-go 1.24.9
+go 1.25.5
 
 require (
-	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.39.1
-	golang.org/x/oauth2 v0.34.0
+	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.39.4
+	golang.org/x/oauth2 v0.35.0
 	google.golang.org/grpc v1.80.0-dev
 )
 
