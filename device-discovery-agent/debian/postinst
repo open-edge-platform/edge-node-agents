@@ -77,6 +77,18 @@ elif [ -r /sys/class/dmi/id/board_serial ]; then
     fi
 fi
 
+# Read hardware UUID and update config
+if [ -r /sys/class/dmi/id/product_uuid ]; then
+    PRODUCT_UUID="$(cat /sys/class/dmi/id/product_uuid 2>/dev/null | tr -d '\n')"
+    if [ ! -z "$PRODUCT_UUID" ] && [ "$PRODUCT_UUID" != "None" ]; then
+        if grep -q "^UUID=" /etc/edge-node/node/confs/device-discovery-agent.env; then
+            sed -i "s|^UUID=.*|UUID=$PRODUCT_UUID|" /etc/edge-node/node/confs/device-discovery-agent.env
+        else
+            echo "UUID=$PRODUCT_UUID" >> /etc/edge-node/node/confs/device-discovery-agent.env
+        fi
+    fi
+fi
+
 # Create system group
 groupadd -f bm-agents --system
 
