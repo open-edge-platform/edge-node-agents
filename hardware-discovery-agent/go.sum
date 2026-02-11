@@ -44,8 +44,8 @@ github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 h1:PwQumkgq4/acIi
 github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3/go.mod h1:autxFIvghDt3jPTLoqZ9OZ7s9qTGNAWmYCjVFWPX/zg=
 github.com/open-edge-platform/edge-node-agents/common v1.10.0 h1:+e43e4yPjtTJLlVnRcqpPhdbwgZG0ow/M35RVebIwGA=
 github.com/open-edge-platform/edge-node-agents/common v1.10.0/go.mod h1:kFEVak/irwkcHaaUdeimwfVNB7HdAwdMvsg56m5hnY8=
-github.com/open-edge-platform/infra-managers/host v1.25.0 h1:Bye9FTps1RbIco51oP910lhqpvsFxMMkEuAt82Yu3RQ=
-github.com/open-edge-platform/infra-managers/host v1.25.0/go.mod h1:KCSkYpADsd3SZ0SJV61+TWDzcm0KmkT8pr96CbmiSPs=
+github.com/open-edge-platform/infra-managers/host v1.25.1 h1:7VwUQcFZZyuoXFQ7u+4hkmewBSQqznFK3E0bmoj3rqM=
+github.com/open-edge-platform/infra-managers/host v1.25.1/go.mod h1:KCSkYpADsd3SZ0SJV61+TWDzcm0KmkT8pr96CbmiSPs=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
