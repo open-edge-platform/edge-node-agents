@@ -50,7 +50,7 @@ show_incorrect_credentials() {
 main() {
 
     # shellcheck source=/dev/null
-    . /etc/device-discovery/validated-config.env
+    . /etc/edge-node/node/confs/validated-config.env
 	export http_proxy=${http_proxy:-""}
 	export https_proxy=${https_proxy:-""}
 	export no_proxy=${no_proxy:-""}
