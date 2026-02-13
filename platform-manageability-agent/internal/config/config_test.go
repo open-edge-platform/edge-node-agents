@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 package config_test
 
@@ -18,8 +18,10 @@ import (
 
 var log = logger.Logger
 
-func createConfigFile(t *testing.T, version string, logLevel string, guid string, url string, statusInterval time.Duration, metricsInterval time.Duration,
-	statusEndpoint string, metricsEndpoint string, rpsAddress string, accessTokenPath string) string {
+func createConfigFile(t *testing.T, version string, logLevel string, guid string, url string, enabled bool,
+	statusInterval time.Duration, metricsInterval time.Duration, statusEndpoint string, metricsEndpoint string,
+	rpsAddress string, accessTokenPath string) string {
+
 	f, err := os.CreateTemp(t.TempDir(), "test_config")
 	require.NoError(t, err)
 
@@ -32,9 +34,12 @@ func createConfigFile(t *testing.T, version string, logLevel string, guid string
 			ServiceURL:        url,
 			HeartbeatInterval: statusInterval,
 		},
-		StatusEndpoint:  statusEndpoint,
-		MetricsEndpoint: metricsEndpoint,
-		MetricsInterval: metricsInterval,
+		StatusEndpoint: statusEndpoint,
+		Metrics: config.ConfigMetrics{
+			Enabled:  enabled,
+			Endpoint: metricsEndpoint,
+			Interval: metricsInterval,
+		},
 		RPSAddress:      rpsAddress,
 		AccessTokenPath: accessTokenPath,
 	}
@@ -62,7 +67,7 @@ func TestValidConfig(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -73,8 +78,9 @@ func TestValidConfig(t *testing.T) {
 	assert.Equal(t, url, cfg.Manageability.ServiceURL)
 	assert.Equal(t, statusInterval, cfg.Manageability.HeartbeatInterval)
 	assert.Equal(t, statusEndpoint, cfg.StatusEndpoint)
-	assert.Equal(t, metricsEndpoint, cfg.MetricsEndpoint)
-	assert.Equal(t, metricsInterval, cfg.MetricsInterval)
+	assert.Equal(t, true, cfg.Metrics.Enabled)
+	assert.Equal(t, metricsEndpoint, cfg.Metrics.Endpoint)
+	assert.Equal(t, metricsInterval, cfg.Metrics.Interval)
 	assert.Equal(t, rpsAddress, cfg.RPSAddress)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
 }
@@ -110,7 +116,7 @@ func TestSymlinkConfigPath(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	symlinkConfig := "/tmp/sysmlink_config.txt"
@@ -131,7 +137,7 @@ func TestPartialConfigFile(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, "", "", guid, url, 0*time.Second, 0*time.Second, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, "", "", guid, url, true, 0*time.Second, 0*time.Second, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName)
 
 	cfg, err := config.New(fileName, log)
@@ -142,8 +148,67 @@ func TestPartialConfigFile(t *testing.T) {
 	assert.Equal(t, url, cfg.Manageability.ServiceURL)
 	assert.Equal(t, 10*time.Second, cfg.Manageability.HeartbeatInterval)
 	assert.Equal(t, statusEndpoint, cfg.StatusEndpoint)
-	assert.Equal(t, metricsEndpoint, cfg.MetricsEndpoint)
-	assert.Equal(t, 10*time.Second, cfg.MetricsInterval)
+	assert.Equal(t, true, cfg.Metrics.Enabled)
+	assert.Equal(t, metricsEndpoint, cfg.Metrics.Endpoint)
+	assert.Equal(t, 10*time.Second, cfg.Metrics.Interval)
+	assert.Equal(t, rpsAddress, cfg.RPSAddress)
+	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
+}
+
+func TestDisabledMetricsWithIntervalEndpointSet(t *testing.T) {
+	version := "v0.1.0"
+	logLevel := "info"
+	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
+	url := "localhost"
+	statusInterval := 30 * time.Second
+	metricsInterval := 15 * time.Second
+	statusEndpoint := "unix://test-socket.sock"
+	metricsEndpoint := "unix://metrics-test-socket.sock"
+	rpsAddress := "test-address.test.com"
+	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+
+	fileName := createConfigFile(t, version, logLevel, guid, url, false, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	defer os.Remove(fileName) // clean up
+
+	cfg, err := config.New(fileName, log)
+	require.NoError(t, err)
+	assert.Equal(t, version, cfg.Version)
+	assert.Equal(t, logLevel, cfg.LogLevel)
+	assert.Equal(t, guid, cfg.GUID)
+	assert.Equal(t, url, cfg.Manageability.ServiceURL)
+	assert.Equal(t, statusInterval, cfg.Manageability.HeartbeatInterval)
+	assert.Equal(t, statusEndpoint, cfg.StatusEndpoint)
+	assert.Equal(t, false, cfg.Metrics.Enabled)
+	assert.Equal(t, metricsEndpoint, cfg.Metrics.Endpoint)
+	assert.Equal(t, metricsInterval, cfg.Metrics.Interval)
+	assert.Equal(t, rpsAddress, cfg.RPSAddress)
+	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
+}
+
+func TestDisabledMetricsWithIntervalEndpointNotSet(t *testing.T) {
+	version := "v0.1.0"
+	logLevel := "info"
+	guid := "aaaaaaaa-0000-1111-2222-bbbbbbbbcccc"
+	url := "localhost"
+	statusInterval := 30 * time.Second
+	statusEndpoint := "unix://test-socket.sock"
+	rpsAddress := "test-address.test.com"
+	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
+
+	fileName := createConfigFile(t, version, logLevel, guid, url, false, statusInterval, 0*time.Second, statusEndpoint, "", rpsAddress, accessTokenPath)
+	defer os.Remove(fileName) // clean up
+
+	cfg, err := config.New(fileName, log)
+	require.NoError(t, err)
+	assert.Equal(t, version, cfg.Version)
+	assert.Equal(t, logLevel, cfg.LogLevel)
+	assert.Equal(t, guid, cfg.GUID)
+	assert.Equal(t, url, cfg.Manageability.ServiceURL)
+	assert.Equal(t, statusInterval, cfg.Manageability.HeartbeatInterval)
+	assert.Equal(t, statusEndpoint, cfg.StatusEndpoint)
+	assert.Equal(t, false, cfg.Metrics.Enabled)
+	assert.Equal(t, "", cfg.Metrics.Endpoint)
+	assert.Equal(t, 0*time.Second, cfg.Metrics.Interval)
 	assert.Equal(t, rpsAddress, cfg.RPSAddress)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
 }
@@ -158,7 +223,7 @@ func TestMissingHeartbeatIntervals(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, 0*time.Second, 0*time.Second, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, 0*time.Second, 0*time.Second, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -169,8 +234,9 @@ func TestMissingHeartbeatIntervals(t *testing.T) {
 	assert.Equal(t, url, cfg.Manageability.ServiceURL)
 	assert.Equal(t, 10*time.Second, cfg.Manageability.HeartbeatInterval)
 	assert.Equal(t, statusEndpoint, cfg.StatusEndpoint)
-	assert.Equal(t, metricsEndpoint, cfg.MetricsEndpoint)
-	assert.Equal(t, 10*time.Second, cfg.MetricsInterval)
+	assert.Equal(t, true, cfg.Metrics.Enabled)
+	assert.Equal(t, metricsEndpoint, cfg.Metrics.Endpoint)
+	assert.Equal(t, 10*time.Second, cfg.Metrics.Interval)
 	assert.Equal(t, rpsAddress, cfg.RPSAddress)
 	assert.Equal(t, accessTokenPath, cfg.AccessTokenPath)
 }
@@ -186,7 +252,7 @@ func TestMissingServiceURL(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, "", statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, "", true, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -205,7 +271,7 @@ func TestMissingTokenPath(t *testing.T) {
 	metricsEndpoint := "unix://metrics-test-socket.sock"
 	rpsAddress := "test-address.test.com"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, "")
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, "")
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -224,7 +290,7 @@ func TestMissingStatusEndpoint(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, "", metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, statusInterval, metricsInterval, "", metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -243,7 +309,7 @@ func TestMissingMetricsEndpoint(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, "", rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, statusInterval, metricsInterval, statusEndpoint, "", rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -263,7 +329,7 @@ func TestInvalidStatusEndpoint(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -283,7 +349,7 @@ func TestInvalidMetricsEndpoint(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -302,7 +368,7 @@ func TestMissingGUID(t *testing.T) {
 	rpsAddress := "test-address.test.com"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, "", url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, "", url, true, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, rpsAddress, accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -321,7 +387,7 @@ func TestMissingRPSAddress(t *testing.T) {
 	metricsEndpoint := "unix://metrics-test-socket.sock"
 	accessTokenPath := "/etc/intel_edge_node/tokens/platform-manageability-agent/access_token"
 
-	fileName := createConfigFile(t, version, logLevel, guid, url, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, "", accessTokenPath)
+	fileName := createConfigFile(t, version, logLevel, guid, url, true, statusInterval, metricsInterval, statusEndpoint, metricsEndpoint, "", accessTokenPath)
 	defer os.Remove(fileName) // clean up
 
 	cfg, err := config.New(fileName, log)
@@ -365,13 +431,13 @@ func FuzzNew(f *testing.F) {
 				if !strings.HasPrefix(conf.StatusEndpoint, "unix://") {
 					t.Error("StatusEndpoint is not a Unix socket address")
 				}
-				if conf.MetricsEndpoint == "" {
+				if conf.Metrics.Endpoint == "" {
 					t.Error("MetricsEndpoint is not set in configuration")
 				}
-				if !strings.HasPrefix(conf.MetricsEndpoint, "unix://") {
+				if !strings.HasPrefix(conf.Metrics.Endpoint, "unix://") {
 					t.Error("MetricsEndpoint is not a Unix socket address")
 				}
-				if conf.MetricsInterval <= 0 {
+				if conf.Metrics.Interval <= 0 {
 					t.Error("MetricsInterval is set to an invalid value in configuration")
 				}
 				if conf.AccessTokenPath == "" {
@@ -383,7 +449,7 @@ func FuzzNew(f *testing.F) {
 }
 
 func FuzzConfigNew(f *testing.F) {
-	exampleConfigFileContents := []byte("# SPDX-FileCopyrightText: (C) 2025 Intel Corporation\n# SPDX-License-Identifier: Apache-2.0\n\n---\nversion: v0.1.0\nlogLevel: info\nGUID: 'aaaaaaaa-0000-1111-2222-bbbbbbbbcccc'\nmanageability:\n  enabled: true\n  serviceURL: 'infra.test.edgeorch.intel.com:443'\n  heartbeatInterval: 10s\nrpsAddress: 'rps.test.edgeorch.intel.com'\nstatusEndpoint: 'unix:///run/node-agent/node-agent.sock'\nmetricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'\nmetricsInterval: 10s\naccessTokenPath: /etc/intel_edge_node/tokens/platform-manageability-agent/access_token")
+	exampleConfigFileContents := []byte("# SPDX-FileCopyrightText: (C) 2025 Intel Corporation\n# SPDX-License-Identifier: Apache-2.0\n\n---\nversion: v0.1.0\nlogLevel: info\nGUID: 'aaaaaaaa-0000-1111-2222-bbbbbbbbcccc'\nmanageability:\n  enabled: true\n  serviceURL: 'infra.test.edgeorch.intel.com:443'\n  heartbeatInterval: 10s\nrpsAddress: 'rps.test.edgeorch.intel.com'\nstatusEndpoint: 'unix:///run/node-agent/node-agent.sock'\nmetrics:\nenabled: true\nendpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'\ninterval: 10s\naccessTokenPath: /etc/intel_edge_node/tokens/platform-manageability-agent/access_token")
 	f.Add(exampleConfigFileContents)
 	f.Fuzz(func(t *testing.T, testConfigFileContents []byte) {
 		testFile, err := os.CreateTemp(t.TempDir(), "example_config.yaml")
@@ -431,13 +497,13 @@ func FuzzConfigNew(f *testing.F) {
 				if !strings.HasPrefix(conf.StatusEndpoint, "unix://") {
 					t.Error("StatusEndpoint is not a Unix socket address")
 				}
-				if conf.MetricsEndpoint == "" {
+				if conf.Metrics.Endpoint == "" && conf.Metrics.Enabled {
 					t.Error("MetricsEndpoint is not set in configuration")
 				}
-				if !strings.HasPrefix(conf.MetricsEndpoint, "unix://") {
+				if !strings.HasPrefix(conf.Metrics.Endpoint, "unix://") && conf.Metrics.Enabled {
 					t.Error("MetricsEndpoint is not a Unix socket address")
 				}
-				if conf.MetricsInterval <= 0 {
+				if conf.Metrics.Interval <= 0 && conf.Metrics.Enabled {
 					t.Error("MetricsInterval is set to an invalid value in configuration")
 				}
 				if conf.AccessTokenPath == "" {

@@ -14,6 +14,11 @@ if [ ! -z "$RET" ]; then
     sed -i "s/^rpsAddress: '.*'/rpsAddress: '$RET'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
 fi
 
+db_get platform-manageability-agent/metrics.enabled
+if [ ! -z "$RET" ]; then
+    sed -i -e '/^metrics:$/{n' -e 's/enabled:.*/enabled: '"$RET"'/' -e '}' /etc/edge-node/node/confs/platform-manageability-agent.yaml
+fi
+
 # Create system group if it doesn't exist
 groupadd -f bm-agents --system
 

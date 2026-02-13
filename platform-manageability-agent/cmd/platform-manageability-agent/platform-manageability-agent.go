@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // main package implements functionality of the Platform Manageability Agent
@@ -108,17 +108,19 @@ func main() {
 	}()
 
 	// Enable agent metrics
-	shutdown, err := metrics.Init(ctx, confs.MetricsEndpoint, confs.MetricsInterval, info.Component, info.Version)
-	if err != nil {
-		log.Errorf("Initialization of metrics failed: %v", err)
-	} else {
-		log.Info("Metrics collection started")
-		defer func() {
-			err = shutdown(ctx)
-			if err != nil && !errors.Is(err, context.Canceled) {
-				log.Errorf("Shutting down metrics failed! Error: %v", err)
-			}
-		}()
+	if confs.Metrics.Enabled {
+		shutdown, err := metrics.Init(ctx, confs.Metrics.Endpoint, confs.Metrics.Interval, info.Component, info.Version)
+		if err != nil {
+			log.Errorf("Initialization of metrics failed: %v", err)
+		} else {
+			log.Info("Metrics collection started")
+			defer func() {
+				err = shutdown(ctx)
+				if err != nil && !errors.Is(err, context.Canceled) {
+					log.Errorf("Shutting down metrics failed! Error: %v", err)
+				}
+			}()
+		}
 	}
 
 	log.Info("Platform Manageability Agent started successfully")
