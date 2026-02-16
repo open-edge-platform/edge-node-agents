@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // Package config contains Platform Manageability Agent configuration management
@@ -17,6 +17,12 @@ import (
 
 const HEARTBEAT_DEFAULT = 10
 
+type ConfigMetrics struct {
+	Enabled  bool          `yaml:"enabled"`
+	Endpoint string        `yaml:"endpoint"`
+	Interval time.Duration `yaml:"interval"`
+}
+
 type ConfigManageability struct {
 	Enabled           bool          `yaml:"enabled"`
 	ServiceURL        string        `yaml:"serviceURL"`
@@ -29,8 +35,7 @@ type Config struct {
 	GUID            string              `yaml:"GUID"`
 	Manageability   ConfigManageability `yaml:"manageability"`
 	StatusEndpoint  string              `yaml:"statusEndpoint"`
-	MetricsEndpoint string              `yaml:"metricsEndpoint"`
-	MetricsInterval time.Duration       `yaml:"metricsInterval"`
+	Metrics         ConfigMetrics       `yaml:"metrics"`
 	RPSAddress      string              `yaml:"rpsAddress"`
 	AccessTokenPath string              `yaml:"accessTokenPath"`
 }
@@ -56,8 +61,13 @@ func New(configPath string, log *logrus.Entry) (*Config, error) {
 		config.Manageability.HeartbeatInterval = HEARTBEAT_DEFAULT * time.Second
 	}
 
-	if config.MetricsInterval == 0 || config.MetricsInterval <= 0 {
-		config.MetricsInterval = HEARTBEAT_DEFAULT * time.Second
+	if config.Metrics.Enabled {
+		if config.Metrics.Interval == 0 || config.Metrics.Interval <= 0 {
+			config.Metrics.Interval = HEARTBEAT_DEFAULT * time.Second
+		}
+		if config.Metrics.Endpoint == "" || !strings.HasPrefix(config.Metrics.Endpoint, "unix://") {
+			return nil, fmt.Errorf("agent metrics reporting address not provided by config file")
+		}
 	}
 
 	if config.Manageability.ServiceURL == "" {
@@ -70,10 +80,6 @@ func New(configPath string, log *logrus.Entry) (*Config, error) {
 
 	if config.StatusEndpoint == "" || !strings.HasPrefix(config.StatusEndpoint, "unix://") {
 		return nil, fmt.Errorf("agent status reporting address not provided by config file")
-	}
-
-	if config.MetricsEndpoint == "" || !strings.HasPrefix(config.MetricsEndpoint, "unix://") {
-		return nil, fmt.Errorf("agent metrics reporting address not provided by config file")
 	}
 
 	if config.GUID == "" {
