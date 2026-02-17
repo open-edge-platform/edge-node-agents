@@ -73,7 +73,16 @@ type Client struct {
 	connectingStateStartTime *time.Time   // Track when AMT entered "connecting" state
 	previousState            string       // Track the previous AMT state to detect direct transitions
 	deactivationInProgress   bool         // Track if deactivation is currently in progress
+	activationInProgress     bool         // Track if activation is currently in progress
+	statusUpdateCallback     func()       // Callback to update timestamp before long-running activation operations
 	mu                       sync.RWMutex // Protects concurrent access to the fields above
+}
+
+// SetStatusUpdateCallback sets the callback function to update status timestamp
+func (cli *Client) SetStatusUpdateCallback(callback func()) {
+	cli.mu.Lock()
+	defer cli.mu.Unlock()
+	cli.statusUpdateCallback = callback
 }
 
 func WithNetworkDialer(serviceAddr string) func(*Client) {
@@ -279,38 +288,8 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		cli.connectingStateStartTime = nil
 		cli.mu.Unlock()
 
-		// Execute activation command
-		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
-		password := resp.ActionPassword
-		activationOutput, activationErr := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
-
-		// handles intermittent activation failures
-		// and allows the main periodic timer to retry activation in the next cycle
-		outputStr := string(activationOutput)
-		if strings.Contains(outputStr, `msg="interrupted system call"`) ||
-			strings.Contains(outputStr, "exit code: 10") {
-			log.Logger.Warnf("Interrupted system call detected for host %s - retrying next cycle", hostID)
-		}
-		if strings.Contains(outputStr, `msg="Unable to authenticate with AMT"`) {
-			log.Logger.Warnf("Unable to authenticate with AMT for host %s - triggering deactivation", hostID)
-			cli.triggerDeactivationAsync(hostID)
-		}
-
-		if activationErr != nil {
-			log.Logger.Errorf("Failed to execute activation command for host %s: %v", hostID, activationErr)
-		}
-
-		// Check provisioning status
-		ok := cli.isProvisioned(ctx, outputStr, hostID)
-		if !ok {
-			log.Logger.Errorf("Failed to execute activation command for host %s: %v, Output: %s",
-				hostID, activationErr, outputStr)
-			activationStatus = pb.ActivationStatus_ACTIVATION_FAILED
-		} else {
-			log.Logger.Debugf("Activation command output for host %s: %s", hostID, outputStr)
-			activationStatus = pb.ActivationStatus_ACTIVATING
-			log.Logger.Debugf("setting activation status to %s: %s", activationStatus, hostID)
-		}
+		// Trigger async activation and return immediately
+		activationStatus = cli.triggerActivationAsync(ctx, hostID, conf, resp.ProfileName, resp.ActionPassword)
 	case "connecting":
 		log.Logger.Infof("host %s is in 'connecting' state", hostID)
 		activationStatus = cli.handleConnectingState(hostID, normalizedStatus)
@@ -385,6 +364,95 @@ func (cli *Client) handleConnectingState(hostID string, currentState string) pb.
 
 	// Still in connecting state within timeout
 	return pb.ActivationStatus_ACTIVATING
+}
+
+// triggerActivationAsync launches activation in background goroutine and returns immediately
+// The periodic timer will retry if activation fails and RAS status remains "not connected"
+func (cli *Client) triggerActivationAsync(ctx context.Context, hostID string, conf *config.Config, profileName, password string) pb.ActivationStatus {
+	cli.mu.Lock()
+	defer cli.mu.Unlock()
+
+	// Only trigger activation if not already in progress
+	if cli.activationInProgress {
+		log.Logger.Infof("Activation already in progress for host %s, skipping", hostID)
+		return pb.ActivationStatus_ACTIVATING
+	}
+
+	// Mark activation as in progress
+	cli.activationInProgress = true
+	log.Logger.Infof("Starting async activation for host %s", hostID)
+
+	// Launch goroutine for activation
+	go cli.performActivationAsync(ctx, hostID, conf, profileName, password)
+	// Return ACTIVATING immediately to indicate activation started
+	return pb.ActivationStatus_ACTIVATING
+}
+
+// performActivationAsync executes activation in background and updates status timestamp periodically
+func (cli *Client) performActivationAsync(ctx context.Context, hostID string, conf *config.Config, profileName, password string) {
+	log.Logger.Infof("Starting async activation for host %s", hostID)
+
+	// Always reset activation in progress flag when done
+	defer func() {
+		cli.mu.Lock()
+		cli.activationInProgress = false
+		cli.mu.Unlock()
+	}()
+
+	// Update status timestamp before starting long-running operation
+	cli.mu.RLock()
+	if cli.statusUpdateCallback != nil {
+		cli.statusUpdateCallback()
+		log.Logger.Debug("Updated status timestamp before async activation")
+	}
+	cli.mu.RUnlock()
+
+	// Execute activation command
+	rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
+	activationOutput, activationErr := cli.Executor.ExecuteAMTActivate(rpsAddress, profileName, password)
+
+	// Update status timestamp after activation completes
+	cli.mu.RLock()
+	if cli.statusUpdateCallback != nil {
+		cli.statusUpdateCallback()
+		log.Logger.Debug("Updated status timestamp after async activation completed")
+	}
+	cli.mu.RUnlock()
+
+	// Handle intermittent activation failures
+	outputStr := string(activationOutput)
+	if strings.Contains(outputStr, `msg="interrupted system call"`) ||
+		strings.Contains(outputStr, "exit code: 10") {
+		log.Logger.Warnf("Interrupted system call detected for host %s - will retry next cycle", hostID)
+		return
+	}
+	if strings.Contains(outputStr, `msg="Unable to authenticate with AMT"`) {
+		log.Logger.Warnf("Unable to authenticate with AMT for host %s - triggering deactivation", hostID)
+		cli.triggerDeactivationAsync(hostID)
+		// Report activation failed before deactivation
+		_ = cli.reportActivationResult(ctx, hostID, pb.ActivationStatus_ACTIVATION_FAILED)
+		return
+	}
+
+	if activationErr != nil {
+		log.Logger.Errorf("Failed to execute activation command for host %s: %v", hostID, activationErr)
+		// Report activation failed to dm-manager
+		_ = cli.reportActivationResult(ctx, hostID, pb.ActivationStatus_ACTIVATION_FAILED)
+		return
+	}
+
+	// Check provisioning status
+	ok := cli.isProvisioned(ctx, outputStr, hostID)
+	if !ok {
+		log.Logger.Errorf("Failed to provision host %s - Output: %s", hostID, outputStr)
+		// Report activation failed to dm-manager
+		_ = cli.reportActivationResult(ctx, hostID, pb.ActivationStatus_ACTIVATION_FAILED)
+	} else {
+		log.Logger.Infof("Activation completed successfully for host %s", hostID)
+		// Activation is still in progress - will transition to ACTIVATED when RAS status becomes "connected"
+		// The next periodic check will detect "connected" state and report ACTIVATED
+		// No need to report here as activation is still progressing
+	}
 }
 
 // triggerDeactivationAsync launches deactivation in background goroutine and returns immediately

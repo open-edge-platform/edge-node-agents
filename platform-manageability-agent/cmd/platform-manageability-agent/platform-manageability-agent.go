@@ -135,6 +135,9 @@ func main() {
 
 	hostID := confs.GUID
 
+	// Declare lastCheckTimestamp here so it can be used in the callback
+	var lastCheckTimestamp int64
+
 	op := func() error {
 		log.Infof("Reporting AMT status for host %s", hostID)
 		status, err := dmMgrClient.ReportAMTStatus(auth.GetAuthContext(ctx, confs.AccessTokenPath), hostID)
@@ -178,11 +181,16 @@ func main() {
 	}
 	log.Infof("Successfully reported AMT status for host %s", hostID)
 
+	// Set up status update callback for long-running activation operations
+	dmMgrClient.SetStatusUpdateCallback(func() {
+		atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix())
+		log.Info("Status timestamp updated via callback during activation operation")
+	})
+
 	var (
 		wg                           sync.WaitGroup
 		activationCheckInterval      = confs.Manageability.HeartbeatInterval
 		lastActivationCheckTimestamp int64
-		lastCheckTimestamp           int64
 	)
 
 	wg.Add(1)
