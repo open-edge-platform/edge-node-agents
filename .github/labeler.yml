@@ -36,6 +36,9 @@ platform-telemetry-agent:
 platform-update-agent:
   - changed-files:
       - any-glob-to-any-file: "platform-update-agent/**"
+device-discovery-agent:
+  - changed-files:
+      - any-glob-to-any-file: "device-discovery-agent/**"
 
 reporting-agent:
   - changed-files:

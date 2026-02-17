@@ -1,0 +1,71 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Last Modified: Tue Feb 10 21:13:41 2026
+include <tunables/global>
+
+
+/opt/edge-node/bin/device-discovery-agent {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+
+  capability dac_read_search,
+  capability net_admin,
+  capability sys_admin,
+  capability sys_rawio,
+  capability sys_resource,
+
+  network inet dgram,
+  network inet stream,
+  network inet6 dgram,
+  network inet6 stream,
+  network unix dgram,
+  network unix stream,
+
+  deny /boot/** rw,
+  deny /proc/kcore rw,
+  deny /sys/kernel/security/** rw,
+
+  /dev/mem r,
+  /dev/shm/idp_access_token rw,
+  /dev/shm/release_token rw,
+  /etc/edge-node/node/confs/device-discovery-agent.env r,
+  /etc/hosts r,
+  /etc/intel_edge_node/orch-ca-cert/orch-ca.pem r,
+  /etc/nsswitch.conf r,
+  /etc/resolv.conf r,
+  /etc/ssl/certs/** r,
+  /etc/ssl/openssl.cnf r,
+  /opt/edge-node/bin/device-discovery-agent mr,
+  /proc/cmdline r,
+  /proc/cmdline r,
+  /proc/sys/kernel/hostname r,
+  /proc/sys/net/core/somaxconn r,
+  /sys/class/dmi/id/board_serial r,
+  /sys/class/dmi/id/product_serial r,
+  /sys/class/dmi/id/product_uuid r,
+  /sys/class/net/*/address r,
+  /sys/class/net/*/operstate r,
+  /sys/devices/** r,
+  /sys/firmware/dmi/tables/DMI r,
+  /sys/firmware/dmi/tables/smbios_entry_point r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  /tmp/** rw,
+  /usr/bin/ip rix,
+  /usr/bin/lshw rix,
+  /usr/sbin/dmidecode rix,
+  /usr/sbin/ip rix,
+  /usr/sbin/lshw rix,
+  /usr/share/ca-certificates/** r,
+  /etc/edge-node/node/confs/ rw,
+  /etc/edge-node/node/confs/** rw,
+  /etc/intel_edge_node/client-credentials/ rw,
+  /etc/intel_edge_node/client-credentials/** rw,
+  owner /etc/intel_edge_node/client-credentials/client_id rw,
+  owner /etc/intel_edge_node/client-credentials/client_secret rw,
+  owner /etc/intel_edge_node/client-credentials/project_id rw,
+  owner /proc/*/mountinfo r,
+  owner /tmp/** rw,
+
+}
