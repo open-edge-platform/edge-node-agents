@@ -7,3 +7,8 @@ Template: platform-manageability-agent/rpsAddress
 Type: string
 Default: localhost
 Description: RPS address:
+
+Template: platform-manageability-agent/metrics.enabled
+Type: string
+Default: true
+Description: Metrics reporting enabled:
