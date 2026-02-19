@@ -3,14 +3,14 @@
 
 module github.com/open-edge-platform/edge-node-agents/platform-update-agent
 
-go 1.25.5
+go 1.25.7
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/open-edge-platform/edge-node-agents/common v1.10.0
+	github.com/open-edge-platform/edge-node-agents/common v1.10.1
 	github.com/open-edge-platform/infra-managers/maintenance v1.25.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/afero v1.15.0

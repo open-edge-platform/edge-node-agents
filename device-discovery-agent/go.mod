@@ -1,10 +1,9 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 module device-discovery
 
-// remains with Go 1.24.1 till EMT Go is updated to support Go 1.24.4
-go 1.25.5
+go 1.25.7
 
 require (
 	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.39.7
