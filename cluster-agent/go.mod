@@ -1,13 +1,13 @@
 module github.com/open-edge-platform/edge-node-agents/cluster-agent
 
-go 1.25.5
+go 1.25.7
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/open-edge-platform/cluster-api-provider-intel v1.3.5
-	github.com/open-edge-platform/edge-node-agents/common v1.10.0
+	github.com/open-edge-platform/edge-node-agents/common v1.10.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0
