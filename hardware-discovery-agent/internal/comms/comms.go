@@ -127,7 +127,8 @@ func ConnectToEdgeInfrastructureManager(serverAddr string, tlsConfig *tls.Config
 }
 
 func parseSystemInfo(serialNumber string, productName string, bmcAddr string, osInfo *system.Os, biosInfo *system.Bios, cpu *cpu.CPU,
-	storage []*disk.Disk, gpu []*gpu.Gpu, mem uint64, networks []*network.Network, bmType proto.BmInfo_BmType, usbInfo []*usb.Usb) *proto.SystemInfo {
+	storage []*disk.Disk, gpu []*gpu.Gpu, mem uint64, networks []*network.Network, bmType proto.BmInfo_BmType, usbInfo []*usb.Usb,
+	device *device.DeviceInfo) *proto.SystemInfo {
 
 	gpuList := []*proto.SystemGPU{}
 	for _, gpuDetails := range gpu {
@@ -276,6 +277,41 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 		}
 	}
 
+	deviceInfo := proto.DeviceInfo{}
+	if device != nil {
+		if device.RAS != nil {
+			deviceInfo = proto.DeviceInfo{
+				Version:          device.Version,
+				Hostname:         device.Hostname,
+				OperationalState: device.OperationalState,
+				BuildNumber:      device.BuildNumber,
+				Sku:              device.Sku,
+				Features:         device.Features,
+				DeviceGuid:       device.Uuid,
+				ControlMode:      device.ControlMode,
+				DnsSuffix:        device.DNSSuffix,
+				RasInfo: &proto.RASInfo{
+					NetworkStatus: device.RAS.NetworkStatus,
+					RemoteStatus:  device.RAS.RemoteStatus,
+					RemoteTrigger: device.RAS.RemoteTrigger,
+					MpsHostname:   device.RAS.MPSHostname,
+				},
+			}
+		} else {
+			deviceInfo = proto.DeviceInfo{
+				Version:          device.Version,
+				Hostname:         device.Hostname,
+				OperationalState: device.OperationalState,
+				BuildNumber:      device.BuildNumber,
+				Sku:              device.Sku,
+				Features:         device.Features,
+				DeviceGuid:       device.Uuid,
+				ControlMode:      device.ControlMode,
+				DnsSuffix:        device.DNSSuffix,
+			}
+		}
+	}
+
 	systemInfo := &proto.SystemInfo{
 		HwInfo: &proto.HWInfo{
 			SerialNum:   serialNumber,
@@ -302,6 +338,7 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 			ReleaseDate: biosInfo.RelDate,
 			Vendor:      biosInfo.Vendor,
 		},
+		DeviceInfo: &deviceInfo,
 	}
 
 	return systemInfo
@@ -358,10 +395,10 @@ func GenerateSystemInfoRequest(executor utils.CmdExecutor) *proto.SystemInfo {
 		log.Errorf("unable to get usb description : %v", err)
 	}
 
-	_, err = device.GetDeviceInfo(executor)
+	deviceInfo, err := device.GetDeviceInfo(executor)
 	if err != nil {
 		log.Errorf("unable to get device description : %v", err)
 	}
 
-	return parseSystemInfo(sn, productName, bmcAddr, osInfo, biosInfo, cpu, storage, gpu, mem, networkList, bmType, usbList)
+	return parseSystemInfo(sn, productName, bmcAddr, osInfo, biosInfo, cpu, storage, gpu, mem, networkList, bmType, usbList, deviceInfo)
 }

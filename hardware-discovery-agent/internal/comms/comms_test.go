@@ -208,7 +208,7 @@ func TestFailedSystemInfoUpdate(t *testing.T) {
 }
 
 func expectedSystemInfoResult(sn string, productName string, bmcAddr string, osInfo *proto.OsInfo, biosInfo *proto.BiosInfo, cpu *proto.SystemCPU, storage []*proto.SystemDisk,
-	gpu []*proto.SystemGPU, mem uint64, networks []*proto.SystemNetwork, bmType proto.BmInfo_BmType, usbInfo []*proto.SystemUSB) *proto.SystemInfo {
+	gpu []*proto.SystemGPU, mem uint64, networks []*proto.SystemNetwork, bmType proto.BmInfo_BmType, usbInfo []*proto.SystemUSB, deviceInfo *proto.DeviceInfo) *proto.SystemInfo {
 
 	return &proto.SystemInfo{
 		HwInfo: &proto.HWInfo{
@@ -228,7 +228,8 @@ func expectedSystemInfoResult(sn string, productName string, bmcAddr string, osI
 				BmIp: bmcAddr,
 			},
 		},
-		BiosInfo: biosInfo,
+		BiosInfo:   biosInfo,
+		DeviceInfo: deviceInfo,
 	}
 }
 
@@ -426,6 +427,26 @@ func getUsbInfo() []*proto.SystemUSB {
 	return usbInfo
 }
 
+func getDeviceInfo() *proto.DeviceInfo {
+	return &proto.DeviceInfo{
+		Version:          "16.1.27",
+		Hostname:         "testhost",
+		OperationalState: "enabled",
+		BuildNumber:      "2176",
+		Sku:              "16392",
+		Features:         "AMT Pro Corporate",
+		DeviceGuid:       "1234abcd-ef56-7890-abcd-123456ef7890",
+		ControlMode:      "activated in client control mode",
+		DnsSuffix:        "test.com",
+		RasInfo: &proto.RASInfo{
+			NetworkStatus: "direct",
+			RemoteStatus:  "not connected",
+			RemoteTrigger: "user initiated",
+			MpsHostname:   "",
+		},
+	}
+}
+
 func TestGenerateUpdateDeviceRequestSuccessAllInfo(t *testing.T) {
 	network.ReadFile = mockedReadFile
 	network.ReadDir = mockedReadDir
@@ -433,7 +454,7 @@ func TestGenerateUpdateDeviceRequestSuccessAllInfo(t *testing.T) {
 	network.CollectEthtoolData = mockedCollectEthtoolData
 	network.Stat = mockedStat
 	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassed)
-	expected := expectedSystemInfoResult("12A34B5", "Test Product", "192.168.1.50", getOsInfo(), getBiosInfo(), getCpuInfo(), getStorageInfo(), getGpuInfo(), 17179869184, getNetworkInfo(), proto.BmInfo_IPMI, getUsbInfo())
+	expected := expectedSystemInfoResult("12A34B5", "Test Product", "192.168.1.50", getOsInfo(), getBiosInfo(), getCpuInfo(), getStorageInfo(), getGpuInfo(), 17179869184, getNetworkInfo(), proto.BmInfo_IPMI, getUsbInfo(), getDeviceInfo())
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -446,12 +467,11 @@ func TestGenerateUpdateDeviceRequestErr(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -464,11 +484,10 @@ func TestGenerateUpdateDeviceRequestSuccessStorageOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, getStorageInfo(), gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, getStorageInfo(), gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -481,12 +500,11 @@ func TestGeneraeUpdateDeviceRequestSuccessSerialNumberOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("12A34B5", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("12A34B5", "", "", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -499,24 +517,22 @@ func TestGenerateUpdateDeviceRequestSuccessProductNameOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "Test Product", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "Test Product", "", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
 
 func TestGenerateUpdateDeviceRequestSuccessOsOnly(t *testing.T) {
 	json := comms.GenerateSystemInfoRequest(testCmdExecutorCommandPassedOsOnly)
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "", getOsInfo(), &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "", "", getOsInfo(), &proto.BiosInfo{}, &proto.SystemCPU{}, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -529,12 +545,11 @@ func TestGenerateUpdateDeviceRequestSuccessBiosOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "", osInfo, getBiosInfo(), cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "", "", osInfo, getBiosInfo(), &proto.SystemCPU{}, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -551,7 +566,7 @@ func TestGenerateUpdateDeviceRequestSuccessCpuOnly(t *testing.T) {
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, getCpuInfo(), storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, getCpuInfo(), storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -564,11 +579,10 @@ func TestGenerateUpdateDeviceRequestSuccessGpuOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, getGpuInfo(), uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, storage, getGpuInfo(), uint64(0), networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -581,12 +595,11 @@ func TestGenerateUpdateDeviceRequestSuccessMemoryOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, 17179869184, networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, storage, gpu, 17179869184, networks, proto.BmInfo_NONE, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -604,11 +617,10 @@ func TestGenerateUpdateDeviceRequestSuccessNetworkOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "192.168.1.50", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), getNetworkInfo(), proto.BmInfo_IPMI, usbInfo)
+	expected := expectedSystemInfoResult("", "", "192.168.1.50", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, storage, gpu, uint64(0), getNetworkInfo(), proto.BmInfo_IPMI, usbInfo, &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -621,11 +633,10 @@ func TestGenerateUpdateDeviceRequestSuccessUsbInfoOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
-	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, getUsbInfo())
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, getUsbInfo(), &proto.DeviceInfo{})
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }
@@ -638,12 +649,11 @@ func TestGenerateUpdateDeviceRequestSuccessDeviceInfoOnly(t *testing.T) {
 		Kernel:  &osKern,
 		Release: &osRelease,
 	}
-	cpu := &proto.SystemCPU{}
 	storage := []*proto.SystemDisk{}
 	gpu := []*proto.SystemGPU{}
 	networks := []*proto.SystemNetwork{}
 	usbInfo := []*proto.SystemUSB{}
-	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, cpu, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo)
+	expected := expectedSystemInfoResult("", "", "", osInfo, &proto.BiosInfo{}, &proto.SystemCPU{}, storage, gpu, uint64(0), networks, proto.BmInfo_NONE, usbInfo, getDeviceInfo())
 	require.NotNil(t, json)
 	assert.Equal(t, expected, json)
 }

@@ -32,23 +32,37 @@ var testRemoteTrigger = "user initiated"
 
 func getExpectedResult(version string, hostname string, opState string, buildNum string, sku string,
 	features string, uuid string, controlMode string, dnsSuffix string, networkStatus string,
-	remoteStatus string, remoteTrigger string) device.DeviceInfo {
-	return device.DeviceInfo{
-		Version:          version,
-		Hostname:         hostname,
-		OperationalState: opState,
-		BuildNumber:      buildNum,
-		Sku:              sku,
-		Features:         features,
-		Uuid:             uuid,
-		ControlMode:      controlMode,
-		DNSSuffix:        dnsSuffix,
-		RAS: device.RASInfo{
-			NetworkStatus: networkStatus,
-			RemoteStatus:  remoteStatus,
-			RemoteTrigger: remoteTrigger,
-			MPSHostname:   "",
-		},
+	remoteStatus string, remoteTrigger string) *device.DeviceInfo {
+	if networkStatus == "" && remoteStatus == "" && remoteTrigger == "" {
+		return &device.DeviceInfo{
+			Version:          version,
+			Hostname:         hostname,
+			OperationalState: opState,
+			BuildNumber:      buildNum,
+			Sku:              sku,
+			Features:         features,
+			Uuid:             uuid,
+			ControlMode:      controlMode,
+			DNSSuffix:        dnsSuffix,
+		}
+	} else {
+		return &device.DeviceInfo{
+			Version:          version,
+			Hostname:         hostname,
+			OperationalState: opState,
+			BuildNumber:      buildNum,
+			Sku:              sku,
+			Features:         features,
+			Uuid:             uuid,
+			ControlMode:      controlMode,
+			DNSSuffix:        dnsSuffix,
+			RAS: &device.RASInfo{
+				NetworkStatus: networkStatus,
+				RemoteStatus:  remoteStatus,
+				RemoteTrigger: remoteTrigger,
+				MPSHostname:   "",
+			},
+		}
 	}
 }
 
@@ -62,23 +76,20 @@ func Test_GetDeviceInfo(t *testing.T) {
 
 func Test_GetDeviceInfoFailed(t *testing.T) {
 	res, err := device.GetDeviceInfo(testFailure)
-	var expected device.DeviceInfo
 	assert.Error(t, err)
-	assert.Equal(t, expected, res)
+	assert.Equal(t, &device.DeviceInfo{}, res)
 }
 
 func Test_GetDeviceInfoSystemUuidFailed(t *testing.T) {
 	res, err := device.GetDeviceInfo(testFailureSystemUuid)
-	var expected device.DeviceInfo
 	assert.Error(t, err)
-	assert.Equal(t, expected, res)
+	assert.Equal(t, &device.DeviceInfo{}, res)
 }
 
 func Test_GetDeviceInfoFailedUnmarshal(t *testing.T) {
 	res, err := device.GetDeviceInfo(testFailureUnmarshal)
-	var expected device.DeviceInfo
 	assert.Error(t, err)
-	assert.Equal(t, expected, res)
+	assert.Equal(t, &device.DeviceInfo{}, res)
 }
 
 func Test_GetDeviceInfoMissingVersionNumber(t *testing.T) {
