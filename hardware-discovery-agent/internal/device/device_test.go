@@ -32,8 +32,8 @@ var testRemoteTrigger = "user initiated"
 
 func getExpectedResult(version string, hostname string, opState string, buildNum string, sku string,
 	features string, uuid string, controlMode string, dnsSuffix string, networkStatus string,
-	remoteStatus string, remoteTrigger string) device.AMTInfo {
-	return device.AMTInfo{
+	remoteStatus string, remoteTrigger string) device.DeviceInfo {
+	return device.DeviceInfo{
 		Version:          version,
 		Hostname:         hostname,
 		OperationalState: opState,
@@ -62,21 +62,21 @@ func Test_GetDeviceInfo(t *testing.T) {
 
 func Test_GetDeviceInfoFailed(t *testing.T) {
 	res, err := device.GetDeviceInfo(testFailure)
-	var expected device.AMTInfo
+	var expected device.DeviceInfo
 	assert.Error(t, err)
 	assert.Equal(t, expected, res)
 }
 
 func Test_GetDeviceInfoSystemUuidFailed(t *testing.T) {
 	res, err := device.GetDeviceInfo(testFailureSystemUuid)
-	var expected device.AMTInfo
+	var expected device.DeviceInfo
 	assert.Error(t, err)
 	assert.Equal(t, expected, res)
 }
 
 func Test_GetDeviceInfoFailedUnmarshal(t *testing.T) {
 	res, err := device.GetDeviceInfo(testFailureUnmarshal)
-	var expected device.AMTInfo
+	var expected device.DeviceInfo
 	assert.Error(t, err)
 	assert.Equal(t, expected, res)
 }
