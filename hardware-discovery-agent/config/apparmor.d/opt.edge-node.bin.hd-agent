@@ -290,6 +290,7 @@ profile hda_sudo {
   /run/systemd/resolve/stub-resolv.conf r,
   /usr/bin/ipmitool rPx -> hda_ipmitool,
   /usr/bin/lshw rPx -> hda_lshw,
+  /usr/bin/rpc ix,
   /usr/bin/sudo mr,
   /usr/libexec/sudo/libsudo_util.so.* mr,
   /usr/sbin/dmidecode rPx -> hda_dmidecode,
