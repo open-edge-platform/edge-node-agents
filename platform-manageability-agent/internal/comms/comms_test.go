@@ -51,7 +51,7 @@ func (m *mockCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, passwo
 	return m.activationOutput, m.activationError
 }
 
-func (m *mockCommandExecutor) ExecuteAMTDeactivate() ([]byte, error) {
+func (m *mockCommandExecutor) ExecuteAMTDeactivate(rpsAddress, password string) ([]byte, error) {
 	return m.deactivationOutput, m.deactivationError
 }
 
@@ -718,7 +718,7 @@ func TestTriggerDeactivationAsync_AlreadyInProgress(t *testing.T) {
 	client.SetDeactivationInProgress(true)
 
 	// Trigger deactivation - should be blocked
-	status := client.TriggerDeactivationAsync("host-id")
+	status := client.TriggerDeactivationAsync("host-id", "wss://mock-rps/activate", "test-password")
 	assert.Equal(t, pb.ActivationStatus_ACTIVATING, status, "Should return ACTIVATING when deactivation already in progress")
 }
 
@@ -749,7 +749,7 @@ func TestPerformDeactivationAsync_Success(t *testing.T) {
 	// Perform deactivation
 	done := make(chan bool, 1) // Buffered channel to prevent goroutine leak
 	go func() {
-		client.PerformDeactivationAsync("host-id")
+		client.PerformDeactivationAsync("host-id", "wss://mock-rps/activate", "test-password")
 		done <- true
 	}()
 
@@ -784,7 +784,7 @@ func TestPerformDeactivationAsync_DeactivationCommandFails(t *testing.T) {
 	// Perform async deactivation
 	done := make(chan bool, 1) // Buffered channel to prevent goroutine leak
 	go func() {
-		client.PerformDeactivationAsync("host-id")
+		client.PerformDeactivationAsync("host-id", "wss://mock-rps/activate", "test-password")
 		done <- true
 	}()
 
@@ -828,7 +828,7 @@ func TestPerformDeactivationAsync_AMTInfoFailures(t *testing.T) {
 	// Perform deactivation
 	done := make(chan bool, 1) // Buffered channel to prevent goroutine leak
 	go func() {
-		client.PerformDeactivationAsync("host-id")
+		client.PerformDeactivationAsync("host-id", "wss://mock-rps/activate", "test-password")
 		done <- true
 	}()
 
