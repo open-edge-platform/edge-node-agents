@@ -11,12 +11,12 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/open-edge-platform/edge-node-agents/common v1.10.1
-	github.com/open-edge-platform/infra-managers/maintenance v1.25.0
+	github.com/open-edge-platform/infra-managers/maintenance v1.25.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/afero v1.15.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0
-	google.golang.org/grpc v1.79.1
+	google.golang.org/grpc v1.80.0-dev
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.35.1
