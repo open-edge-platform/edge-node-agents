@@ -7,12 +7,12 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/open-edge-platform/edge-node-agents/common v1.10.1
-	github.com/open-edge-platform/infra-managers/host v1.25.1
+	github.com/open-edge-platform/infra-managers/host v1.25.2
 	github.com/safchain/ethtool v0.7.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0
-	google.golang.org/grpc v1.79.1
+	google.golang.org/grpc v1.80.0-dev
 	gopkg.in/yaml.v3 v3.0.1
 )
 
