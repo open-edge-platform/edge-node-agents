@@ -13,6 +13,7 @@ updates:
       - "/platform-telemetry-agent"
       - "/platform-update-agent"
       - "/device-discovery-agent"
+      - "/in-band-manageability"
     schedule:
       interval: daily
     open-pull-requests-limit: 3
