@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+db_input high platform-manageability-agent/manageability.serviceURL || true
+db_input high platform-manageability-agent/rpsAddress || true
+db_input low platform-manageability-agent/metrics.enabled || true
+db_go || true
