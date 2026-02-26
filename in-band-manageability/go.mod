@@ -3,11 +3,11 @@ module github.com/open-edge-platform/edge-node-agents/in-band-manageability
 go 1.25.7
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260209202127-80ab13bee0bf.1
 	github.com/stretchr/testify v1.11.1
 	github.com/xeipuuv/gojsonschema v1.2.0
-	google.golang.org/grpc v1.76.0
-	google.golang.org/protobuf v1.36.10
+	google.golang.org/grpc v1.79.1
+	google.golang.org/protobuf v1.36.11
 )
 
 require (
@@ -24,9 +24,9 @@ require (
 require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/spf13/afero v1.15.0
-	github.com/spf13/cobra v1.10.1
-	golang.org/x/net v0.46.0 // indirect
-	golang.org/x/sys v0.37.0
-	golang.org/x/text v0.30.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251007200510-49b9836ed3ff // indirect
+	github.com/spf13/cobra v1.10.2
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sys v0.39.0
+	golang.org/x/text v0.32.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 )
