@@ -140,7 +140,7 @@ func parseFinalFlags(cfg *config.Config) {
 
 	// Optional configuration - use current values as defaults
 	flag.StringVar(&cfg.ExtraHosts, "extra-hosts", cfg.ExtraHosts, "Additional host mappings (comma-separated: 'host1:ip1,host2:ip2')")
-	flag.StringVar(&cfg.CaCertPath, "ca-cert", cfg.CaCertPath, "Path to CA certificate (required)")
+	flag.StringVar(&cfg.CaCertPath, "ca-cert", cfg.CaCertPath, "Path to CA certificate (optional, uses system CAs if not provided)")
 	flag.BoolVar(&cfg.Debug, "debug", cfg.Debug, "Enable debug mode with timeout")
 	flag.DurationVar(&cfg.Timeout, "timeout", cfg.Timeout, "Timeout duration for debug mode")
 	flag.BoolVar(&cfg.DisableInteractiveMode, "disable-interactive", cfg.DisableInteractiveMode, "Disable interactive mode fallback")
@@ -167,10 +167,11 @@ func printUsage() {
 	fmt.Fprintf(os.Stderr, "        Onboarding manager port\n")
 	fmt.Fprintf(os.Stderr, "  -keycloak-url string\n")
 	fmt.Fprintf(os.Stderr, "        Keycloak authentication URL\n")
-	fmt.Fprintf(os.Stderr, "  -ca-cert string\n")
-	fmt.Fprintf(os.Stderr, "        Path to CA certificate\n")
 	fmt.Fprintf(os.Stderr, "  -mac string\n")
 	fmt.Fprintf(os.Stderr, "        MAC address of the device (required unless -auto-detect is used)\n")
+	fmt.Fprintf(os.Stderr, "\nOptional Configuration:\n")
+	fmt.Fprintf(os.Stderr, "  -ca-cert string\n")
+	fmt.Fprintf(os.Stderr, "        Path to CA certificate (optional, uses system CAs if not provided)\n")
 	fmt.Fprintf(os.Stderr, "\nOptional Device Information:\n")
 	fmt.Fprintf(os.Stderr, "  -serial string\n")
 	fmt.Fprintf(os.Stderr, "        Serial number (auto-detected if not provided)\n")

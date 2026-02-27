@@ -214,10 +214,8 @@ func FuzzValidate(f *testing.F) {
 			if cfg.KeycloakURL == "" {
 				t.Error("Validation passed but KeycloakURL is empty")
 			}
-			if cfg.CaCertPath == "" {
-				t.Error("Validation passed but CaCertPath is empty")
-			}
-			// Note: MAC, SERIAL, UUID, IPAddress can be auto-detected
+			// CaCertPath is optional - system default CAs will be used if empty
+			// MAC, SERIAL, UUID, IPAddress can be auto-detected
 			// so validation may pass even if they're empty
 		}
 	})
