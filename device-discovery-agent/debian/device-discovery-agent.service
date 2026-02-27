@@ -6,6 +6,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+EnvironmentFile=/etc/edge-node/node/agent_variables
 ExecStart=/opt/edge-node/bin/device-discovery-agent -config /etc/edge-node/node/confs/device-discovery-agent.env
 StandardOutput=journal
 StandardError=journal

@@ -4,6 +4,7 @@ Documentation=https://github.com/open-edge-platform/edge-node-agents/blob/main/n
 
 [Service]
 EnvironmentFile=/etc/environment
+EnvironmentFile=/etc/edge-node/node/agent_variables
 ExecStart=/opt/edge-node/bin/node-agent -config /etc/edge-node/node/confs/node-agent.yaml
 StandardOutput=journal
 StandardError=journal
