@@ -1,59 +1,48 @@
 #!/bin/bash -e
 
-. /usr/share/debconf/confmodule
-
 # Update onboarding service URL (OBM_SVC)
-db_get device-discovery-agent/onboarding.serviceURL
-if [ ! -z "$RET" ]; then
-    sed -i "s|^OBM_SVC=.*|OBM_SVC=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+if [ ! -z "$ONBOARDING_SVC_URL" ]; then
+    sed -i "s|^OBM_SVC=.*|OBM_SVC=$ONBOARDING_SVC_URL|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
 # Update onboarding service port (OBM_PORT)
-db_get device-discovery-agent/onboarding.servicePort
-if [ ! -z "$RET" ]; then
-    sed -i "s|^OBM_PORT=.*|OBM_PORT=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+if [ ! -z "$ONBOARDING_SVC_PORT" ]; then
+    sed -i "s|^OBM_PORT=.*|OBM_PORT=$ONBOARDING_SVC_PORT|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
-# Update discovery service URL (OBS_SVC)
-db_get device-discovery-agent/discovery.serviceURL
-if [ ! -z "$RET" ]; then
-    sed -i "s|^OBS_SVC=.*|OBS_SVC=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+# Update onboarding stream service URL (OBS_SVC)
+if [ ! -z "$ONBOARDING_STREAM_SVC_URL" ]; then
+    sed -i "s|^OBS_SVC=.*|OBS_SVC=$ONBOARDING_STREAM_SVC_URL|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
-# Update Keycloak URL (KEYCLOAK_URL)
-db_get device-discovery-agent/auth.keycloakURL
-if [ ! -z "$RET" ]; then
-    sed -i "s|^KEYCLOAK_URL=.*|KEYCLOAK_URL=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+# Update keycloak URL (KEYCLOAK_URL)
+if [ ! -z "$KEYCLOAK_URL" ]; then
+    sed -i "s|^KEYCLOAK_URL=.*|KEYCLOAK_URL=$KEYCLOAK_URL|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
 # Update CA certificate path (CA_CERT)
-db_get device-discovery-agent/onboarding.caCertPath
-if [ ! -z "$RET" ]; then
-    sed -i "s|^CA_CERT=.*|CA_CERT=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+if [ ! -z "$CA_PEM" ]; then
+    sed -i "s|^CA_CERT=.*|CA_CERT=$CA_PEM|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
 # Update auto-detect setting (AUTO_DETECT)
-db_get device-discovery-agent/sysinfo.autoDetect
-if [ ! -z "$RET" ]; then
-    sed -i "s|^AUTO_DETECT=.*|AUTO_DETECT=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+if [ ! -z "$AUTO_DETECT" ]; then
+    sed -i "s|^AUTO_DETECT=.*|AUTO_DETECT=$AUTO_DETECT|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
 # Update debug mode (DEBUG)
-db_get device-discovery-agent/debug
-if [ ! -z "$RET" ]; then
-    sed -i "s|^DEBUG=.*|DEBUG=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+if [ ! -z "$DEBUG" ]; then
+    sed -i "s|^DEBUG=.*|DEBUG=$DEBUG|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
 # Update disable interactive mode (DISABLE_INTERACTIVE)
-db_get device-discovery-agent/disableInteractive
-if [ ! -z "$RET" ]; then
-    sed -i "s|^DISABLE_INTERACTIVE=.*|DISABLE_INTERACTIVE=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+if [ ! -z "$DISABLE_INTERACTIVE" ]; then
+    sed -i "s|^DISABLE_INTERACTIVE=.*|DISABLE_INTERACTIVE=$DISABLE_INTERACTIVE|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
 # Update use kernel args (USE_KERNEL_ARGS)
-db_get device-discovery-agent/useKernelArgs
-if [ ! -z "$RET" ]; then
-    sed -i "s|^USE_KERNEL_ARGS=.*|USE_KERNEL_ARGS=$RET|" /etc/edge-node/node/confs/device-discovery-agent.env
+if [ ! -z "$KERNEL_ARGS" ]; then
+    sed -i "s|^USE_KERNEL_ARGS=.*|USE_KERNEL_ARGS=$KERNEL_ARGS|" /etc/edge-node/node/confs/device-discovery-agent.env
 fi
 
 # Read hardware serial number and update config

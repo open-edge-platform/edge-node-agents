@@ -1,25 +1,21 @@
 #!/bin/bash -e
 
-. /usr/share/debconf/confmodule
+# Source agent variables from file created by Installer
 
-db_get node-agent/onboarding.enabled
-if [ ! -z "$RET" ]; then
-    sed -i -e '/^onboarding:$/{n' -e 's/enabled:.*/enabled: '"$RET"'/' -e '}' /etc/edge-node/node/confs/node-agent.yaml
+if [ ! -z "$NODE_ONBOARDING_ENABLED" ]; then
+    sed -i -e '/^onboarding:$/{n' -e 's/enabled:.*/enabled: '"$NODE_ONBOARDING_ENABLED"'/' -e '}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/onboarding.serviceURL
-if [ ! -z "$RET" ]; then
-    sed -i -e '/^onboarding:$/{n' -e '/.*enabled:/{n' -e 's#serviceURL:.*#serviceURL: '"$RET"'#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
+if [ ! -z "$NODE_ONBOARDING_URL" ]; then
+    sed -i -e '/^onboarding:$/{n' -e '/.*enabled:/{n' -e 's#serviceURL:.*#serviceURL: '"$NODE_ONBOARDING_URL"'#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/onboarding.heartbeatInterval
-if [ ! -z "$RET" ]; then
-    sed -i -e '/^onboarding:$/{n' -e '/.*enabled:/{n' -e '/.*serviceURL:/{n' -e 's/heartbeatInterval:.*/heartbeatInterval: '"$RET"'/' -e '}}}' /etc/edge-node/node/confs/node-agent.yaml
+if [ ! -z "$NODE_ONBOARDING_HEARTBEAT" ]; then
+    sed -i -e '/^onboarding:$/{n' -e '/.*enabled:/{n' -e '/.*serviceURL:/{n' -e 's/heartbeatInterval:.*/heartbeatInterval: '"$NODE_ONBOARDING_HEARTBEAT"'/' -e '}}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/status.serviceClients
-if [ ! -z "$RET" ]; then
-    IFS=',' read -r -a serviceClientArray <<< "$RET"
+if [ ! -z "$NODE_SERVICE_CLIENTS" ]; then
+    IFS=',' read -r -a serviceClientArray <<< "$NODE_SERVICE_CLIENTS"
     arrayLength=${#serviceClientArray[@]}
     agentList=""
     index=0
@@ -34,9 +30,8 @@ if [ ! -z "$RET" ]; then
     sed -i -e '/^status:$/{n' -e '/.*endpoint:/{n' -e 's#serviceClients:.*#serviceClients: [ '"${agentList}"' ]#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/status.outboundClients
-if [ ! -z "$RET" ]; then
-    IFS=',' read -r -a outboundClientArray <<< "$RET"
+if [ ! -z "$NODE_OUTBOUND_CLIENTS" ]; then
+    IFS=',' read -r -a outboundClientArray <<< "$NODE_OUTBOUND_CLIENTS"
     arrayLength=${#outboundClientArray[@]}
     agentList=""
     index=0
@@ -51,24 +46,20 @@ if [ ! -z "$RET" ]; then
     sed -i -e '/^status:$/{n' -e '/.*endpoint:/{n' -e '/.*serviceClients:/{n' -e 's#outboundClients:.*#outboundClients: [ '"${agentList}"' ]#' -e '}}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/metrics.enabled
-if [ ! -z "$RET" ]; then
-    sed -i -e '/^metrics:$/{n' -e 's/enabled:.*/enabled: '"$RET"'/' -e '}' /etc/edge-node/node/confs/node-agent.yaml
+if [ ! -z "$NODE_METRICS_ENABLED" ]; then
+    sed -i -e '/^metrics:$/{n' -e 's/enabled:.*/enabled: '"$NODE_METRICS_ENABLED"'/' -e '}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/auth.accessTokenURL
-if [ ! -z "$RET" ]; then
-    sed -i -e '/^auth:$/{n' -e 's#accessTokenURL:.*#accessTokenURL: '"$RET"'#' -e '}' /etc/edge-node/node/confs/node-agent.yaml
+if [ ! -z "$NODE_ACCESS_URL" ]; then
+    sed -i -e '/^auth:$/{n' -e 's#accessTokenURL:.*#accessTokenURL: '"$NODE_ACCESS_URL"'#' -e '}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/auth.rsTokenURL
-if [ ! -z "$RET" ]; then
-    sed -i -e '/^auth:$/{n' -e '/.*accessTokenURL:/{n' -e 's#rsTokenURL:.*#rsTokenURL: '"$RET"'#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
+if [ ! -z "$NODE_RS_URL" ]; then
+    sed -i -e '/^auth:$/{n' -e '/.*accessTokenURL:/{n' -e 's#rsTokenURL:.*#rsTokenURL: '"$NODE_RS_URL"'#' -e '}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/auth.tokenClients
-if [ ! -z "$RET" ]; then
-    IFS=',' read -r -a tokenClientArray <<< "$RET"
+if [ ! -z "$NODE_TOKEN_CLIENTS" ]; then
+    IFS=',' read -r -a tokenClientArray <<< "$NODE_TOKEN_CLIENTS"
     arrayLength=${#tokenClientArray[@]}
     agentList=""
     index=0
@@ -83,29 +74,25 @@ if [ ! -z "$RET" ]; then
     sed -i -e '/^auth:$/{n' -e '/.*accessTokenURL:/{n' -e '/.*rsTokenURL:/{n' -e '/.*accessTokenPath:/{n' -e '/.*clientCredsPath:/{n' -e 's#tokenClients:.*#tokenClients: [ '"${agentList}"' ]#' -e '}}}}}' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/proxy.aptSourceURL
-if [ ! -z "$RET" ]; then
-    sed -i -e 's#reverse_proxy.*#reverse_proxy https://'"$RET"' {#' /etc/caddy/pua.caddy
+if [ ! -z "$CADDY_APT_PROXY_URL" ]; then
+    sed -i -e 's#reverse_proxy.*#reverse_proxy https://'"$CADDY_APT_PROXY_URL"' {#' /etc/caddy/pua.caddy
 fi
 
-db_get node-agent/proxy.aptSourceProxyPort
-if [ ! -z "$RET" ]; then
-    sed -i -e 's#localhost.*#localhost:'"$RET"' {#' /etc/caddy/pua.caddy
-    sed -i -E '/name: client-proxy/,/url:/ s|(http://[^:]+:)[0-9]+|\1'"$RET"'|' /etc/edge-node/node/confs/node-agent.yaml
+if [ ! -z "$CADDY_APT_PROXY_PORT" ]; then
+    sed -i -e 's#localhost.*#localhost:'"$CADDY_APT_PROXY_PORT"' {#' /etc/caddy/pua.caddy
+    sed -i -E '/name: client-proxy/,/url:/ s|(http://[^:]+:)[0-9]+|\1'"$CADDY_APT_PROXY_PORT"'|' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
-db_get node-agent/proxy.aptSourceFilesRSRoot
-if [ ! -z "$RET" ]; then
-   sed -i -E '/name: client-proxy/,/url:/ s|(http://[^/]+/)[^/]+|\1'"$RET"'|' /etc/edge-node/node/confs/node-agent.yaml
+if [ ! -z "$FILE_RS_ROOT" ]; then
+   sed -i -E '/name: client-proxy/,/url:/ s|(http://[^/]+/)[^/]+|\1'"$FILE_RS_ROOT"'|' /etc/edge-node/node/confs/node-agent.yaml
 fi
 
 if ! grep -q "EnvironmentFile" "/lib/systemd/system/caddy.service"; then
     sed -i '/^\[Service\]$/a EnvironmentFile=\/etc\/environment' /lib/systemd/system/caddy.service
 fi
 
-db_get node-agent/auth.RSType
-if [ ! -z "$RET" ]; then
-    if [ "$RET" == "no-auth" ]; then
+if [ ! -z "$RS_TYPE" ]; then
+    if [ "$RS_TYPE" == "no-auth" ]; then
         sed -i -e '/header_up Authorization.*/d' /etc/caddy/pua.caddy
     fi
 fi

@@ -2,21 +2,17 @@
 
 set -e
 
-. /usr/share/debconf/confmodule
-
-db_get platform-manageability-agent/manageability.serviceURL
-if [ ! -z "$RET" ]; then
-    sed -i "s/^  serviceURL: '.*'/  serviceURL: '$RET'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
+# Source agent variables from file created by Installer
+if [ ! -z "$PLATFORM_MANAGEABILITY_URL" ]; then
+    sed -i "s/^  serviceURL: '.*'/  serviceURL: '$PLATFORM_MANAGEABILITY_URL'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
 fi
 
-db_get platform-manageability-agent/rpsAddress
-if [ ! -z "$RET" ]; then
-    sed -i "s/^rpsAddress: '.*'/rpsAddress: '$RET'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
+if [ ! -z "$RPS_ADDRESS" ]; then
+    sed -i "s/^rpsAddress: '.*'/rpsAddress: '$RPS_ADDRESS'/" /etc/edge-node/node/confs/platform-manageability-agent.yaml
 fi
 
-db_get platform-manageability-agent/metrics.enabled
-if [ ! -z "$RET" ]; then
-    sed -i -e '/^metrics:$/{n' -e 's/enabled:.*/enabled: '"$RET"'/' -e '}' /etc/edge-node/node/confs/platform-manageability-agent.yaml
+if [ ! -z "$NODE_METRICS_ENABLED" ]; then
+    sed -i -e '/^metrics:$/{n' -e 's/enabled:.*/enabled: '"$NODE_METRICS_ENABLED"'/' -e '}' /etc/edge-node/node/confs/platform-manageability-agent.yaml
 fi
 
 # Create system group if it doesn't exist
