@@ -12,7 +12,7 @@ packages:
     version: 1.9.1
     ociArtifact: edge-orch/en/deb/cluster-agent
   - name: hardware-discovery-agent
-    version: 1.9.2
+    version: 1.9.3
     ociArtifact: edge-orch/en/deb/hardware-discovery-agent
   - name: node-agent
     version: 1.10.3
