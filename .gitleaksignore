@@ -3,4 +3,4 @@
 
 # Test certificates - safe to ignore.
 platform-manageability-agent/test/_dummy-key.pem:private-key:1
-platform-manageability-agent/test/_dummy-cert.pem
+path:platform-manageability-agent/test/_dummy-cert.pem
