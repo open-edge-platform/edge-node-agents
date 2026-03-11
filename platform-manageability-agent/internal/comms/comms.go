@@ -74,7 +74,7 @@ type Client struct {
 	connectingStateStartTime *time.Time   // Track when AMT entered "connecting" state
 	previousState            string       // Track the previous AMT state to detect direct transitions
 	deactivationInProgress   bool         // Track if deactivation is currently in progress
-	isActivationInProgress   int32        // Track if activation is currently in progress (atomic)
+	isActivationInProgress   atomic.Bool  // Track if activation is currently in progress
 	mu                       sync.RWMutex // Protects concurrent access to the fields above
 }
 
@@ -139,7 +139,7 @@ func ConnectToDMManager(ctx context.Context, serviceAddr string, tlsConfig *tls.
 
 // IsActivationInProgress returns true if activation is currently in progress.
 func (cli *Client) IsActivationInProgress() bool {
-	return atomic.LoadInt32(&cli.isActivationInProgress) == 1
+	return cli.isActivationInProgress.Load()
 }
 func parseAMTInfoField(output []byte, parseKey string) (string, bool) {
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
@@ -290,8 +290,8 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		password := resp.ActionPassword
 
 		// Set flag to indicate activation is in progress
-		atomic.StoreInt32(&cli.isActivationInProgress, 1)
-		defer atomic.StoreInt32(&cli.isActivationInProgress, 0)
+		cli.isActivationInProgress.Store(true)
+		defer cli.isActivationInProgress.Store(false)
 
 		activationOutput, activationErr := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
 
