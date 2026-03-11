@@ -261,11 +261,7 @@ func main() {
 					if err := statusClient.SendStatusReady(ctx, AGENT_NAME); err != nil {
 						log.Errorf("Failed to send status ready: %v", err)
 					}
-					if activationInProgress {
-						log.Infoln("Status Ready (activation in progress)")
-					} else {
-						log.Infoln("Status Ready")
-					}
+					log.Infoln("Status Ready")
 				} else {
 					if err := statusClient.SendStatusNotReady(ctx, AGENT_NAME); err != nil {
 						log.Errorf("Failed to send status not ready: %v", err)
