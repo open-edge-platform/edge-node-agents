@@ -209,9 +209,11 @@ func main() {
 					atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix())
 					// FIXME: In future if we set dynamic status of desired_amt_state after onboarding.
 					// we need to revisit this logic.
-					// To report Agent healthy if AMT enabled
 					return nil
 				}
+				// Update timestamp to keep PMA healthy but return error
+				log.Errorf("Failed to retrieve activation details: %v", err)
+				atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix())
 				return fmt.Errorf("failed to retrieve activation details: %w", err)
 			}
 			atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix()) // To report Agent healthy if AMT enabled
@@ -246,11 +248,16 @@ func main() {
 			case <-statusTicker.C:
 				statusTicker.Stop()
 
+				// Check if activation is in progress
+				activationInProgress := dmMgrClient.IsActivationInProgress()
 				lastCheck := atomic.LoadInt64(&lastCheckTimestamp)
 				now := time.Now().Unix()
+
 				// To ensure the agent is not marked as not ready due to a functional delay, a
 				// check of 2x of interval is considered. This should prevent false negatives.
-				if now-lastCheck <= 2*compareInterval {
+				// report STATUS_READY when activation is in progress since
+				// activation can take 60+ seconds and should not cause the agent to be marked as not ready.
+				if activationInProgress || now-lastCheck <= 2*compareInterval {
 					if err := statusClient.SendStatusReady(ctx, AGENT_NAME); err != nil {
 						log.Errorf("Failed to send status ready: %v", err)
 					}
