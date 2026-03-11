@@ -12,6 +12,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -73,6 +74,7 @@ type Client struct {
 	connectingStateStartTime *time.Time   // Track when AMT entered "connecting" state
 	previousState            string       // Track the previous AMT state to detect direct transitions
 	deactivationInProgress   bool         // Track if deactivation is currently in progress
+	isActivationInProgress   int32        // Track if activation is currently in progress (atomic)
 	mu                       sync.RWMutex // Protects concurrent access to the fields above
 }
 
@@ -134,7 +136,10 @@ func ConnectToDMManager(ctx context.Context, serviceAddr string, tlsConfig *tls.
 		}
 	}
 }
-
+// IsActivationInProgress returns true if activation is currently in progress.
+func (cli *Client) IsActivationInProgress() bool {
+	return atomic.LoadInt32(&cli.isActivationInProgress) == 1
+}
 func parseAMTInfoField(output []byte, parseKey string) (string, bool) {
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 	for scanner.Scan() {
@@ -282,6 +287,11 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		// Execute activation command
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
 		password := resp.ActionPassword
+
+		// Set flag to indicate activation is in progress
+		atomic.StoreInt32(&cli.isActivationInProgress, 1)
+		defer atomic.StoreInt32(&cli.isActivationInProgress, 0)
+
 		activationOutput, activationErr := cli.Executor.ExecuteAMTActivate(rpsAddress, resp.ProfileName, password)
 
 		// handles intermittent activation failures
