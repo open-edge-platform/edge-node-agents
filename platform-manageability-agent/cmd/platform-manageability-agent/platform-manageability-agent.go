@@ -211,10 +211,10 @@ func main() {
 					// we need to revisit this logic.
 					return nil
 				}
-				// log the error but PMA is still healthy
+				// Update timestamp to keep PMA healthy but return error
 				log.Errorf("Failed to retrieve activation details: %v", err)
 				atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix())
-				return nil
+				return fmt.Errorf("failed to retrieve activation details: %w", err)
 			}
 			atomic.StoreInt64(&lastCheckTimestamp, time.Now().Unix()) // To report Agent healthy if AMT enabled
 			log.Infof("Successfully retrieved activation details for host %s", hostID)
