@@ -136,6 +136,7 @@ func ConnectToDMManager(ctx context.Context, serviceAddr string, tlsConfig *tls.
 		}
 	}
 }
+
 // IsActivationInProgress returns true if activation is currently in progress.
 func (cli *Client) IsActivationInProgress() bool {
 	return atomic.LoadInt32(&cli.isActivationInProgress) == 1
