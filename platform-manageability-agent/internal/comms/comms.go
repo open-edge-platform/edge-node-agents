@@ -12,6 +12,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -70,10 +71,10 @@ type Client struct {
 	DMMgrClient              pb.DeviceManagementClient
 	RetryInterval            time.Duration
 	Executor                 utils.CommandExecutor
-	connectingStateStartTime *time.Time   // Track when AMT entered "connecting" state
-	previousState            string       // Track the previous AMT state to detect direct transitions
-	deactivationInProgress   bool         // Track if deactivation is currently in progress
-	mu                       sync.RWMutex // Protects concurrent access to the fields above
+	connectingStateStartTime *time.Time   // Still needs mutex (pointer, not atomic-safe)
+	previousState            string       // Still needs mutex (string, not atomic-safe)
+	deactivationInProgress   atomic.Bool  // No mutex needed
+	mu                       sync.RWMutex // Protects connectingStateStartTime and previousState
 }
 
 func WithNetworkDialer(serviceAddr string) func(*Client) {
@@ -392,13 +393,13 @@ func (cli *Client) handleConnectingState(hostID, currentState, rpsAddress, passw
 func (cli *Client) triggerDeactivationAsync(hostID, rpsAddress, password string) pb.ActivationStatus {
 	cli.mu.Lock()
 	// Only trigger deactivation if not already in progress
-	if cli.deactivationInProgress {
+	if cli.deactivationInProgress.Load() {
 		cli.mu.Unlock()
 		log.Logger.Infof("Deactivation already in progress for host %s, skipping", hostID)
 		return pb.ActivationStatus_ACTIVATING
 	}
 	// Mark deactivation as in progress
-	cli.deactivationInProgress = true
+	cli.deactivationInProgress.Store(true)
 	// Reset connecting state timer but DON'T change previousState yet
 	cli.connectingStateStartTime = nil
 	cli.mu.Unlock()
@@ -417,7 +418,7 @@ func (cli *Client) performDeactivationAsync(hostID, rpsAddress, password string)
 	// Always reset deactivation in progress flag when done
 	defer func() {
 		cli.mu.Lock()
-		cli.deactivationInProgress = false
+		cli.deactivationInProgress.Store(false)
 		cli.mu.Unlock()
 	}()
 
@@ -554,15 +555,11 @@ func (cli *Client) GetPreviousState() string {
 }
 
 func (cli *Client) SetDeactivationInProgress(inProgress bool) {
-	cli.mu.Lock()
-	defer cli.mu.Unlock()
-	cli.deactivationInProgress = inProgress
+	cli.deactivationInProgress.Store(inProgress)
 }
 
 func (cli *Client) GetDeactivationInProgress() bool {
-	cli.mu.RLock()
-	defer cli.mu.RUnlock()
-	return cli.deactivationInProgress
+	return cli.deactivationInProgress.Load()
 }
 
 func (cli *Client) TriggerDeactivationAsync(hostID, rpsAddress, password string) pb.ActivationStatus {
