@@ -318,9 +318,7 @@ func Validate(cfg *Config) error {
 	if cfg.KeycloakURL == "" {
 		missing = append(missing, "KEYCLOAK_URL")
 	}
-	if cfg.CaCertPath == "" {
-		missing = append(missing, "CA_CERT")
-	}
+	// CA_CERT is optional - if not provided, system default CAs will be used
 	if cfg.MacAddr == "" {
 		missing = append(missing, "MAC")
 	}

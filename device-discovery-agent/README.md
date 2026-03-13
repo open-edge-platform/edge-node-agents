@@ -142,17 +142,17 @@ The Device Discovery Agent can be configured using multiple sources. Configurati
 The configuration file uses KEY=VALUE format (not YAML):
 
 ```bash
-# Service Endpoints
+# Service Endpoints (Required)
 OBM_SVC=localhost
 OBS_SVC=localhost
 OBM_PORT=50051
 KEYCLOAK_URL=keycloak.example.com
-CA_CERT=/etc/intel_edge_node/orch-ca-cert/orch-ca.pem
 
 # Auto-detection
 AUTO_DETECT=true
 
 # Optional Settings
+# CA_CERT=/etc/intel_edge_node/orch-ca-cert/orch-ca.pem  # Optional - uses system CAs if not provided
 DEBUG=false
 TIMEOUT=5m
 DISABLE_INTERACTIVE=false
@@ -194,13 +194,15 @@ The following flags are required unless specified in a configuration file:
 - `-obs-svc` - Onboarding stream service address (hostname or IP)
 - `-obm-port` - Onboarding manager port (default: 50051)
 - `-keycloak-url` - Keycloak authentication URL (hostname or IP)
-- `-ca-cert` - Path to CA certificate (required for TLS)
 - `-mac` - MAC address of the device (required unless using `-auto-detect`)
 
 ### Optional Flags
 
 **Configuration File:**
 - `-config` - Path to configuration file in KEY=VALUE format (e.g., `/etc/edge-node/node/confs/device-discovery-agent.env`)
+
+**TLS Configuration:**
+- `-ca-cert` - Path to CA certificate (optional, uses system default CAs if not provided)
 
 **Device Information (auto-detected if not provided):**
 - `-serial` - Serial number (auto-detected using dmidecode)
@@ -224,7 +226,17 @@ The following flags are required unless specified in a configuration file:
 ./device-discovery-agent -config /etc/edge-node/node/confs/device-discovery-agent.env
 ```
 
-#### 2. Auto-detect all system information
+#### 2. Auto-detect all system information (using system default CAs)
+```bash
+./device-discovery-agent \
+      -obm-svc obm.example.com \
+      -obs-svc obs.example.com \
+      -obm-port 50051 \
+      -keycloak-url keycloak.example.com \
+      -auto-detect
+```
+
+#### 3. Auto-detect with custom CA certificate
 ```bash
 ./device-discovery-agent \
       -obm-svc obm.example.com \
@@ -235,32 +247,30 @@ The following flags are required unless specified in a configuration file:
       -auto-detect
 ```
 
-#### 3. Specify MAC address, auto-detect other info
+#### 4. Specify MAC address, auto-detect other info
 ```bash
 ./device-discovery-agent \
       -obm-svc obm.example.com \
       -obs-svc obs.example.com \
       -obm-port 50051 \
       -keycloak-url keycloak.example.com \
-      -ca-cert /etc/intel_edge_node/orch-ca-cert/orch-ca.pem \
       -mac 00:11:22:33:44:55
 ```
 
-#### 4. Fully manual configuration
+#### 5. Fully manual configuration
 ```bash
 ./device-discovery-agent \
       -obm-svc obm.example.com \
       -obs-svc obs.example.com \
       -obm-port 50051 \
       -keycloak-url keycloak.example.com \
-      -ca-cert /etc/intel_edge_node/orch-ca-cert/orch-ca.pem \
       -mac 00:11:22:33:44:55 \
       -serial ABC123 \
       -uuid 12345678-1234-1234-1234-123456789012 \
       -ip 192.168.1.100
 ```
 
-#### 5. With debug mode and extra hosts
+#### 6. With debug mode and extra hosts
 ```bash
 ./device-discovery-agent \
       -obm-svc obm.example.com \
@@ -274,7 +284,7 @@ The following flags are required unless specified in a configuration file:
       -extra-hosts "registry.local:10.0.0.1,api.local:10.0.0.2"
 ```
 
-#### 6. Override config file values with CLI flags
+#### 7. Override config file values with CLI flags
 ```bash
 # Config file has OBM_SVC=localhost, but we override it
 ./device-discovery-agent \
