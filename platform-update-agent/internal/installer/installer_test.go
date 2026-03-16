@@ -285,6 +285,9 @@ func TestInbm_UpdatePackages_NonZeroUpgradedHappyPath(t *testing.T) {
 		return []byte{}, nil
 	})
 	installer := New(executor)
+	originalWait := WaitForInbdReady
+	WaitForInbdReady = func(ctx context.Context) error { return nil }
+	defer func() { WaitForInbdReady = originalWait }()
 
 	sut := installer.UpgradeInbmPackages
 	require.NoError(t, sut(context.TODO()))

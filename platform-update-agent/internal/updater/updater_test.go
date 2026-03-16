@@ -4,6 +4,7 @@
 package updater
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/aptmirror"
+	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/installer"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/metadata"
 	"github.com/open-edge-platform/edge-node-agents/platform-update-agent/internal/utils"
 	pb "github.com/open-edge-platform/infra-managers/maintenance/pkg/api/maintmgr/v1"
@@ -1024,6 +1026,10 @@ func stringCommand(cmd string, args ...string) *[]string {
 }
 
 func Test_inbmUpdater_update_shouldRunUpdateAndSetCorrectUpdateInMetadata(t *testing.T) {
+	originalWait := installer.WaitForInbdReady
+	installer.WaitForInbdReady = func(ctx context.Context) error { return nil }
+	defer func() { installer.WaitForInbdReady = originalWait }()
+
 	metadataController := metadata.NewController()
 	executor := utils.NewExecutor(func(name string, args ...string) *exec.Cmd {
 		return exec.Command("true")
@@ -1064,6 +1070,10 @@ func Test_inbmUpdater_update_shouldReturnErrorIfUnableToAccessMetadataFile(t *te
 }
 
 func Test_inbmUpdater_update_shouldRunEvenForKernelOnlyUpdate(t *testing.T) {
+	originalWait := installer.WaitForInbdReady
+	installer.WaitForInbdReady = func(ctx context.Context) error { return nil }
+	defer func() { installer.WaitForInbdReady = originalWait }()
+
 	// Set up a temporary metadata file
 	file, err := os.CreateTemp("/tmp", "metadata-")
 	assert.NoError(t, err)

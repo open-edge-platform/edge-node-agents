@@ -120,7 +120,6 @@ func fileExists(f string) (bool, error) {
 func fileHasContent() (bool, error) {
 	info, err := os.Stat(MetaPath)
 	if err != nil {
-		log.Fatal(err)
 		return false, err
 	}
 
