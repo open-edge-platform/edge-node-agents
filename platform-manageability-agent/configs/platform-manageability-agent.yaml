@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 ---
@@ -11,6 +11,8 @@ manageability:
   heartbeatInterval: 10s
 rpsAddress: 'rps.test.edgeorch.intel.com'
 statusEndpoint: 'unix:///run/node-agent/node-agent.sock'
-metricsEndpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
-metricsInterval: 10s
+metrics:
+  enabled: true
+  endpoint: 'unix:///run/platform-observability-agent/platform-observability-agent.sock'
+  interval: 10s
 accessTokenPath: /etc/intel_edge_node/tokens/platform-manageability-agent/access_token

@@ -13,6 +13,21 @@ Type: string
 Default: 10s
 Description: Onboarding service Heartbeat interval:
 
+Template: node-agent/status.serviceClients
+Type: string
+Default: hardware-discovery-agent,cluster-agent,platform-manageability-agent,platform-update-agent,platform-telemetry-agent
+Description: List of agents to provide status reports:
+
+Template: node-agent/status.outboundClients
+Type: string
+Default: platform-observability-collector,platform-observability-health-check,platform-observability-logging,platform-observability-metrics
+Description: List of services to perform status checks on:
+
+Template: node-agent/metrics.enabled
+Type: string
+Default: true
+Description: Metrics reporting enabled:
+
 Template: node-agent/auth.accessTokenURL
 Type: string
 Default: localhost:443
@@ -22,6 +37,11 @@ Template: node-agent/auth.rsTokenURL
 Type: string
 Default: localhost:443
 Description: Release service token URL:
+
+Template: node-agent/auth.tokenClients
+Type: string
+Default: node-agent,hd-agent,cluster-agent,platform-update-agent,platform-observability-agent,platform-telemetry-agent,prometheus,connect-agent,attestation-manager,platform-manageability-agent
+Description: List of services requiring token management:
 
 Template: node-agent/proxy.aptSourceURL
 Type: string
