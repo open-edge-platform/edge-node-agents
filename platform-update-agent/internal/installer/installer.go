@@ -23,6 +23,9 @@ var log = logger.Logger()
 const (
 	_ERR_PATH_DOES_NOT_CONTAIN_VALUE = "The following element path doesn't contain the value to remove"
 	_ERR_CANNOT_SET_METAFILE         = "cannot write metafile"
+
+	inbdReadyPollInterval = 2 * time.Second
+	inbdReadyTimeout      = 2 * time.Minute
 )
 
 var (
@@ -118,6 +121,14 @@ func (i *Installer) UpgradeInbmPackages(ctx context.Context) error {
 		if err := i.modifyConfiguration(ctx); err != nil {
 			return fmt.Errorf("failed to modify INBC configuration - %v", err)
 		}
+
+		// Wait for inbd daemon to be fully ready after restart.
+		// After apt upgrade + systemctl restart, inbd needs time to start up.
+		// Without this wait, subsequent inbc commands (e.g. inbc sota) will fail with
+		// "connection refused" on /var/run/inbd.sock.
+		if err := WaitForInbdReady(ctx); err != nil {
+			return fmt.Errorf("inbd service not active after upgrade - %v", err)
+		}
 	}
 	return nil
 }
@@ -180,6 +191,29 @@ func (i *Installer) removeDocker(ctx context.Context) (done bool, err error) {
 func fileOrDirExists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
+}
+
+// WaitForInbdReady polls systemctl until the inbd service is reported active,
+// indicating that the daemon has fully restarted and is ready to accept inbc commands.
+// We use systemctl instead of dialing the socket directly because the inbd socket
+// is owned by root:inbc (0660) and PUA does not run in the inbc group.
+// Exported as a variable so tests can override it.
+var WaitForInbdReady = func(ctx context.Context) error {
+	log.Info("Waiting for inbd service to become active")
+	return wait.PollUntilContextTimeout(ctx, inbdReadyPollInterval, inbdReadyTimeout, true,
+		func(ctx context.Context) (bool, error) {
+			out, err := exec.CommandContext(ctx, "systemctl", "is-active", "inbd").Output()
+			if err != nil {
+				log.Debugf("inbd service not active yet: %v", err)
+				return false, nil
+			}
+			if strings.TrimSpace(string(out)) == "active" {
+				log.Info("inbd service is active")
+				return true, nil
+			}
+			return false, nil
+		},
+	)
 }
 
 func (i *Installer) InstallAdditionalPackages(packages string) error {
