@@ -6,23 +6,13 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
-<<<<<<< vpro-support-reporting
-	github.com/open-edge-platform/edge-node-agents/common v1.10.0
-	github.com/open-edge-platform/infra-managers/host v1.25.3-0.20260224153806-441992a7dc4b
-	github.com/safchain/ethtool v0.7.0
-	github.com/sirupsen/logrus v1.9.4
-	github.com/stretchr/testify v1.11.1
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0
-	google.golang.org/grpc v1.80.0-dev
-=======
 	github.com/open-edge-platform/edge-node-agents/common v1.10.1
-	github.com/open-edge-platform/infra-managers/host v1.25.4
+	github.com/open-edge-platform/infra-managers/host v1.25.5-0.20260318161218-8db11f57899b
 	github.com/safchain/ethtool v0.7.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.67.0
 	google.golang.org/grpc v1.81.0-dev
->>>>>>> main
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -32,13 +22,8 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-<<<<<<< vpro-support-reporting
-	github.com/ebitengine/purego v0.9.1 // indirect
-	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
-=======
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
->>>>>>> main
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
