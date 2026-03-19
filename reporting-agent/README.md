@@ -29,7 +29,7 @@ To develop Reporting Agent, the following prerequisites are required:
 - [Go programming language](https://go.dev)
 - [Golangci-lint](https://github.com/golangci/golangci-lint)
 
-The required Go version for the agents is outlined [here](https://github.com/open-edge-platform/edge-node-agents/blob/main/reporting-agent/go.mod).
+The required Go version for the agents is outlined [in the go.mod file](https://github.com/open-edge-platform/edge-node-agents/blob/main/reporting-agent/go.mod).
 
 ## Building the Reporting Agent
 
