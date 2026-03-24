@@ -78,10 +78,12 @@ profile dda_sudo {
   capability sys_resource,
 
   /etc/locale.conf r,
+  /etc/security/limits.d/* r,
   /etc/sudoers r,
   /etc/sudoers.d/* r,
   /proc/*/loginuid r,
   /proc/sys/kernel/seccomp/actions_avail r,
+  /run/systemd/resolve/stub-resolv.conf r,
   /usr/bin/sudo mr,
   /usr/libexec/sudo/libsudo_util.so.* mr,
   /usr/sbin/dmidecode rPx -> dda_dmidecode,
@@ -115,8 +117,6 @@ profile dda_sudo {
 
 profile dda_dmidecode {
   include <abstractions/base>
-
-  capability sys_rawio,
 
   /usr/sbin/dmidecode mr,
   owner /dev/mem r,
