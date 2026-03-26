@@ -146,7 +146,8 @@ func (c *Client) OnboardWithRetry(ctx context.Context) error {
 		logger.Logger.Warnf("There was an error in updating the edge-node details with the onboarding manager: %v", err)
 		if retries < maxRetries-1 {
 			logger.Logger.Infof("Retrying update... attempt %d of %d", retries+2, maxRetries) // retries+2 to show next attempt
-			time.Sleep(retryDelay + time.Duration(rand.Intn(1000))*time.Millisecond)          // slight random jitter
+			// slight random jitter
+			time.Sleep(retryDelay + time.Duration(rand.Intn(1000))*time.Millisecond)
 		}
 	}
 
