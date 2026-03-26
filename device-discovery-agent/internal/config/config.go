@@ -297,7 +297,7 @@ func ApplyValue(cfg *Config, key, value string) error {
 		cfg.UseKernelArgs = useKernelArgs
 	default:
 		// Unknown key - skip it with a warning
-		fmt.Fprintf(os.Stderr, "Warning: unknown config key '%s' (skipping)\n", key)
+		logger.Logger.Warnf("Unknown config key '%s' (skipping)", key)
 	}
 
 	return nil
