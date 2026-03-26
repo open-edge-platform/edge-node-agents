@@ -15,7 +15,6 @@ RemainAfterExit=no
 TimeoutStartSec=10m
 
 # Security settings
-NoNewPrivileges=true
 PrivateTmp=true
 
 # Resource limits

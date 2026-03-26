@@ -13,7 +13,6 @@ include <tunables/global>
   capability dac_read_search,
   capability net_admin,
   capability sys_admin,
-  capability sys_rawio,
   capability sys_resource,
 
   network inet dgram,
@@ -54,7 +53,7 @@ include <tunables/global>
   /tmp/** rw,
   /usr/bin/ip rix,
   /usr/bin/lshw rix,
-  /usr/sbin/dmidecode rix,
+  /usr/bin/sudo rPx -> dda_sudo,
   /usr/sbin/ip rix,
   /usr/sbin/lshw rix,
   /usr/share/ca-certificates/** r,
@@ -67,5 +66,65 @@ include <tunables/global>
   owner /etc/intel_edge_node/client-credentials/project_id rw,
   owner /proc/*/mountinfo r,
   owner /tmp/** rw,
+
+}
+
+profile dda_sudo {
+  include <abstractions/base>
+  include <abstractions/consoles>
+  include <abstractions/nameservice>
+
+  capability audit_write,
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
+
+  /etc/locale.conf r,
+  /etc/security/limits.d/* r,
+  /etc/sudoers r,
+  /etc/sudoers.d/* r,
+  /proc/*/loginuid r,
+  /proc/sys/kernel/seccomp/actions_avail r,
+  /run/systemd/resolve/stub-resolv.conf r,
+  /usr/bin/sudo mr,
+  /usr/libexec/sudo/libsudo_util.so.* mr,
+  /usr/libexec/sudo/audit_json.so mr,
+  /usr/sbin/dmidecode rPx -> dda_dmidecode,
+  owner /etc/default/locale r,
+  owner /etc/environment r,
+  owner /etc/group r,
+  owner /etc/host.conf r,
+  owner /etc/hosts r,
+  owner /etc/ld.so.cache r,
+  owner /etc/locale.alias r,
+  owner /etc/login.defs r,
+  owner /etc/nsswitch.conf r,
+  owner /etc/pam.d/* r,
+  owner /etc/passwd r,
+  owner /etc/security/capability.conf r,
+  owner /etc/security/limits.conf r,
+  owner /etc/security/limits.d/ r,
+  owner /etc/security/pam_env.conf r,
+  owner /etc/shadow r,
+  owner /etc/sudo.conf r,
+  owner /etc/sudoers.d/ r,
+  owner /proc/*/cgroup r,
+  owner /proc/*/limits r,
+  owner /proc/*/mountinfo r,
+  owner /proc/*/stat r,
+  owner /proc/filesystems r,
+  owner /proc/sys/kernel/ngroups_max r,
+  owner /usr/libexec/sudo/sudoers.so mr,
+
+}
+
+profile dda_dmidecode {
+  include <abstractions/base>
+
+  /usr/sbin/dmidecode mr,
+  owner /dev/mem r,
+  owner /sys/firmware/dmi/tables/DMI r,
+  owner /sys/firmware/dmi/tables/smbios_entry_point r,
+  owner /sys/firmware/efi/systab r,
 
 }
