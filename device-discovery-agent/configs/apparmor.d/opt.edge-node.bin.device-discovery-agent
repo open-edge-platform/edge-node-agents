@@ -75,6 +75,8 @@ profile dda_sudo {
   include <abstractions/nameservice>
 
   capability audit_write,
+  capability setgid,
+  capability setuid,
   capability sys_resource,
 
   /etc/locale.conf r,
@@ -86,6 +88,7 @@ profile dda_sudo {
   /run/systemd/resolve/stub-resolv.conf r,
   /usr/bin/sudo mr,
   /usr/libexec/sudo/libsudo_util.so.* mr,
+  /usr/libexec/sudo/audit_json.so mr,
   /usr/sbin/dmidecode rPx -> dda_dmidecode,
   owner /etc/default/locale r,
   owner /etc/environment r,
