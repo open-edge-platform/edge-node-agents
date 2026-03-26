@@ -44,18 +44,29 @@ func fetchAccessToken(keycloakURL string, clientID string, clientSecret string, 
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Load the CA certificate
-	caCertPool, err := loadCACertPool(caCertPath)
-	if err != nil {
-		return "", fmt.Errorf("error loading CA certificate: %v", err)
+	// Configure TLS
+	var tlsConfig *tls.Config
+	if caCertPath != "" {
+		// Load the CA certificate from provided path
+		caCertPool, err := loadCACertPool(caCertPath)
+		if err != nil {
+			return "", fmt.Errorf("error loading CA certificate: %v", err)
+		}
+		tlsConfig = &tls.Config{
+			RootCAs:    caCertPool,
+			MinVersion: tls.VersionTLS12,
+		}
+	} else {
+		// Use system default CA certificates
+		tlsConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
 	}
 
-	// Create an HTTP client with the CA certificate
+	// Create an HTTP client with TLS configuration
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs: caCertPool,
-			},
+			TLSClientConfig: tlsConfig,
 		},
 	}
 
@@ -92,10 +103,23 @@ func fetchReleaseToken(releaseServerURL string, accessToken string, caCertPath s
 		return "", fmt.Errorf("access token is required")
 	}
 
-	// Load CA certificate
-	caCertPool, err := loadCACertPool(caCertPath)
-	if err != nil {
-		return "", fmt.Errorf("error loading CA certificate: %v", err)
+	// Configure TLS
+	var tlsConfig *tls.Config
+	if caCertPath != "" {
+		// Load CA certificate from provided path
+		caCertPool, err := loadCACertPool(caCertPath)
+		if err != nil {
+			return "", fmt.Errorf("error loading CA certificate: %v", err)
+		}
+		tlsConfig = &tls.Config{
+			RootCAs:    caCertPool,
+			MinVersion: tls.VersionTLS12,
+		}
+	} else {
+		// Use system default CA certificates
+		tlsConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
 	}
 
 	// Construct the HTTP request
@@ -107,12 +131,10 @@ func fetchReleaseToken(releaseServerURL string, accessToken string, caCertPath s
 	// Add the authorization header with the bearer token
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	// Create an HTTP client with CA certificate
+	// Create an HTTP client with TLS configuration
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs: caCertPool,
-			},
+			TLSClientConfig: tlsConfig,
 		},
 	}
 

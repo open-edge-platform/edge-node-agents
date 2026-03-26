@@ -419,32 +419,20 @@ func TestValidate_MissingCriticalFields(t *testing.T) {
 		{
 			name: "missing KeycloakURL",
 			cfg: &Config{
-				ObmSvc:     "obm.example.com",
-				ObsSvc:     "obs.example.com",
-				ObmPort:    50051,
-				CaCertPath: "/path/to/cert",
+				ObmSvc:  "obm.example.com",
+				ObsSvc:  "obs.example.com",
+				ObmPort: 50051,
 			},
 			wantErr: true,
 		},
 		{
-			name: "missing CaCertPath",
+			name: "missing non-critical fields (Serial, UUID, IP, MAC, CaCertPath)",
 			cfg: &Config{
 				ObmSvc:      "obm.example.com",
 				ObsSvc:      "obs.example.com",
 				ObmPort:     50051,
 				KeycloakURL: "keycloak.example.com",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing non-critical fields (Serial, UUID, IP, MAC)",
-			cfg: &Config{
-				ObmSvc:      "obm.example.com",
-				ObsSvc:      "obs.example.com",
-				ObmPort:     50051,
-				KeycloakURL: "keycloak.example.com",
-				CaCertPath:  "/path/to/cert",
-				// SerialNumber, UUID, IPAddress, MacAddr can be auto-detected
+				// SerialNumber, UUID, IPAddress, MacAddr, CaCertPath can be auto-detected or use system defaults
 			},
 			wantErr: false,
 		},
