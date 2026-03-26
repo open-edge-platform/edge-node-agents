@@ -46,7 +46,7 @@ include <tunables/global>
   /etc/security/capability.conf r,
   /etc/security/limits.conf r,
   /etc/security/limits.d/ r,
-  /etc/security/limits.d/10-gamemode.conf r,
+  /etc/security/limits.d/* r,
   /etc/security/pam_env.conf r,
   /etc/shadow r,
   /etc/sudo.conf r,
