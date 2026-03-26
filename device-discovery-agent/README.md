@@ -133,9 +133,12 @@ The Device Discovery Agent can be configured using multiple sources. Configurati
 
 ### Configuration Sources
 
-1. **Configuration File** (KEY=VALUE format): `/etc/edge-node/node/confs/device-discovery-agent.env`
+Sources are listed from lowest to highest priority:
+
+1. **Default values** - Built-in defaults hardcoded in the application
 2. **Kernel Arguments**: Values from `/proc/cmdline` (if `-use-kernel-args` flag is enabled)
-3. **CLI Flags**: Command-line arguments
+3. **Configuration File** (KEY=VALUE format): `/etc/edge-node/node/confs/device-discovery-agent.env`
+4. **CLI Flags** (highest priority): Command-line arguments
 
 ### Configuration File Format
 
@@ -293,7 +296,7 @@ The following flags are required unless specified in a configuration file:
       -debug
 ```
 
-#### 7. Using kernel arguments with configuration file
+#### 8. Using kernel arguments with configuration file
 ```bash
 # Reads kernel args first, then config file (which overrides kernel args),
 # then CLI flags (which override everything)
