@@ -18,7 +18,7 @@ import (
 
 const (
 	TokenFolder             = "/dev/shm" // #nosec G101 -- This is a path, not a credential
-	EnvConfigPath           = "/etc/device-discovery/validated-config.env"
+	EnvConfigPath           = "/etc/edge-node/node/confs/validated-config.env"
 	ExtraHostsFile          = "/etc/hosts"
 	AccessTokenFile         = TokenFolder + "/idp_access_token"
 	ReleaseTokenFile        = TokenFolder + "/release_token"
@@ -320,9 +320,7 @@ func Validate(cfg *Config) error {
 	if cfg.KeycloakURL == "" {
 		missing = append(missing, "KEYCLOAK_URL")
 	}
-	if cfg.CaCertPath == "" {
-		missing = append(missing, "CA_CERT")
-	}
+	// CA_CERT is optional - if not provided, system default CAs will be used
 	if cfg.MacAddr == "" {
 		missing = append(missing, "MAC")
 	}

@@ -18,25 +18,27 @@ import (
 // GetSerialNumber retrieves the serial number of the machine.
 func GetSerialNumber() (string, error) {
 	cmd := exec.Command("sudo", "/usr/sbin/dmidecode", "-s", "system-serial-number")
-	var out bytes.Buffer
-	cmd.Stdout = &out
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("failed to get serial number: %w", err)
+		return "", fmt.Errorf("failed to get serial number: %w, stderr: %s", err, strings.TrimSpace(errBuf.String()))
 	}
-	return strings.TrimSpace(out.String()), nil
+	return strings.TrimSpace(outBuf.String()), nil
 }
 
 // GetUUID retrieves the UUID of the machine.
 func GetUUID() (string, error) {
 	cmd := exec.Command("sudo", "/usr/sbin/dmidecode", "-s", "system-uuid")
-	var out bytes.Buffer
-	cmd.Stdout = &out
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("failed to get UUID: %w", err)
+		return "", fmt.Errorf("failed to get UUID: %w, stderr: %s", err, strings.TrimSpace(errBuf.String()))
 	}
-	return strings.TrimSpace(out.String()), nil
+	return strings.TrimSpace(outBuf.String()), nil
 }
 
 // GetIPAddress retrieves the IP address associated with a given MAC address.

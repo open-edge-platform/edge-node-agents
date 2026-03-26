@@ -19,7 +19,7 @@ import (
 type CommandExecutor interface {
 	ExecuteAMTInfo() ([]byte, error)
 	ExecuteAMTActivate(rpsAddress, profileName, password string) ([]byte, error)
-	ExecuteAMTDeactivate() ([]byte, error)
+	ExecuteAMTDeactivate(rpsAddress, password string) ([]byte, error)
 }
 
 type RealCommandExecutor struct{}
@@ -83,12 +83,13 @@ func (r *RealCommandExecutor) ExecuteAMTActivate(rpsAddress, profileName, passwo
 }
 
 // ExecuteAMTDeactivate executes the AMT deactivate command and verifies success.
-func (r *RealCommandExecutor) ExecuteAMTDeactivate() ([]byte, error) {
+func (r *RealCommandExecutor) ExecuteAMTDeactivate(rpsAddress, password string) ([]byte, error) {
 	// Check if agent is being run with the DM manager mock and skip command if so
 	_, testCheck := os.LookupEnv("PMA_BINARY_PATH")
 	if !testCheck {
 		// Execute deactivation command
-		cmd := exec.Command("sudo", "/usr/bin/rpc", "deactivate", "-local")
+		cmd := exec.Command("sudo", "-E", "/usr/bin/rpc", "deactivate", "-u", rpsAddress, "-n")
+		cmd.Env = append(cmd.Environ(), fmt.Sprintf("AMT_PASSWORD=%s", password))
 		output, err := cmd.CombinedOutput()
 		outputStr := string(output)
 		log.Logger.Infof("AMT deactivate command output: %s", outputStr)
