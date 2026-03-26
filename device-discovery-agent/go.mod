@@ -7,6 +7,7 @@ go 1.25.7
 
 require (
 	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.39.10
+	github.com/sirupsen/logrus v1.9.4
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/grpc v1.81.0-dev
 )

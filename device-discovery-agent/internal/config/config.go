@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"device-discovery/internal/logger"
 )
 
 const (
@@ -44,7 +46,7 @@ func UpdateHosts(extraHosts string) error {
 			return fmt.Errorf("error updating /etc/hosts: %w", err)
 		}
 
-		fmt.Println("Adding extra host mappings completed")
+		logger.Logger.Info("Adding extra host mappings completed")
 	}
 	return nil
 }
@@ -207,7 +209,7 @@ func LoadFromKernelArgs(cfg *Config) error {
 	// Map worker_id from Tinkerbell to MAC address
 	if kernelCfg.WorkerID != "" {
 		cfg.MacAddr = kernelCfg.WorkerID
-		fmt.Printf("Mapped worker_id from kernel args to MAC address: %s\n", kernelCfg.WorkerID)
+		logger.Logger.Infof("Mapped worker_id from kernel args to MAC address: %s", kernelCfg.WorkerID)
 	}
 
 	// DEBUG flag from kernel args
@@ -216,7 +218,7 @@ func LoadFromKernelArgs(cfg *Config) error {
 		if err == nil {
 			cfg.Debug = debug
 			if debug {
-				fmt.Println("Debug mode enabled via kernel arguments")
+				logger.Logger.Info("Debug mode enabled via kernel arguments")
 			}
 		}
 	}
@@ -226,7 +228,7 @@ func LoadFromKernelArgs(cfg *Config) error {
 		timeout, err := time.ParseDuration(kernelCfg.Timeout)
 		if err == nil {
 			cfg.Timeout = timeout
-			fmt.Printf("Timeout set from kernel args: %v\n", cfg.Timeout)
+			logger.Logger.Infof("Timeout set from kernel args: %v", cfg.Timeout)
 		}
 	}
 
@@ -295,7 +297,7 @@ func ApplyValue(cfg *Config, key, value string) error {
 		cfg.UseKernelArgs = useKernelArgs
 	default:
 		// Unknown key - skip it with a warning
-		fmt.Fprintf(os.Stderr, "Warning: unknown config key '%s' (skipping)\n", key)
+		logger.Logger.Warnf("Unknown config key '%s' (skipping)", key)
 	}
 
 	return nil
@@ -388,6 +390,6 @@ func WriteToFile(cfg *Config) error {
 		fmt.Fprintf(file, "TIMEOUT=%s\n", cfg.Timeout.String())
 	}
 
-	fmt.Printf("Configuration written to: %s\n", EnvConfigPath)
+	logger.Logger.Infof("Configuration written to: %s", EnvConfigPath)
 	return nil
 }
