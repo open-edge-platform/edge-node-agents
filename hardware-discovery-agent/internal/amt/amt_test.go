@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: (C) 2026 Intel Corporation
-//
 // SPDX-License-Identifier: Apache-2.0
 
-package device_test
+package amt_test
 
 import (
 	"fmt"
@@ -14,11 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/device"
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/amt"
 )
 
 var testVersion = "16.1.27"
-var testHostname = "testhost"
+var testDeviceName = "testhost"
 var testOperationalState = "enabled"
 var testBuildNumber = "2176"
 var testSku = "16392"
@@ -30,13 +29,13 @@ var testNetworkStatus = "direct"
 var testRemoteStatus = "not connected"
 var testRemoteTrigger = "user initiated"
 
-func getExpectedResult(version string, hostname string, opState string, buildNum string, sku string,
+func getExpectedResult(version string, deviceName string, opState string, buildNum string, sku string,
 	features string, uuid string, controlMode string, dnsSuffix string, networkStatus string,
-	remoteStatus string, remoteTrigger string) *device.DeviceInfo {
+	remoteStatus string, remoteTrigger string) *amt.AmtInfo {
 	if networkStatus == "" && remoteStatus == "" && remoteTrigger == "" {
-		return &device.DeviceInfo{
+		return &amt.AmtInfo{
 			Version:          version,
-			Hostname:         hostname,
+			DeviceName:       deviceName,
 			OperationalState: opState,
 			BuildNumber:      buildNum,
 			Sku:              sku,
@@ -46,9 +45,9 @@ func getExpectedResult(version string, hostname string, opState string, buildNum
 			DNSSuffix:        dnsSuffix,
 		}
 	} else {
-		return &device.DeviceInfo{
+		return &amt.AmtInfo{
 			Version:          version,
-			Hostname:         hostname,
+			DeviceName:       deviceName,
 			OperationalState: opState,
 			BuildNumber:      buildNum,
 			Sku:              sku,
@@ -56,7 +55,7 @@ func getExpectedResult(version string, hostname string, opState string, buildNum
 			Uuid:             uuid,
 			ControlMode:      controlMode,
 			DNSSuffix:        dnsSuffix,
-			RAS: &device.RASInfo{
+			RAS: &amt.RASInfo{
 				NetworkStatus: networkStatus,
 				RemoteStatus:  remoteStatus,
 				RemoteTrigger: remoteTrigger,
@@ -66,131 +65,131 @@ func getExpectedResult(version string, hostname string, opState string, buildNum
 	}
 }
 
-func Test_GetDeviceInfo(t *testing.T) {
-	res, err := device.GetDeviceInfo(testSuccess)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku,
+func Test_GetAmtInfo(t *testing.T) {
+	res, err := amt.GetAmtInfo(testSuccess)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku,
 		testFeatures, testUuid, testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoFailed(t *testing.T) {
-	res, err := device.GetDeviceInfo(testFailure)
+func Test_GetAmtInfoFailed(t *testing.T) {
+	res, err := amt.GetAmtInfo(testFailure)
 	assert.Error(t, err)
-	assert.Equal(t, &device.DeviceInfo{}, res)
+	assert.Equal(t, &amt.AmtInfo{}, res)
 }
 
-func Test_GetDeviceInfoSystemUuidFailed(t *testing.T) {
-	res, err := device.GetDeviceInfo(testFailureSystemUuid)
+func Test_GetAmtInfoSystemUuidFailed(t *testing.T) {
+	res, err := amt.GetAmtInfo(testFailureSystemUuid)
 	assert.Error(t, err)
-	assert.Equal(t, &device.DeviceInfo{}, res)
+	assert.Equal(t, &amt.AmtInfo{}, res)
 }
 
-func Test_GetDeviceInfoFailedUnmarshal(t *testing.T) {
-	res, err := device.GetDeviceInfo(testFailureUnmarshal)
+func Test_GetAmtInfoFailedUnmarshal(t *testing.T) {
+	res, err := amt.GetAmtInfo(testFailureUnmarshal)
 	assert.Error(t, err)
-	assert.Equal(t, &device.DeviceInfo{}, res)
+	assert.Equal(t, &amt.AmtInfo{}, res)
 }
 
-func Test_GetDeviceInfoMissingVersionNumber(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingVersionNumber)
-	expected := getExpectedResult("", testHostname, testOperationalState, testBuildNumber, testSku, testFeatures,
+func Test_GetAmtInfoMissingVersionNumber(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingVersionNumber)
+	expected := getExpectedResult("", testDeviceName, testOperationalState, testBuildNumber, testSku, testFeatures,
 		testUuid, testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingHostname(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingHostname)
+func Test_GetAmtInfoMissingDeviceName(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingDeviceName)
 	expected := getExpectedResult(testVersion, "", testOperationalState, testBuildNumber, testSku, testFeatures,
 		testUuid, testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingOperationalState(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingOperationalState)
-	expected := getExpectedResult(testVersion, testHostname, "", testBuildNumber, testSku, testFeatures, testUuid,
+func Test_GetAmtInfoMissingOperationalState(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingOperationalState)
+	expected := getExpectedResult(testVersion, testDeviceName, "", testBuildNumber, testSku, testFeatures, testUuid,
 		testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingBuildNumber(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingBuildNumber)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, "", testSku, testFeatures, testUuid,
+func Test_GetAmtInfoMissingBuildNumber(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingBuildNumber)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, "", testSku, testFeatures, testUuid,
 		testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingSku(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingSku)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, "", testFeatures,
+func Test_GetAmtInfoMissingSku(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingSku)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, "", testFeatures,
 		testUuid, testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingFeatures(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingFeatures)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku, "",
+func Test_GetAmtInfoMissingFeatures(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingFeatures)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku, "",
 		testUuid, testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingUuid(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingUuid)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku,
+func Test_GetAmtInfoMissingUuid(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingUuid)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku,
 		testFeatures, testUuid, testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingControlMode(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingControlMode)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku,
+func Test_GetAmtInfoMissingControlMode(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingControlMode)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku,
 		testFeatures, testUuid, "", testDnsSuffix, testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingDnsSuffix(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingDnsSuffix)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku,
+func Test_GetAmtInfoMissingDnsSuffix(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingDnsSuffix)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku,
 		testFeatures, testUuid, testControlMode, "", testNetworkStatus, testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingRasInfo(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingRasInfo)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku,
+func Test_GetAmtInfoMissingRasInfo(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingRasInfo)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku,
 		testFeatures, testUuid, testControlMode, testDnsSuffix, "", "", "")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingNetworkStatus(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingNetworkStatus)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku,
+func Test_GetAmtInfoMissingNetworkStatus(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingNetworkStatus)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku,
 		testFeatures, testUuid, testControlMode, testDnsSuffix, "", testRemoteStatus, testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingRemoteStatus(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingRemoteStatus)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku,
+func Test_GetAmtInfoMissingRemoteStatus(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingRemoteStatus)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku,
 		testFeatures, testUuid, testControlMode, testDnsSuffix, testNetworkStatus, "", testRemoteTrigger)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
 
-func Test_GetDeviceInfoMissingRemoteTrigger(t *testing.T) {
-	res, err := device.GetDeviceInfo(testMissingRemoteTrigger)
-	expected := getExpectedResult(testVersion, testHostname, testOperationalState, testBuildNumber, testSku,
+func Test_GetAmtInfoMissingRemoteTrigger(t *testing.T) {
+	res, err := amt.GetAmtInfo(testMissingRemoteTrigger)
+	expected := getExpectedResult(testVersion, testDeviceName, testOperationalState, testBuildNumber, testSku,
 		testFeatures, testUuid, testControlMode, testDnsSuffix, testNetworkStatus, testRemoteStatus, "")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
@@ -228,8 +227,8 @@ func testMissingVersionNumber(command string, args ...string) *exec.Cmd {
 	return testCmd("TestMissingVersionNumber", command, args...)
 }
 
-func testMissingHostname(command string, args ...string) *exec.Cmd {
-	return testCmd("TestMissingHostname", command, args...)
+func testMissingDeviceName(command string, args ...string) *exec.Cmd {
+	return testCmd("TestMissingDeviceName", command, args...)
 }
 
 func testMissingOperationalState(command string, args ...string) *exec.Cmd {
@@ -316,11 +315,11 @@ func TestMissingVersionNumber(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestMissingHostname(t *testing.T) {
+func TestMissingDeviceName(t *testing.T) {
 	if os.Getenv("GO_TEST_PROCESS") != "1" {
 		return
 	}
-	testData, err := os.ReadFile("../../test/data/mock_amtinfo_missinghostname.json")
+	testData, err := os.ReadFile("../../test/data/mock_amtinfo_missingdevicename.json")
 	require.NoError(t, err)
 	fmt.Fprintf(os.Stdout, "%v", string(testData))
 	os.Exit(0)

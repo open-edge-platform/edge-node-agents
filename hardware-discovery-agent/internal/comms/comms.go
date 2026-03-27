@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/amt"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/cpu"
-	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/device"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/disk"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/gpu"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/logger"
@@ -128,7 +128,7 @@ func ConnectToEdgeInfrastructureManager(serverAddr string, tlsConfig *tls.Config
 
 func parseSystemInfo(serialNumber string, productName string, bmcAddr string, osInfo *system.Os, biosInfo *system.Bios, cpu *cpu.CPU,
 	storage []*disk.Disk, gpu []*gpu.Gpu, mem uint64, networks []*network.Network, bmType proto.BmInfo_BmType, usbInfo []*usb.Usb,
-	device *device.DeviceInfo) *proto.SystemInfo {
+	amt *amt.AmtInfo) *proto.SystemInfo {
 
 	gpuList := []*proto.SystemGPU{}
 	for _, gpuDetails := range gpu {
@@ -277,37 +277,37 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 		}
 	}
 
-	deviceInfo := proto.DeviceInfo{}
-	if device != nil {
-		if device.RAS != nil {
-			deviceInfo = proto.DeviceInfo{
-				Version:          device.Version,
-				Hostname:         device.Hostname,
-				OperationalState: device.OperationalState,
-				BuildNumber:      device.BuildNumber,
-				Sku:              device.Sku,
-				Features:         device.Features,
-				DeviceGuid:       device.Uuid,
-				ControlMode:      device.ControlMode,
-				DnsSuffix:        device.DNSSuffix,
+	amtInfo := proto.AmtConfigInfo{}
+	if amt != nil {
+		if amt.RAS != nil {
+			amtInfo = proto.AmtConfigInfo{
+				Version:          amt.Version,
+				DeviceName:       amt.DeviceName,
+				OperationalState: amt.OperationalState,
+				BuildNumber:      amt.BuildNumber,
+				Sku:              amt.Sku,
+				Features:         amt.Features,
+				DeviceGuid:       amt.Uuid,
+				ControlMode:      amt.ControlMode,
+				DnsSuffix:        amt.DNSSuffix,
 				RasInfo: &proto.RASInfo{
-					NetworkStatus: device.RAS.NetworkStatus,
-					RemoteStatus:  device.RAS.RemoteStatus,
-					RemoteTrigger: device.RAS.RemoteTrigger,
-					MpsHostname:   device.RAS.MPSHostname,
+					NetworkStatus: amt.RAS.NetworkStatus,
+					RemoteStatus:  amt.RAS.RemoteStatus,
+					RemoteTrigger: amt.RAS.RemoteTrigger,
+					MpsHostname:   amt.RAS.MPSHostname,
 				},
 			}
 		} else {
-			deviceInfo = proto.DeviceInfo{
-				Version:          device.Version,
-				Hostname:         device.Hostname,
-				OperationalState: device.OperationalState,
-				BuildNumber:      device.BuildNumber,
-				Sku:              device.Sku,
-				Features:         device.Features,
-				DeviceGuid:       device.Uuid,
-				ControlMode:      device.ControlMode,
-				DnsSuffix:        device.DNSSuffix,
+			amtInfo = proto.AmtConfigInfo{
+				Version:          amt.Version,
+				DeviceName:       amt.DeviceName,
+				OperationalState: amt.OperationalState,
+				BuildNumber:      amt.BuildNumber,
+				Sku:              amt.Sku,
+				Features:         amt.Features,
+				DeviceGuid:       amt.Uuid,
+				ControlMode:      amt.ControlMode,
+				DnsSuffix:        amt.DNSSuffix,
 			}
 		}
 	}
@@ -338,7 +338,7 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 			ReleaseDate: biosInfo.RelDate,
 			Vendor:      biosInfo.Vendor,
 		},
-		DeviceInfo: &deviceInfo,
+		AmtInfo: &amtInfo,
 	}
 
 	return systemInfo
@@ -395,10 +395,10 @@ func GenerateSystemInfoRequest(executor utils.CmdExecutor) *proto.SystemInfo {
 		log.Errorf("unable to get usb description : %v", err)
 	}
 
-	deviceInfo, err := device.GetDeviceInfo(executor)
+	amtInfo, err := amt.GetAmtInfo(executor)
 	if err != nil {
-		log.Errorf("unable to get device description : %v", err)
+		log.Errorf("unable to get amt description : %v", err)
 	}
 
-	return parseSystemInfo(sn, productName, bmcAddr, osInfo, biosInfo, cpu, storage, gpu, mem, networkList, bmType, usbList, deviceInfo)
+	return parseSystemInfo(sn, productName, bmcAddr, osInfo, biosInfo, cpu, storage, gpu, mem, networkList, bmType, usbList, amtInfo)
 }
