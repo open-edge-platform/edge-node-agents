@@ -5,6 +5,7 @@ package noninteractive
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io"
@@ -18,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"device-discovery/internal/config"
+	"device-discovery/internal/logger"
 )
 
 // StreamResult holds the result of a streaming onboarding attempt.
@@ -55,20 +57,29 @@ func NewClient(address string, port int, mac, uuid, serial, ipAddress, caCertPat
 
 // createSecureConnection creates a secure gRPC connection with TLS.
 func createSecureConnection(target string, caCertPath string) (*grpc.ClientConn, error) {
-	// Load the CA certificate
-	caCert, err := os.ReadFile(caCertPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read CA certificate: %v", err)
-	}
+	var creds credentials.TransportCredentials
 
-	// Create a certificate pool from the CA certificate
-	certPool := x509.NewCertPool()
-	if !certPool.AppendCertsFromPEM(caCert) {
-		return nil, fmt.Errorf("failed to append CA certificate to cert pool")
-	}
+	if caCertPath != "" {
+		// Load the CA certificate from the provided path
+		caCert, err := os.ReadFile(caCertPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA certificate: %v", err)
+		}
 
-	// Create the credentials using the certificate pool
-	creds := credentials.NewClientTLSFromCert(certPool, "")
+		// Create a certificate pool from the CA certificate
+		certPool := x509.NewCertPool()
+		if !certPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to append CA certificate to cert pool")
+		}
+
+		// Create the credentials using the certificate pool
+		creds = credentials.NewClientTLSFromCert(certPool, "")
+	} else {
+		// Use system default CA certificates
+		creds = credentials.NewTLS(&tls.Config{
+			MinVersion: tls.VersionTLS12,
+		})
+	}
 
 	// Create the gRPC connection with TLS credentials
 	conn, err := grpc.NewClient(
@@ -149,7 +160,7 @@ func (c *Client) Onboard(ctx context.Context) StreamResult {
 		if resp.Status.Code == int32(codes.OK) {
 			switch resp.NodeState {
 			case pb.OnboardNodeStreamResponse_NODE_STATE_REGISTERED:
-				fmt.Println("Edge node registered. Waiting for the edge node to become ready for onboarding...")
+				logger.Logger.Info("Edge node registered. Waiting for the edge node to become ready for onboarding...")
 
 				// Sleep for a randomized backoff duration
 				time.Sleep(backoff + time.Duration(rand.Intn(1000))*time.Millisecond)

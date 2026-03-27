@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+
+	"device-discovery/internal/logger"
 )
 
 //go:embed client-auth.sh
@@ -65,16 +67,16 @@ func ExecuteAuthScript(ctx context.Context) error {
 	case err := <-done:
 		if err != nil {
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				fmt.Printf("STDERR:\n%s\n", string(exitErr.Stderr))
+				logger.Logger.Errorf("STDERR:\n%s", string(exitErr.Stderr))
 			}
 			return fmt.Errorf("error executing command: %w", err)
 		}
-		fmt.Println("client-auth.sh executed successfully")
+		logger.Logger.Info("client-auth.sh executed successfully")
 		return nil
 	case <-ctx.Done():
-		fmt.Println("client-auth.sh timed out, killing process group...")
+		logger.Logger.Warn("client-auth.sh timed out, killing process group...")
 		if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
-			fmt.Printf("Failed to kill process group: %v\n", err)
+			logger.Logger.Warnf("Failed to kill process group: %v", err)
 		}
 		return fmt.Errorf("client-auth.sh timed out: %w", ctx.Err())
 	}
