@@ -267,8 +267,8 @@ func main() {
 				log.Info("terminating cluster detection")
 				return
 			case <-ticker.C:
-				detectAndManageCluster(ctx, clusterDetector, kubeconfigMgr, statusService)
-				fmt.Println("Cluster detection tick - implement cluster detection logic here 2222")
+				detectAndManageCluster(ctx, hostmgrCli, clusterDetector, kubeconfigMgr)
+				fmt.Println("Cluster detection tick - implement cluster detection logic here")
 			}
 			ticker.Reset(confs.Cluster.DetectionInterval)
 		}
@@ -399,11 +399,11 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 }
 
 // detects clusters on the node and manages kubeconfig lifecycle
-func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, statusSvc *statusService.StatusService) {
+func detectAndManageCluster(ctx context.Context, hostMgrCli *hostmgr_client.Client, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager) {
 	clusterInfo, err := detector.DetectCluster()
 	if err != nil {
 		// No cluster detected - clear any existing kubeconfig and update status
-		statusSvc.SetClusterStatus("cluster: none detected")
+		log.Debugf("No cluster detected: %v", err)
 		if kubeconfigMgr.HasKubeconfig() {
 			log.Debug("No cluster detected, clearing kubeconfig")
 			if clearErr := kubeconfigMgr.ClearKubeconfig(ctx); clearErr != nil {
@@ -414,8 +414,9 @@ func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetect
 	}
 
 	// Update status service with cluster information
+	// TODO: THIS IS NOT NEEDED
 	//statusSvc.SetClusterStatus(kubeconfigMgr.GetClusterStatus(clusterInfo))
-	statusSvc.SetClusterStatus("")
+	//statusSvc.SetClusterStatus("")
 
 	// Cluster detected - check if it's running and has kubeconfig
 	if clusterInfo.Status != "running" {
@@ -446,6 +447,11 @@ func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetect
 	// 	log.Errorf("Failed to notify host manager about kubeconfig: %v", err)
 	// 	return
 	// }
+
+	err = hostMgrCli.UpdateClusterStatus(ctx, "kubeconfigData")
+	if err != nil {
+		log.Errorf("not able to update node status to running : %v", err)
+	}
 
 	log.Debugf("Cluster management completed for %s cluster", clusterInfo.Type)
 }

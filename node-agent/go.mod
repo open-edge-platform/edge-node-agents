@@ -68,3 +68,5 @@ require (
 	golang.org/x/sys v0.42.0 // indirect
 	google.golang.org/grpc v1.81.0-dev
 )
+
+replace github.com/open-edge-platform/infra-managers/host => github.com/open-edge-platform/infra-managers/host v1.25.5-0.20260402155654-ed7b22250fe3
