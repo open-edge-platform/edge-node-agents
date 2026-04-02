@@ -267,7 +267,7 @@ func main() {
 				log.Info("terminating cluster detection")
 				return
 			case <-ticker.C:
-				detectAndManageCluster(ctx, hostmgrCli, clusterDetector, kubeconfigMgr)
+				detectAndManageCluster(ctx, hostmgrCli, clusterDetector, kubeconfigMgr, confs)
 				fmt.Println("Cluster detection tick - implement cluster detection logic here")
 			}
 			ticker.Reset(confs.Cluster.DetectionInterval)
@@ -399,7 +399,7 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 }
 
 // detects clusters on the node and manages kubeconfig lifecycle
-func detectAndManageCluster(ctx context.Context, hostMgrCli *hostmgr_client.Client, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager) {
+func detectAndManageCluster(ctx context.Context, hostMgrCli *hostmgr_client.Client, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, confs *config.NodeAgentConfig) {
 	clusterInfo, err := detector.DetectCluster()
 	if err != nil {
 		// No cluster detected - clear any existing kubeconfig and update status
@@ -448,7 +448,8 @@ func detectAndManageCluster(ctx context.Context, hostMgrCli *hostmgr_client.Clie
 	// 	return
 	// }
 
-	err = hostMgrCli.UpdateClusterStatus(ctx, "kubeconfigData")
+	tokenFile := filepath.Join(confs.Auth.AccessTokenPath, "node-agent", config.AccessToken)
+	err = hostMgrCli.UpdateClusterStatus(utils.GetAuthContext(ctx, tokenFile), "kubeconfigData")
 	if err != nil {
 		log.Errorf("not able to update node status to running : %v", err)
 	}
