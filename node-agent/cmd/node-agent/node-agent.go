@@ -268,6 +268,7 @@ func main() {
 				return
 			case <-ticker.C:
 				detectAndManageCluster(ctx, clusterDetector, kubeconfigMgr, statusService)
+				fmt.Println("Cluster detection tick - implement cluster detection logic here 2222")
 			}
 			ticker.Reset(confs.Cluster.DetectionInterval)
 		}
@@ -397,7 +398,7 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 	}
 }
 
-// detectAndManageCluster detects clusters on the node and manages kubeconfig lifecycle
+// detects clusters on the node and manages kubeconfig lifecycle
 func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, statusSvc *statusService.StatusService) {
 	clusterInfo, err := detector.DetectCluster()
 	if err != nil {
@@ -413,7 +414,8 @@ func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetect
 	}
 
 	// Update status service with cluster information
-	statusSvc.SetClusterStatus(kubeconfigMgr.GetClusterStatus(clusterInfo))
+	//statusSvc.SetClusterStatus(kubeconfigMgr.GetClusterStatus(clusterInfo))
+	statusSvc.SetClusterStatus("")
 
 	// Cluster detected - check if it's running and has kubeconfig
 	if clusterInfo.Status != "running" {
@@ -439,14 +441,11 @@ func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetect
 		return
 	}
 
-	// Notify host manager about kubeconfig
-	if err := kubeconfigMgr.NotifyKubeconfig(ctx, kubeconfigData, clusterInfo); err != nil {
-		log.Errorf("Failed to notify host manager about kubeconfig: %v", err)
-		return
-	}
-
-	// Update status with kubeconfig information
-	statusSvc.SetClusterStatus(kubeconfigMgr.GetClusterStatus(clusterInfo))
+	// // Notify host manager about kubeconfig
+	// if err := kubeconfigMgr.NotifyKubeconfig(ctx, kubeconfigData, clusterInfo); err != nil {
+	// 	log.Errorf("Failed to notify host manager about kubeconfig: %v", err)
+	// 	return
+	// }
 
 	log.Debugf("Cluster management completed for %s cluster", clusterInfo.Type)
 }
