@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package statusService
@@ -40,6 +40,9 @@ type StatusService struct {
 	agents map[string]struct{}
 	// interval for status checks
 	statusInterval time.Duration
+	// cluster status information
+	clusterStatus string
+	clusterMutex  sync.RWMutex
 }
 
 type CmdExecutor = func(name string, args ...string) *exec.Cmd
@@ -158,8 +161,28 @@ func (s *StatusService) GatherStatus(confs *config.NodeAgentConfig) (string, boo
 		log.Warnf("Unhealthy components : %v", unhealthy)
 	}
 
+	// Include cluster status if available
+	statusMessage := fmt.Sprintf("%d of %d components running", counter, total)
+	if clusterInfo := s.GetClusterStatus(); clusterInfo != "" {
+		statusMessage += fmt.Sprintf("; %s", clusterInfo)
+	}
+
 	// Return formatted string to HRM, boolean value for instance status
-	return fmt.Sprintf("%d of %d components running", counter, total), counter == total
+	return statusMessage, counter == total
+}
+
+// updates the cluster status information
+func (s *StatusService) SetClusterStatus(status string) {
+	s.clusterMutex.Lock()
+	defer s.clusterMutex.Unlock()
+	s.clusterStatus = status
+}
+
+// returns the current cluster status
+func (s *StatusService) GetClusterStatus() string {
+	s.clusterMutex.RLock()
+	defer s.clusterMutex.RUnlock()
+	return s.clusterStatus
 }
 
 // CheckServicesStatus checks the status of the services, custom CmdExecutor

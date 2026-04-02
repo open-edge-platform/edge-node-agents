@@ -26,3 +26,6 @@ auth:
   accessTokenPath: /etc/intel_edge_node/tokens
   clientCredsPath: /etc/intel_edge_node/client-credentials
   tokenClients: [ node-agent,  hd-agent, cluster-agent, platform-update-agent, platform-observability-agent, platform-telemetry-agent, prometheus, connect-agent, attestation-manager, platform-manageability-agent ]
+cluster:
+  detectionEnabled: true
+  detectionInterval: 120s

@@ -22,6 +22,7 @@ const NodeAgentKey = "node-agent-key.pem"
 const AccessToken = "access_token"
 
 const HEARTBEAT_DEFAULT = 10
+const CLUSTER_DETECTION_DEFAULT = 30
 
 var log = logger.Logger
 
@@ -58,6 +59,11 @@ type ConfigMetrics struct {
 	Interval time.Duration `yaml:"interval"`
 }
 
+type ConfigCluster struct {
+	DetectionEnabled  bool          `yaml:"detectionEnabled"`
+	DetectionInterval time.Duration `yaml:"detectionInterval"`
+}
+
 type NodeAgentConfig struct {
 	Version    string           `yaml:"version"`
 	LogLevel   string           `yaml:"logLevel"`
@@ -66,6 +72,7 @@ type NodeAgentConfig struct {
 	Auth       ConfigAuth       `yaml:"auth"`
 	Status     ConfigStatus     `yaml:"status"`
 	Metrics    ConfigMetrics    `yaml:"metrics"`
+	Cluster    ConfigCluster    `yaml:"cluster"`
 }
 
 // Create a new Node agent configuration.
@@ -131,6 +138,11 @@ func (cfg *NodeAgentConfig) setDefaults(cfgPath string) {
 		interval = 60 * time.Second
 	}
 	cfg.Status.NetworkStatusInterval = interval
+
+	if cfg.Cluster.DetectionInterval <= 0*time.Second {
+		log.Warnf("cluster detection interval not provided by %s, setting to default %d", cfgPath, CLUSTER_DETECTION_DEFAULT)
+		cfg.Cluster.DetectionInterval = CLUSTER_DETECTION_DEFAULT * time.Second
+	}
 }
 
 // readConfigFile loads yaml file into NodeAgentConfig type
