@@ -31,7 +31,7 @@ jobs:
           persist-credentials: false
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@d40dfda9598df896aa20cb1dc2c950d6444e8fa7  # 2026.0.19
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
@@ -44,7 +44,7 @@ jobs:
 
       - name: Discover Changed Files
         id: check-files
-        uses: open-edge-platform/orch-ci/discover-changed-files@d40dfda9598df896aa20cb1dc2c950d6444e8fa7  # 2026.0.19
+        uses: open-edge-platform/orch-ci/discover-changed-files@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           project_folder: "."
   post-merge-pipeline:
@@ -108,7 +108,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@d40dfda9598df896aa20cb1dc2c950d6444e8fa7  # 2026.0.19
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "yq,aws,oras"
@@ -168,7 +168,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@d40dfda9598df896aa20cb1dc2c950d6444e8fa7  # 2026.0.19
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base,yq"
@@ -198,7 +198,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@d40dfda9598df896aa20cb1dc2c950d6444e8fa7  # 2026.0.19
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base"
