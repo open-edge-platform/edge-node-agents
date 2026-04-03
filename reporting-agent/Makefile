@@ -23,7 +23,7 @@ REGISTRY        := 080137407410.dkr.ecr.us-west-2.amazonaws.com
 
 GOCMD           := CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go
 GOCMD_TEST      := CGO_ENABLED=1 GOARCH=amd64 GOOS=linux go
-GOEXTRAFLAGS    :=-trimpath -gcflags="all=-spectre=all -N -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w -X main.version=$(shell cat ./VERSION)"
+GOEXTRAFLAGS    :=-trimpath -gcflags="all=-spectre=all -N -l" -asmflags="-spectre=all" -ldflags="all=-s -w -X main.version=$(shell cat ./VERSION)"
 
 # Include shared makefile, if it exists
 ifneq ("$(wildcard ../common.mk)","")
