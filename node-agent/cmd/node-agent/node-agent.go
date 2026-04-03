@@ -449,7 +449,7 @@ func detectAndManageCluster(ctx context.Context, hostMgrCli *hostmgr_client.Clie
 	// }
 
 	tokenFile := filepath.Join(confs.Auth.AccessTokenPath, "node-agent", config.AccessToken)
-	err = hostMgrCli.UpdateClusterStatus(utils.GetAuthContext(ctx, tokenFile), "kubeconfigData")
+	err = hostMgrCli.UpdateClusterStatus(utils.GetAuthContext(ctx, tokenFile), "kubeconfig")
 	if err != nil {
 		log.Errorf("not able to update node status to running : %v", err)
 	}
