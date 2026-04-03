@@ -1,13 +1,13 @@
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 CI 🤖:
   - changed-files:
-      - any-glob-to-any-file: ".github/**"
+    - any-glob-to-any-file: ".github/**"
 
 root:
   - changed-files:
-      - any-glob-to-any-file: "*"
+    - any-glob-to-any-file: "*"
 
 cluster-agent:
   - changed-files:
@@ -17,6 +17,14 @@ common:
   - changed-files:
     - any-glob-to-any-file: "common/**"
 
+device-discovery-agent:
+  - changed-files:
+    - any-glob-to-any-file: "device-discovery-agent/**"
+
+in-band-manageability:
+  - changed-files:
+    - any-glob-to-any-file: "in-band-manageability/**"
+
 hardware-discovery-agent:
   - changed-files:
     - any-glob-to-any-file: "hardware-discovery-agent/**"
@@ -25,21 +33,22 @@ node-agent:
   - changed-files:
     - any-glob-to-any-file: "node-agent/**"
 
+platform-manageability-agent:
+  - changed-files:
+    - any-glob-to-any-files: "platform-manageability-agent/**"
+
 platform-observability-agent:
   - changed-files:
     - any-glob-to-any-file: "platform-observability-agent/**"
 
 platform-telemetry-agent:
   - changed-files:
-      - any-glob-to-any-file: "platform-telemetry-agent/**"
+    - any-glob-to-any-file: "platform-telemetry-agent/**"
 
 platform-update-agent:
   - changed-files:
-      - any-glob-to-any-file: "platform-update-agent/**"
-device-discovery-agent:
-  - changed-files:
-      - any-glob-to-any-file: "device-discovery-agent/**"
+    - any-glob-to-any-file: "platform-update-agent/**"
 
 reporting-agent:
   - changed-files:
-      - any-glob-to-any-file: "reporting-agent/**"
+    - any-glob-to-any-file: "reporting-agent/**"
