@@ -59,7 +59,7 @@ pmainstall:
 pmabuild:
 	mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
-	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w -extldflags=-static \
+	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="-spectre=all" -ldflags="all=-s -w -extldflags=-static \
 	-X github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info.version=$(VERSION) \
 	-X github.com/open-edge-platform/edge-node-agents/platform-manageability-agent/info.commit=$(COMMIT)" \
 	-o $(BUILD_DIR)/$(NAME) cmd/platform-manageability-agent/platform-manageability-agent.go

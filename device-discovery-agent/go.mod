@@ -3,7 +3,7 @@
 
 module device-discovery
 
-go 1.25.7
+go 1.26.1
 
 require (
 	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.39.10

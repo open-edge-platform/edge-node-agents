@@ -117,7 +117,7 @@ func fileExists(f string) (bool, error) {
 	}
 }
 
-func fileHasContent() (bool, error) {
+func fileHasContent() (bool, error) { //nolint:unparam // Error is returned if os.Stat called failed.
 	info, err := os.Stat(MetaPath)
 	if err != nil {
 		log.Fatal(err)

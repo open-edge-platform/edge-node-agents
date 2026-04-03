@@ -35,14 +35,14 @@ puainstall:
 puabuild:
 	@echo "---MAKEFILE PUA BUILD---"
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
-	go build -buildmode=pie -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w \
+	go build -buildmode=pie -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all -l" -asmflags="-spectre=all" -ldflags="all=-s -w \
 	-X github.com/open-edge-platform/edge-node-agents/platform-update-agent/info.version=$(shell cat VERSION) \
 	-X github.com/open-edge-platform/edge-node-agents/platform-update-agent/info.commit=$(shell git rev-parse --short HEAD)" \
 	-o $(BUILD_DIR)/$(NAME) cmd/platform-update-agent/platform_update_agent.go
 	@echo "---END MAKEFILE PUA Build---"
 
 puabuild_with_race:
-	CGO_ENABLED=1 go build -race -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w  \
+	CGO_ENABLED=1 go build -race -trimpath -mod=$(GO_MOD_MODE) -gcflags="all=-spectre=all -l" -asmflags="-spectre=all" -ldflags="all=-s -w  \
 	-X github.com/open-edge-platform/edge-node-agents/platform-update-agent/info.version=$(shell cat VERSION) \
 	-X github.com/open-edge-platform/edge-node-agents/platform-update-agent/info.commit=$(shell git rev-parse --short HEAD)" \
 	-o $(BUILD_DIR)/$(NAME)_race cmd/platform-update-agent/platform_update_agent.go
