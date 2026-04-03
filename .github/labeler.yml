@@ -35,7 +35,7 @@ node-agent:
 
 platform-manageability-agent:
   - changed-files:
-    - any-glob-to-any-files: "platform-manageability-agent/**"
+    - any-glob-to-any-file: "platform-manageability-agent/**"
 
 platform-observability-agent:
   - changed-files:
