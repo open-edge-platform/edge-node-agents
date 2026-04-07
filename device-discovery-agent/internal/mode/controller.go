@@ -6,7 +6,6 @@ package mode
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"device-discovery/internal/auth"
 	"device-discovery/internal/config"
@@ -154,30 +153,13 @@ func (o *OnboardingController) completeNonInteractiveAuth(clientID, clientSecret
 func (o *OnboardingController) executeInteractiveMode(ctx context.Context) error {
 	logger.Logger.Info("Starting interactive (manual) onboarding...")
 
-	// Feature flag for authentication method
-	authMethod := os.Getenv("DEVICE_DISCOVERY_AUTH_METHOD")
-	if authMethod == "" {
-		authMethod = "native" // Default to native (rollout complete)
+	// Step 1: Authenticate using native Go TTY authenticator
+	authenticator, err := interactive.NewTTYAuthenticator(config.EnvConfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to create authenticator: %w", err)
 	}
-
-	// Step 1: Execute authentication (bash or native)
-	switch authMethod {
-	case "bash":
-		logger.Logger.Info("Using bash script authentication (legacy)")
-		if err := interactive.ExecuteAuthScript(ctx); err != nil {
-			return fmt.Errorf("failed to run client auth script: %w", err)
-		}
-	case "native":
-		logger.Logger.Info("Using native Go authentication")
-		authenticator, err := interactive.NewTTYAuthenticator(config.EnvConfigPath)
-		if err != nil {
-			return fmt.Errorf("failed to create authenticator: %w", err)
-		}
-		if err := authenticator.Authenticate(ctx); err != nil {
-			return fmt.Errorf("failed to authenticate: %w", err)
-		}
-	default:
-		return fmt.Errorf("unknown auth method: %s (use 'bash' or 'native')", authMethod)
+	if err := authenticator.Authenticate(ctx); err != nil {
+		return fmt.Errorf("failed to authenticate: %w", err)
 	}
 
 	// Step 2: Create interactive client with JWT authentication
