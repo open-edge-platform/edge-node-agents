@@ -15,6 +15,11 @@ import (
 	"device-discovery/internal/logger"
 )
 
+const (
+	defaultLogDir  = "/var/log/client-auth"
+	defaultLogFile = defaultLogDir + "/client-auth.log"
+)
+
 // Credentials holds username and password from TTY input.
 type Credentials struct {
 	Username string
@@ -45,7 +50,7 @@ func NewTTYAuthenticator(configPath string) (*TTYAuthenticator, error) {
 		extraHosts:  cfg.ExtraHosts,
 		ttyDevices:  []string{"ttyS0", "ttyS1", "tty0"}, // Default devices from bash script
 		maxAttempts: 3,
-		logFile:     "/var/log/client-auth/client-auth.log",
+		logFile:     defaultLogFile,
 	}, nil
 }
 
@@ -54,7 +59,7 @@ func NewTTYAuthenticator(configPath string) (*TTYAuthenticator, error) {
 // and fetch both IDP access token and release token.
 func (t *TTYAuthenticator) Authenticate(ctx context.Context) error {
 	// Ensure log directory exists
-	if err := os.MkdirAll("/var/log/client-auth", 0755); err != nil {
+	if err := os.MkdirAll(defaultLogDir, 0755); err != nil {
 		logger.Logger.Warnf("Failed to create log directory: %v", err)
 	}
 
