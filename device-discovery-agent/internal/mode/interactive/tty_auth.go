@@ -74,7 +74,7 @@ func (t *TTYAuthenticator) Authenticate(ctx context.Context) error {
 	for attempt := 1; attempt <= t.maxAttempts; attempt++ {
 		t.logToFile(fmt.Sprintf("Attempt %d to read username and password", attempt))
 
-		creds, err := t.collectCredentials(ctx, attempt)
+		creds, err := t.collectCredentials(ctx)
 		if err != nil {
 			t.logToFile(fmt.Sprintf("Failed to collect credentials: %v", err))
 			continue
@@ -102,7 +102,7 @@ func (t *TTYAuthenticator) Authenticate(ctx context.Context) error {
 
 // collectCredentials attempts to read credentials from multiple TTYs concurrently.
 // Returns the first successfully collected credentials or an error if timeout/all fail.
-func (t *TTYAuthenticator) collectCredentials(ctx context.Context, attemptNum int) (*Credentials, error) {
+func (t *TTYAuthenticator) collectCredentials(ctx context.Context) (*Credentials, error) {
 	// Create context with timeout (50 seconds to match bash script: 10 checks x 5 seconds)
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 50*time.Second)
 	defer cancel()
