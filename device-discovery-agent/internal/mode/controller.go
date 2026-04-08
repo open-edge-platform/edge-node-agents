@@ -153,10 +153,13 @@ func (o *OnboardingController) completeNonInteractiveAuth(clientID, clientSecret
 func (o *OnboardingController) executeInteractiveMode(ctx context.Context) error {
 	logger.Logger.Info("Starting interactive (manual) onboarding...")
 
-	// Step 1: Execute client-auth.sh for TTY-based authentication
-	logger.Logger.Info("Executing client authentication script...")
-	if err := interactive.ExecuteAuthScript(ctx); err != nil {
-		return fmt.Errorf("failed to run client auth script: %w", err)
+	// Step 1: Authenticate using native Go TTY authenticator
+	authenticator, err := interactive.NewTTYAuthenticator(config.EnvConfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to create authenticator: %w", err)
+	}
+	if err := authenticator.Authenticate(ctx); err != nil {
+		return fmt.Errorf("failed to authenticate: %w", err)
 	}
 
 	// Step 2: Create interactive client with JWT authentication
