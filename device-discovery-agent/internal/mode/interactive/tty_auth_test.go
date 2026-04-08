@@ -222,7 +222,7 @@ CA_CERT=/path/to/cert.pem
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	_, err = auth.collectCredentials(ctx, 1)
+	_, err = auth.collectCredentials(ctx)
 	if err == nil {
 		t.Fatal("Expected timeout error")
 	}
