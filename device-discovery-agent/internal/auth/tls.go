@@ -19,10 +19,9 @@ import (
 // If caCertPath is provided, it loads the certificate from the file and creates a new pool.
 func LoadCACertPool(caCertPath string) (*x509.CertPool, error) {
 	if caCertPath == "" {
-		// Use system certificate pool
-		pool, err := x509.SystemCertPool()
-		if err != nil {
-			// Fallback to empty pool on systems without system certs
+		// Use system certificate pool; fallback to empty pool on systems without system certs
+		pool, _ := x509.SystemCertPool()
+		if pool == nil {
 			return x509.NewCertPool(), nil
 		}
 		return pool, nil

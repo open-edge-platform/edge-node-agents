@@ -114,7 +114,7 @@ func (t *TTYAuthenticator) collectCredentials(ctx context.Context, attemptNum in
 	// Launch a goroutine for each TTY device
 	for _, device := range t.ttyDevices {
 		go func(dev string) {
-			creds, err := t.collectFromDevice(ctxWithTimeout, dev, attemptNum)
+			creds, err := t.collectFromDevice(ctxWithTimeout, dev)
 			if err != nil {
 				errChan <- err
 				return
@@ -140,7 +140,7 @@ func (t *TTYAuthenticator) collectCredentials(ctx context.Context, attemptNum in
 }
 
 // collectFromDevice attempts to read credentials from a single TTY device.
-func (t *TTYAuthenticator) collectFromDevice(ctx context.Context, devicePath string, attemptNum int) (*Credentials, error) {
+func (t *TTYAuthenticator) collectFromDevice(ctx context.Context, devicePath string) (*Credentials, error) {
 	// Open the device
 	reader, err := NewDeviceReader(devicePath)
 	if err != nil {
@@ -262,7 +262,7 @@ func (t *TTYAuthenticator) showErrorToAllTTYs(message string) {
 		if err != nil {
 			continue // Skip devices that can't be opened
 		}
-		reader.Prompt(fmt.Sprintf("\n%s\n", message))
+		_ = reader.Prompt(fmt.Sprintf("\n%s\n", message))
 		reader.Close()
 	}
 }

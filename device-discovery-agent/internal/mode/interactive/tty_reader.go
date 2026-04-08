@@ -109,19 +109,19 @@ func (d *DeviceReader) ReadPassword(ctx context.Context, prompt string) (string,
 	case <-ctx.Done():
 		// Restore terminal state on cancellation
 		if d.oldState != nil {
-			term.Restore(fd, d.oldState)
+			_ = term.Restore(fd, d.oldState)
 		}
 		return "", ctx.Err()
 	case err := <-errChan:
 		// Restore terminal state on error
 		if d.oldState != nil {
-			term.Restore(fd, d.oldState)
+			_ = term.Restore(fd, d.oldState)
 		}
 		return "", err
 	case password := <-resultChan:
 		// Restore terminal state after successful read
 		if d.oldState != nil {
-			term.Restore(fd, d.oldState)
+			_ = term.Restore(fd, d.oldState)
 		}
 		return string(password), nil
 	}
