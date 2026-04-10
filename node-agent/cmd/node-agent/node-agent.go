@@ -1,4 +1,5 @@
 // SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+//
 // SPDX-License-Identifier: Apache-2.0
 
 package main
@@ -236,7 +237,7 @@ func main() {
 	// Go-routine to detect clusters and manage kubeconfig
 	go func() {
 		defer wg.Done()
-		// Need not detect clusters if onboarding is not enabled or cluster detection is disabled
+		// Do not detect clusters if onboarding is not enabled or cluster detection is disabled
 		if !confs.Onboarding.Enabled || !confs.Cluster.DetectionEnabled {
 			if !confs.Cluster.DetectionEnabled {
 				log.Info("Cluster detection disabled in configuration")
@@ -252,7 +253,7 @@ func main() {
 
 		hostmgrCli, err := hostmgr_client.ConnectToHostMgr(ctx, confs.GUID, confs.Onboarding.ServiceURL, tlsConfig)
 		if err != nil {
-			log.Errorf("failed to create Host Manager client for cluster detection : %v", err)
+			log.Errorf("failed to create Host Manager client for cluster detection updates : %v", err)
 			return
 		}
 
@@ -402,21 +403,18 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 func detectAndManageCluster(ctx context.Context, hostMgrCli *hostmgr_client.Client, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, confs *config.NodeAgentConfig) {
 	clusterInfo, err := detector.DetectCluster()
 	if err != nil {
-		// No cluster detected - clear any existing kubeconfig and update status
+		// No cluster detected yet - clear any existing kubeconfig and update status
 		log.Debugf("No cluster detected: %v", err)
 		if kubeconfigMgr.HasKubeconfig() {
 			log.Debug("No cluster detected, clearing kubeconfig")
+			// Done in case cluster was removed after detection or kubeconfig was left orphaned due to some error
+			// In both cases, kubeconfig needs to be cleared to avoid stale kubeconfig scenario
 			if clearErr := kubeconfigMgr.ClearKubeconfig(ctx); clearErr != nil {
 				log.Errorf("Failed to clear kubeconfig: %v", clearErr)
 			}
 		}
 		return
 	}
-
-	// Update status service with cluster information
-	// TODO: THIS IS NOT NEEDED
-	//statusSvc.SetClusterStatus(kubeconfigMgr.GetClusterStatus(clusterInfo))
-	//statusSvc.SetClusterStatus("")
 
 	// Cluster detected - check if it's running and has kubeconfig
 	if clusterInfo.Status != "running" {
