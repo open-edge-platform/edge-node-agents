@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/logger"
 )
 
@@ -27,13 +28,15 @@ type ClusterInfo struct {
 
 // handles detection of running clusters on the node
 type ClusterDetector struct {
-	nodeID string
+	nodeID      string
+	clusterType config.ClusterType
 }
 
 // creates a new cluster detector
-func NewClusterDetector(nodeID string) *ClusterDetector {
+func NewClusterDetector(nodeID string, clusterType config.ClusterType) *ClusterDetector {
 	return &ClusterDetector{
-		nodeID: nodeID,
+		nodeID:      nodeID,
+		clusterType: clusterType,
 	}
 }
 
@@ -41,24 +44,33 @@ func NewClusterDetector(nodeID string) *ClusterDetector {
 func (cd *ClusterDetector) DetectCluster() (*ClusterInfo, error) {
 	log.Debug("Detecting clusters on the node...")
 
-	if clusterInfo, err := cd.detectK3s(); err == nil {
-		log.Infof("Detected K3s cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
-		return clusterInfo, nil
+	switch cd.clusterType.Type {
+	case "k3s":
+		if clusterInfo, err := cd.detectK3s(cd.clusterType.BinaryPath); err == nil {
+			log.Infof("Detected K3s cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
+			return clusterInfo, nil
+		}
+	case "rke2":
+		if clusterInfo, err := cd.detectRKE2(cd.clusterType.BinaryPath); err == nil {
+			log.Infof("Detected RKE2 cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
+			return clusterInfo, nil
+		}
+	default:
+		log.Warnf("Unsupported cluster type: %s", cd.clusterType.Type)
 	}
 
 	return nil, fmt.Errorf("no cluster detected on node")
 }
 
 // detects K3s cluster installation
-func (cd *ClusterDetector) detectK3s() (*ClusterInfo, error) {
+func (cd *ClusterDetector) detectK3s(k3sBinaryPath string) (*ClusterInfo, error) {
 	// Check if k3s binary exists
-	k3sBinary := "/usr/local/bin/k3s"
-	if _, err := os.Stat(k3sBinary); os.IsNotExist(err) {
-		return nil, fmt.Errorf("K3s binary not found")
+	if _, err := os.Stat(k3sBinaryPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("K3s binary not found at %s", k3sBinaryPath)
 	}
 
 	// Get K3s version
-	cmd := exec.Command(k3sBinary, "--version")
+	cmd := exec.Command(k3sBinaryPath, "--version")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get K3s version: %v", err)
@@ -84,6 +96,47 @@ func (cd *ClusterDetector) detectK3s() (*ClusterInfo, error) {
 
 	return &ClusterInfo{
 		Type:           "k3s",
+		Status:         status,
+		Version:        version,
+		KubeconfigPath: kubeconfigPath,
+		DetectedAt:     time.Now(),
+	}, nil
+}
+
+// detects RKE2 cluster installation
+func (cd *ClusterDetector) detectRKE2(rke2BinaryPath string) (*ClusterInfo, error) {
+	// Check if rke2 binary exists
+	if _, err := os.Stat(rke2BinaryPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("RKE2 binary not found at %s", rke2BinaryPath)
+	}
+
+	// Get RKE2 version
+	cmd := exec.Command(rke2BinaryPath, "--version")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get RKE2 version: %v", err)
+	}
+
+	versionParts := strings.Fields(string(output))
+	version := "unknown"
+	if len(versionParts) >= 3 {
+		version = strings.TrimSpace(versionParts[2])
+	}
+
+	// Check if RKE2 server or agent service is running
+	status := "stopped"
+	if cd.isServiceActive("rke2-server") || cd.isServiceActive("rke2-agent") {
+		status = "running"
+	}
+
+	// Look for kubeconfig (RKE2 uses different path)
+	kubeconfigPath := "/etc/rancher/rke2/rke2.yaml"
+	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
+		kubeconfigPath = ""
+	}
+
+	return &ClusterInfo{
+		Type:           "rke2",
 		Status:         status,
 		Version:        version,
 		KubeconfigPath: kubeconfigPath,

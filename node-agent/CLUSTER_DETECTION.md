@@ -27,7 +27,7 @@ The node-agent now has the ability to:
 ### Detection Logic
 
 The cluster detector checks for:
-- **K3s clusters**: Looks for `/usr/local/bin/k3s` binary and checks systemd service status
+- **K3s clusters**: Looks for K3s binary (configurable path, defaults to `/usr/local/bin/k3s`) and checks systemd service status
 
 When a cluster is detected, it:
 - Retrieves the cluster version
@@ -55,8 +55,8 @@ cluster:
 ### Default Behavior
 
 - **Detection Enabled**: By default, cluster detection is enabled when onboarding is enabled
-- **Detection Interval**: 120 seconds (2 minutes)
-- **Status Integration**: Cluster information is automatically included in status reports
+- **Detection Interval**: By default, 120 seconds (2 minutes)
+- **Status Integration**: Cluster status is checked periodically and, if changed, host manager is informed
 
 ## Implementation Details
 

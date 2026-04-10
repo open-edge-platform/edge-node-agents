@@ -9,11 +9,16 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/config"
 )
 
 func TestNewClusterDetector(t *testing.T) {
 	nodeID := "test-node-123"
-	detector := NewClusterDetector(nodeID)
+	clusterType := config.ClusterType{
+		Type: "k3s", BinaryPath: "/usr/local/bin/k3s",
+	}
+	detector := NewClusterDetector(nodeID, clusterType)
 
 	if detector == nil {
 		t.Fatal("NewClusterDetector should not return nil")
@@ -22,10 +27,37 @@ func TestNewClusterDetector(t *testing.T) {
 	if detector.nodeID != nodeID {
 		t.Errorf("Expected nodeID %s, got %s", nodeID, detector.nodeID)
 	}
+
+	if detector.clusterType.Type != "k3s" {
+		t.Errorf("Expected cluster type 'k3s', got %s", detector.clusterType.Type)
+	}
+}
+
+func TestNewClusterDetectorWithCustomPath(t *testing.T) {
+	nodeID := "test-node-custom"
+	clusterTypes := config.ClusterType{
+		Type: "rke2", BinaryPath: "/usr/local/bin/rke2",
+	}
+	detector := NewClusterDetector(nodeID, clusterTypes)
+
+	if detector == nil {
+		t.Fatal("NewClusterDetector should not return nil")
+	}
+
+	if detector.nodeID != nodeID {
+		t.Errorf("Expected nodeID %s, got %s", nodeID, detector.nodeID)
+	}
+
+	if detector.clusterType.BinaryPath != "/usr/local/bin/rke2" {
+		t.Errorf("Expected k3s binary path '/usr/bin/k3s', got %s", detector.clusterType.BinaryPath)
+	}
 }
 
 func TestValidateKubeconfig(t *testing.T) {
-	detector := NewClusterDetector("test-node")
+	clusterType := config.ClusterType{
+		Type: "k3s", BinaryPath: "/usr/local/bin/k3s",
+	}
+	detector := NewClusterDetector("test-node", clusterType)
 
 	tests := []struct {
 		name        string
@@ -145,13 +177,17 @@ func TestClusterInfo(t *testing.T) {
 
 // This test will only run if K3s is actually installed on the system
 func TestDetectK3sIntegration(t *testing.T) {
+	k3sPath := "/usr/local/bin/k3s"
 	// Skip this test if we're not in an environment with K3s
-	if _, err := os.Stat("/usr/local/bin/k3s"); os.IsNotExist(err) {
+	if _, err := os.Stat(k3sPath); os.IsNotExist(err) {
 		t.Skip("Skipping K3s detection test - K3s not installed")
 	}
 
-	detector := NewClusterDetector("test-node")
-	clusterInfo, err := detector.detectK3s()
+	clusterType := config.ClusterType{
+		Type: "k3s", BinaryPath: k3sPath,
+	}
+	detector := NewClusterDetector("test-node", clusterType)
+	clusterInfo, err := detector.detectK3s(k3sPath)
 
 	if err != nil {
 		t.Logf("K3s detection failed (expected if K3s not running): %v", err)
@@ -171,7 +207,10 @@ func TestDetectK3sIntegration(t *testing.T) {
 }
 
 func TestDetectCluster(t *testing.T) {
-	detector := NewClusterDetector("test-node")
+	clusterType := config.ClusterType{
+		Type: "k3s", BinaryPath: "/usr/local/bin/k3s",
+	}
+	detector := NewClusterDetector("test-node", clusterType)
 
 	// This test may fail if no cluster is installed, which is expected
 	clusterInfo, err := detector.DetectCluster()
@@ -192,4 +231,44 @@ func TestDetectCluster(t *testing.T) {
 
 	t.Logf("Detected cluster: type=%s, status=%s, version=%s",
 		clusterInfo.Type, clusterInfo.Status, clusterInfo.Version)
+}
+
+func TestDetectK3sWithInvalidPath(t *testing.T) {
+	// Test with a non-existent k3s binary path
+	clusterType := config.ClusterType{
+		Type: "k3s", BinaryPath: "/nonexistent/path/k3s",
+	}
+	detector := NewClusterDetector("test-node", clusterType)
+
+	clusterInfo, err := detector.DetectCluster()
+
+	if err == nil {
+		t.Error("Expected error when k3s binary not found, but got none")
+	}
+
+	if clusterInfo != nil {
+		t.Error("Expected nil clusterInfo when k3s binary not found")
+	}
+
+	if !strings.Contains(err.Error(), "no cluster detected") {
+		t.Errorf("Error message should indicate no cluster detected, got: %v", err)
+	}
+}
+
+func TestDetectRKE2WithInvalidPath(t *testing.T) {
+	// Test RKE2 detection with non-existent binary
+	clusterType := config.ClusterType{
+		Type: "rke2", BinaryPath: "/nonexistent/path/rke2",
+	}
+	detector := NewClusterDetector("test-node", clusterType)
+
+	clusterInfo, err := detector.DetectCluster()
+
+	if err == nil {
+		t.Error("Expected error when rke2 binary not found, but got none")
+	}
+
+	if clusterInfo != nil {
+		t.Error("Expected nil clusterInfo when rke2 binary not found")
+	}
 }

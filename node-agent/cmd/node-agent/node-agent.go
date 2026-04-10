@@ -257,7 +257,7 @@ func main() {
 			return
 		}
 
-		clusterDetector := cluster.NewClusterDetector(confs.GUID)
+		clusterDetector := cluster.NewClusterDetector(confs.GUID, confs.Cluster.ClusterType)
 		kubeconfigMgr := cluster.NewKubeconfigManager(hostmgrCli, confs.GUID)
 
 		ticker := time.NewTicker(1 * time.Nanosecond)
@@ -440,16 +440,10 @@ func detectAndManageCluster(ctx context.Context, hostMgrCli *hostmgr_client.Clie
 		return
 	}
 
-	// // Notify host manager about kubeconfig
-	// if err := kubeconfigMgr.NotifyKubeconfig(ctx, kubeconfigData, clusterInfo); err != nil {
-	// 	log.Errorf("Failed to notify host manager about kubeconfig: %v", err)
-	// 	return
-	// }
-
-	tokenFile := filepath.Join(confs.Auth.AccessTokenPath, "node-agent", config.AccessToken)
-	err = hostMgrCli.UpdateClusterStatus(utils.GetAuthContext(ctx, tokenFile), "kubeconfig")
-	if err != nil {
-		log.Errorf("not able to update node status to running : %v", err)
+	// Notify host manager about kubeconfig update
+	if err := kubeconfigMgr.NotifyKubeconfig(ctx, kubeconfigData, clusterInfo, confs); err != nil {
+		log.Errorf("Failed to notify host manager about kubeconfig: %v", err)
+		return
 	}
 
 	log.Debugf("Cluster management completed for %s cluster", clusterInfo.Type)

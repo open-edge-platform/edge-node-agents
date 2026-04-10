@@ -1,4 +1,5 @@
 // SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+//
 // SPDX-License-Identifier: Apache-2.0
 
 // Package config contains Node Agent configuration management
@@ -23,6 +24,9 @@ const AccessToken = "access_token"
 
 const HEARTBEAT_DEFAULT = 10
 const CLUSTER_DETECTION_DEFAULT = 30
+
+// Kubernetes cluster configuration
+const K3S_DEFAULT_BINARY_PATH = "/usr/local/bin/k3s"
 
 var log = logger.Logger
 
@@ -59,9 +63,15 @@ type ConfigMetrics struct {
 	Interval time.Duration `yaml:"interval"`
 }
 
+type ClusterType struct {
+	Type       string `yaml:"type"`
+	BinaryPath string `yaml:"binaryPath"`
+}
+
 type ConfigCluster struct {
 	DetectionEnabled  bool          `yaml:"detectionEnabled"`
 	DetectionInterval time.Duration `yaml:"detectionInterval"`
+	ClusterType       ClusterType   `yaml:"clusterType"`
 }
 
 type NodeAgentConfig struct {
@@ -142,6 +152,18 @@ func (cfg *NodeAgentConfig) setDefaults(cfgPath string) {
 	if cfg.Cluster.DetectionInterval <= 0*time.Second {
 		log.Warnf("cluster detection interval not provided by %s, setting to default %d", cfgPath, CLUSTER_DETECTION_DEFAULT)
 		cfg.Cluster.DetectionInterval = CLUSTER_DETECTION_DEFAULT * time.Second
+	}
+
+	// Set default cluster types if none configured
+	if cfg.Cluster.ClusterType.Type != "" {
+		log.Infof("Cluster type configured: %s", cfg.Cluster.ClusterType.Type)
+	} else {
+		log.Warnf("No cluster type configured in %s, setting to default k3s with binary path %s",
+			cfgPath, K3S_DEFAULT_BINARY_PATH)
+		cfg.Cluster.ClusterType = ClusterType{
+			Type:       "k3s",
+			BinaryPath: K3S_DEFAULT_BINARY_PATH,
+		}
 	}
 }
 
