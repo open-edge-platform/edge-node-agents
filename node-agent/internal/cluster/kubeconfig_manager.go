@@ -17,7 +17,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/logger"
 )
 
-var kubeconfigLog = logger.Logger
+var managerLog = logger.Logger
 
 // manages kubeconfig lifecycle and communication with host manager
 // tracks the last known kubeconfig and only notifies host manager
@@ -51,18 +51,19 @@ func (km *KubeconfigManager) NotifyKubeconfig(ctx context.Context, kubeconfigDat
 	hashBytes := sha256.Sum256(kubeconfigData)
 	currentHash := fmt.Sprintf("%x", hashBytes)
 
-	// Check if kubeconfig has changed
-	if km.lastKubeconfigHash == currentHash {
-		kubeconfigLog.Debug("Kubeconfig unchanged, skipping notification")
-		return nil
-	}
+	// Avoid unnecessary updates to host manager and DB when kubeconfig content is the same
+	// if km.lastKubeconfigHash == currentHash {
+	// 	managerLog.Debug("Kubeconfig unchanged, skipping notification")
+	// 	return nil
+	// }
 
-	kubeconfigLog.Infof("Notifying host manager about kubeconfig update (cluster: %s, version: %s)",
+	managerLog.Infof("Notifying host manager about kubeconfig update (cluster: %s, version: %s)",
 		clusterInfo.Type, clusterInfo.Version)
 
 	// Encode kubeconfig in base64 before storing to avoid any formatting issues while transmitting over gRPC and storing in DB
-	//kubeconfigBlob := base64.StdEncoding.EncodeToString(kubeconfigData)
-	kubeconfigBlob := fmt.Sprintf("%x", sha256.Sum256(kubeconfigData))
+	//kubeconfigBlob := fmt.Sprintf("%x", sha256.Sum256(kubeconfigData))
+	//kubeconfigBlob := fmt.Sprintf("%s", base64.StdEncoding.EncodeToString(kubeconfigData))
+	kubeconfigBlob := "available" // placeholder to indicate presence of kubeconfig without storing actual content
 
 	// Notify host manager about kubeconfig update
 	tokenFile := filepath.Join(confs.Auth.AccessTokenPath, "node-agent", config.AccessToken)
@@ -71,7 +72,7 @@ func (km *KubeconfigManager) NotifyKubeconfig(ctx context.Context, kubeconfigDat
 	if km.hostmgrClient != nil {
 		err := km.hostmgrClient.UpdateClusterStatus(utils.GetAuthContext(ctx, tokenFile), kubeconfigBlob)
 		if err != nil {
-			kubeconfigLog.Errorf("not able to update node status to running : %v", err)
+			managerLog.Errorf("not able to update node status to running : %v", err)
 			return fmt.Errorf("failed to update cluster status: %v", err)
 		}
 	}
@@ -81,7 +82,7 @@ func (km *KubeconfigManager) NotifyKubeconfig(ctx context.Context, kubeconfigDat
 	copy(km.lastKubeconfig, kubeconfigData)
 	km.lastKubeconfigHash = currentHash
 
-	kubeconfigLog.Infof("Successfully notified host manager about kubeconfig (%d bytes)", len(kubeconfigData))
+	managerLog.Infof("Successfully notified host manager about kubeconfig (%d bytes)", len(kubeconfigData))
 	return nil
 }
 
@@ -90,12 +91,12 @@ func (km *KubeconfigManager) ClearKubeconfig(ctx context.Context) error {
 	km.mu.Lock()
 	defer km.mu.Unlock()
 
-	kubeconfigLog.Info("Clearing kubeconfig from host manager")
+	managerLog.Info("Clearing kubeconfig from host manager")
 
 	km.lastKubeconfig = nil
 	km.lastKubeconfigHash = ""
 
-	kubeconfigLog.Info("Kubeconfig cleared successfully")
+	managerLog.Info("Kubeconfig cleared successfully")
 	return nil
 }
 

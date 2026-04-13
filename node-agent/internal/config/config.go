@@ -26,7 +26,7 @@ const HEARTBEAT_DEFAULT = 10
 const CLUSTER_DETECTION_DEFAULT = 30
 
 // Kubernetes cluster configuration
-const K3S_DEFAULT_BINARY_PATH = "/usr/local/bin/k3s"
+const K3S_DEFAULT_BINARY_PATH = "/var/lib/rancher/k3s/bin/k3s"
 
 var log = logger.Logger
 
@@ -158,7 +158,7 @@ func (cfg *NodeAgentConfig) setDefaults(cfgPath string) {
 	if cfg.Cluster.ClusterType.Type != "" {
 		log.Infof("Cluster type configured: %s", cfg.Cluster.ClusterType.Type)
 	} else {
-		log.Warnf("No cluster type configured in %s, setting to default k3s with binary path %s",
+		log.Infof("No cluster type configured in %s, setting to default k3s with binary path %s",
 			cfgPath, K3S_DEFAULT_BINARY_PATH)
 		cfg.Cluster.ClusterType = ClusterType{
 			Type:       "k3s",

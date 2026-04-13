@@ -15,7 +15,7 @@ import (
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/logger"
 )
 
-var log = logger.Logger
+var clusterLog = logger.Logger
 
 // represents detected cluster information
 type ClusterInfo struct {
@@ -42,21 +42,21 @@ func NewClusterDetector(nodeID string, clusterType config.ClusterType) *ClusterD
 
 // checks if there's a cluster running on the node
 func (cd *ClusterDetector) DetectCluster() (*ClusterInfo, error) {
-	log.Debug("Detecting clusters on the node...")
+	clusterLog.Debug("Detecting clusters on the node...")
 
 	switch cd.clusterType.Type {
 	case "k3s":
 		if clusterInfo, err := cd.detectK3s(cd.clusterType.BinaryPath); err == nil {
-			log.Infof("Detected K3s cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
+			clusterLog.Infof("Detected K3s cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
 			return clusterInfo, nil
 		}
 	case "rke2":
 		if clusterInfo, err := cd.detectRKE2(cd.clusterType.BinaryPath); err == nil {
-			log.Infof("Detected RKE2 cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
+			clusterLog.Infof("Detected RKE2 cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
 			return clusterInfo, nil
 		}
 	default:
-		log.Warnf("Unsupported cluster type: %s", cd.clusterType.Type)
+		clusterLog.Warnf("Unsupported cluster type: %s", cd.clusterType.Type)
 	}
 
 	return nil, fmt.Errorf("no cluster detected on node")
@@ -160,14 +160,14 @@ func (cd *ClusterDetector) GetKubeconfig(clusterInfo *ClusterInfo) ([]byte, erro
 		return nil, fmt.Errorf("no kubeconfig available for cluster")
 	}
 
-	log.Debugf("Reading kubeconfig from: %s", clusterInfo.KubeconfigPath)
+	clusterLog.Debugf("Reading kubeconfig from: %s", clusterInfo.KubeconfigPath)
 
 	content, err := os.ReadFile(clusterInfo.KubeconfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read kubeconfig from %s: %v", clusterInfo.KubeconfigPath, err)
 	}
 
-	log.Infof("Successfully retrieved kubeconfig: %d bytes", len(content))
+	clusterLog.Infof("Successfully retrieved kubeconfig: %d bytes", len(content))
 	return content, nil
 }
 
@@ -187,6 +187,6 @@ func (cd *ClusterDetector) ValidateKubeconfig(kubeconfigData []byte) error {
 		}
 	}
 
-	log.Debug("Kubeconfig validation passed")
+	clusterLog.Debug("Kubeconfig validation passed")
 	return nil
 }

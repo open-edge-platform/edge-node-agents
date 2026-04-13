@@ -269,6 +269,7 @@ func main() {
 				return
 			case <-ticker.C:
 				detectAndManageCluster(ctx, clusterDetector, kubeconfigMgr, confs)
+				log.Info("Cluster detection cycle completed")
 			}
 			ticker.Reset(confs.Cluster.DetectionInterval)
 		}
