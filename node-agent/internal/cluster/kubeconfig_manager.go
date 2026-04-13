@@ -20,6 +20,8 @@ import (
 var kubeconfigLog = logger.Logger
 
 // manages kubeconfig lifecycle and communication with host manager
+// tracks the last known kubeconfig and only notifies host manager
+// on changes to avoid unnecessary updates
 type KubeconfigManager struct {
 	hostmgrClient      *hostmgr_client.Client
 	nodeID             string

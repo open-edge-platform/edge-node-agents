@@ -268,8 +268,7 @@ func main() {
 				log.Info("terminating cluster detection")
 				return
 			case <-ticker.C:
-				detectAndManageCluster(ctx, hostmgrCli, clusterDetector, kubeconfigMgr, confs)
-				fmt.Println("Cluster detection tick - implement cluster detection logic here")
+				detectAndManageCluster(ctx, clusterDetector, kubeconfigMgr, confs)
 			}
 			ticker.Reset(confs.Cluster.DetectionInterval)
 		}
@@ -400,7 +399,7 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 }
 
 // detects clusters on the node and manages kubeconfig lifecycle
-func detectAndManageCluster(ctx context.Context, hostMgrCli *hostmgr_client.Client, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, confs *config.NodeAgentConfig) {
+func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, confs *config.NodeAgentConfig) {
 	clusterInfo, err := detector.DetectCluster()
 	if err != nil {
 		// No cluster detected yet - clear any existing kubeconfig and update status
