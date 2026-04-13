@@ -66,6 +66,8 @@ include <tunables/global>
   owner /etc/intel_edge_node/client-credentials/project_id rw,
   owner /proc/*/mountinfo r,
   owner /tmp/** rw,
+  /var/log/client-auth/ rw,
+  /var/log/client-auth/** rw,
 
 }
 
