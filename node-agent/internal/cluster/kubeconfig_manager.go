@@ -7,6 +7,7 @@ package cluster
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -62,8 +63,8 @@ func (km *KubeconfigManager) NotifyKubeconfig(ctx context.Context, kubeconfigDat
 
 	// Encode kubeconfig in base64 before storing to avoid any formatting issues while transmitting over gRPC and storing in DB
 	//kubeconfigBlob := fmt.Sprintf("%x", sha256.Sum256(kubeconfigData))
-	//kubeconfigBlob := fmt.Sprintf("%s", base64.StdEncoding.EncodeToString(kubeconfigData))
-	kubeconfigBlob := "available" // placeholder to indicate presence of kubeconfig without storing actual content
+	kubeconfigBlob := fmt.Sprintf("%s", base64.StdEncoding.EncodeToString(kubeconfigData))
+	//kubeconfigBlob := "available" // placeholder to indicate presence of kubeconfig without storing actual content
 
 	// Notify host manager about kubeconfig update
 	tokenFile := filepath.Join(confs.Auth.AccessTokenPath, "node-agent", config.AccessToken)
