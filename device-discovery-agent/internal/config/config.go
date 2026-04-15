@@ -17,11 +17,8 @@ import (
 )
 
 const (
-	TokenFolder             = "/dev/shm" // #nosec G101 -- This is a path, not a credential
 	EnvConfigPath           = "/etc/edge-node/node/confs/validated-config.env"
 	ExtraHostsFile          = "/etc/hosts"
-	AccessTokenFile         = TokenFolder + "/idp_access_token"
-	ReleaseTokenFile        = TokenFolder + "/release_token"
 	KeycloakTokenURL        = "/realms/master/protocol/openid-connect/token"
 	ReleaseTokenURL         = "/token"
 	ClientCredentialsFolder = "/etc/intel_edge_node/client-credentials/" // #nosec G101 -- This is a path, not a credential
@@ -29,6 +26,8 @@ const (
 	ClientSecretPath        = ClientCredentialsFolder + "client_secret"
 	KernelArgsFilePath      = "/proc/cmdline"
 	ProjectIDPath           = ClientCredentialsFolder + "project_id"
+	AccessTokenFile         = ClientCredentialsFolder + "idp_access_token"
+	ReleaseTokenFile        = ClientCredentialsFolder + "release_token"
 )
 
 // UpdateHosts updates /etc/hosts with extra host mappings.

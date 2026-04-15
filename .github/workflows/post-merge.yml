@@ -31,7 +31,7 @@ jobs:
           persist-credentials: false
       - name: "Discover Changed Subfolders"
         id: discover-changes
-        uses: open-edge-platform/orch-ci/discover-changed-subfolders@b5930c48c1fcdb6b34ffbcd465cff96dabfbde70  # 2026.0.17
+        uses: open-edge-platform/orch-ci/discover-changed-subfolders@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
       - name: "Filter Out Unwanted Changed Subfolders"
         id: filter-changes
         env:
@@ -44,7 +44,7 @@ jobs:
 
       - name: Discover Changed Files
         id: check-files
-        uses: open-edge-platform/orch-ci/discover-changed-files@b5930c48c1fcdb6b34ffbcd465cff96dabfbde70  # 2026.0.17
+        uses: open-edge-platform/orch-ci/discover-changed-files@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           project_folder: "."
   post-merge-pipeline:
@@ -60,7 +60,7 @@ jobs:
       matrix:
         # runner_version: [ubuntu-24.04, ubuntu-22.04]
         project_folder: ${{ fromJson(needs.pre-checks.outputs.filtered_projects) }}
-    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@b5930c48c1fcdb6b34ffbcd465cff96dabfbde70  # 2026.0.17
+    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
     with:
       #  runner_version: ${{ matrix.runner_version }}
       runs_on: ubuntu-22.04
@@ -108,20 +108,20 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b5930c48c1fcdb6b34ffbcd465cff96dabfbde70  # 2026.0.17
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "yq,aws,oras"
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7   # v6.0.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37   # v6.1.0
         with:
           aws-access-key-id: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}
           aws-secret-access-key: ${{ secrets.NO_AUTH_ECR_PUSH_PASSWD }}
           aws-region: us-west-2
 
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@183a1442edf41672e66566b7fc560e297a290896   # v2.1.1
+        uses: aws-actions/amazon-ecr-login@f2e9fc6c2b355c1890b65e6f6f0e2ac3e6e22f78   # v2.1.2
         with:
           registries: "080137407410"
 
@@ -168,7 +168,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b5930c48c1fcdb6b34ffbcd465cff96dabfbde70  # 2026.0.17
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base,yq"
@@ -198,7 +198,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b5930c48c1fcdb6b34ffbcd465cff96dabfbde70  # 2026.0.17
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "base"

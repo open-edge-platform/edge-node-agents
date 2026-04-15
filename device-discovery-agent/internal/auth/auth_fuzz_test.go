@@ -46,18 +46,18 @@ BQADQQBvZmZzZXQgdGVzdCBkYXRhIGZvciBmdXp6aW5nIHB1cnBvc2VzIG9ubHk=
 			t.Skip("Failed to write test file")
 		}
 
-		// Test loadCACertPool - should not panic
-		pool, err := loadCACertPool(certPath)
+		// Test LoadCACertPool - should not panic
+		pool, err := LoadCACertPool(certPath)
 
 		// Validate results
 		if err == nil {
 			// If no error, pool should be valid and non-nil
 			if pool == nil {
-				t.Error("loadCACertPool returned nil pool without error")
+				t.Error("LoadCACertPool returned nil pool without error")
 			}
 			// Verify it's a valid x509.CertPool
 			if _, ok := interface{}(pool).(*x509.CertPool); !ok {
-				t.Error("loadCACertPool returned invalid type")
+				t.Error("LoadCACertPool returned invalid type")
 			}
 		}
 		// If error occurred, that's fine - we just don't want panics
@@ -84,7 +84,7 @@ func FuzzJSONTokenResponse(f *testing.F) {
 	f.Add([]byte(`{"access_token":"` + strings.Repeat("x", 10000) + `"}`)) // Very long token
 
 	f.Fuzz(func(t *testing.T, jsonData []byte) {
-		// Simulate the JSON parsing logic from fetchAccessToken
+		// Simulate the JSON parsing logic from FetchClientCredentialsToken
 		var result map[string]interface{}
 		err := json.Unmarshal(jsonData, &result)
 
@@ -125,7 +125,7 @@ func FuzzReleaseTokenResponse(f *testing.F) {
 	f.Add([]byte("{\"token\":\"value\"}"))    // JSON when expecting plain text
 
 	f.Fuzz(func(t *testing.T, tokenData []byte) {
-		// Simulate the token validation logic from fetchReleaseToken
+		// Simulate the token validation logic from FetchReleaseToken
 		token := string(tokenData)
 
 		// Test the validation logic
@@ -170,7 +170,7 @@ func FuzzURLConstruction(f *testing.F) {
 		fullURL := "https://" + urlStr
 
 		// Validate URL parsing doesn't panic
-		// This simulates the URL construction in fetchAccessToken and fetchReleaseToken
+		// This simulates the URL construction in FetchClientCredentialsToken and FetchReleaseToken
 		_ = fullURL
 
 		// Test strings.Replace operation from ClientAuth
@@ -199,7 +199,7 @@ func FuzzAuthorizationHeader(f *testing.F) {
 	f.Add(strings.Repeat("a", 10000)) // Very long token
 
 	f.Fuzz(func(t *testing.T, token string) {
-		// Simulate Authorization header construction from fetchReleaseToken
+		// Simulate Authorization header construction from FetchReleaseToken
 		authHeader := "Bearer " + token
 
 		// Check for potential header injection vulnerabilities

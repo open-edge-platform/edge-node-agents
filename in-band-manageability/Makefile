@@ -50,7 +50,7 @@ inbcbuild:
 	@echo "---MAKEFILE BUILD INBC---"
 	@# Help: Build the inbc binary
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
-	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w -extldflags=-static \
+	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="-spectre=all" -ldflags="all=-s -w -extldflags=-static \
 	-X main.Version=$(VERSION) \
 	-X github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/telemetry.Version=$(VERSION) \
 	-X github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/telemetry.GitCommit=$(COMMIT) \
@@ -62,7 +62,7 @@ inbdbuild:
 	@echo "---MAKEFILE BUILD INBD---"
 	@# Help: Build the inbd binary
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
-	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w -extldflags=-static \
+	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="-spectre=all" -ldflags="all=-s -w -extldflags=-static \
 	-X github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/telemetry.Version=$(VERSION) \
 	-X github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/telemetry.GitCommit=$(COMMIT) \
 	-X github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/telemetry.BuildDate=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")" \

@@ -5,7 +5,6 @@ package interactive
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"math/rand"
 	"os"
@@ -15,9 +14,9 @@ import (
 	pb "github.com/open-edge-platform/infra-onboarding/onboarding-manager/pkg/api/onboardingmgr/v1"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/oauth"
 
+	"device-discovery/internal/auth"
 	"device-discovery/internal/config"
 	"device-discovery/internal/logger"
 )
@@ -51,20 +50,11 @@ func NewClient(address string, port int, mac, ipAddress, uuid, serial, caCertPat
 // Onboard performs interactive device onboarding using JWT authentication.
 // This requires that the user has already authenticated and obtained an access token.
 func (c *Client) Onboard(ctx context.Context) error {
-	// Load the CA certificate
-	caCert, err := os.ReadFile(c.caCertPath)
+	// Create gRPC transport credentials with TLS
+	creds, err := auth.NewGRPCTransportCredentials(c.caCertPath)
 	if err != nil {
-		return fmt.Errorf("failed to read CA certificate: %v", err)
+		return fmt.Errorf("failed to create transport credentials: %v", err)
 	}
-
-	// Create a certificate pool from the CA certificate
-	certPool := x509.NewCertPool()
-	if !certPool.AppendCertsFromPEM(caCert) {
-		return fmt.Errorf("failed to append CA certificate to cert pool")
-	}
-
-	// Create the credentials using the certificate pool
-	creds := credentials.NewClientTLSFromCert(certPool, "")
 
 	// Read JWT token from file
 	jwtToken, err := os.ReadFile(c.accessTokenPath)

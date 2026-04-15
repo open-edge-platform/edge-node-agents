@@ -43,7 +43,7 @@ tmmbuild:
 
 ptabuild:
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
-	go build -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -buildmode=pie -asmflags="all=-spectre=all" -ldflags="all=-s -w -extldflags=-static \
+	go build -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -buildmode=pie -asmflags="-spectre=all" -ldflags="all=-s -w -extldflags=-static \
 	-X github.com/open-edge-platform/edge-node-agents/platform-telemetry-agent/internal/info.version=$(VERSION) \
 	-X github.com/open-edge-platform/edge-node-agents/platform-telemetry-agent/internal/info.commit=$(COMMIT)" \
 	-o $(BUILD_DIR)/$(NAME) cmd/telemetryagent/main.go

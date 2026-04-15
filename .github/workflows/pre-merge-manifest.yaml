@@ -41,7 +41,7 @@ jobs:
           token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           persist-credentials: false
       - name: Setup CI environment
-        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@b5930c48c1fcdb6b34ffbcd465cff96dabfbde70  # 2026.0.17
+        uses: open-edge-platform/orch-ci/.github/actions/bootstrap@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # 2026.1.1
         with:
           gh_token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           bootstrap_tools: "yq"
