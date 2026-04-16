@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 package comms
 
@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/amt"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/cpu"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/disk"
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/gpu"
@@ -126,7 +127,8 @@ func ConnectToEdgeInfrastructureManager(serverAddr string, tlsConfig *tls.Config
 }
 
 func parseSystemInfo(serialNumber string, productName string, bmcAddr string, osInfo *system.Os, biosInfo *system.Bios, cpu *cpu.CPU,
-	storage []*disk.Disk, gpu []*gpu.Gpu, mem uint64, networks []*network.Network, bmType proto.BmInfo_BmType, usbInfo []*usb.Usb) *proto.SystemInfo {
+	storage []*disk.Disk, gpu []*gpu.Gpu, mem uint64, networks []*network.Network, bmType proto.BmInfo_BmType, usbInfo []*usb.Usb,
+	amt *amt.AmtInfo) *proto.SystemInfo {
 
 	gpuList := []*proto.SystemGPU{}
 	for _, gpuDetails := range gpu {
@@ -275,6 +277,41 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 		}
 	}
 
+	amtInfo := proto.AmtConfigInfo{}
+	if amt != nil {
+		if amt.RAS != nil {
+			amtInfo = proto.AmtConfigInfo{
+				Version:          amt.Version,
+				DeviceName:       amt.DeviceName,
+				OperationalState: amt.OperationalState,
+				BuildNumber:      amt.BuildNumber,
+				Sku:              amt.Sku,
+				Features:         amt.Features,
+				DeviceGuid:       amt.Uuid,
+				ControlMode:      amt.ControlMode,
+				DnsSuffix:        amt.DNSSuffix,
+				RasInfo: &proto.RASInfo{
+					NetworkStatus: amt.RAS.NetworkStatus,
+					RemoteStatus:  amt.RAS.RemoteStatus,
+					RemoteTrigger: amt.RAS.RemoteTrigger,
+					MpsHostname:   amt.RAS.MPSHostname,
+				},
+			}
+		} else {
+			amtInfo = proto.AmtConfigInfo{
+				Version:          amt.Version,
+				DeviceName:       amt.DeviceName,
+				OperationalState: amt.OperationalState,
+				BuildNumber:      amt.BuildNumber,
+				Sku:              amt.Sku,
+				Features:         amt.Features,
+				DeviceGuid:       amt.Uuid,
+				ControlMode:      amt.ControlMode,
+				DnsSuffix:        amt.DNSSuffix,
+			}
+		}
+	}
+
 	systemInfo := &proto.SystemInfo{
 		HwInfo: &proto.HWInfo{
 			SerialNum:   serialNumber,
@@ -301,6 +338,7 @@ func parseSystemInfo(serialNumber string, productName string, bmcAddr string, os
 			ReleaseDate: biosInfo.RelDate,
 			Vendor:      biosInfo.Vendor,
 		},
+		AmtInfo: &amtInfo,
 	}
 
 	return systemInfo
@@ -357,5 +395,10 @@ func GenerateSystemInfoRequest(executor utils.CmdExecutor) *proto.SystemInfo {
 		log.Errorf("unable to get usb description : %v", err)
 	}
 
-	return parseSystemInfo(sn, productName, bmcAddr, osInfo, biosInfo, cpu, storage, gpu, mem, networkList, bmType, usbList)
+	amtInfo, err := amt.GetAmtInfo(executor)
+	if err != nil {
+		log.Errorf("unable to get amt description : %v", err)
+	}
+
+	return parseSystemInfo(sn, productName, bmcAddr, osInfo, biosInfo, cpu, storage, gpu, mem, networkList, bmType, usbList, amtInfo)
 }
