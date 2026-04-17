@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/bin/sh
+# SPDX-FileCopyrightText: 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
 
 # Loop over DRM cards
 for d in /sys/class/drm/card*; do
@@ -16,7 +18,7 @@ for d in /sys/class/drm/card*; do
   CARD_NUM=${CARD#card}
   DRI_PATH="/sys/kernel/debug/dri/$CARD_NUM"
 
-  # ---- Capture JSON safely ----
+  # ---- Capture JSON ----
   JSON=$(timeout 3 stdbuf -oL intel_gpu_top -J -d drm:/dev/dri/$CARD -s 1000 2>/dev/null | awk '
   /^{/ {buf=$0; depth=1; next}
   depth>0 {
@@ -29,7 +31,7 @@ for d in /sys/class/drm/card*; do
   }')
 
   if [ -z "$JSON" ]; then
-    echo "igpu_metrics,card=$CARD status=0i"
+    echo "igpu_metrics,card=$CARD collection_status=0i"
     continue
   fi
 
@@ -52,6 +54,6 @@ for d in /sys/class/drm/card*; do
   fi
 
   # ---- Output (InfluxDB line protocol) ----
-  echo "igpu_metrics,card=${CARD} busy=${BUSY},rc6=${RC6},freq_mhz=${FREQ},power_w=${POWER},mem_bytes=${MEM_BYTES}i" | tr -d '\000' | head -n 1
+  echo "igpu_metrics,card=${CARD} engine_busy_pct=${BUSY},rc6_residency_pct=${RC6},freq_mhz=${FREQ},power_w=${POWER},mem_bytes=${MEM_BYTES}i" | tr -d '\000' | head -n 1
 
 done
