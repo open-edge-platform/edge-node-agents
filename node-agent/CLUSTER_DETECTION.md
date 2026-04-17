@@ -27,9 +27,8 @@ The node-agent now has the ability to:
 ### Detection Logic
 
 The cluster detector supports multiple cluster types and checks for:
-- **K3s clusters**: Configurable binary path (defaults to `/usr/local/bin/k3s`), checks systemd service status
+- **K3s clusters**: Configurable binary path (defaults to `/var/lib/rancher/k3s/bin/k3s`), checks systemd service status
 - **RKE2 clusters**: Configurable binary path (defaults to `/usr/local/bin/rke2`), checks systemd service status
-- **Priority-based detection**: First configured cluster type found takes priority
 
 When a cluster is detected, it:
 - Retrieves the cluster version
@@ -81,7 +80,7 @@ Cluster status updates are handled via a dedicated `UpdateClusterStatus` gRPC ca
 
 - **Separate from Node Status**: Cluster updates don't interfere with regular node status reporting
 - **Change-based Notifications**: Only sends updates when kubeconfig content changes (SHA256 hash comparison)
-- **Kubeconfig Hash**: Sends SHA256 hash of kubeconfig content to avoid transmission issues
+- **Kubeconfig Hash**: Sends a base64 encoded message with kubeconfig content to avoid transmission issues
 - **Error Handling**: Failures in cluster status updates don't affect node status reporting
 
 ### Kubeconfig Management
@@ -91,16 +90,6 @@ The kubeconfig manager:
 - Only notifies the host manager when kubeconfig content changes
 - Uses dedicated `UpdateClusterStatus` API call
 - Provides methods to clear kubeconfig when clusters are removed
-- Thread-safe operations with read/write mutex protection
-
-
-### Key Functions
-
-- `DetectCluster()` - Main cluster detection entry point (supports multiple cluster types)
-- `GetKubeconfig()` - Retrieve kubeconfig content from detected cluster
-- `NotifyKubeconfig()` - Send kubeconfig to host manager via dedicated UpdateClusterStatus API
-- `ValidateKubeconfig()` - Basic kubeconfig validation
-- `UpdateClusterStatus()` - Dedicated gRPC call for cluster status updates
 
 ## Usage Example
 
@@ -119,7 +108,7 @@ The functionality is automatic once configured. The node-agent will:
 cluster:
   detectionEnabled: true
   detectionInterval: 120s
-  # Will automatically default to both K3s and RKE2
+  # Will automatically default to K3s
 ```
 
 **K3s only configuration:**
@@ -129,5 +118,5 @@ cluster:
   detectionInterval: 60s
   clusterTypes:
     type: k3s
-    binaryPath: "/usr/local/bin/k3s"
+    binaryPath: "/var/lib/rancher/k3s/bin/k3s"
 ```
