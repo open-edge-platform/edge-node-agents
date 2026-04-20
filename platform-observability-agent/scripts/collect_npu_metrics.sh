@@ -1,7 +1,6 @@
 #!/bin/sh
 # SPDX-FileCopyrightText: 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-set -u
 
 found=0
 JSON=$(/usr/bin/jq -n '{}' 2>/dev/null || /usr/bin/echo '{}')
