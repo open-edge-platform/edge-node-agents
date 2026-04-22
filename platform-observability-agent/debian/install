@@ -13,6 +13,7 @@ configs/apparmor.d/opt.telegraf.bin.telegraf etc/apparmor.d
 perfmon/ /etc/telegraf/
 scripts/collect_gpu_metrics.sh opt/telegraf/bin/
 scripts/collect_disk_info.sh opt/telegraf/bin/
+scripts/collect_bios_metrics.sh opt/telegraf/bin/
 scripts/core_metrics.sh opt/telegraf/bin/
 
 configs/otelcol.yaml etc/otelcol
