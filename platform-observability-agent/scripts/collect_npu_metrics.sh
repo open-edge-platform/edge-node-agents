@@ -2,8 +2,17 @@
 # SPDX-FileCopyrightText: 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+# Escape special characters in influx line protocol tag values
+escape_influx_tag() {
+  echo "$1" | sed 's/\\/\\\\/g; s/,/\\,/g; s/ /\\ /g; s/=/\\=/g'
+}
+
+# Escape double quotes for influx string fields
+escape_influx_string() {
+  echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
 found=0
-JSON=$(/usr/bin/jq -n '{}' 2>/dev/null || /usr/bin/echo '{}')
 
 for acc in /sys/class/accel/accel*; do
   [ -e "$acc" ] || continue
@@ -52,45 +61,29 @@ for acc in /sys/class/accel/accel*; do
 
   RUNTIME_TOTAL_TIME=$((RUNTIME_ACTIVE_TIME + RUNTIME_SUSPENDED_TIME))
 
-  METRICS=$(/usr/bin/jq -n \
-    --arg accel "$ACCEL" \
-    --arg pci "$PCI_BDF" \
-    --arg driver "$DRIVER" \
-    --arg runtime_status "$RUNTIME_STATUS" \
-    --argjson present "$PRESENT" \
-    --argjson driver_bound "$DRIVER_BOUND" \
-    --argjson runtime_active "$RUNTIME_ACTIVE" \
-    --argjson runtime_active_time_ms "$RUNTIME_ACTIVE_TIME" \
-    --argjson runtime_suspended_time_ms "$RUNTIME_SUSPENDED_TIME" \
-    --argjson runtime_total_time_ms "$RUNTIME_TOTAL_TIME" \
-    --argjson runtime_usage "$RUNTIME_USAGE" \
-    '{
-      accel: $accel,
-      pci: $pci,
-      driver: $driver,
-      runtime_status: $runtime_status,
-      present: $present,
-      driver_bound: $driver_bound,
-      runtime_active: $runtime_active,
-      runtime_active_time_ms: $runtime_active_time_ms,
-      runtime_suspended_time_ms: $runtime_suspended_time_ms,
-      runtime_total_time_ms: $runtime_total_time_ms,
-      runtime_usage: $runtime_usage
-    }' 2>/dev/null || /usr/bin/echo '{}')
+  ACCEL_TAG=$(escape_influx_tag "$ACCEL")
+  PCI_TAG=$(escape_influx_tag "$PCI_BDF")
+  DRIVER_TAG=$(escape_influx_tag "$DRIVER")
+  STATUS_ESC=$(escape_influx_string "$RUNTIME_STATUS")
 
-  JSON=$(/usr/bin/echo "$JSON" | /usr/bin/jq --arg key "$ACCEL" --argjson val "$METRICS" '. + {($key): $val}' 2>/dev/null || /usr/bin/echo "$JSON")
+  echo "npu_metrics,accel=${ACCEL_TAG},pci=${PCI_TAG},driver=${DRIVER_TAG} \
+runtime_status=\"${STATUS_ESC}\",\
+present=${PRESENT}i,\
+driver_bound=${DRIVER_BOUND}i,\
+runtime_active=${RUNTIME_ACTIVE}i,\
+runtime_active_time_ms=${RUNTIME_ACTIVE_TIME}i,\
+runtime_suspended_time_ms=${RUNTIME_SUSPENDED_TIME}i,\
+runtime_total_time_ms=${RUNTIME_TOTAL_TIME}i,\
+runtime_usage=${RUNTIME_USAGE}i"
 done
 
 if [ "$found" -eq 0 ]; then
-  JSON=$(/usr/bin/jq -n '{
-    present: 0,
-    driver_bound: 0,
-    runtime_active: 0,
-    runtime_active_time_ms: 0,
-    runtime_suspended_time_ms: 0,
-    runtime_total_time_ms: 0,
-    runtime_usage: 0
-  }' 2>/dev/null || /usr/bin/echo '{}')
+  echo "npu_metrics \
+present=0i,\
+driver_bound=0i,\
+runtime_active=0i,\
+runtime_active_time_ms=0i,\
+runtime_suspended_time_ms=0i,\
+runtime_total_time_ms=0i,\
+runtime_usage=0i"
 fi
-
-/usr/bin/echo "$JSON"
