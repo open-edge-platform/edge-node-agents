@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
-# Validate required tooling; emit a health point instead of failing noisily.
+# Validate required tooling.
 for cmd in timeout stdbuf intel_gpu_top jq awk; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "igpu_metrics collection_status=0i"
