@@ -6,7 +6,6 @@ package auth
 import (
 	"context"
 	"fmt"
-	"strings"
 )
 
 // ClientAuth handles authentication and retrieves tokens using client credentials.
@@ -26,12 +25,5 @@ func ClientAuth(clientID string, clientSecret string, keycloakURL string, access
 		return "", "", fmt.Errorf("failed to get JWT access token from Keycloak: %v", err)
 	}
 
-	// Fetch release service token
-	releaseURL := strings.Replace(keycloakURL, "keycloak", "release", 1) + releaseTokenURL
-	releaseToken, err = FetchReleaseToken(ctx, releaseURL, idpAccessToken, caCertPath)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to get release service token: %v", err)
-	}
-
-	return idpAccessToken, releaseToken, nil
+	return idpAccessToken, "anonymous", nil
 }
