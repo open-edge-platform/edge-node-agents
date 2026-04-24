@@ -13,10 +13,12 @@ done
 # Normalize non-numeric values to 0 for Influx field safety.
 numeric_or_zero() {
   case "$1" in
-    ''|*[!0-9.\-]*) echo 0 ;;
+    ''|*[^0-9.]* ) echo 0 ;;
     *) echo "$1" ;;
   esac
 }
+
+found=0
 
 # Loop over DRM cards
 for d in /sys/class/drm/card*; do
@@ -35,6 +37,7 @@ for d in /sys/class/drm/card*; do
     continue
   fi
 
+  found=1
   CARD=$(basename "$d")
   CARD_NUM=${CARD#card}
   DRI_PATH="/sys/kernel/debug/dri/$CARD_NUM"
@@ -70,10 +73,15 @@ for d in /sys/class/drm/card*; do
   # ---- Memory (UMA) ----
   MEM_BYTES=0
   if [ -f "$DRI_PATH/i915_gem_objects" ]; then
-    MEM_BYTES=$(grep -o '[0-9]\+ bytes' "$DRI_PATH/i915_gem_objects" | awk '{print $1}') MEM_BYTES=${MEM_BYTES:-0}
+    MEM_BYTES=$(grep -o '[0-9]\+ bytes' "$DRI_PATH/i915_gem_objects" | awk '{print $1}')
+    MEM_BYTES=${MEM_BYTES:-0}
   fi
 
   # ---- Output (InfluxDB line protocol) ----
   echo "igpu_metrics,card=${CARD} engine_busy_pct=${BUSY},rc6_residency_pct=${RC6},freq_mhz=${FREQ},power_w=${POWER},mem_bytes=${MEM_BYTES}i" | tr -d '\000' | head -n 1
 
 done
+
+if [ "$found" -eq 0 ]; then
+  echo "igpu_metrics collection_status=0i"
+fi
