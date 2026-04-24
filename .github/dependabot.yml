@@ -1,19 +1,12 @@
 ---
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 version: 2
 updates:
+  # Go modules - separate block for each directory
   - package-ecosystem: "gomod"
-    directories:
-      - "/cluster-agent"
-      - "/common"
-      - "/hardware-discovery-agent"
-      - "/node-agent"
-      - "/platform-telemetry-agent"
-      - "/platform-update-agent"
-      - "/device-discovery-agent"
-      - "/in-band-manageability"
+    directory: "/cluster-agent"
     schedule:
       interval: daily
     open-pull-requests-limit: 3
@@ -28,20 +21,138 @@ updates:
       internal-dependencies:
         patterns:
           - "*open-edge-platform*"
+
   - package-ecosystem: "gomod"
-    directories:
-      - "/reporting-agent"
+    directory: "/common"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "[gomod] "
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*open-edge-platform*"
+      internal-dependencies:
+        patterns:
+          - "*open-edge-platform*"
+
+  - package-ecosystem: "gomod"
+    directory: "/hardware-discovery-agent"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "[gomod] "
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*open-edge-platform*"
+      internal-dependencies:
+        patterns:
+          - "*open-edge-platform*"
+
+  - package-ecosystem: "gomod"
+    directory: "/node-agent"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "[gomod] "
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*open-edge-platform*"
+      internal-dependencies:
+        patterns:
+          - "*open-edge-platform*"
+
+  - package-ecosystem: "gomod"
+    directory: "/platform-telemetry-agent"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "[gomod] "
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*open-edge-platform*"
+      internal-dependencies:
+        patterns:
+          - "*open-edge-platform*"
+
+  - package-ecosystem: "gomod"
+    directory: "/platform-update-agent"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "[gomod] "
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*open-edge-platform*"
+      internal-dependencies:
+        patterns:
+          - "*open-edge-platform*"
+
+  - package-ecosystem: "gomod"
+    directory: "/device-discovery-agent"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "[gomod] "
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*open-edge-platform*"
+      internal-dependencies:
+        patterns:
+          - "*open-edge-platform*"
+
+  - package-ecosystem: "gomod"
+    directory: "/in-band-manageability"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "[gomod] "
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "*open-edge-platform*"
+      internal-dependencies:
+        patterns:
+          - "*open-edge-platform*"
+
+  - package-ecosystem: "gomod"
+    directory: "/reporting-agent"
     schedule:
       interval: daily
     open-pull-requests-limit: 10
     commit-message:
       prefix: "[gomod][reporting-agent] "
+
   - package-ecosystem: "github-actions"
-    directories:
-      - "/"  # this enables searching only in /.github/workflows directory
+    directory: "/"  # This searches in .github/workflows directory
     schedule:
       interval: daily
     open-pull-requests-limit: 10
     commit-message:
       prefix: "[gha] "
-
