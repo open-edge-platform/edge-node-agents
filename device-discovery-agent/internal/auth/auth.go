@@ -25,5 +25,6 @@ func ClientAuth(clientID string, clientSecret string, keycloakURL string, access
 		return "", "", fmt.Errorf("failed to get JWT access token from Keycloak: %v", err)
 	}
 
+	// Release token is hardcoded to "anonymous" as the release endpoint is not used.
 	return idpAccessToken, "anonymous", nil
 }
