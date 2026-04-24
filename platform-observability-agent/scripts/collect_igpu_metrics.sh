@@ -78,7 +78,12 @@ for d in /sys/class/drm/card*; do
   fi
 
   # ---- Output (InfluxDB line protocol) ----
-  echo "igpu_metrics,card=${CARD} engine_busy_pct=${BUSY},rc6_residency_pct=${RC6},freq_mhz=${FREQ},power_w=${POWER},mem_bytes=${MEM_BYTES}i" | tr -d '\000' | head -n 1
+  echo "igpu_metrics,card=${CARD} \
+engine_busy_pct=${BUSY},\
+rc6_residency_pct=${RC6},\
+freq_mhz=${FREQ},\
+power_w=${POWER},\
+mem_bytes=${MEM_BYTES}i"
 
 done
 
