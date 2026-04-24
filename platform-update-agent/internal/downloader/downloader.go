@@ -170,7 +170,7 @@ func (d *Downloader) Notify(prependToImageURL string, updateSource *pb.OSProfile
 
 			delay := time.Until(downloadTime)
 			d.downloadTimer = time.AfterFunc(delay, func() {
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute) // INBC specific timeout
+				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute) // INBC specific timeout
 				defer cancel()
 
 				if d.startDownload(ctx, prependToImageURL, updateSource) {
