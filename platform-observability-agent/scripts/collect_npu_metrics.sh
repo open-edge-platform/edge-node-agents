@@ -78,12 +78,5 @@ runtime_usage=${RUNTIME_USAGE}i"
 done
 
 if [ "$found" -eq 0 ]; then
-  echo "npu_metrics \
-present=0i,\
-driver_bound=0i,\
-runtime_active=0i,\
-runtime_active_time_ms=0i,\
-runtime_suspended_time_ms=0i,\
-runtime_total_time_ms=0i,\
-runtime_usage=0i"
+  echo "npu_metrics,accel=none,pci=none,driver=none present=0i,collection_status=0i"
 fi
