@@ -2,22 +2,43 @@
 # SPDX-FileCopyrightText: 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+#!/bin/sh
+
+DMIDECODE=/usr/sbin/dmidecode
+AWK=/usr/bin/awk
+JQ=/usr/bin/jq
+
+# Validate required binaries
+for cmd in "$DMIDECODE" "$JQ"; do
+  if [ ! -x "$cmd" ]; then
+    echo '{"collection_status":0}'
+    exit 0
+  fi
+done
+
+numeric_or_zero() {
+  case "$1" in
+    ''|*[^0-9]* ) echo 0 ;;
+    *) echo "$1" ;;
+  esac
+}
+
 # ---- BIOS ----
-BIOS_VENDOR=$(dmidecode -s bios-vendor 2>/dev/null)
-BIOS_VERSION=$(dmidecode -s bios-version 2>/dev/null)
-BIOS_DATE=$(dmidecode -s bios-release-date 2>/dev/null)
+BIOS_VENDOR=$("$DMIDECODE" -s bios-vendor 2>/dev/null)
+BIOS_VERSION=$("$DMIDECODE" -s bios-version 2>/dev/null)
+BIOS_DATE=$("$DMIDECODE" -s bios-release-date 2>/dev/null)
 
 # ---- SYSTEM ----
-SYS_VENDOR=$(dmidecode -s system-manufacturer 2>/dev/null)
-PRODUCT=$(dmidecode -s system-product-name 2>/dev/null)
+SYS_VENDOR=$("$DMIDECODE" -s system-manufacturer 2>/dev/null)
+PRODUCT=$("$DMIDECODE" -s system-product-name 2>/dev/null)
 
 # ---- CPU ----
-SOCKETS=$(dmidecode -t processor 2>/dev/null | awk -F: '
+SOCKETS=$("$DMIDECODE" -t processor 2>/dev/null | "$AWK" -F: '
 /Socket Designation/ {n++}
 END {print n+0}
 ')
 
-CORES=$(dmidecode -t processor 2>/dev/null | awk -F: '
+CORES=$("$DMIDECODE" -t processor 2>/dev/null | "$AWK" -F: '
 /Core Count/ {
   gsub(/ /, "", $2)
   if ($2 ~ /^[0-9]+$/) sum += $2
@@ -25,7 +46,7 @@ CORES=$(dmidecode -t processor 2>/dev/null | awk -F: '
 END {print sum+0}
 ')
 
-THREADS=$(dmidecode -t processor 2>/dev/null | awk -F: '
+THREADS=$("$DMIDECODE" -t processor 2>/dev/null | "$AWK" -F: '
 /Thread Count/ {
   gsub(/ /, "", $2)
   if ($2 ~ /^[0-9]+$/) sum += $2
@@ -35,7 +56,7 @@ END {print sum+0}
 
 # ---- MEMORY ----
 set -- $(
-  dmidecode -t memory 2>/dev/null | awk '
+  "$DMIDECODE" -t memory 2>/dev/null | "$AWK" '
     BEGIN {
       total=0
       dimms=0
@@ -59,31 +80,38 @@ set -- $(
   '
 )
 
-TOTAL_MEM_MB=${1:-0}
-DIMMS=${2:-0}
-DIMMS_POPULATED=${3:-0}
+TOTAL_MEM_MB=$(numeric_or_zero "${1:-0}")
+DIMMS=$(numeric_or_zero "${2:-0}")
+DIMMS_POPULATED=$(numeric_or_zero "${3:-0}")
+SOCKETS=$(numeric_or_zero "$SOCKETS")
+CORES=$(numeric_or_zero "$CORES")
+THREADS=$(numeric_or_zero "$THREADS")
 
-# ---- OUTPUT ----
-# Escape double quotes for influx string fields
-escape_influx_string() {
-  echo "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
-}
-
-BIOS_VENDOR_ESC=$(escape_influx_string "$BIOS_VENDOR")
-BIOS_VERSION_ESC=$(escape_influx_string "$BIOS_VERSION")
-BIOS_DATE_ESC=$(escape_influx_string "$BIOS_DATE")
-SYS_VENDOR_ESC=$(escape_influx_string "$SYS_VENDOR")
-PRODUCT_ESC=$(escape_influx_string "$PRODUCT")
-
-echo "bios_info \
-bios_vendor=\"${BIOS_VENDOR_ESC}\",\
-bios_version=\"${BIOS_VERSION_ESC}\",\
-bios_date=\"${BIOS_DATE_ESC}\",\
-system_vendor=\"${SYS_VENDOR_ESC}\",\
-product=\"${PRODUCT_ESC}\",\
-cpu_sockets=${SOCKETS}i,\
-cpu_cores=${CORES}i,\
-cpu_threads=${THREADS}i,\
-mem_total_mb=${TOTAL_MEM_MB}i,\
-mem_dimms=${DIMMS}i,\
-mem_dimms_populated=${DIMMS_POPULATED}i"
+# ---- OUTPUT JSON ----
+"$JQ" -n \
+  --arg bios_vendor "$BIOS_VENDOR" \
+  --arg bios_version "$BIOS_VERSION" \
+  --arg bios_date "$BIOS_DATE" \
+  --arg system_vendor "$SYS_VENDOR" \
+  --arg product "$PRODUCT" \
+  --argjson cpu_sockets "$SOCKETS" \
+  --argjson cpu_cores "$CORES" \
+  --argjson cpu_threads "$THREADS" \
+  --argjson mem_total_mb "$TOTAL_MEM_MB" \
+  --argjson mem_dimms "$DIMMS" \
+  --argjson mem_dimms_populated "$DIMMS_POPULATED" \
+  --argjson collection_status 1 \
+  '{
+    bios_vendor: $bios_vendor,
+    bios_version: $bios_version,
+    bios_date: $bios_date,
+    system_vendor: $system_vendor,
+    product: $product,
+    cpu_sockets: $cpu_sockets,
+    cpu_cores: $cpu_cores,
+    cpu_threads: $cpu_threads,
+    mem_total_mb: $mem_total_mb,
+    mem_dimms: $mem_dimms,
+    mem_dimms_populated: $mem_dimms_populated,
+    collection_status: $collection_status
+  }'
