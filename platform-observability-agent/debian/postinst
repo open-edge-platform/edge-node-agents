@@ -44,7 +44,9 @@ chown platform-observability-agent:bm-agents /run/platform-observability-agent/f
 
 chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_gpu_metrics.sh
 chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_igpu_metrics.sh
+chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_npu_metrics.sh
 chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_disk_info.sh
+chown platform-observability-agent:bm-agents /opt/telegraf/bin/collect_bios_metrics.sh
 chown platform-observability-agent:bm-agents /opt/telegraf/bin/core_metrics.sh
 
 chmod 740 /etc/edge-node/node/confs/platform-observability-collector
