@@ -16,7 +16,12 @@ import (
 )
 
 var expectedProductName = "Test Product"
-var expectedReleaseDate = "21/09/2023"
+var expectedReleaseDateMonthFirstFormat = "09/21/2023"
+var expectedReleaseDateYearFirstFormat = "2023-09-21"
+var expectedReleaseDateInvalidFormat = "09.21.2023"
+var expectedReleaseDatePartialMonthFormat = "9/21/2023"
+var expectedReleaseDatePartialMonthDayFormat = "2023-9-2"
+var expectedReleaseDateInvalidPartialFormat = "9/2023"
 var expectedSN = "26B06S3"
 var expectedUUID = "ec2b1731-304d-853d-cac8-659fe7fcb6ab"
 var expectedVendor = "Test Vendor"
@@ -32,7 +37,72 @@ func TestGetBiosInfoSuccess(t *testing.T) {
 
 	expectedInfo := &system.Bios{
 		Version: expectedVersion,
-		RelDate: expectedReleaseDate,
+		RelDate: expectedReleaseDateMonthFirstFormat,
+		Vendor:  expectedVendor,
+	}
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedInfo, biosInfo)
+}
+
+func TestGetBiosInfoSuccessReleaseDateYearFirstFormat(t *testing.T) {
+	biosInfo, err := system.GetBiosInfo(testCmdExecutorSuccessBiosInfoReleaseDateYearFirstFormat)
+
+	expectedInfo := &system.Bios{
+		Version: expectedVersion,
+		RelDate: expectedReleaseDateYearFirstFormat,
+		Vendor:  expectedVendor,
+	}
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedInfo, biosInfo)
+}
+
+func TestGetBiosInfoSuccessReleaseDateInvalidateFormat(t *testing.T) {
+	biosInfo, err := system.GetBiosInfo(testCmdExecutorSuccessBiosInfoReleaseDateInvalidFormat)
+
+	expectedInfo := &system.Bios{
+		Version: expectedVersion,
+		RelDate: "",
+		Vendor:  expectedVendor,
+	}
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedInfo, biosInfo)
+}
+
+func TestGetBiosInfoSuccessReleaseDatePartialMonthFormat(t *testing.T) {
+	biosInfo, err := system.GetBiosInfo(testCmdExecutorSuccessBiosInfoReleaseDatePartialMonthFormat)
+
+	expectedInfo := &system.Bios{
+		Version: expectedVersion,
+		RelDate: expectedReleaseDateMonthFirstFormat,
+		Vendor:  expectedVendor,
+	}
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedInfo, biosInfo)
+}
+
+func TestGetBiosInfoSuccessReleaseDatePartialMonthDayFormat(t *testing.T) {
+	biosInfo, err := system.GetBiosInfo(testCmdExecutorSuccessBiosInfoReleaseDatePartialMonthDayFormat)
+
+	expectedInfo := &system.Bios{
+		Version: expectedVersion,
+		RelDate: "2023-09-02",
+		Vendor:  expectedVendor,
+	}
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedInfo, biosInfo)
+}
+
+func TestGetBiosInfoSuccessReleaseDatePartialInvalidFormat(t *testing.T) {
+	biosInfo, err := system.GetBiosInfo(testCmdExecutorSuccessBiosInfoPartialReleaseDateInvalidFormat)
+
+	expectedInfo := &system.Bios{
+		Version: expectedVersion,
+		RelDate: "",
 		Vendor:  expectedVendor,
 	}
 
@@ -331,6 +401,81 @@ func testCmdExecutorSuccessBiosInfo(command string, args ...string) *exec.Cmd {
 	return cmd
 }
 
+func testCmdExecutorSuccessBiosInfoReleaseDateYearFirstFormat(command string, args ...string) *exec.Cmd {
+	var cs []string
+	if strings.Contains(args[2], "bios-version") {
+		cs = []string{"--test.run=TestBiosInfoVersionSuccess", "--", command}
+	} else if strings.Contains(args[2], "bios-release-date") {
+		cs = []string{"--test.run=TestBiosInfoReleaseDateYearFirstFormatSuccess", "--", command}
+	} else {
+		cs = []string{"--test.run=TestBiosInfoVendorSuccess", "--", command}
+	}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
+}
+
+func testCmdExecutorSuccessBiosInfoReleaseDateInvalidFormat(command string, args ...string) *exec.Cmd {
+	var cs []string
+	if strings.Contains(args[2], "bios-version") {
+		cs = []string{"--test.run=TestBiosInfoVersionSuccess", "--", command}
+	} else if strings.Contains(args[2], "bios-release-date") {
+		cs = []string{"--test.run=TestBiosInfoReleaseDateInvalidFormatSuccess", "--", command}
+	} else {
+		cs = []string{"--test.run=TestBiosInfoVendorSuccess", "--", command}
+	}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
+}
+
+func testCmdExecutorSuccessBiosInfoReleaseDatePartialMonthFormat(command string, args ...string) *exec.Cmd {
+	var cs []string
+	if strings.Contains(args[2], "bios-version") {
+		cs = []string{"--test.run=TestBiosInfoVersionSuccess", "--", command}
+	} else if strings.Contains(args[2], "bios-release-date") {
+		cs = []string{"--test.run=TestBiosInfoReleaseDatePartialMonthFormatSuccess", "--", command}
+	} else {
+		cs = []string{"--test.run=TestBiosInfoVendorSuccess", "--", command}
+	}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
+}
+
+func testCmdExecutorSuccessBiosInfoReleaseDatePartialMonthDayFormat(command string, args ...string) *exec.Cmd {
+	var cs []string
+	if strings.Contains(args[2], "bios-version") {
+		cs = []string{"--test.run=TestBiosInfoVersionSuccess", "--", command}
+	} else if strings.Contains(args[2], "bios-release-date") {
+		cs = []string{"--test.run=TestBiosInfoReleaseDatePartialMonthDayFormatSuccess", "--", command}
+	} else {
+		cs = []string{"--test.run=TestBiosInfoVendorSuccess", "--", command}
+	}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
+}
+
+func testCmdExecutorSuccessBiosInfoPartialReleaseDateInvalidFormat(command string, args ...string) *exec.Cmd {
+	var cs []string
+	if strings.Contains(args[2], "bios-version") {
+		cs = []string{"--test.run=TestBiosInfoVersionSuccess", "--", command}
+	} else if strings.Contains(args[2], "bios-release-date") {
+		cs = []string{"--test.run=TestBiosInfoReleaseDatePartialInvalidFormatSuccess", "--", command}
+	} else {
+		cs = []string{"--test.run=TestBiosInfoVendorSuccess", "--", command}
+	}
+	cs = append(cs, args...)
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = []string{"GO_TEST_PROCESS=1"}
+	return cmd
+}
+
 func testCmdExecutorFailureBiosInfoReleaseDate(command string, args ...string) *exec.Cmd {
 	var cs []string
 	if strings.Contains(args[2], "bios-version") {
@@ -440,7 +585,52 @@ func TestBiosInfoReleaseDateSuccess(_ *testing.T) {
 		return
 	}
 	// Print out the test value to stdout
-	fmt.Fprintf(os.Stdout, "%v", expectedReleaseDate)
+	fmt.Fprintf(os.Stdout, "%v", expectedReleaseDateMonthFirstFormat)
+	os.Exit(0)
+}
+
+func TestBiosInfoReleaseDateYearFirstFormatSuccess(_ *testing.T) {
+	if os.Getenv("GO_TEST_PROCESS") != "1" {
+		return
+	}
+	// Print out the test value to stdout
+	fmt.Fprintf(os.Stdout, "%v", expectedReleaseDateYearFirstFormat)
+	os.Exit(0)
+}
+
+func TestBiosInfoReleaseDateInvalidFormatSuccess(_ *testing.T) {
+	if os.Getenv("GO_TEST_PROCESS") != "1" {
+		return
+	}
+	// Print out the test value to stdout
+	fmt.Fprintf(os.Stdout, "%v", expectedReleaseDateInvalidFormat)
+	os.Exit(0)
+}
+
+func TestBiosInfoReleaseDatePartialMonthFormatSuccess(_ *testing.T) {
+	if os.Getenv("GO_TEST_PROCESS") != "1" {
+		return
+	}
+	// Print out the test value to stdout
+	fmt.Fprintf(os.Stdout, "%v", expectedReleaseDatePartialMonthFormat)
+	os.Exit(0)
+}
+
+func TestBiosInfoReleaseDatePartialMonthDayFormatSuccess(_ *testing.T) {
+	if os.Getenv("GO_TEST_PROCESS") != "1" {
+		return
+	}
+	// Print out the test value to stdout
+	fmt.Fprintf(os.Stdout, "%v", expectedReleaseDatePartialMonthDayFormat)
+	os.Exit(0)
+}
+
+func TestBiosInfoReleaseDatePartialInvalidFormatSuccess(_ *testing.T) {
+	if os.Getenv("GO_TEST_PROCESS") != "1" {
+		return
+	}
+	// Print out the test value to stdout
+	fmt.Fprintf(os.Stdout, "%v", expectedReleaseDateInvalidPartialFormat)
 	os.Exit(0)
 }
 

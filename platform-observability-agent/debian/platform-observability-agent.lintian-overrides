@@ -18,6 +18,7 @@ platform-observability-agent: dir-or-file-in-opt opt/health-check/bin/fluent-bit
 platform-observability-agent: dir-or-file-in-opt opt/telegraf/bin/collect_disk_info.sh
 platform-observability-agent: dir-or-file-in-opt opt/telegraf/bin/collect_gpu_metrics.sh
 platform-observability-agent: dir-or-file-in-opt opt/telegraf/bin/collect_bios_metrics.sh
+platform-observability-agent: dir-or-file-in-opt opt/telegraf/bin/collect_npu_metrics.sh
 platform-observability-agent: dir-or-file-in-opt opt/telegraf/bin/core_metrics.sh
 platform-observability-agent: python3-script-but-no-python3-dep python3 (does not satisfy python3:any | python3-minimal:any) [etc/telegraf/perfmon/scripts/ci/verify_mapfile/verify_mapfile.py]
 platform-observability-agent: python3-script-but-no-python3-dep python3 (does not satisfy python3:any | python3-minimal:any) [etc/telegraf/perfmon/scripts/create_perf_json.py]
