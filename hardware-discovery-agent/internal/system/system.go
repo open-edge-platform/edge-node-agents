@@ -4,6 +4,7 @@ package system
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/open-edge-platform/edge-node-agents/hardware-discovery-agent/internal/utils"
@@ -36,6 +37,36 @@ type Os struct {
 	Release *OsRel
 }
 
+// Fix formatting for retrieved release date if needed.
+func formatReleaseDate(releaseDate string) string {
+	regexPattern := regexp.MustCompile("^0[1-9]|[12][0-9]|3[012]$")
+	var strSeparator string
+
+	if strings.Contains(releaseDate, "/") {
+		strSeparator = "/"
+	} else if strings.Contains(releaseDate, "-") {
+		strSeparator = "-"
+	} else {
+		return ""
+	}
+
+	dateContents := strings.Split(releaseDate, strSeparator)
+	if len(dateContents) < 3 {
+		return ""
+	}
+	for dateCount := 0; dateCount < len(dateContents); dateCount++ {
+		// Check that day and month values are two digits and add a 0 if not.
+		// Skip this check for the year value.
+		if len(dateContents[dateCount]) < 4 {
+			if !regexPattern.MatchString(dateContents[dateCount]) {
+				dateContents[dateCount] = "0" + dateContents[dateCount]
+			}
+		}
+	}
+	formattedDate := strings.Join(dateContents, strSeparator)
+	return formattedDate
+}
+
 func GetBiosInfo(executor utils.CmdExecutor) (*Bios, error) {
 	version, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "bios-version")
 	if err != nil {
@@ -47,6 +78,8 @@ func GetBiosInfo(executor utils.CmdExecutor) (*Bios, error) {
 		return &Bios{}, fmt.Errorf("failed to get Bios release date: %w", err)
 	}
 
+	formattedReleaseDate := formatReleaseDate(strings.TrimSpace(string(releaseDate)))
+
 	vendor, err := utils.ReadFromCommand(executor, "sudo", "dmidecode", "-s", "bios-vendor")
 	if err != nil {
 		return &Bios{}, fmt.Errorf("failed to get Bios vendor: %w", err)
@@ -54,7 +87,7 @@ func GetBiosInfo(executor utils.CmdExecutor) (*Bios, error) {
 
 	biosInfo := Bios{
 		Version: strings.TrimSpace(string(version)),
-		RelDate: strings.TrimSpace(string(releaseDate)),
+		RelDate: formattedReleaseDate,
 		Vendor:  strings.TrimSpace(string(vendor)),
 	}
 
