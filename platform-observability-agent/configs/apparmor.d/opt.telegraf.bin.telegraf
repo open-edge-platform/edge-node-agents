@@ -76,6 +76,7 @@ include <tunables/global>
   /opt/telegraf/** rw,
   /opt/telegraf/bin/collect_disk_info.sh ix,
   /opt/telegraf/bin/collect_gpu_metrics.sh mrix,
+  /opt/telegraf/bin/collect_bios_metrics.sh mrix,
   /opt/telegraf/bin/collect_npu_metrics.sh mrix,
   /opt/telegraf/bin/core_metrics.sh mrix,
   /opt/telegraf/bin/telegraf mrix,
