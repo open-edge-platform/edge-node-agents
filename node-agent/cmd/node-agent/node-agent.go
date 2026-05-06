@@ -1,4 +1,5 @@
 // SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+//
 // SPDX-License-Identifier: Apache-2.0
 
 package main
@@ -23,6 +24,7 @@ import (
 	statusService "github.com/open-edge-platform/edge-node-agents/node-agent/cmd/status-service"
 	"github.com/open-edge-platform/edge-node-agents/node-agent/info"
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/auth"
+	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/cluster"
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/comms"
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/config"
 	"github.com/open-edge-platform/edge-node-agents/node-agent/internal/hostmgr_client"
@@ -40,6 +42,7 @@ var initTimestamp = time.Now().Unix()
 const REFRESH_CHECK_INTERVAL = 600 * time.Second
 const TOKEN_REFRESH_CHECK_INTERVAL = 300 * time.Second
 const COMPONENTS_INIT_WAIT_INTERVAL = 300 * time.Second
+const CLUSTER_DETECTION_INTERVAL = 120 * time.Second
 
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "version" {
@@ -230,6 +233,48 @@ func main() {
 		}
 	}()
 
+	wg.Add(1)
+	// Go-routine to detect clusters and manage kubeconfig
+	go func() {
+		defer wg.Done()
+		// Do not detect clusters if onboarding is not enabled or cluster detection is disabled
+		if !confs.Onboarding.Enabled || !confs.Cluster.DetectionEnabled {
+			if !confs.Cluster.DetectionEnabled {
+				log.Info("Cluster detection disabled in configuration")
+			}
+			return
+		}
+
+		tlsConfig, err := utils.GetAuthConfig(ctx, nil)
+		if err != nil {
+			log.Errorf("failed to create TLS config for cluster detection : %v", err)
+			return
+		}
+
+		hostmgrCli, err := hostmgr_client.ConnectToHostMgr(ctx, confs.GUID, confs.Onboarding.ServiceURL, tlsConfig)
+		if err != nil {
+			log.Errorf("failed to create Host Manager client for cluster detection updates : %v", err)
+			return
+		}
+
+		clusterDetector := cluster.NewClusterDetector(confs.GUID, confs.Cluster.ClusterType)
+		kubeconfigMgr := cluster.NewKubeconfigManager(hostmgrCli, confs.GUID)
+
+		ticker := time.NewTicker(1 * time.Nanosecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				log.Info("terminating cluster detection")
+				return
+			case <-ticker.C:
+				detectAndManageCluster(ctx, clusterDetector, kubeconfigMgr, confs)
+				log.Info("Cluster detection cycle completed")
+			}
+			ticker.Reset(confs.Cluster.DetectionInterval)
+		}
+	}()
+
 	// once booted (connected to orchestrator, report boot stats)
 	instrument.ReportBootStats()
 
@@ -352,4 +397,54 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 	if err != nil {
 		log.Errorf("not able to update node status to running : %v", err)
 	}
+}
+
+// detects clusters on the node and manages kubeconfig lifecycle
+func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, confs *config.NodeAgentConfig) {
+	clusterInfo, err := detector.DetectCluster()
+	if err != nil {
+		// No cluster detected yet - clear any existing kubeconfig and update status
+		log.Debugf("No cluster detected: %v", err)
+		if kubeconfigMgr.HasKubeconfig() {
+			log.Debug("No cluster detected, clearing kubeconfig")
+			// Done in case cluster was removed after detection or kubeconfig was left orphaned due to some error
+			// In both cases, kubeconfig needs to be cleared to avoid stale kubeconfig scenario
+			if clearErr := kubeconfigMgr.ClearKubeconfig(ctx); clearErr != nil {
+				log.Errorf("Failed to clear kubeconfig: %v", clearErr)
+			}
+		}
+		return
+	}
+
+	// Cluster detected - check if it's running and has kubeconfig
+	if clusterInfo.Status != "running" {
+		log.Debugf("Cluster detected but not running: %s", clusterInfo.Status)
+		return
+	}
+
+	if clusterInfo.KubeconfigPath == "" {
+		log.Warnf("Cluster running but no kubeconfig found for %s", clusterInfo.Type)
+		return
+	}
+
+	// Retrieve kubeconfig content
+	kubeconfigData, err := detector.GetKubeconfig(clusterInfo)
+	if err != nil {
+		log.Errorf("Failed to retrieve kubeconfig: %v", err)
+		return
+	}
+
+	// Validate kubeconfig
+	if err := detector.ValidateKubeconfig(kubeconfigData); err != nil {
+		log.Errorf("Invalid kubeconfig detected: %v", err)
+		return
+	}
+
+	// Notify host manager about kubeconfig update
+	if err := kubeconfigMgr.NotifyKubeconfig(ctx, kubeconfigData, clusterInfo, confs); err != nil {
+		log.Errorf("Failed to notify host manager about kubeconfig: %v", err)
+		return
+	}
+
+	log.Debugf("Cluster management completed for %s cluster", clusterInfo.Type)
 }

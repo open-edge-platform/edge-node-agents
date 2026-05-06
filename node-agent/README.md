@@ -1,5 +1,5 @@
 <!---
-  SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+  SPDX-FileCopyrightText: (C) 2026 Intel Corporation
   SPDX-License-Identifier: Apache-2.0
 -->
 # Node Agent
@@ -12,6 +12,7 @@ It:
 - Registers and authenticates Edge Node with Edge Infrastructure Manager service
 - Reports status of Edge Node to the Edge Infrastructure Manager as it onboards
 - Creates and refreshes tokens for other agents running on the Edge Node
+- Provides cluster detection and kubeconfig management functionality. See [CLUSTER_DETECTION.md](CLUSTER_DETECTION.md) for more information.
 
 ## Develop
 
