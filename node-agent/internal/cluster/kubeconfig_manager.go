@@ -52,19 +52,17 @@ func (km *KubeconfigManager) NotifyKubeconfig(ctx context.Context, kubeconfigDat
 	hashBytes := sha256.Sum256(kubeconfigData)
 	currentHash := fmt.Sprintf("%x", hashBytes)
 
-	// Avoid unnecessary updates to host manager and DB when kubeconfig content is the same
-	// if km.lastKubeconfigHash == currentHash {
-	// 	managerLog.Debug("Kubeconfig unchanged, skipping notification")
-	// 	return nil
-	// }
+	//Avoid unnecessary updates to host manager and DB when kubeconfig content is the same
+	if km.lastKubeconfigHash == currentHash {
+		managerLog.Debug("Kubeconfig unchanged, skipping notification")
+		return nil
+	}
 
 	managerLog.Infof("Notifying host manager about kubeconfig update (cluster: %s, version: %s)",
 		clusterInfo.Type, clusterInfo.Version)
 
 	// Encode kubeconfig in base64 before storing to avoid any formatting issues while transmitting over gRPC and storing in DB
-	//kubeconfigBlob := fmt.Sprintf("%x", sha256.Sum256(kubeconfigData))
-	kubeconfigBlob := fmt.Sprintf("%s", base64.StdEncoding.EncodeToString(kubeconfigData))
-	//kubeconfigBlob := "available" // placeholder to indicate presence of kubeconfig without storing actual content
+	kubeconfigBlob := base64.StdEncoding.EncodeToString(kubeconfigData)
 
 	// Notify host manager about kubeconfig update
 	tokenFile := filepath.Join(confs.Auth.AccessTokenPath, "node-agent", config.AccessToken)
