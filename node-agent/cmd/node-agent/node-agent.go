@@ -400,10 +400,10 @@ func updateInstanceStatus(ctx context.Context, hostMgrCli *hostmgr_client.Client
 }
 
 // detects clusters on the node and manages kubeconfig lifecycle
-func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, confs *config.NodeAgentConfig) {
+func detectAndManageCluster(ctx context.Context,
+	detector *cluster.ClusterDetector, kubeconfigMgr *cluster.KubeconfigManager, confs *config.NodeAgentConfig) {
 	clusterInfo, err := detector.DetectCluster()
 	if err != nil {
-		// No cluster detected yet - clear any existing kubeconfig and update status
 		log.Debugf("No cluster detected: %v", err)
 		if kubeconfigMgr.HasKubeconfig() {
 			log.Debug("No cluster detected, clearing kubeconfig")
@@ -416,7 +416,6 @@ func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetect
 		return
 	}
 
-	// Cluster detected - check if it's running and has kubeconfig
 	if clusterInfo.Status != "running" {
 		log.Debugf("Cluster detected but not running: %s", clusterInfo.Status)
 		return
@@ -427,20 +426,17 @@ func detectAndManageCluster(ctx context.Context, detector *cluster.ClusterDetect
 		return
 	}
 
-	// Retrieve kubeconfig content
 	kubeconfigData, err := detector.GetKubeconfig(clusterInfo)
 	if err != nil {
 		log.Errorf("Failed to retrieve kubeconfig: %v", err)
 		return
 	}
 
-	// Validate kubeconfig
 	if err := detector.ValidateKubeconfig(kubeconfigData); err != nil {
 		log.Errorf("Invalid kubeconfig detected: %v", err)
 		return
 	}
 
-	// Notify host manager about kubeconfig update
 	if err := kubeconfigMgr.NotifyKubeconfig(ctx, kubeconfigData, clusterInfo, confs); err != nil {
 		log.Errorf("Failed to notify host manager about kubeconfig: %v", err)
 		return

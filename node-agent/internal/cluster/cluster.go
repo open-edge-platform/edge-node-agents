@@ -49,11 +49,15 @@ func (cd *ClusterDetector) DetectCluster() (*ClusterInfo, error) {
 		if clusterInfo, err := cd.detectK3s(cd.clusterType.BinaryPath); err == nil {
 			clusterLog.Infof("Detected K3s cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
 			return clusterInfo, nil
+		} else {
+			return nil, fmt.Errorf("K3s detection failed: %v", err)
 		}
 	case "rke2":
 		if clusterInfo, err := cd.detectRKE2(cd.clusterType.BinaryPath); err == nil {
 			clusterLog.Infof("Detected RKE2 cluster: version=%s, status=%s", clusterInfo.Version, clusterInfo.Status)
 			return clusterInfo, nil
+		} else {
+			return nil, fmt.Errorf("RKE2 detection failed: %v", err)
 		}
 	default:
 		clusterLog.Warnf("Unsupported cluster type: %s", cd.clusterType.Type)
@@ -88,7 +92,7 @@ func (cd *ClusterDetector) detectK3s(k3sBinaryPath string) (*ClusterInfo, error)
 		status = "running"
 	}
 
-	// Look for kubeconfig
+	// Using reporting-agent's default path for k3s kubeconfig
 	kubeconfigPath := "/etc/rancher/k3s/k3s.yaml"
 	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
 		kubeconfigPath = ""
@@ -129,7 +133,7 @@ func (cd *ClusterDetector) detectRKE2(rke2BinaryPath string) (*ClusterInfo, erro
 		status = "running"
 	}
 
-	// Look for kubeconfig (RKE2 uses different path)
+	// Using reporting-agent's default path for rke2 kubeconfig
 	kubeconfigPath := "/etc/rancher/rke2/rke2.yaml"
 	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
 		kubeconfigPath = ""
