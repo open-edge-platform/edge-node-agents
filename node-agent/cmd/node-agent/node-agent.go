@@ -409,7 +409,7 @@ func detectAndManageCluster(ctx context.Context,
 			log.Debug("No cluster detected, clearing kubeconfig")
 			// Done in case cluster was removed after detection or kubeconfig was left orphaned due to some error
 			// In both cases, kubeconfig needs to be cleared to avoid stale kubeconfig scenario
-			if clearErr := kubeconfigMgr.ClearKubeconfig(ctx); clearErr != nil {
+			if clearErr := kubeconfigMgr.ClearKubeconfig(ctx, confs); clearErr != nil {
 				log.Errorf("Failed to clear kubeconfig: %v", clearErr)
 			}
 		}

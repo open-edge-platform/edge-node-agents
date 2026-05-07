@@ -250,7 +250,7 @@ func TestDetectK3sWithInvalidPath(t *testing.T) {
 		t.Error("Expected nil clusterInfo when k3s binary not found")
 	}
 
-	if !strings.Contains(err.Error(), "no cluster detected") {
+	if !strings.Contains(err.Error(), "K3s detection failed: K3s binary not found at /nonexistent/path/k3s") {
 		t.Errorf("Error message should indicate no cluster detected, got: %v", err)
 	}
 }

@@ -323,7 +323,8 @@ func TestKubeconfigManager_ClearKubeconfig(t *testing.T) {
 	// First set some kubeconfig data
 	kubeconfig := createTestKubeconfig()
 	clusterInfo := createTestClusterInfo()
-	err := manager.NotifyKubeconfig(ctx, kubeconfig, clusterInfo, createTestConfig())
+	nodeAgentConfg := createTestConfig()
+	err := manager.NotifyKubeconfig(ctx, kubeconfig, clusterInfo, nodeAgentConfg)
 	assert.NoError(t, err)
 
 	// Verify data is set
@@ -331,7 +332,7 @@ func TestKubeconfigManager_ClearKubeconfig(t *testing.T) {
 	assert.NotEmpty(t, manager.lastKubeconfigHash)
 
 	// Clear the kubeconfig
-	err = manager.ClearKubeconfig(ctx)
+	err = manager.ClearKubeconfig(ctx, nodeAgentConfg)
 	assert.NoError(t, err)
 
 	// Verify data is cleared
@@ -374,12 +375,13 @@ func TestKubeconfigManager_HasKubeconfig(t *testing.T) {
 	// After setting kubeconfig should be true
 	kubeconfig := createTestKubeconfig()
 	clusterInfo := createTestClusterInfo()
-	err := manager.NotifyKubeconfig(ctx, kubeconfig, clusterInfo, createTestConfig())
+	nodeAgentConfg := createTestConfig()
+	err := manager.NotifyKubeconfig(ctx, kubeconfig, clusterInfo, nodeAgentConfg)
 	assert.NoError(t, err)
 	assert.True(t, manager.HasKubeconfig())
 
 	// After clearing should be false again
-	err = manager.ClearKubeconfig(ctx)
+	err = manager.ClearKubeconfig(ctx, nodeAgentConfg)
 	assert.NoError(t, err)
 	assert.False(t, manager.HasKubeconfig())
 }
@@ -394,12 +396,13 @@ func TestKubeconfigManager_KubeconfigSize(t *testing.T) {
 	// After setting kubeconfig should return correct size
 	kubeconfig := createTestKubeconfig()
 	clusterInfo := createTestClusterInfo()
-	err := manager.NotifyKubeconfig(ctx, kubeconfig, clusterInfo, createTestConfig())
+	nodeAgentConfg := createTestConfig()
+	err := manager.NotifyKubeconfig(ctx, kubeconfig, clusterInfo, nodeAgentConfg)
 	assert.NoError(t, err)
 	assert.Equal(t, len(kubeconfig), manager.KubeconfigSize())
 
 	// After clearing should be 0 again
-	err = manager.ClearKubeconfig(ctx)
+	err = manager.ClearKubeconfig(ctx, nodeAgentConfg)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, manager.KubeconfigSize())
 }
@@ -495,7 +498,7 @@ func TestKubeconfigManager_ConcurrentAccess(t *testing.T) {
 	for i := 0; i < numGoroutines; i++ {
 		go func() {
 			defer wg.Done()
-			manager.ClearKubeconfig(ctx)
+			manager.ClearKubeconfig(ctx, createTestConfig())
 		}()
 	}
 

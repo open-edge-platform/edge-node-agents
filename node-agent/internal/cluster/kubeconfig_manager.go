@@ -85,12 +85,23 @@ func (km *KubeconfigManager) NotifyKubeconfig(ctx context.Context, kubeconfigDat
 	return nil
 }
 
-// clears the kubeconfig from the host manager
-func (km *KubeconfigManager) ClearKubeconfig(ctx context.Context) error {
+// set the kubeconfig to nil and notify host manager to clear it
+// avoid having stale kubeconfig data in host manager when cluster is deleted or becomes unreachable
+func (km *KubeconfigManager) ClearKubeconfig(ctx context.Context, confs *config.NodeAgentConfig) error {
 	km.mu.Lock()
 	defer km.mu.Unlock()
 
 	managerLog.Info("Clearing kubeconfig from host manager")
+
+	if km.hostmgrClient != nil {
+		tokenFile := filepath.Join(confs.Auth.AccessTokenPath, "node-agent", config.AccessToken)
+
+		// Empty string means "clear kubeconfig" on Host Manager side.
+		if err := km.hostmgrClient.UpdateClusterStatus(utils.GetAuthContext(ctx, tokenFile), ""); err != nil {
+			managerLog.Errorf("failed to clear kubeconfig in host manager: %v", err)
+			return fmt.Errorf("failed to clear kubeconfig in host manager: %w", err)
+		}
+	}
 
 	km.lastKubeconfig = nil
 	km.lastKubeconfigHash = ""
