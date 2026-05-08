@@ -1,4 +1,5 @@
 // SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+//
 // SPDX-License-Identifier: Apache-2.0
 
 package config_test
@@ -74,6 +75,7 @@ func createConfigFile(t *testing.T, testGUID string, onboardingServiceURL string
 			Endpoint: testMetricsEndpoint,
 			Interval: testMetricsHeartbeatInterval,
 		},
+		Cluster: config.ConfigCluster{},
 	}
 
 	file, err := yaml.Marshal(c)
@@ -115,6 +117,13 @@ func getExpectedConfig(logLevel string, heartbeatInterval time.Duration, network
 			Enabled:  testMetricsEnabled,
 			Endpoint: testMetricsEndpoint,
 			Interval: testMetricsHeartbeatInterval,
+		},
+		Cluster: config.ConfigCluster{
+			DetectionEnabled:  false,
+			DetectionInterval: 30 * time.Second,
+			ClusterType: config.ClusterType{
+				Type: "k3s", BinaryPath: config.K3S_DEFAULT_BINARY_PATH,
+			},
 		},
 	}
 }
