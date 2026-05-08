@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+#
 # SPDX-License-Identifier: Apache-2.0
 
 ---
@@ -26,3 +27,10 @@ auth:
   accessTokenPath: /etc/intel_edge_node/tokens
   clientCredsPath: /etc/intel_edge_node/client-credentials
   tokenClients: [ node-agent,  hd-agent, cluster-agent, platform-update-agent, platform-observability-agent, platform-telemetry-agent, prometheus, connect-agent, attestation-manager, platform-manageability-agent ]
+cluster:
+  detectionEnabled: true
+  detectionInterval: 120s
+  # Cluster configuration (defaults to k3s with standard binary path if not specified)
+  # clusterType:
+  #   type: k3s
+  #   binaryPath: "/usr/local/bin/k3s"
