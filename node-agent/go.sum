@@ -83,8 +83,8 @@ github.com/lufia/plan9stats v0.0.0-20260330125221-c963978e514e h1:Q6MvJtQK/iRcRt
 github.com/lufia/plan9stats v0.0.0-20260330125221-c963978e514e/go.mod h1:autxFIvghDt3jPTLoqZ9OZ7s9qTGNAWmYCjVFWPX/zg=
 github.com/open-edge-platform/edge-node-agents/common v1.11.0 h1:90MFBov0zadLXLevlJduptp6LE2xTNcG1w8hOt5QR9U=
 github.com/open-edge-platform/edge-node-agents/common v1.11.0/go.mod h1:AdcCf9e7GfNA3eR/qFnYHYLa5t1WcQIlCush9s2pBNE=
-github.com/open-edge-platform/infra-managers/host v1.25.4 h1:5Ulfpasc3y8F5TwpSZYMQAA58SkIwWItKHrd/lai3gE=
-github.com/open-edge-platform/infra-managers/host v1.25.4/go.mod h1:1aEoXXhxW9OIBIK71u+SHg9vn60pemsyLZIzAkBZU9o=
+github.com/open-edge-platform/infra-managers/host v1.25.5-0.20260402155654-ed7b22250fe3 h1:hlMnCGERzxSXcdfAkfCYn9m6TZa5nWREiT8xbHPhhjM=
+github.com/open-edge-platform/infra-managers/host v1.25.5-0.20260402155654-ed7b22250fe3/go.mod h1:uN9Cz6MpJlQwGayspoofYysy/QPs9MqTi1VLh89jObU=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJwooC2xJA040=

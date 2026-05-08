@@ -95,7 +95,7 @@ func ConnectToHostMgr(ctx context.Context, guid string, serverAddr string, tlsCo
 
 }
 
-// UpdateInstanceStatus client method sends UpdateInstanceStateStatusByHostGUIDRequest message to the server & receives UpdateInstanceStateStatusByHostGUIDResponse message
+// client method sends UpdateInstanceStateStatusByHostGUIDRequest message to the server & receives UpdateInstanceStateStatusByHostGUIDResponse message
 func (cli *Client) UpdateInstanceStatus(ctx context.Context, insState proto.InstanceState, insStatus proto.InstanceStatus, insDetails string) error {
 	updateInstanceStatusRequest := proto.UpdateInstanceStateStatusByHostGUIDRequest{
 		HostGuid:             cli.HostGUID,
@@ -127,6 +127,41 @@ func (cli *Client) UpdateInstanceStatus(ctx context.Context, insState proto.Inst
 	}
 
 	log.Infof("UpdateInstanceStatus sent successfully: %s", insStatus.String())
+
+	return nil
+}
+
+// client method sends UpdateHostSystemInfoByGUIDRequest message to the server & receives UpdateHostSystemInfoByGUIDResponse message
+func (cli *Client) UpdateClusterStatus(ctx context.Context, kubeconfig string) error {
+
+	updateHostSystemInfoRequest := proto.UpdateHostSystemInfoByGUIDRequest{
+		HostGuid:   cli.HostGUID,
+		SystemInfo: &proto.SystemInfo{KcInfo: &proto.ClusterInfo{Kubeconfig: kubeconfig}},
+	}
+
+	op := func() error {
+		_, err := cli.InfraSouthboundClient.UpdateHostSystemInfoByGUID(ctx, &updateHostSystemInfoRequest)
+		if err != nil {
+			log.Errorf("UpdateClusterStatus failed with error: %v", err)
+			return err
+		}
+		return nil
+	}
+	err := backoff.Retry(op, backoff.WithMaxRetries(backoff.WithContext(backoff.NewExponentialBackOff(), ctx), NUM_RETRIES))
+	if err != nil {
+		log.Errorf("will try to reconnect because of failure: %v", err)
+		conn_err := cli.GrpcConn.Close()
+		if conn_err != nil {
+			return conn_err
+		}
+		conn_err = cli.Connect(ctx)
+		if conn_err != nil {
+			return conn_err
+		}
+		return err
+	}
+
+	log.Infof("UpdateClusterStatus sent successfully")
 
 	return nil
 }
