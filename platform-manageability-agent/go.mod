@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
-	github.com/open-edge-platform/edge-node-agents/common v1.11.0
+	github.com/open-edge-platform/edge-node-agents/common v1.11.1
 	github.com/open-edge-platform/infra-external/dm-manager v0.8.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
