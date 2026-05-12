@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/open-edge-platform/edge-node-agents/common v1.11.0
-	github.com/open-edge-platform/infra-managers/maintenance v1.26.0
+	github.com/open-edge-platform/infra-managers/maintenance v1.26.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/afero v1.15.0
 	github.com/stretchr/testify v1.11.1
