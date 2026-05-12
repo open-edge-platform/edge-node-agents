@@ -6,7 +6,7 @@ module device-discovery
 go 1.26.3
 
 require (
-	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.40.0
+	github.com/open-edge-platform/infra-onboarding/onboarding-manager v1.40.1
 	github.com/sirupsen/logrus v1.9.4
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/term v0.43.0
