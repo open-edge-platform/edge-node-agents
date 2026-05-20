@@ -5,7 +5,7 @@ go 1.26.3
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
-	github.com/open-edge-platform/edge-node-agents/common v1.11.1
+	github.com/open-edge-platform/edge-node-agents/common v1.11.2
 	github.com/open-edge-platform/infra-external/dm-manager v0.8.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
@@ -42,10 +42,10 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect

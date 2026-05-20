@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3
-	github.com/open-edge-platform/edge-node-agents/common v1.11.1
+	github.com/open-edge-platform/edge-node-agents/common v1.11.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -30,7 +30,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/grpc v1.81.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
