@@ -50,9 +50,9 @@ func TestNoDownload(t *testing.T) {
 	t.Run("no packages", func(t *testing.T) {
 		expectedCmds := [][]string{
 			{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
-			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
+			{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o",
 				"Dpkg::Options::=--force-confold", "-yq", "-f", "install"},
-			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef",
+			{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--with-new-pkgs",
 				"--fix-missing", "-yq", "upgrade"},
@@ -67,9 +67,9 @@ func TestNoDownload(t *testing.T) {
 		packages := []string{"package1", "package2"}
 		expectedCmds := [][]string{
 			{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
-			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
+			{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o",
 				"Dpkg::Options::=--force-confold", "-yq", "-f", "install"},
-			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef",
+			{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--fix-missing", "-yq",
 				"install", "package1", "package2"},
@@ -85,8 +85,8 @@ func TestDownloadOnly(t *testing.T) {
 	t.Run("no packages", func(t *testing.T) {
 		expectedCmds := [][]string{
 			{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
-			{common.AptGetCmd, "update"},
-			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef",
+			{common.AptGetCmd, "-o", aptLockTimeoutOption, "update"},
+			{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--with-new-pkgs", "--download-only", "--fix-missing",
 				"-yq", "upgrade"},
@@ -101,8 +101,8 @@ func TestDownloadOnly(t *testing.T) {
 		packages := []string{"package1", "package2"}
 		expectedCmds := [][]string{
 			{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
-			{common.AptGetCmd, "update"},
-			{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef",
+			{common.AptGetCmd, "-o", aptLockTimeoutOption, "update"},
+			{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef",
 				"-o", "Dpkg::Options::=--force-confold",
 				"--download-only", "--fix-missing",
 				"-yq", "install", "package1", "package2"},
@@ -125,7 +125,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("successful size estimation", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.True(t, isUpdateAvail)
 		assert.Equal(t, uint64(524288000), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("failed to get size estimation", func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.False(t, isUpdateAvail)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("no size information in output", func(t *testing.T) {
@@ -169,7 +169,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.False(t, isUpdateAvail)
 		assert.Equal(t, uint64(0), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 
 	t.Run("command execution error but valid output", func(t *testing.T) {
@@ -184,7 +184,7 @@ func TestGetEstimatedSize(t *testing.T) {
 		assert.True(t, isUpdateAvail)
 		assert.Equal(t, uint64(524288000), size)
 		assert.Equal(t, 1, len(mockExec.commands))
-		assert.Equal(t, []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
+		assert.Equal(t, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}, mockExec.commands[0])
 	})
 }
 
