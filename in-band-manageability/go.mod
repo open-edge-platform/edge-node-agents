@@ -25,8 +25,8 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sys v0.44.0
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0
+	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
 )
