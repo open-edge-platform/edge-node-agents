@@ -10,7 +10,7 @@ package commands
 const clientDialTimeoutInSeconds = 5
 const sourceTimeoutInSeconds = 15
 const emtSoftwareUpdateTimerInSeconds = 1200
-const defaultSoftwareUpdateTimerInSeconds = 1800
+const defaultSoftwareUpdateTimerInSeconds = 3600
 const configTimeoutInSeconds = 15
 const firmwareUpdateTimerInSeconds = 90
 const queryTimeoutInSeconds = 15
