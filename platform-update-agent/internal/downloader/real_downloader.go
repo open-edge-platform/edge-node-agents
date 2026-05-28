@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	pb "github.com/open-edge-platform/infra-managers/maintenance/pkg/api/maintmgr/v1"
 	"github.com/sirupsen/logrus"
@@ -65,6 +66,13 @@ func (r *RealDownloadExecutor) runInbcCommand(ctx context.Context, args ...strin
 	cmdArgs := append([]string{"inbc"}, args...)
 	output, err := r.commandRunner.RunCommand(ctx, "sudo", cmdArgs...)
 	if err != nil {
+		if strings.Contains(string(output), "SOTA Command Response: 200-Success") {
+			r.log.WithError(err).Warn("DOWNLOAD: command returned non-zero exit after explicit success response; treating as successful")
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				r.log.WithError(ctxErr).Debug("DOWNLOAD: context state when command returned non-zero")
+			}
+			return nil
+		}
 		return fmt.Errorf("command failed. output: \n%s\nerror: %w", string(output), err)
 	}
 	return nil
