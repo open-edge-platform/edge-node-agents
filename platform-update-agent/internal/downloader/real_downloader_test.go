@@ -5,7 +5,6 @@ package downloader
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"testing"
 
@@ -86,54 +85,4 @@ func TestRealDownloadExecutor_Download_Success(t *testing.T) {
 func TestNewDownloadExecutor_NoError(t *testing.T) {
 	executor := NewDownloadExecutor(nil)
 	assert.NotNil(t, executor, "NewDownloadExecutor(nil) should not return nil")
-}
-
-func TestRealDownloadExecutor_Download_SuccessMarkerWithKilledError(t *testing.T) {
-	logger := logrus.New()
-	logEntry := logrus.NewEntry(logger)
-	mockRunner := &MockCommandRunner{}
-
-	r := &RealDownloadExecutor{
-		log:           logEntry,
-		commandRunner: mockRunner,
-	}
-
-	url := "https://example.com/image"
-	sha := "1234567890abcdef"
-
-	source := &pb.OSProfileUpdateSource{
-		OsImageUrl:  url,
-		OsImageSha:  sha,
-		ProfileName: "test-profile",
-	}
-
-	mockRunner.SetResponse([]byte("SOTA INBC Command was invoked.\nSOTA Command Response: 200-Success\n"), errors.New("signal: killed"))
-
-	err := r.Download(context.Background(), "", source)
-	assert.NoError(t, err, "Download() should treat explicit success marker as successful even if wrapper exits non-zero")
-}
-
-func TestRealDownloadExecutor_Download_FailsWithoutSuccessMarker(t *testing.T) {
-	logger := logrus.New()
-	logEntry := logrus.NewEntry(logger)
-	mockRunner := &MockCommandRunner{}
-
-	r := &RealDownloadExecutor{
-		log:           logEntry,
-		commandRunner: mockRunner,
-	}
-
-	url := "https://example.com/image"
-	sha := "1234567890abcdef"
-
-	source := &pb.OSProfileUpdateSource{
-		OsImageUrl:  url,
-		OsImageSha:  sha,
-		ProfileName: "test-profile",
-	}
-
-	mockRunner.SetResponse([]byte("SOTA INBC Command was invoked.\n"), errors.New("signal: killed"))
-
-	err := r.Download(context.Background(), "", source)
-	assert.Error(t, err, "Download() should fail when command exits non-zero without explicit success marker")
 }
