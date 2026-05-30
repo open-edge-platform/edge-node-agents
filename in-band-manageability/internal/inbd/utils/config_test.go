@@ -8,6 +8,7 @@ package utils
 
 import (
 	"testing"
+	"time"
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
@@ -61,10 +62,7 @@ func TestLoadConfig(t *testing.T) {
 
 func TestIsTrustedRepository(t *testing.T) {
 	config := &Configurations{
-		OSUpdater: struct {
-			TrustedRepositories    []string `json:"trustedRepositories"`
-			ProceedWithoutRollback bool     `json:"proceedWithoutRollback"`
-		}{
+		OSUpdater: OSUpdaterConfig{
 			TrustedRepositories: []string{
 				"https://example.com/repo1",
 				"https://example.com/repo2"},
@@ -93,10 +91,7 @@ func TestIsTrustedRepository(t *testing.T) {
 func TestIsProceedWithoutRollback_True(t *testing.T) {
 	// Create a configuration where ProceedWithoutRollback is true
 	config := &Configurations{
-		OSUpdater: struct {
-			TrustedRepositories    []string `json:"trustedRepositories"`
-			ProceedWithoutRollback bool     `json:"proceedWithoutRollback"`
-		}{
+		OSUpdater: OSUpdaterConfig{
 			ProceedWithoutRollback: true,
 		},
 	}
@@ -111,10 +106,7 @@ func TestIsProceedWithoutRollback_True(t *testing.T) {
 func TestIsProceedWithoutRollback_False(t *testing.T) {
 	// Create a configuration where ProceedWithoutRollback is false
 	config := &Configurations{
-		OSUpdater: struct {
-			TrustedRepositories    []string `json:"trustedRepositories"`
-			ProceedWithoutRollback bool     `json:"proceedWithoutRollback"`
-		}{
+		OSUpdater: OSUpdaterConfig{
 			ProceedWithoutRollback: false,
 		},
 	}
@@ -124,4 +116,32 @@ func TestIsProceedWithoutRollback_False(t *testing.T) {
 
 	// Assertions
 	assert.False(t, result, "Expected rollback to be disallowed")
+}
+
+func TestGetInstallIdleTimeout(t *testing.T) {
+	t.Run("empty value disabled", func(t *testing.T) {
+		cfg := &Configurations{OSUpdater: OSUpdaterConfig{}}
+		idleTimeout, err := GetInstallIdleTimeout(cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, 60*time.Minute, idleTimeout)
+	})
+
+	t.Run("valid duration", func(t *testing.T) {
+		cfg := &Configurations{OSUpdater: OSUpdaterConfig{InstallIdleTimeoutSeconds: 2700}}
+		idleTimeout, err := GetInstallIdleTimeout(cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, 45*time.Minute, idleTimeout)
+	})
+
+	t.Run("invalid duration", func(t *testing.T) {
+		cfg := &Configurations{OSUpdater: OSUpdaterConfig{InstallIdleTimeoutSeconds: -1}}
+		_, err := GetInstallIdleTimeout(cfg)
+		assert.ErrorContains(t, err, "invalid os_updater.installIdleTimeoutSeconds")
+	})
+
+	t.Run("negative duration", func(t *testing.T) {
+		cfg := &Configurations{OSUpdater: OSUpdaterConfig{InstallIdleTimeoutSeconds: -1}}
+		_, err := GetInstallIdleTimeout(cfg)
+		assert.ErrorContains(t, err, "must be >= 0")
+	})
 }

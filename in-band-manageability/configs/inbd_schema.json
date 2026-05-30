@@ -16,6 +16,11 @@
         "proceedWithoutRollback": {
           "type": "boolean",
           "description": "Indicates whether to proceed with updates without rollback support."
+        },
+        "installIdleTimeoutSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum idle duration without install output/progress, in seconds."
         }
       },
       "required": ["trustedRepositories", "proceedWithoutRollback"],

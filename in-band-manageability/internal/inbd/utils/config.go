@@ -11,17 +11,24 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/spf13/afero"
 )
 
-// Configurations represents the structure of the XML configuration file
-type Configurations struct {
-	OSUpdater struct {
-		TrustedRepositories    []string `json:"trustedRepositories"`
-		ProceedWithoutRollback bool     `json:"proceedWithoutRollback"`
-	} `json:"os_updater"`
+// OSUpdaterConfig represents the OS updater section of the config file.
+type OSUpdaterConfig struct {
+	TrustedRepositories       []string `json:"trustedRepositories"`
+	ProceedWithoutRollback    bool     `json:"proceedWithoutRollback"`
+	InstallIdleTimeoutSeconds int      `json:"installIdleTimeoutSeconds"`
 }
+
+// Configurations represents the structure of the JSON configuration file.
+type Configurations struct {
+	OSUpdater OSUpdaterConfig `json:"os_updater"`
+}
+
+const defaultInstallIdleTimeout = 60 * time.Minute
 
 // LoadConfig loads the XML configuration file
 func LoadConfig(fs afero.Fs, filePath string) (*Configurations, error) {
@@ -65,4 +72,18 @@ func IsTrustedRepository(url string, config *Configurations) bool {
 func IsProceedWithoutRollback(config *Configurations) bool {
 	log.Printf("Checking if rollback is allowed")
 	return config.OSUpdater.ProceedWithoutRollback
+}
+
+// GetInstallIdleTimeout converts os_updater.installIdleTimeoutSeconds into a duration.
+// Empty value falls back to the default idle watchdog timeout.
+func GetInstallIdleTimeout(config *Configurations) (time.Duration, error) {
+	if config == nil || config.OSUpdater.InstallIdleTimeoutSeconds == 0 {
+		return defaultInstallIdleTimeout, nil
+	}
+
+	if config.OSUpdater.InstallIdleTimeoutSeconds < 0 {
+		return 0, fmt.Errorf("invalid os_updater.installIdleTimeoutSeconds: must be >= 0")
+	}
+
+	return time.Duration(config.OSUpdater.InstallIdleTimeoutSeconds) * time.Second, nil
 }

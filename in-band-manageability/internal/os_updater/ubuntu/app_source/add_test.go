@@ -37,10 +37,7 @@ func TestAdd(t *testing.T) {
 				},
 				loadConfigFunc: func(afero.Fs, string) (*utils.Configurations, error) {
 					return &utils.Configurations{
-						OSUpdater: struct {
-							TrustedRepositories    []string `json:"trustedRepositories"`
-							ProceedWithoutRollback bool     `json:"proceedWithoutRollback"`
-						}{
+						OSUpdater: utils.OSUpdaterConfig{
 							TrustedRepositories: []string{
 								"https://example.com/repo1",
 								"https://example.com/repo2",
@@ -86,10 +83,7 @@ func TestAdd(t *testing.T) {
 			adder: &Adder{
 				loadConfigFunc: func(afero.Fs, string) (*utils.Configurations, error) {
 					return &utils.Configurations{
-						OSUpdater: struct {
-							TrustedRepositories    []string `json:"trustedRepositories"`
-							ProceedWithoutRollback bool     `json:"proceedWithoutRollback"`
-						}{
+						OSUpdater: utils.OSUpdaterConfig{
 							TrustedRepositories: []string{
 								"https://example.com/repo1",
 								"https://example.com/repo2",
@@ -115,10 +109,7 @@ func TestAdd(t *testing.T) {
 			adder: &Adder{
 				loadConfigFunc: func(afero.Fs, string) (*utils.Configurations, error) {
 					return &utils.Configurations{
-						OSUpdater: struct {
-							TrustedRepositories    []string `json:"trustedRepositories"`
-							ProceedWithoutRollback bool     `json:"proceedWithoutRollback"`
-						}{
+						OSUpdater: utils.OSUpdaterConfig{
 							TrustedRepositories: []string{
 								"https://example.com/repo1",
 								"https://example.com/repo2",
@@ -150,10 +141,7 @@ func TestAdd(t *testing.T) {
 				},
 				loadConfigFunc: func(fs afero.Fs, path string) (*utils.Configurations, error) {
 					return &utils.Configurations{
-						OSUpdater: struct {
-							TrustedRepositories    []string `json:"trustedRepositories"`
-							ProceedWithoutRollback bool     `json:"proceedWithoutRollback"`
-						}{
+						OSUpdater: utils.OSUpdaterConfig{
 							TrustedRepositories: []string{
 								"https://example.com/repo1",
 								"https://example.com/repo2",

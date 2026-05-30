@@ -7,14 +7,20 @@
 package ubuntu
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
+	"time"
 
 	common "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/common"
 	utils "github.com/open-edge-platform/edge-node-agents/in-band-manageability/internal/inbd/utils"
@@ -26,6 +32,103 @@ import (
 )
 
 const aptLockTimeoutOption = "Dpkg::Lock::Timeout=300"
+
+func shouldApplyInstallIdleWatchdog(mode pb.UpdateSystemSoftwareRequest_DownloadMode) bool {
+	return mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_FULL ||
+		mode == pb.UpdateSystemSoftwareRequest_DOWNLOAD_MODE_NO_DOWNLOAD
+}
+
+type activityWriterFunc func()
+
+func (w activityWriterFunc) Write(p []byte) (int, error) {
+	if len(p) > 0 {
+		w()
+	}
+	return len(p), nil
+}
+
+func executeCommandWithIdleWatchdog(command []string, idleTimeout time.Duration) ([]byte, []byte, error) {
+	if len(command) == 0 {
+		return nil, nil, fmt.Errorf("empty command")
+	}
+
+	cmd := exec.Command(command[0], command[1:]...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get stdout pipe: %w", err)
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get stderr pipe: %w", err)
+	}
+
+	var stdoutBuf bytes.Buffer
+	var stderrBuf bytes.Buffer
+	activityCh := make(chan struct{}, 1)
+
+	signalActivity := func() {
+		select {
+		case activityCh <- struct{}{}:
+		default:
+		}
+	}
+
+	stdoutWriter := io.MultiWriter(&stdoutBuf, activityWriterFunc(signalActivity))
+	stderrWriter := io.MultiWriter(&stderrBuf, activityWriterFunc(signalActivity))
+
+	if err := cmd.Start(); err != nil {
+		return nil, nil, fmt.Errorf("failed to start command '%s': %w", strings.Join(command, " "), err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		_, _ = io.Copy(stdoutWriter, stdoutPipe)
+	}()
+	go func() {
+		defer wg.Done()
+		_, _ = io.Copy(stderrWriter, stderrPipe)
+	}()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- cmd.Wait()
+	}()
+
+	idleTimer := time.NewTimer(idleTimeout)
+	defer idleTimer.Stop()
+
+	for {
+		select {
+		case err := <-errCh:
+			wg.Wait()
+			if err != nil {
+				return stdoutBuf.Bytes(), stderrBuf.Bytes(), fmt.Errorf("failed to run '%s' command - %w", strings.Join(command, " "), err)
+			}
+			return stdoutBuf.Bytes(), stderrBuf.Bytes(), nil
+		case <-activityCh:
+			if !idleTimer.Stop() {
+				select {
+				case <-idleTimer.C:
+				default:
+				}
+			}
+			idleTimer.Reset(idleTimeout)
+		case <-idleTimer.C:
+			if cmd.Process != nil {
+				if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
+					_ = cmd.Process.Kill()
+				}
+			}
+			<-errCh
+			wg.Wait()
+			return stdoutBuf.Bytes(), stderrBuf.Bytes(), fmt.Errorf("command idle timeout exceeded after %s", idleTimeout)
+		}
+	}
+}
 
 // Updater is the concrete implementation of the Updater interface
 // for the Ubuntu OS.
@@ -165,8 +268,33 @@ func (u *Updater) Update() (bool, error) {
 	}
 
 	for _, cmd := range cmds {
+
 		log.Printf("Executing command: %s", cmd)
-		_, stderr, err := u.CommandExecutor.Execute(cmd)
+
+		var stderr []byte
+		if shouldApplyInstallIdleWatchdog(u.Request.Mode) {
+			config, loadErr := utils.LoadConfig(fs, utils.ConfigFilePath)
+			if loadErr != nil {
+				log.Printf("Warning: failed to load install idle timeout config, continuing without watchdog: %v", loadErr)
+				_, stderr, err = u.CommandExecutor.Execute(cmd)
+			} else {
+				installIdleTimeout, idleErr := utils.GetInstallIdleTimeout(config)
+				if idleErr != nil {
+					emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), idleErr.Error())
+					emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_INBM, "ubuntu")
+					return false, fmt.Errorf("SOTA Aborted: failed to parse install idle timeout configuration: %v", idleErr)
+				}
+
+				if installIdleTimeout > 0 {
+					_, stderr, err = executeCommandWithIdleWatchdog(cmd, installIdleTimeout)
+				} else {
+					_, stderr, err = u.CommandExecutor.Execute(cmd)
+				}
+			}
+		} else {
+			_, stderr, err = u.CommandExecutor.Execute(cmd)
+		}
+
 		if err != nil {
 			emt.WriteUpdateStatus(fs, emt.FAIL, string(jsonString), err.Error())
 			emt.WriteGranularLogWithOSType(fs, emt.FAIL, emt.FAILURE_REASON_UPDATE_TOOL, "ubuntu")

@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	pb "github.com/open-edge-platform/edge-node-agents/in-band-manageability/pkg/api/inbd/v1"
 	"github.com/spf13/cobra"
@@ -179,5 +180,54 @@ func TestHandleSOTA(t *testing.T) {
 
 		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
 		assert.NoError(t, err, "handleSOTA should not return an error even if Close fails")
+	})
+
+	t.Run("SOTA request context has no deadline", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("UpdateSystemSoftware", mock.Anything, mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				ctxArg, ok := args.Get(0).(context.Context)
+				assert.True(t, ok)
+				_, hasDeadline := ctxArg.Deadline()
+				assert.False(t, hasDeadline)
+			}).
+			Return(&pb.UpdateResponse{StatusCode: 200, Error: ""}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return MockDialer(ctx, socket, mockClient, false)
+		}
+		detectOS := func() (string, error) {
+			return "ubuntu", nil
+		}
+
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+		assert.NoError(t, err)
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("SOTA request context has EMT deadline", func(t *testing.T) {
+		mockClient := new(MockInbServiceClient)
+		mockClient.On("UpdateSystemSoftware", mock.Anything, mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				ctxArg, ok := args.Get(0).(context.Context)
+				assert.True(t, ok)
+				deadline, hasDeadline := ctxArg.Deadline()
+				assert.True(t, hasDeadline)
+				remaining := time.Until(deadline)
+				assert.Greater(t, remaining, 0*time.Second)
+				assert.LessOrEqual(t, remaining, emtSoftwareUpdateTimerInSeconds*time.Second)
+			}).
+			Return(&pb.UpdateResponse{StatusCode: 200, Error: ""}, nil)
+
+		dialer := func(ctx context.Context, socket string) (pb.InbServiceClient, grpc.ClientConnInterface, error) {
+			return MockDialer(ctx, socket, mockClient, false)
+		}
+		detectOS := func() (string, error) {
+			return "EMT", nil
+		}
+
+		err := handleSOTA(&socket, &url, &releaseDate, &mode, &reboot, &packageList, &signature, detectOS, dialer)(cmd, args)
+		assert.NoError(t, err)
+		mockClient.AssertExpectations(t)
 	})
 }
