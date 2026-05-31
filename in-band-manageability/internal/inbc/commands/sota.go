@@ -122,15 +122,14 @@ func handleSOTA(
 			return fmt.Errorf("error detected OS type: %v", err)
 		}
 
-		var timeout time.Duration = defaultSoftwareUpdateTimerInSeconds
+		updateCtx := context.Background()
 		if os == "EMT" {
-			timeout = emtSoftwareUpdateTimerInSeconds
+			var updateCancel context.CancelFunc
+			updateCtx, updateCancel = context.WithTimeout(context.Background(), emtSoftwareUpdateTimerInSeconds*time.Second)
+			defer updateCancel()
 		}
 
-		ctx, cancel = context.WithTimeout(context.Background(), timeout*time.Second)
-		defer cancel()
-
-		resp, err := client.UpdateSystemSoftware(ctx, request)
+		resp, err := client.UpdateSystemSoftware(updateCtx, request)
 		if err != nil {
 			return fmt.Errorf("error updating system software: %v", err)
 		}
