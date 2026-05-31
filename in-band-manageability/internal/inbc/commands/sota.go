@@ -117,13 +117,13 @@ func handleSOTA(
 			}
 		}()
 
-		osType, err := detectOS()
+		os, err := detectOS()
 		if err != nil {
 			return fmt.Errorf("error detected OS type: %v", err)
 		}
 
 		updateCtx := context.Background()
-		if osType == "EMT" {
+		if os == "EMT" {
 			var updateCancel context.CancelFunc
 			updateCtx, updateCancel = context.WithTimeout(context.Background(), emtSoftwareUpdateTimerInSeconds*time.Second)
 			defer updateCancel()
