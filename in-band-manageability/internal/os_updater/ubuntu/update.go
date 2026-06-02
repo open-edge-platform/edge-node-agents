@@ -25,6 +25,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+const aptLockTimeoutOption = "Dpkg::Lock::Timeout=300"
+
 // Updater is the concrete implementation of the Updater interface
 // for the Ubuntu OS.
 type Updater struct {
@@ -214,11 +216,11 @@ func GetEstimatedSize(cmdExec common.Executor, packageList []string) (bool, uint
 	// If specific packages are requested, check those; otherwise check system-wide upgrade
 	if len(packageList) > 0 {
 		// For specific packages: apt-get install --dry-run <packages>
-		cmd = append([]string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
+		cmd = append([]string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold", "-u", "install", "--assume-no"}, packageList...)
 	} else {
 		// For system-wide upgrade
-		cmd = []string{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
+		cmd = []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold", "--with-new-pkgs", "-u", "upgrade", "--assume-no"}
 	}
 
@@ -315,17 +317,17 @@ func noDownload(packages []string) [][]string {
 	log.Println("No download mode")
 	cmds := [][]string{
 		{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
-		{common.AptGetCmd, "-o", "Dpkg::Options::=--force-confdef", "-o",
+		{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o", "Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold", "-yq", "-f", "install"},
 	}
 
 	if len(packages) == 0 {
-		cmds = append(cmds, []string{common.AptGetCmd, "-o",
+		cmds = append(cmds, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o",
 			"Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold",
 			"--with-new-pkgs", "--fix-missing", "-yq", "upgrade"})
 	} else {
-		cmds = append(cmds, [][]string{append([]string{common.AptGetCmd, "-o",
+		cmds = append(cmds, [][]string{append([]string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o",
 			"Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold",
 			"--fix-missing", "-yq",
@@ -429,17 +431,17 @@ func downloadOnly(packages []string) [][]string {
 
 	cmds := [][]string{
 		{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
-		{common.AptGetCmd, "update"},
+		{common.AptGetCmd, "-o", aptLockTimeoutOption, "update"},
 	}
 
 	if len(packages) == 0 {
-		cmds = append(cmds, []string{common.AptGetCmd, "-o",
+		cmds = append(cmds, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o",
 			"Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold",
 			"--with-new-pkgs", "--download-only",
 			"--fix-missing", "-yq", "upgrade"})
 	} else {
-		cmds = append(cmds, [][]string{append([]string{common.AptGetCmd, "-o",
+		cmds = append(cmds, [][]string{append([]string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-o",
 			"Dpkg::Options::=--force-confdef", "-o",
 			"Dpkg::Options::=--force-confold", "--download-only",
 			"--fix-missing", "-yq", "install"}, packages...)}...)
@@ -452,15 +454,15 @@ func fullInstall(packages []string) [][]string {
 	log.Println("Download and install mode")
 
 	cmds := [][]string{
-		{common.AptGetCmd, "update"},
-		{common.AptGetCmd, "-yq", "-f", "install"}, // Fix broken dependencies
+		{common.AptGetCmd, "-o", aptLockTimeoutOption, "update"},
+		{common.AptGetCmd, "-o", aptLockTimeoutOption, "-yq", "-f", "install"}, // Fix broken dependencies
 		{common.DpkgCmd, "--configure", "-a", "--force-confdef", "--force-confold"},
 	}
 
 	if len(packages) == 0 {
-		cmds = append(cmds, []string{common.AptGetCmd, "-yq", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "upgrade"})
+		cmds = append(cmds, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-yq", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "--with-new-pkgs", "upgrade"})
 	} else {
-		cmds = append(cmds, []string{common.AptGetCmd, "-yq", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "install"})
+		cmds = append(cmds, []string{common.AptGetCmd, "-o", aptLockTimeoutOption, "-yq", "-o", "Dpkg::Options::=--force-confdef", "-o", "Dpkg::Options::=--force-confold", "install"})
 		cmds = append(cmds, packages)
 	}
 
