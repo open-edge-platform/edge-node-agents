@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
+# Wait for access token
 while true
 do
 	if [ -f /etc/intel_edge_node/tokens/platform-observability-agent/access_token ]; then
@@ -12,5 +13,29 @@ do
         	sleep 10
 	fi
 done
+
+# Resolve TENANT_ID from available sources
+# Priority: cloud-init tenantId > client-credentials project_id > fail-fast
+
+# Try to read from cloud-init
+if [ -f /etc/intel_edge_node/tenantId ]; then
+	TENANT_ID=$(cat /etc/intel_edge_node/tenantId)
+fi
+
+# If not set or "not-set", try to read from client-credentials
+if [ -z "$TENANT_ID" ] || [ "$TENANT_ID" = "not-set" ]; then
+	if [ -f /etc/intel_edge_node/client-credentials/project_id ]; then
+		TENANT_ID=$(cat /etc/intel_edge_node/client-credentials/project_id)
+	fi
+fi
+
+# Fail-fast if TENANT_ID is still empty or "not-set"
+if [ -z "$TENANT_ID" ] || [ "$TENANT_ID" = "not-set" ]; then
+	echo "ERROR: TENANT_ID is not set. Neither /etc/intel_edge_node/tenantId nor /etc/intel_edge_node/client-credentials/project_id contain a valid tenant ID" >&2
+	exit 1
+fi
+
+# Export TENANT_ID for the collector process
+export TENANT_ID
 
 exec "$@"
