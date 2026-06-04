@@ -1,7 +1,9 @@
 /*
- * SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+ * SPDX-FileCopyrightText: (C) 2026 Intel Corporation
  * SPDX-License-Identifier: Apache-2.0
  */
+
+// codeql-test: scan trigger 2026.1
 package main
 
 import (

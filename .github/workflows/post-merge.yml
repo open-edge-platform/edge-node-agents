@@ -76,6 +76,8 @@ jobs:
       remove_cache_go: true
       cache_go: true
       bootstrap_tools: "all,golangci-lint2"
+      run_codeql: true
+      codeql_language: "go"
     secrets:
       SYS_EMF_GH_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
       NO_AUTH_ECR_PUSH_USERNAME: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}

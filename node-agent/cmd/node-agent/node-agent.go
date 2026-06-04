@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+// codeql-test: scan trigger 2026.1
 package main
 
 import (

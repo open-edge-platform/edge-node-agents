@@ -1,7 +1,8 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // main package implements functionality of the Cluster Agent
+// codeql-test: scan trigger 2026.1
 package main
 
 import (

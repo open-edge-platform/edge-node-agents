@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // main package implements functionality of the Platform Manageability Agent
+// codeql-test: scan trigger 2026.1
 package main
 
 import (
