@@ -116,6 +116,9 @@ func (c *Client) Onboard(ctx context.Context) error {
 	if err := config.SaveToFile(config.ProjectIDPath, nodeResponse.ProjectId); err != nil {
 		return fmt.Errorf("failed to save Project ID to file: %v", err)
 	}
+	if err := os.Chmod(config.ProjectIDPath, 0640); err != nil {
+		return fmt.Errorf("failed to set Project ID file permissions: %v", err)
+	}
 
 	return nil
 }
