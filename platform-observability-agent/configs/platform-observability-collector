@@ -15,17 +15,19 @@ do
 done
 
 # Resolve TENANT_ID from available sources
-# Priority: cloud-init tenantId > client-credentials project_id > fail-fast
+# Priority: systemd-loaded cloud-init tenantId > client-credentials project_id > fail-fast
 
-# Try to read from cloud-init
-if [ -f /etc/intel_edge_node/tenantId ]; then
-	TENANT_ID=$(cat /etc/intel_edge_node/tenantId)
-fi
-
-# If not set or "not-set", try to read from client-credentials
+# If TENANT_ID is not provided by systemd EnvironmentFile, try project_id fallback
 if [ -z "$TENANT_ID" ] || [ "$TENANT_ID" = "not-set" ]; then
+	if [ -e /etc/intel_edge_node/client-credentials/project_id ] && [ ! -r /etc/intel_edge_node/client-credentials/project_id ]; then
+		echo "ERROR: /etc/intel_edge_node/client-credentials/project_id exists but is not readable by $(id -un). Check file ownership and permissions" >&2
+		exit 1
+	fi
 	if [ -f /etc/intel_edge_node/client-credentials/project_id ]; then
-		TENANT_ID=$(cat /etc/intel_edge_node/client-credentials/project_id)
+		TENANT_ID=$(head -n1 /etc/intel_edge_node/client-credentials/project_id)
+		case "$TENANT_ID" in
+			*=*) TENANT_ID=${TENANT_ID#*=} ;;
+		esac
 	fi
 fi
 

@@ -15,7 +15,7 @@ packages:
     version: 1.10.2
     ociArtifact: edge-orch/en/deb/hardware-discovery-agent
   - name: node-agent
-    version: 1.11.3
+    version: 1.11.5
     ociArtifact: edge-orch/en/deb/node-agent
   - name: platform-manageability-agent
     version: 0.5.1
@@ -36,5 +36,5 @@ packages:
     version: 1.2.2
     ociArtifact: edge-orch/en/deb/in-band-manageability
   - name: device-discovery-agent
-    version: 1.0.4
+    version: 1.0.5
     ociArtifact: edge-orch/en/deb/device-discovery-agent
