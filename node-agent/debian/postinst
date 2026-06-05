@@ -118,8 +118,9 @@ if [ ! -e "/etc/incron.allow" ] || ! grep -q "node-agent" "/etc/incron.allow"; t
     echo "node-agent" >> /etc/incron.allow
 fi
 
-chmod 700 etc/intel_edge_node/client-credentials
+chmod 750 etc/intel_edge_node/client-credentials
 chmod 600 etc/intel_edge_node/client-credentials/*
+chmod 640 etc/intel_edge_node/client-credentials/project_id 2>/dev/null || true
 chmod -R 750 etc/intel_edge_node/tokens
 
 # Ensure path exists when node-agent starts

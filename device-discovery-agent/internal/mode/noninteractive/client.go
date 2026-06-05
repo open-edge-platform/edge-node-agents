@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"os"
 	"time"
 
 	pb "github.com/open-edge-platform/infra-onboarding/onboarding-manager/pkg/api/onboardingmgr/v1"
@@ -164,6 +165,10 @@ func (c *Client) Onboard(ctx context.Context) StreamResult {
 				// Save the Project ID to a file
 				if err := config.SaveToFile(config.ProjectIDPath, projectID); err != nil {
 					result.Error = fmt.Errorf("failed to save Project ID to file: %v", err)
+					return result
+				}
+				if err := os.Chmod(config.ProjectIDPath, 0640); err != nil {
+					result.Error = fmt.Errorf("failed to set Project ID file permissions: %v", err)
 					return result
 				}
 
