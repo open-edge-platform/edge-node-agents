@@ -5,6 +5,7 @@ package comms
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -142,7 +143,7 @@ func (cli *Client) IsActivationInProgress() bool {
 	return cli.isActivationInProgress.Load()
 }
 func parseAMTInfoField(output []byte, parseKey string) (string, bool) {
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	scanner := bufio.NewScanner(bytes.NewReader(output))
 	for scanner.Scan() {
 		line := scanner.Text()
 
