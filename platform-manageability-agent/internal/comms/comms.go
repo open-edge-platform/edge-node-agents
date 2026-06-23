@@ -304,7 +304,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 		}
 		if strings.Contains(outputStr, `msg="Unable to authenticate with AMT"`) {
 			log.Logger.Warnf("Unable to authenticate with AMT for host %s - triggering deactivation", hostID)
-			cli.triggerDeactivationAsync(hostID, rpsAddress, password)
+			cli.triggerDeactivationAsync(hostID, rpsAddress, resp.ProfileName, password)
 		}
 
 		if activationErr != nil {
@@ -325,7 +325,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 	case "connecting":
 		log.Logger.Infof("host %s is in 'connecting' state", hostID)
 		rpsAddress := fmt.Sprintf("wss://%s/activate", conf.RPSAddress)
-		activationStatus = cli.handleConnectingState(hostID, normalizedStatus, rpsAddress, resp.ActionPassword)
+		activationStatus = cli.handleConnectingState(hostID, normalizedStatus, rpsAddress, resp.ProfileName, resp.ActionPassword)
 
 	case "connected":
 		// Update previous state and reset connecting state timestamp
@@ -351,7 +351,7 @@ func (cli *Client) RetrieveActivationDetails(ctx context.Context, hostID string,
 // handleConnectingState manages the connecting state
 // If device went directly to "connecting" (bypassing "not connected"), trigger immediate deactivation
 // Otherwise, wait for 3 minutes before triggering deactivation
-func (cli *Client) handleConnectingState(hostID, currentState, rpsAddress, password string) pb.ActivationStatus {
+func (cli *Client) handleConnectingState(hostID, currentState, rpsAddress, profileName, password string) pb.ActivationStatus {
 	now := time.Now()
 
 	// Track when first entered connecting state
@@ -372,7 +372,7 @@ func (cli *Client) handleConnectingState(hostID, currentState, rpsAddress, passw
 			log.Logger.Infof("Host %s: direct transition to 'connecting' from '%s', triggering deactivation",
 				hostID, previousState)
 			// trigger the deactivation
-			return cli.triggerDeactivationAsync(hostID, rpsAddress, password)
+			return cli.triggerDeactivationAsync(hostID, rpsAddress, profileName, password)
 		}
 	} else {
 		cli.mu.Unlock()
@@ -392,7 +392,7 @@ func (cli *Client) handleConnectingState(hostID, currentState, rpsAddress, passw
 		log.Logger.Warnf("Host %s stuck in 'connecting' state for %v (>%v), triggering deactivation",
 			hostID, timeInConnecting, connectingStateTimeout)
 		// trigger the deactivation
-		return cli.triggerDeactivationAsync(hostID, rpsAddress, password)
+		return cli.triggerDeactivationAsync(hostID, rpsAddress, profileName, password)
 	}
 
 	// Still in connecting state within timeout
@@ -400,7 +400,7 @@ func (cli *Client) handleConnectingState(hostID, currentState, rpsAddress, passw
 }
 
 // triggerDeactivationAsync launches deactivation in background goroutine and returns immediately
-func (cli *Client) triggerDeactivationAsync(hostID, rpsAddress, password string) pb.ActivationStatus {
+func (cli *Client) triggerDeactivationAsync(hostID, rpsAddress, profileName, password string) pb.ActivationStatus {
 	cli.mu.Lock()
 	// Only trigger deactivation if not already in progress
 	if cli.deactivationInProgress {
@@ -415,14 +415,14 @@ func (cli *Client) triggerDeactivationAsync(hostID, rpsAddress, password string)
 	cli.mu.Unlock()
 
 	// Launch goroutine for deactivation
-	go cli.performDeactivationAsync(hostID, rpsAddress, password)
+	go cli.performDeactivationAsync(hostID, rpsAddress, profileName, password)
 	// Return ACTIVATION_FAILED to stop current activation attempts
 	return pb.ActivationStatus_ACTIVATION_FAILED
 }
 
 // performDeactivationAsync executes deactivation
 // and polls RAS status until "not connected" or timeout
-func (cli *Client) performDeactivationAsync(hostID, rpsAddress, password string) {
+func (cli *Client) performDeactivationAsync(hostID, rpsAddress, profileName, password string) {
 	log.Logger.Infof("Starting async deactivation for host %s", hostID)
 
 	// Always reset deactivation in progress flag when done
@@ -433,7 +433,7 @@ func (cli *Client) performDeactivationAsync(hostID, rpsAddress, password string)
 	}()
 
 	// Execute deactivation command
-	deactivateOutput, deactivateErr := cli.Executor.ExecuteAMTDeactivate(rpsAddress, password)
+	deactivateOutput, deactivateErr := cli.Executor.ExecuteAMTDeactivate(rpsAddress, profileName, password)
 	if deactivateErr != nil {
 		log.Logger.Errorf("Deactivation command failed for host %s: %v, Output: %s",
 			hostID, deactivateErr, string(deactivateOutput))
@@ -576,10 +576,10 @@ func (cli *Client) GetDeactivationInProgress() bool {
 	return cli.deactivationInProgress
 }
 
-func (cli *Client) TriggerDeactivationAsync(hostID, rpsAddress, password string) pb.ActivationStatus {
-	return cli.triggerDeactivationAsync(hostID, rpsAddress, password)
+func (cli *Client) TriggerDeactivationAsync(hostID, rpsAddress, profileName, password string) pb.ActivationStatus {
+	return cli.triggerDeactivationAsync(hostID, rpsAddress, profileName, password)
 }
 
-func (cli *Client) PerformDeactivationAsync(hostID, rpsAddress, password string) {
-	cli.performDeactivationAsync(hostID, rpsAddress, password)
+func (cli *Client) PerformDeactivationAsync(hostID, rpsAddress, profileName, password string) {
+	cli.performDeactivationAsync(hostID, rpsAddress, profileName, password)
 }

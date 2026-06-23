@@ -68,7 +68,7 @@ func (m *mockCommandExecutorForErrorHandling) ExecuteAMTActivate(rpsAddress, pro
 	return m.amtActivateOutput, m.amtActivateError
 }
 
-func (m *mockCommandExecutorForErrorHandling) ExecuteAMTDeactivate(rpsAddress, password string) ([]byte, error) {
+func (m *mockCommandExecutorForErrorHandling) ExecuteAMTDeactivate(rpsAddress, profileName, password string) ([]byte, error) {
 	m.deactivationTriggered = true
 	m.deactivateCallCount++
 	return m.amtDeactivateOutput, m.amtDeactivateError
