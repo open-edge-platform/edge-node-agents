@@ -5,6 +5,7 @@ package utils
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -28,7 +29,7 @@ func DetectOS(reader FileReader, forcedOS string) (string, error) {
 		return "", fmt.Errorf("failed to open /etc/os-release: %v", err)
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(string(content)))
+	scanner := bufio.NewScanner(bytes.NewReader(content))
 	var osId string
 	for scanner.Scan() {
 		line := scanner.Text()
